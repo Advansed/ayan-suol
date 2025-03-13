@@ -1,0 +1,7 @@
+{
+  "name": "ayan-suol",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
