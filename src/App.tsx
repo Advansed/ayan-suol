@@ -10,7 +10,7 @@ import {
   setupIonicReact
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
+import { bicycleOutline, ellipse, giftOutline, personOutline, square, triangle, walkOutline } from 'ionicons/icons';
 import Tab1 from './pages/Tab1';
 import Tab2 from './pages/Tab2';
 import Tab3 from './pages/Tab3';
@@ -30,7 +30,7 @@ import '@ionic/react/css/text-alignment.css';
 import '@ionic/react/css/text-transformation.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
-
+import './app.css';
 /**
  * Ionic Dark Mode
  * -----------------------------------------------------
@@ -44,44 +44,76 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import { useState } from 'react';
+import Login from './components/Login';
+import { Store } from './components/Store';
 
 setupIonicReact();
 
-const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-      <IonTabs>
-        <IonRouterOutlet>
-          <Route exact path="/tab1">
-            <Tab1 />
-          </Route>
-          <Route exact path="/tab2">
-            <Tab2 />
-          </Route>
-          <Route path="/tab3">
-            <Tab3 />
-          </Route>
-          <Route exact path="/">
-            <Redirect to="/tab1" />
-          </Route>
-        </IonRouterOutlet>
-        <IonTabBar slot="bottom">
-          <IonTabButton tab="tab1" href="/tab1">
-            <IonIcon aria-hidden="true" icon={triangle} />
-            <IonLabel>Tab 1</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab2" href="/tab2">
-            <IonIcon aria-hidden="true" icon={ellipse} />
-            <IonLabel>Tab 2</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab3" href="/tab3">
-            <IonIcon aria-hidden="true" icon={square} />
-            <IonLabel>Tab 3</IonLabel>
-          </IonTabButton>
-        </IonTabBar>
-      </IonTabs>
-    </IonReactRouter>
-  </IonApp>
-);
+const App: React.FC = () => {
+  const [ auth, setAuth ]   = useState(false);
+  const [ swap, setSwap ]   = useState(false);
+  const [ alert, setAlert ] = useState<any>();
+
+  Store.subscribe({ num: 101, type: "auth", func: ()=>{
+    setAuth( Store.getState().auth  )
+  }})
+
+  Store.subscribe({ num: 102, type: "swap", func: ()=>{
+    setSwap( Store.getState().swap  )
+  }})
+
+  Store.subscribe({ num: 103, type: "message", func: ()=>{
+    setAlert( Store.getState().message )
+  }})
+
+  function App1(){
+    return (
+      <IonReactRouter>
+        <IonTabs>
+          <IonRouterOutlet>
+            <Route exact path="/tab1">
+              <Tab1 />
+            </Route>
+            <Route exact path="/tab2">
+              <Tab2 />
+            </Route>
+            <Route path="/tab3">
+              <Tab3 />
+            </Route>
+            <Route exact path="/">
+              <Redirect to="/tab1" />
+            </Route>
+          </IonRouterOutlet>
+          <IonTabBar slot="bottom">
+            <IonTabButton tab="tab1" href="/tab1">
+              <IonIcon aria-hidden="true" icon={ giftOutline } />
+              <IonLabel>{ swap ? "Заказы" : "Создать заказ"}</IonLabel>
+            </IonTabButton>
+            <IonTabButton tab="tab2" href="/tab2">
+              <IonIcon aria-hidden="true" icon={ walkOutline } />
+              <IonLabel>{ swap ? "Транспорт" : "Заказы"}</IonLabel>
+            </IonTabButton>
+            <IonTabButton tab="tab3" href="/tab3">
+              <IonIcon aria-hidden="true" icon={ personOutline} />
+              <IonLabel>Профиль</IonLabel>
+            </IonTabButton>
+          </IonTabBar>
+        </IonTabs>
+      </IonReactRouter>
+    )
+  }
+  
+  return (
+
+    <IonApp>
+      { 
+        auth 
+            ? <App1 />
+            : <Login /> 
+      }
+    </IonApp>
+  )
+};
 
 export default App;
