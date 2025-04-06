@@ -108,7 +108,6 @@ function    Ahthorization (props:{ setPage, Auth }) {
     
     const elem = <>
         <div className='container'>
-
             <IonCard className="login-container">
                 <div className='a-center'>
                     <h2>Авторизация</h2>
@@ -132,6 +131,7 @@ function    Ahthorization (props:{ setPage, Auth }) {
                         onIonInput={(e)=>{
                             info.password = e.detail.value;
                         }}
+                        label="Пароль" labelPlacement="stacked"
                     >
                     </IonInput>
                 </div>
@@ -197,22 +197,24 @@ function    Registration ( props:{ setPage, Reg } ) {
                 </div>
                 <div className='l-input mt-1'>
                     <IonInput
-                        placeholder='Имя'
+                        placeholder='Иван'
                         type='text'
                         value={ info?.name}
                         onIonInput={(e)=>{
                             info.name = e.detail.value;
                         }}
+                        label="Имя" labelPlacement="stacked"   
                     >
                     </IonInput>
                 </div>
                 <div className='l-input mt-1'>
                     <IonInput
-                        placeholder='email'
+                        placeholder='email@mail.com'
                         type='email'
                         onIonInput={(e)=>{
                             info.email = e.detail.value;
                         }}
+                        label="Почта" labelPlacement="stacked"   
                     >
                     </IonInput>
                 </div>

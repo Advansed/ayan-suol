@@ -831,6 +831,7 @@ export function Maskito(props:{ value, onIonInput, mask, placeholder  }) {
                 props.onIonInput(e)
             }}
             placeholder =  { props.placeholder } //"+7 (xxx) xxx-xxxx"
+            label="Телефон" labelPlacement="stacked"
         />
 
     );
