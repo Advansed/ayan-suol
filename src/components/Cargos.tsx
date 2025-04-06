@@ -28,7 +28,7 @@ export function Cargos() {
                   page === 0 
                     ? <List info = {{ setPage: setPage, setServ: setServ, setAlert }}/>
                 : page === 1 
-                    ? <Service info = { undefined } setPage = { setPage } />
+                    ? <NewService setPage = { setPage } />
                 : page === 2
                     ? <Service info = { serv } setPage = { setPage } />
                 : <></>

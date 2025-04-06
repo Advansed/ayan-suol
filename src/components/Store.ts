@@ -110,7 +110,7 @@ export const Store   =  create_Store(rootReducer, i_state)
 
 
 //export const URL = "https://fhd.aostng.ru/services/hs/API/V1/"
-export const URL = "http://gruzreis.ru/services/hs/API/V1/"
+export const URL = "https://gruzreis.ru/services/hs/api/v1/"
 
 
 export function Phone(phone): string {
