@@ -835,7 +835,7 @@ export function Maskito(props:{ value, onIonInput, mask, placeholder  }) {
         />
 
     );
-  }
+}
 
 export function Phone(phone): string {
     if(phone === undefined) return ""
