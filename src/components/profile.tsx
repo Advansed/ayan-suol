@@ -185,3 +185,127 @@ export function Profile() {
         </IonCard>
     )
 }
+
+
+function Body(props:{ info }){
+
+    
+    const body = () => {
+        return (
+            <div className='a-container' style={{ background: 'white', padding: 12, color: 'black' }}>
+                <div className="p-topBar">
+                    <div className="p-topBar-text">Мой профиль</div>
+                </div>
+                <div>
+                    <div className="p-container">
+                        <div className="p-container-flex">
+                            <div className="p-container-flex">
+                                <img src='profileImg.jpeg' width={40} height={40} />
+                                <div>
+                                    <div className="p-container-Name">{info.name}</div>
+                                    <div className="p-container-Name">Фамилия</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="p-container-Name">Водитель</div>
+                            </div>
+                        </div>
+                        <div className="p-StatCard-container-flex">
+                            <div className="p-StatCard">
+                                <div className="p-StatCard-title">124</div>
+                                <div className="p-StatCard-text">Выполнено заказов</div>
+                            </div>
+                            <div className="p-StatCard">
+                                <div className="p-StatCard-title">4,9</div>
+                                <div className="p-StatCard-text">Рейтинг</div>
+                            </div>
+                            <div className="p-StatCard">
+                                <div className="p-StatCard-title">15</div>
+                                <div className="p-StatCard-text">Заявки</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-container-dropdown">
+                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(0)}>
+                            <div>Купить заявки</div>
+                            <div><img src='chevron-down.svg' /></div>
+                        </div>
+                        <div className={whichDropDown == 0 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
+                            testText
+                        </div>
+                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(1)}>
+                            <div>Личные данные</div>
+                            <div><img src='chevron-down.svg' /></div>
+                        </div>
+                        <div className={whichDropDown == 1 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
+                            testText
+                        </div>
+                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(2)}>
+                            <div>Транспорт</div>
+                            <div><img src='chevron-down.svg' /></div>
+                        </div>
+                        <div className={whichDropDown == 2 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
+                            testText
+                        </div>
+                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(3)}>
+                            <div>Безопасность</div>
+                            <div><img src='chevron-down.svg' /></div>
+                        </div>
+                        <div className={whichDropDown == 3 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
+                            testText
+                        </div>
+                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(4)}>
+                            <div>Уведомления</div>
+                            <div><img src='chevron-down.svg' /></div>
+                        </div>
+                        <div className={whichDropDown == 4 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
+                            testText
+                        </div>
+                    </div>
+
+
+
+                    {/* <div className="p-roleChooseText">
+                    Настройте аккаунт для доступа<br />
+                    к платформе грузоперевозок
+                </div> */}
+                    <div className="p-roleChoose">
+                        <button
+                            className={typeClient == 'company' ? 'p-ActiveButton' : 'p-Button'}
+                            onClick={() => { setTypeClient('company'); setOpenModal(true) }}>
+                            Я заказчик
+                        </button>
+                        <button
+                            className={typeClient == 'cargos' ? 'p-ActiveButton' : 'p-Button'}
+                            onClick={() => { setTypeClient('cargos'); setOpenModal(true) }}>
+                            Я водитель</button>
+                    </div>
+                </div>
+
+                <div className="p-BottomBar">
+                    <div className="p-BottomBar-text">Готово</div>
+                </div>
+                <Modal
+                    open={openModal}
+                    onClose={() => setOpenModal(false)}
+                    aria-labelledby="modal-modal-title"
+                    aria-describedby="modal-modal-description"
+                >
+                    <Box sx={modalStyle}>
+                        {/* <Typography id="modal-modal-title" variant="h6" component="h2">
+                            Text in a modal
+                        </Typography>
+                        <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                            Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
+                        </Typography> */}
+                        {typeClient == 'company' ? regCompanyContainer() : null}
+                        {typeClient == 'cargos' ? regCargosContainer() : null}
+                    </Box>
+                </Modal>
+            </div>
+        )
+    }
+
+    return body()
+}
