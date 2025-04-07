@@ -263,3 +263,26 @@
         padding:14px;
     }
 }
+.p-settingsContainer{
+    color: black;
+}
+.p-settingsContainer-label-text{
+    font-size: 10px;
+    color: black;
+    font-weight: 400;
+}
+.p-regInput{
+    background-color: transparent;
+    border: 1px solid #888880;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid #888880;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    height:31px;
+    width: 100%;
+    font-size: 10px;
+    font-weight: 400;
+    padding-left: 16px;
+    padding-right: 16px;
+}

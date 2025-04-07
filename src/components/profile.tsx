@@ -41,10 +41,10 @@ export function Profile() {
 
     // Modal
     const [openModal, setOpenModal] = useState<boolean>(false);
-
+    const [openModalSettings, setOpenModalSettings] = useState<boolean>(false);
     // WhichDropdown
     const [whichDropDown, setWhichDropDown] = useState<number>(-1);
- 
+
     const disabledCompany = innText.length == 0 || nameCompanyText.length == 0 ? true : false;
     const disabledCargos = typeTransportText.length == 0 || loadCapacityText.length == 0 ? true : false;
 
@@ -272,7 +272,181 @@ export function Profile() {
         )
     }
 
+    const personalInfo = () => {
+        return (
+            <div className='p-settingsContainer'>
+                <div>Личная Информация</div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Имя</div>
+                    <input className={'p-regInput'} placeholder="Иван" />
+                </div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Фамилия</div>
+                    <input className={'p-regInput'} placeholder="Петров" />
+                </div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Email</div>
+                    <input className={'p-regInput'} placeholder="Ivan.Petr@mail.ru" />
+                </div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Телефон</div>
+                    <input className={'p-regInput'} placeholder="+7 (123) 456 - 78 - 99" />
+                </div>
+                <div>
+                    <div className="p-settingsContainer-label-text">О себе</div>
+                    <input className={'p-regInput'} placeholder="Профессиональный водитель с 8-летним опытом перевозки негабаритных грузов. Специализируюсь на промышленном оборудовании и металлоконструкциях." />
+                </div>
+            </div>
+        )
+    }
+    const vehicleInfo = () => {
+        return (
+            <div className='p-settingsContainer'>
+                <div>Информация о транспорте</div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Тип транспорта</div>
+                    <input className={'p-regInput'} placeholder="Volvo" />
+                </div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Грузоподъемность (т)</div>
+                    <input className={'p-regInput'} placeholder="20 тонн" />
+                </div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Год выпуска</div>
+                    <input className={'p-regInput'} placeholder="2020" />
+                </div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Гос. номер</div>
+                    <input className={'p-regInput'} placeholder="Ф123 БВ 14" />
+                </div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Опыт вождения</div>
+                    <input className={'p-regInput'} placeholder="10 лет" />
+                </div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Документы</div>
+                    {/* <input className={'p-regInput'} /> */}
+                </div>
+            </div>
+        )
+    }
+    const securityInfo = () => {
+        return (
+            <div className='p-settingsContainer'>
+                <div>Безопасность</div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Текущий пароль</div>
+                    <input className={'p-regInput'} placeholder="Иван" />
+                </div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Новый пароль</div>
+                    <input className={'p-regInput'} placeholder="Петров" />
+                </div>
+                <div>
+                    <div className="p-settingsContainer-label-text">Подтверждение пароля</div>
+                    <input className={'p-regInput'} placeholder="Ivan.Petr@mail.ru" />
+                </div>
+            </div>
+        )
+    }
+    const notificationInfo = () => {
+        return (
+            <div className='p-settingsContainer'>
+                <div>Настройки уведомлений</div>
+                <div>
+                    <div>
+                        <div className="p-settingsContainer-label-text">Emial-уведомления</div>
+                        <div>Получать уведомления на email</div>
+                    </div>
+                    <div>
+                        switcher
+                    </div>
+                </div>
+                <div>
+                    <div>
+                        <div className="p-settingsContainer-label-text">SMS-уведомления</div>
+                        <div>Получать уведомления по SMS</div>
+                    </div>
+                    <div>
+                        switcher
+                    </div>
+                </div>
+                <div>
+                    <div>
+                        <div className="p-settingsContainer-label-text">Новые заказы</div>
+                        <div>Уведомления о новых заказах, соответствующих вашим критериям</div>
+                    </div>
+                    <div>
+                        switcher
+                    </div>
+                </div>
+                <div>
+                    <div>
+                        <div className="p-settingsContainer-label-text">Маркетинговые уведомления</div>
+                        <div>Новости, акции и специальные предложения</div>
+                    </div>
+                    <div>
+                        switcher
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+
     const body = () => {
+        if (!info) {
+            return
+        }
+
+        const dropdownItems = typeClient == 'cargos' ? [
+            {
+                id: 0,
+                text: 'Купить заявки'
+            },
+            {
+                id: 1,
+                text: 'Личные данные'
+            },
+            {
+                id: 2,
+                text: 'Транспорт'
+            },
+            {
+                id: 3,
+                text: 'Безопасность'
+            },
+            {
+                id: 4,
+                text: 'Уведомления'
+            },
+            {
+                id: 5,
+                text: 'Регистрация Прицепа'
+            },
+        ] : [
+            {
+                id: 100,
+                text: 'Личные данные'
+            },
+            {
+                id: 101,
+                text: 'Компания'
+            },
+            {
+                id: 102,
+                text: 'Безопасность'
+            },
+            {
+                id: 103,
+                text: 'Уведомления'
+            },
+            {
+                id: 104,
+                text: 'Регистрация юридического лица'
+            }
+        ]
+
         return (
             <div className='a-container' style={{ background: 'white', padding: 12, color: 'black' }}>
                 <div className="p-topBar">
@@ -284,7 +458,7 @@ export function Profile() {
                             <div className="p-container-flex">
                                 <img src='profileImg.jpeg' width={40} height={40} />
                                 <div>
-                                    <div className="p-container-Name">{info.name}</div>
+                                    <div className="p-container-Name"></div>
                                     <div className="p-container-Name">Фамилия</div>
                                 </div>
                             </div>
@@ -309,58 +483,25 @@ export function Profile() {
                     </div>
 
                     <div className="p-container-dropdown">
-                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(0)}>
-                            <div>Купить заявки</div>
-                            <div><img src='chevron-down.svg' /></div>
-                        </div>
-                        <div className={whichDropDown == 0 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
-                            testText
-                        </div>
-                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(1)}>
-                            <div>Личные данные</div>
-                            <div><img src='chevron-down.svg' /></div>
-                        </div>
-                        <div className={whichDropDown == 1 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
-                            testText
-                        </div>
-                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(2)}>
-                            <div>Транспорт</div>
-                            <div><img src='chevron-down.svg' /></div>
-                        </div>
-                        <div className={whichDropDown == 2 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
-                            testText
-                        </div>
-                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(3)}>
-                            <div>Безопасность</div>
-                            <div><img src='chevron-down.svg' /></div>
-                        </div>
-                        <div className={whichDropDown == 3 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
-                            testText
-                        </div>
-                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(4)}>
-                            <div>Уведомления</div>
-                            <div><img src='chevron-down.svg' /></div>
-                        </div>
-                        <div className={whichDropDown == 4 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
-                            testText
-                        </div>
+                        {dropdownItems.map((l: any) => {
+                            return (
+                                <div className="p-container-dropdown-item" onClick={() => { setWhichDropDown(l.id); setOpenModalSettings(true) }}>
+                                    <div>{l.text}</div>
+                                    <div><img src='chevron-down.svg' /></div>
+                                </div>
+                            )
+                        })}
                     </div>
 
-
-
-                    {/* <div className="p-roleChooseText">
-                    Настройте аккаунт для доступа<br />
-                    к платформе грузоперевозок
-                </div> */}
                     <div className="p-roleChoose">
                         <button
                             className={typeClient == 'company' ? 'p-ActiveButton' : 'p-Button'}
-                            onClick={() => { setTypeClient('company'); setOpenModal(true) }}>
+                            onClick={() => setTypeClient('company')}>
                             Я заказчик
                         </button>
                         <button
                             className={typeClient == 'cargos' ? 'p-ActiveButton' : 'p-Button'}
-                            onClick={() => { setTypeClient('cargos'); setOpenModal(true) }}>
+                            onClick={() => setTypeClient('cargos')}>
                             Я водитель</button>
                     </div>
                 </div>
@@ -369,22 +510,29 @@ export function Profile() {
                     <div className="p-BottomBar-text">Готово</div>
                 </div>
                 <Modal
+                    open={openModalSettings}
+                    onClose={() => setOpenModalSettings(false)}
+                    aria-labelledby="modal-modal-title"
+                    aria-describedby="modal-modal-description"
+                >
+                    <Box sx={modalStyle}>
+                        {whichDropDown === 1 && personalInfo()}
+                        {whichDropDown === 2 && vehicleInfo()}
+                        {whichDropDown === 3 && securityInfo()}
+                        {whichDropDown === 4 && notificationInfo()}
+                        {whichDropDown === 5 && regCargosContainer()}
+                        {/* regCompanyContainer() */}
+                    </Box>
+                </Modal>
+                {/* <Modal
                     open={openModal}
                     onClose={() => setOpenModal(false)}
                     aria-labelledby="modal-modal-title"
                     aria-describedby="modal-modal-description"
                 >
                     <Box sx={modalStyle}>
-                        {/* <Typography id="modal-modal-title" variant="h6" component="h2">
-                            Text in a modal
-                        </Typography>
-                        <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                            Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
-                        </Typography> */}
-                        {typeClient == 'company' ? regCompanyContainer() : null}
-                        {typeClient == 'cargos' ? regCargosContainer() : null}
                     </Box>
-                </Modal>
+                </Modal> */}
             </div>
         )
     }
