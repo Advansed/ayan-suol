@@ -168,7 +168,7 @@
 }
 
 .p-Button{
-    color: black;
+    color: #888880;
     font-size: 14px;
     font-weight: 400;
     background-color: transparent;
@@ -202,8 +202,9 @@
     height: 40px;
     border-radius: 10px;
     font-weight: 500;
-    font-size: 18px;
-    width: 335px;
+    font-size: 14px;
+    /* width: 335px; */
+    width: 100%;
 }
 .p-regInput-save-button-disabled{
     background-color: #888880;
@@ -211,8 +212,9 @@
     height: 40px;
     border-radius: 10px;
     font-weight: 500;
-    font-size: 18px;
-    width: 335px;
+    font-size: 14px;
+    /* width: 335px; */
+    width: 100%;
 }
 
 .p-reg-container{
@@ -223,12 +225,12 @@
     color: black;
 }
 .p-reg-container-title{
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 500;
     margin-bottom: 16px;
 }
 .p-regInput-text{
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 400;
     margin-bottom: 10px;
 }
@@ -266,10 +268,21 @@
 .p-settingsContainer{
     color: black;
 }
+.p-settingsContainer-flex-row{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+}
 .p-settingsContainer-label-text{
     font-size: 10px;
     color: black;
     font-weight: 400;
+}
+.p-settingsContainer-label-description{
+    font-size: 10px;
+    color: #888888;
+    font-weight: 200;
 }
 .p-regInput{
     background-color: transparent;
@@ -285,4 +298,74 @@
     font-weight: 400;
     padding-left: 16px;
     padding-right: 16px;
+}
+.p-connects-invite-button{
+    padding:12px 0px;
+    text-align: center;
+    border-radius: 5px;
+    margin-top: 12px;
+    border: 1px solid #88888850;
+    font-weight: 500;
+    width: 100%;   
+}
+.p-connects-line-container{
+    display: flex;
+    justify-content: space-between;
+    font-weight: 400;
+    color: black;
+}
+.p-connects-line{
+    height: 8px;
+    border-radius: 4px;
+    background: aliceblue;
+    background-color: black;
+    /* background-position: 50% 0%; */
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+.p-connects-title{
+    font-size: 24px;
+    font-weight: 700;
+}
+.p-connect-title-container{
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+    align-items: center;
+}
+.p-connects-title-image{
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: #2563EB;
+}
+.p-connects-rate-title{
+    font-weight: 500;
+    color: #888880;
+    margin-bottom: 8px;
+}
+.p-connects-rate-text{
+    margin-top: 2px;
+    font-weight: 400;
+    color: #888880;
+}
+.p-connects-rate-button{
+    padding:12px 0px;
+    text-align: center;
+    border-radius: 5px;
+    margin-top: 12px;
+    color: #888880;
+    border: 1px solid #88888850;
+    font-weight: 500;
+    width: 100%;   
+}
+.p-connects-buy-container{
+    margin-top: 24px;
+}
+.p-connects-buy-title-description{
+    font-weight: 400;
+    color: #888880;   
+}
+.p-connects-pack{
+    border: 1px solid #888880;
 }

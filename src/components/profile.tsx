@@ -9,6 +9,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
+import { Switch } from "@mui/material"
 
 const modalStyle = {
     position: 'absolute',
@@ -272,6 +273,178 @@ export function Profile() {
         )
     }
 
+    const buyOrders = () => {
+        return (
+            <div className='p-settingsContainer'>
+                <div className="p-connect-title-container">
+                    <div className="p-connects-title-image" />
+                    <div className="p-connects-title">Бонусные коннекты</div>
+                </div>
+                <div>
+                    <div className="p-connects-line-container">
+                        <div>
+                            Выполнено заказов: 5/10
+                        </div>
+                        <div>
+                            +5 коннектов
+                        </div>
+                    </div>
+                    <div className="p-connects-line"/> 
+                    <div className="p-connects-line-container">
+                        <div>
+                            Рейтинг: 4.7/5.0
+                        </div>
+                        <div>
+                            +10 коннектов
+                        </div>
+                    </div>
+                    <div className="p-connects-line"/> 
+                    <div className="p-connects-line-container">
+                        <div>
+                            Приглашено водителей: 0/3
+                        </div>
+                        <div>
+                            +15 коннектов
+                        </div>
+                    </div>
+                    <div className="p-connects-line"/> 
+                </div>
+                <div className="p-connects-invite-button">
+                    Пригласить водителя
+                </div>
+
+                <div className="p-connects-rate-title">
+                    Расход коннектов:
+                </div>
+                <div>
+                    <div className="p-connects-rate-text">
+                        -До 10 000 Р: 1 коннект
+                    </div>
+                    <div className="p-connects-rate-text">
+                        -10 001 - 50 000 Р: 2 коннекта
+                    </div>
+                    <div className="p-connects-rate-text">
+                        -50 001 - 100 000 Р: 3 коннекта
+                    </div>
+                    <div className="p-connects-rate-text">
+                        -100 001 - 200 000 Р: 4 коннекта
+                    </div>
+                    <div className="p-connects-rate-text">
+                        -Свыше 200 000 Р: 5 коннектов
+                    </div>
+                </div>
+                <div className="p-connects-rate-button">
+                    Подробнее о системе коннектов
+                </div>
+
+                <div className="p-connects-buy-container">
+                    <div className="p-connects-title">
+                        Пополнение баланса коннектов
+                    </div>
+                    <div className="p-connects-buy-title-description">
+                        Выберите подходящий пакет коннектов или укажите нужное количество
+                    </div>
+                    <div className="p-roleChoose">
+                        <button
+                            className={'p-ActiveButton'}
+                            // onClick={() => setTypeClient('company')}
+                            >
+                            Готовые пакеты
+                        </button>
+                        <button
+                            className={'p-Button'}
+                            // onClick={() => setTypeClient('cargos')}
+                            >
+                            Свое количество</button>
+                    </div>
+                    <div className="p-connects-pack">
+                        <div>
+                            <div>
+                                Стартовый
+                            </div>
+                            <div>
+                                400 Р
+                            </div>
+                        </div>
+                        <div>
+                            <div>
+                                img
+                            </div>
+                            <div>
+                                20 коннектов
+                            </div>
+                            <div>
+                                20 р за коннект
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-connects-pack">
+                        <div>
+                            <div>
+                                Стандартный
+                            </div>
+                            <div>
+                                <div>1000 Р</div>
+                                900 Р
+                            </div>
+                        </div>
+                        <div>
+                            <div>
+                                img
+                            </div>
+                            <div>
+                                20 коннектов
+                            </div>
+                            <div>
+                                20 р за коннект
+                            </div>
+                        </div>
+                        <div>
+                            Скидка 10%
+                        </div>
+                    </div>
+                    <div className="p-connects-pack">
+                        <div>
+                            <div>
+                                Профессиональный
+                            </div>
+                            <div>
+                                <div>2400 Р</div>
+                                1800 Р
+                            </div>
+                        </div>
+                        <div>
+                            <div>
+                                img
+                            </div>
+                            <div>
+                                120 коннектов
+                            </div>
+                            <div>
+                                15 р за коннект
+                            </div>
+                        </div>
+                        <div>
+                            Скидка 10%
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <select>
+                        <option>Центральный ФО</option>
+                        <option>Северо-Западный ФО (скидка 5%)</option>
+                        <option>Южный ФО (скидка 10%)</option>
+                        <option>Северо-Кавказский ФО (скидка 15%)</option>
+                        <option>Приволжский ФО (скидка 10%)</option>
+                        <option>Уральский ФО (скидка 10%)</option>
+                        <option>Сибирский ФО (скидка 15%)</option>
+                        <option>Дальневосточный ФО (скидка 20%)</option>
+                    </select>
+                </div>
+            </div>
+        )
+    }
+
     const personalInfo = () => {
         return (
             <div className='p-settingsContainer'>
@@ -353,40 +526,48 @@ export function Profile() {
         return (
             <div className='p-settingsContainer'>
                 <div>Настройки уведомлений</div>
-                <div>
+                <div className="p-settingsContainer-flex-row">
                     <div>
                         <div className="p-settingsContainer-label-text">Emial-уведомления</div>
-                        <div>Получать уведомления на email</div>
+                        <div className="p-settingsContainer-label-description">Получать уведомления на email</div>
                     </div>
                     <div>
-                        switcher
+                        <Switch
+                        // disabled defaultChecked
+                        />
                     </div>
                 </div>
-                <div>
+                <div className="p-settingsContainer-flex-row">
                     <div>
                         <div className="p-settingsContainer-label-text">SMS-уведомления</div>
-                        <div>Получать уведомления по SMS</div>
+                        <div className="p-settingsContainer-label-description">Получать уведомления по SMS</div>
                     </div>
                     <div>
-                        switcher
+                        <Switch
+                        // disabled defaultChecked
+                        />
                     </div>
                 </div>
-                <div>
+                <div className="p-settingsContainer-flex-row">
                     <div>
                         <div className="p-settingsContainer-label-text">Новые заказы</div>
-                        <div>Уведомления о новых заказах, соответствующих вашим критериям</div>
+                        <div className="p-settingsContainer-label-description">Уведомления о новых заказах, соответствующих вашим критериям</div>
                     </div>
                     <div>
-                        switcher
+                        <Switch
+                        // disabled defaultChecked
+                        />
                     </div>
                 </div>
-                <div>
+                <div className="p-settingsContainer-flex-row">
                     <div>
                         <div className="p-settingsContainer-label-text">Маркетинговые уведомления</div>
-                        <div>Новости, акции и специальные предложения</div>
+                        <div className="p-settingsContainer-label-description">Новости, акции и специальные предложения</div>
                     </div>
                     <div>
-                        switcher
+                        <Switch
+                        // disabled defaultChecked
+                        />
                     </div>
                 </div>
             </div>
@@ -516,11 +697,13 @@ export function Profile() {
                     aria-describedby="modal-modal-description"
                 >
                     <Box sx={modalStyle}>
+                        {whichDropDown === 0 && buyOrders()}
                         {whichDropDown === 1 && personalInfo()}
                         {whichDropDown === 2 && vehicleInfo()}
                         {whichDropDown === 3 && securityInfo()}
                         {whichDropDown === 4 && notificationInfo()}
                         {whichDropDown === 5 && regCargosContainer()}
+                        {whichDropDown === 104 && regCompanyContainer()}
                         {/* regCompanyContainer() */}
                     </Box>
                 </Modal>
