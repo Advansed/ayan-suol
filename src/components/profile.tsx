@@ -9,7 +9,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
-import { Switch } from "@mui/material"
+import { Icon, Switch } from "@mui/material"
 
 const modalStyle = {
     position: 'absolute',
@@ -273,46 +273,126 @@ export function Profile() {
         )
     }
 
-    const buyOrders = () => {
+    const connectChoose = () => {
         return (
-            <div className='p-settingsContainer'>
-                <div className="p-connect-title-container">
-                    <div className="p-connects-title-image" />
-                    <div className="p-connects-title">Бонусные коннекты</div>
+            <>
+                <div className="p-connects-buy-container">
+                    <div className="p-connects-title">
+                        Пополнение баланса коннектов
+                    </div>
+                    <div className="p-connects-buy-title-description">
+                        Выберите подходящий пакет коннектов или укажите нужное количество
+                    </div>
+                    <div className="p-roleChoose">
+                        <button
+                            className={'p-ActiveButton'}
+                        // onClick={() => setTypeClient('company')}
+                        >
+                            Готовые пакеты
+                        </button>
+                        <button
+                            className={'p-Button'}
+                        // onClick={() => setTypeClient('cargos')}
+                        >
+                            Свое количество</button>
+                    </div>
+                    <div className="p-connects-pack">
+                        <div className="p-connects-title-flex">
+                            <div className="p-connects-pack-title">
+                                Стартовый
+                            </div>
+                            <div className="p-connects-pack-price">
+                                400 Р
+                            </div>
+                        </div>
+                        <div className="p-connects-title-flex">
+                            <div className="p-connects-title-flex">
+                                <div>
+                                    <img src="receipt1.svg" alt="" className="p-connect-pack-img" />
+                                </div>
+                                <div className="p-connects-pack-value">
+                                    20 коннектов
+                                </div>
+                            </div>
+                            <div className="p-connects-pack-value-per-connect">
+                                20 р за коннект
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-connects-pack">
+                        <div className="p-connects-title-flex">
+                            <div className="p-connects-pack-title">
+                                Стандартный
+                            </div>
+                            <div className="p-connects-pack-price">
+                                <div className="p-connects-pack-discount">1000 Р</div>
+                                900 Р
+                            </div>
+                        </div>
+                        <div className="p-connects-title-flex">
+                            <div className="p-connects-title-flex">
+                                <div>
+                                    <img src="receipt1.svg" alt="" className="p-connect-pack-img" />
+                                </div>
+                                <div className="p-connects-pack-value">
+                                    50 коннектов
+                                </div>
+                            </div>
+                            <div className="p-connects-pack-value-per-connect">
+                                20 р за коннект
+                            </div>
+                        </div>
+                        <div>
+                            Скидка 10%
+                        </div>
+                    </div>
+                    <div className="p-connects-pack">
+                        <div className="p-connects-title-flex">
+                            <div className="p-connects-pack-title">
+                                Профессиональный
+                            </div>
+                            <div className="p-connects-pack-price">
+                                <div className="p-connects-pack-discount">2400 Р</div>
+                                1800 Р
+                            </div>
+                        </div>
+                        <div className="p-connects-title-flex">
+                            <div className="p-connects-title-flex">
+                                <div>
+                                    <img src="receipt1.svg" alt="" className="p-connect-pack-img" />
+                                </div>
+                                <div className="p-connects-pack-value">
+                                    120 коннектов
+                                </div>
+                            </div>
+                            <div className="p-connects-pack-value-per-connect">
+                                15 р за коннект
+                            </div>
+                        </div>
+                        <div className="p-connects-pack-sale-text">
+                            Скидка 10%
+                        </div>
+                    </div>
                 </div>
                 <div>
-                    <div className="p-connects-line-container">
-                        <div>
-                            Выполнено заказов: 5/10
-                        </div>
-                        <div>
-                            +5 коннектов
-                        </div>
-                    </div>
-                    <div className="p-connects-line"/> 
-                    <div className="p-connects-line-container">
-                        <div>
-                            Рейтинг: 4.7/5.0
-                        </div>
-                        <div>
-                            +10 коннектов
-                        </div>
-                    </div>
-                    <div className="p-connects-line"/> 
-                    <div className="p-connects-line-container">
-                        <div>
-                            Приглашено водителей: 0/3
-                        </div>
-                        <div>
-                            +15 коннектов
-                        </div>
-                    </div>
-                    <div className="p-connects-line"/> 
+                    <select style={{ background: 'white', border: '1px solid #88888850', padding: 8, borderRadius: 8, marginTop: 8, width: '100%' }}>
+                            <option>Центральный ФО</option>
+                            <option>Северо-Западный ФО (скидка 5%)</option>
+                            <option>Южный ФО (скидка 10%)</option>
+                            <option>Северо-Кавказский ФО (скидка 15%)</option>
+                            <option>Приволжский ФО (скидка 10%)</option>
+                            <option>Уральский ФО (скидка 10%)</option>
+                            <option>Сибирский ФО (скидка 15%)</option>
+                            <option>Дальневосточный ФО (скидка 20%)</option>
+                    </select>
                 </div>
-                <div className="p-connects-invite-button">
-                    Пригласить водителя
-                </div>
+            </>
+        )
+    }
 
+    const connectRate = () => {
+        return (
+            <>
                 <div className="p-connects-rate-title">
                     Расход коннектов:
                 </div>
@@ -336,111 +416,59 @@ export function Profile() {
                 <div className="p-connects-rate-button">
                     Подробнее о системе коннектов
                 </div>
+            </>
+        )
+    }
 
-                <div className="p-connects-buy-container">
-                    <div className="p-connects-title">
-                        Пополнение баланса коннектов
-                    </div>
-                    <div className="p-connects-buy-title-description">
-                        Выберите подходящий пакет коннектов или укажите нужное количество
-                    </div>
-                    <div className="p-roleChoose">
-                        <button
-                            className={'p-ActiveButton'}
-                            // onClick={() => setTypeClient('company')}
-                            >
-                            Готовые пакеты
-                        </button>
-                        <button
-                            className={'p-Button'}
-                            // onClick={() => setTypeClient('cargos')}
-                            >
-                            Свое количество</button>
-                    </div>
-                    <div className="p-connects-pack">
-                        <div>
-                            <div>
-                                Стартовый
-                            </div>
-                            <div>
-                                400 Р
-                            </div>
-                        </div>
-                        <div>
-                            <div>
-                                img
-                            </div>
-                            <div>
-                                20 коннектов
-                            </div>
-                            <div>
-                                20 р за коннект
-                            </div>
-                        </div>
-                    </div>
-                    <div className="p-connects-pack">
-                        <div>
-                            <div>
-                                Стандартный
-                            </div>
-                            <div>
-                                <div>1000 Р</div>
-                                900 Р
-                            </div>
-                        </div>
-                        <div>
-                            <div>
-                                img
-                            </div>
-                            <div>
-                                20 коннектов
-                            </div>
-                            <div>
-                                20 р за коннект
-                            </div>
-                        </div>
-                        <div>
-                            Скидка 10%
-                        </div>
-                    </div>
-                    <div className="p-connects-pack">
-                        <div>
-                            <div>
-                                Профессиональный
-                            </div>
-                            <div>
-                                <div>2400 Р</div>
-                                1800 Р
-                            </div>
-                        </div>
-                        <div>
-                            <div>
-                                img
-                            </div>
-                            <div>
-                                120 коннектов
-                            </div>
-                            <div>
-                                15 р за коннект
-                            </div>
-                        </div>
-                        <div>
-                            Скидка 10%
-                        </div>
-                    </div>
+    const connectRating = () => {
+        return (
+            <>
+                <div className="p-connect-title-container">
+                    <div className="p-connects-title-image" />
+                    <div className="p-connects-title">Бонусные коннекты</div>
                 </div>
                 <div>
-                    <select>
-                        <option>Центральный ФО</option>
-                        <option>Северо-Западный ФО (скидка 5%)</option>
-                        <option>Южный ФО (скидка 10%)</option>
-                        <option>Северо-Кавказский ФО (скидка 15%)</option>
-                        <option>Приволжский ФО (скидка 10%)</option>
-                        <option>Уральский ФО (скидка 10%)</option>
-                        <option>Сибирский ФО (скидка 15%)</option>
-                        <option>Дальневосточный ФО (скидка 20%)</option>
-                    </select>
+                    <div className="p-connects-line-container">
+                        <div>
+                            Выполнено заказов: 5/10
+                        </div>
+                        <div>
+                            +5 коннектов
+                        </div>
+                    </div>
+                    <div className="p-connects-line" />
+                    <div className="p-connects-line-container">
+                        <div>
+                            Рейтинг: 4.7/5.0
+                        </div>
+                        <div>
+                            +10 коннектов
+                        </div>
+                    </div>
+                    <div className="p-connects-line" />
+                    <div className="p-connects-line-container">
+                        <div>
+                            Приглашено водителей: 0/3
+                        </div>
+                        <div>
+                            +15 коннектов
+                        </div>
+                    </div>
+                    <div className="p-connects-line" />
                 </div>
+                <div className="p-connects-invite-button">
+                    Пригласить водителя
+                </div>
+            </>
+        )
+    }
+
+    const buyOrders = () => {
+        return (
+            <div className='p-settingsContainer'>
+                {/* {connectRating()} */}
+                {/* {connectRate()} */}
+                {connectChoose()}
             </div>
         )
     }

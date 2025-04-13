@@ -363,9 +363,67 @@
     margin-top: 24px;
 }
 .p-connects-buy-title-description{
+    margin-top: 8px;
     font-weight: 400;
     color: #888880;   
 }
 .p-connects-pack{
-    border: 1px solid #888880;
+    margin-top: 16px;
+    border: 1px solid #88888050;
+    border-radius: 8px;
+    padding:24px 16px;
+}
+.p-connects-pack-title{
+ font-weight: 500;
+ font-size: 16px;
+}
+.p-connects-pack-price{
+    text-align: right;
+    font-weight: 700;
+    color: #2563EB;
+    font-size: 20px;
+}
+.p-connects-pack-value{
+    font-weight: 700;
+    color: black;
+    font-size: 20px;
+}
+.p-connects-pack-value-per-connect{
+    display: flex;
+    align-items: center;
+    vertical-align: middle;
+    font-weight: 400;
+    color: #888880;
+    font-size: 14px;
+}
+.p-connects-pack-sale-text{
+    color: chartreuse;
+    padding: 4px 8px;
+    background: #f0fdf4;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+.p-connects-title-flex{
+    /* background-color: red; */
+    /* margin-top: 8px; */
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    align-items: center;
+}
+.p-connects-pack-discount{
+    /* margin-top: 8px; */
+    text-decoration: line-through;
+    font-size: 14px;
+    color: #888880;
+    font-weight: 400;
+}
+.p-connect-pack-img{
+    width: 24px;
+    height: 24px;
+    color: #2563EB;
+}
+.p-connects-select{
+    /* display: flex; */
+    /* background: red !important; */
 }
