@@ -1,0 +1,232 @@
+/* styles.module.css */
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: rgba(250,250,250,1);
+    color: black;
+  }
+  
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .backButton {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+  
+  .header h1 {
+    font-size: 18px;
+    margin: 0;
+  }
+  
+  /* Status Section */
+  .statusSection {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #e6f7fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  
+  .status {
+    background-color: #28a745;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 14px;
+  }
+  
+  .id {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .price {
+    font-size: 18px;
+    font-weight: bold;
+  }
+  
+  /* Route Section */
+  .routeSection h2 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .routeDetails {
+    margin-bottom: 15px;
+  }
+  
+  .routePoint {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+  }
+  
+  .routePoint .label {
+    font-weight: bold;
+    font-size: 14px;
+  }
+  
+  .routePoint .value {
+    font-size: 14px;
+    margin: 5px 0;
+  }
+  
+  .routePoint .date {
+    font-size: 12px;
+    color: #666;
+  }
+  
+  .cargoDetails {
+    background-color: #f0f8ff;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  
+  /* Cargo Info Section */
+  .cargoInfoSection h2 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .cargoInfo {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  .infoItem {
+    flex: 1;
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    margin: 0 5px;
+  }
+  
+  .infoItem .label {
+    display: block;
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .infoItem .value {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  
+  /* Contact Section */
+  .contactSection h2 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .contactInfo .infoItem {
+    background: none;
+    text-align: left;
+    padding: 0;
+  }
+  
+  .rating {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+  }
+  
+  .stars {
+    color: #f39c12;
+    font-size: 14px;
+  }
+  
+  .viewReviews {
+    background-color: #e6f7fa;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #007bff;
+  }
+  
+  /* Offer Section */
+  .offerSection h2 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .offerInput {
+    margin-bottom: 15px;
+  }
+  
+  .offerInput .label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+  
+  .offerInput input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+  
+  .calculation {
+    background-color: #e6f7fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+  }
+  
+  .calculationItem {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .calculationItem.total {
+    font-weight: bold;
+  }
+  
+  .commentSection textarea {
+    width: 100%;
+    height: 100px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    resize: none;
+  }
+  
+  /* Submit Button */
+  .submitButton {
+    width: 100%;
+    background-color: #007bff;
+    color: white;
+    padding: 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+  
+  .submitButton:hover {
+    background-color: #0056b3;
+  }

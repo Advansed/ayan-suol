@@ -2,6 +2,7 @@ import { IonPage } from '@ionic/react';
 import './Tab2.css';
 // import { Publics } from '../components/Publics';
 import PublicsLayout from '../components/Publics-Layout';
+import ShipmentForm from '../components/ShipmentForm-Layout';
 import { Store } from '../components/Store';
 
 const Tab2: React.FC = () => {
@@ -12,7 +13,9 @@ const Tab2: React.FC = () => {
       {
         swap 
           ? <></>
-          : <PublicsLayout />
+          : 
+          // <PublicsLayout />
+          <ShipmentForm />
       }
         
     </IonPage>
