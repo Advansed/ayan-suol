@@ -11,8 +11,10 @@ const ShipmentForm = () => {
       </div>
 
       <div className={styles.statusSection}>
-        <span className={styles.status}>Новый</span>
-        <span className={styles.id}>ID: 12460</span>
+        <div>
+          <span className={styles.status}>Новый</span>
+          <span className={styles.id}>ID: 12460</span>
+        </div>
         <span className={styles.price}>₽ 120 000</span>
       </div>
 
@@ -67,7 +69,7 @@ const ShipmentForm = () => {
         <h2>Ваше предложение</h2>
         <div className={styles.offerInput}>
           <span className={styles.label}>Предлагаемая цена (₽)</span>
-          <input type="text" defaultValue="100 000" />
+          <input type="text" defaultValue="100 000" className={styles.shipmentFormInput} />
         </div>
         <div className={styles.calculation}>
           <div className={styles.calculationItem}>
@@ -80,7 +82,7 @@ const ShipmentForm = () => {
           </div>
         </div>
         <div className={styles.commentSection}>
-          <textarea placeholder="Опишите детали вашего предложения, особенности транспорта или другую важную информацию"></textarea>
+          <textarea placeholder="Опишите детали вашего предложения, особенности транспорта или другую важную информацию" className={styles.shipmentFormInput}></textarea>
         </div>
       </div>
 
