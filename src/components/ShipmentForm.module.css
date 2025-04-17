@@ -1,272 +1,274 @@
 /* styles.module.css */
 .container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: Arial, sans-serif;
-    background: rgba(250,250,250,1);
-    color: black;
-  }
-  
-  /* Header */
-  .header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .backButton {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    margin-right: 10px;
-  }
-  
-  .header h1 {
-    font-size: 18px;
-    margin: 0;
-  }
-  
-  /* Status Section */
-  .statusSection {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #e6f7fa;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-  }
-  
-  .status {
-    background-color: #28a745;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 12px;
-    font-size: 14px;
-  }
-  
-  .id {
-    margin-left: 8px;
-    font-size: 14px;
-    color: #666;
-  }
-  
-  .shipmentFormInput{
-    background: transparent;
-  }
-  .price {
-    font-size: 18px;
-    font-weight: bold;
-  }
-  
-  /* Route Section */
-  .routeSection{
-    margin-top: 16px;
-    background: transparent;
-    border-radius: 16px;
-    padding: 16px 24px;
-    border: 1px solid #88888850;
-  }
+  max-width: 37.5em;
+  margin: 0 auto;
+  padding: 1.25em;
+  font-family: Arial, sans-serif;
+  background: rgba(250, 250, 250, 1);
+  color: black;
+}
 
-  .routeSection h2 {
-    font-size: 16px;
-    margin-bottom: 10px;
-  }
-  
-  .routeDetails {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
-  }
-  
-  .routePoint {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 10px;
-    border-radius: 16px;
-    padding: 8px 16px;
-    border: 1px solid #88888850;
-  }
-  
-  .routePoint .label {
-    font-weight: bold;
-    font-size: 14px;
-  }
-  
-  .routePoint .value {
-    font-size: 14px;
-    margin: 5px 0;
-  }
-  
-  .routePoint .date {
-    font-size: 12px;
-    color: #666;
-  }
-  
-  .cargoDetails {
-    background-color: #f0f8ff;
-    padding: 15px;
-    border-radius: 8px;
-    font-size: 14px;
-    line-height: 1.5;
-  }
-  
-  /* Cargo Info Section */
-  .cargoInfoSection{
-    margin-top: 16px;
-    background: transparent;
-    border-radius: 16px;
-    padding: 16px 16px;
-    border: 1px solid #88888850;
-  }
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.25em;
+}
 
-  .cargoInfoSection h2 {
-    font-size: 16px;
-    margin-bottom: 10px;
-  }
-  
-  .cargoInfo {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-  }
-  
-  .infoItem {
-    flex: 1;
-    background-color: #f5f5f5;
-    padding: 10px;
-    border-radius: 8px;
-    text-align: center;
-    margin: 0 5px;
-  }
-  
-  .infoItem .label {
-    display: block;
-    font-size: 14px;
-    color: #666;
-  }
-  
-  .infoItem .value {
-    font-size: 16px;
-    font-weight: bold;
-  }
-  
-  /* Contact Section */
-  .contactSection{
-    margin-top: 16px;
-    background: transparent;
-    border-radius: 16px;
-    padding: 16px 24px;
-    border: 1px solid #88888850;
-  }
+.backButton {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  cursor: pointer;
+  margin-right: 0.625em;
+}
 
-  .contactSection h2 {
-    font-size: 16px;
-    margin-bottom: 10px;
-  }
-  
-  .contactInfo .infoItem {
-    background: none;
-    text-align: left;
-    padding: 0;
-  }
-  
-  .rating {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 10px;
-  }
-  
-  .stars {
-    color: #f39c12;
-    font-size: 14px;
-  }
-  
-  .viewReviews {
-    background-color: #e6f7fa;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #007bff;
-  }
-  
-  /* Offer Section */
-  .offerSection {
-    margin-top: 16px;
-    background: transparent;
-    border-radius: 16px;
-    padding: 16px 24px;
-    border: 1px solid #88888850;
-  }
-  .offerSection h2 {
-    font-size: 16px;
-    margin-bottom: 10px;
-  }
-  
-  .offerInput {
-    margin-bottom: 15px;
-  }
-  
-  .offerInput .label {
-    display: block;
-    font-size: 14px;
-    margin-bottom: 5px;
-  }
-  
-  .offerInput input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 14px;
-  }
-  
-  .calculation {
-    background-color: #e6f7fa;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-  }
-  
-  .calculationItem {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    margin-bottom: 10px;
-  }
-  
-  .calculationItem.total {
-    font-weight: bold;
-  }
-  
-  .commentSection textarea {
-    width: 100%;
-    height: 100px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 14px;
-    resize: none;
-  }
-  
-  /* Submit Button */
-  .submitButton {
-    width: 100%;
-    background-color: #007bff;
-    color: white;
-    padding: 15px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 20px;
-  }
-  
-  .submitButton:hover {
-    background-color: #0056b3;
-  }
+.header h1 {
+  font-size: 1.125em;
+  margin: 0;
+}
+
+/* Status Section */
+.statusSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #e6f7fa;
+  padding: 0.9375em;
+  border-radius: 0.5em;
+  margin-bottom: 1.25em;
+}
+
+.status {
+  background-color: #28a745;
+  color: white;
+  padding: 0.3125em 0.625em;
+  border-radius: 0.75em;
+  font-size: 0.875em;
+}
+
+.id {
+  margin-left: 0.5em;
+  font-size: 0.875em;
+  color: #666;
+}
+
+.shipmentFormInput {
+  background: transparent;
+}
+
+.price {
+  font-size: 1.125em;
+  font-weight: bold;
+}
+
+/* Route Section */
+.routeSection {
+  margin-top: 1em;
+  background: transparent;
+  border-radius: 1em;
+  padding: 1em 1.5em;
+  border: 0.0625em solid #88888850;
+}
+
+.routeSection h2 {
+  font-size: 1em;
+  margin-bottom: 0.625em;
+}
+
+.routeDetails {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.9375em;
+}
+
+.routePoint {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.625em;
+  border-radius: 1em;
+  padding: 0.5em 1em;
+  border: 0.0625em solid #88888850;
+}
+
+.routePoint .label {
+  font-weight: bold;
+  font-size: 0.875em;
+}
+
+.routePoint .value {
+  font-size: 0.875em;
+  margin: 0.3125em 0;
+}
+
+.routePoint .date {
+  font-size: 0.75em;
+  color: #666;
+}
+
+.cargoDetails {
+  background-color: #f0f8ff;
+  padding: 0.9375em;
+  border-radius: 0.5em;
+  font-size: 0.875em;
+  line-height: 1.5;
+}
+
+/* Cargo Info Section */
+.cargoInfoSection {
+  margin-top: 1em;
+  background: transparent;
+  border-radius: 1em;
+  padding: 1em 1em;
+  border: 0.0625em solid #88888850;
+}
+
+.cargoInfoSection h2 {
+  font-size: 1em;
+  margin-bottom: 0.625em;
+}
+
+.cargoInfo {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.25em;
+}
+
+.infoItem {
+  flex: 1;
+  background-color: #f5f5f5;
+  padding: 0.625em;
+  border-radius: 0.5em;
+  text-align: center;
+  margin: 0 0.3125em;
+}
+
+.infoItem .label {
+  display: block;
+  font-size: 0.875em;
+  color: #666;
+}
+
+.infoItem .value {
+  font-size: 1em;
+  font-weight: bold;
+}
+
+/* Contact Section */
+.contactSection {
+  margin-top: 1em;
+  background: transparent;
+  border-radius: 1em;
+  padding: 1em 1.5em;
+  border: 0.0625em solid #88888850;
+}
+
+.contactSection h2 {
+  font-size: 1em;
+  margin-bottom: 0.625em;
+}
+
+.contactInfo .infoItem {
+  background: none;
+  text-align: left;
+  padding: 0;
+}
+
+.rating {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.625em;
+}
+
+.stars {
+  color: #f39c12;
+  font-size: 0.875em;
+}
+
+.viewReviews {
+  background-color: #e6f7fa;
+  border: none;
+  padding: 0.3125em 0.625em;
+  border-radius: 0.3125em;
+  cursor: pointer;
+  font-size: 0.875em;
+  color: #007bff;
+}
+
+/* Offer Section */
+.offerSection {
+  margin-top: 1em;
+  background: transparent;
+  border-radius: 1em;
+  padding: 1em 1.5em;
+  border: 0.0625em solid #88888850;
+}
+
+.offerSection h2 {
+  font-size: 1em;
+  margin-bottom: 0.625em;
+}
+
+.offerInput {
+  margin-bottom: 0.9375em;
+}
+
+.offerInput .label {
+  display: block;
+  font-size: 0.875em;
+  margin-bottom: 0.3125em;
+}
+
+.offerInput input {
+  width: 100%;
+  padding: 0.625em;
+  border: 0.0625em solid #ccc;
+  border-radius: 0.3125em;
+  font-size: 0.875em;
+}
+
+.calculation {
+  background-color: #e6f7fa;
+  padding: 0.9375em;
+  border-radius: 0.5em;
+  margin-bottom: 0.9375em;
+}
+
+.calculationItem {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875em;
+  margin-bottom: 0.625em;
+}
+
+.calculationItem.total {
+  font-weight: bold;
+}
+
+.commentSection textarea {
+  width: 100%;
+  height: 6.25em;
+  padding: 0.625em;
+  border: 0.0625em solid #ccc;
+  border-radius: 0.3125em;
+  font-size: 0.875em;
+  resize: none;
+}
+
+/* Submit Button */
+.submitButton {
+  width: 100%;
+  background-color: #007bff;
+  color: white;
+  padding: 0.9375em;
+  border: none;
+  border-radius: 0.3125em;
+  font-size: 1em;
+  cursor: pointer;
+  margin-top: 1.25em;
+}
+
+.submitButton:hover {
+  background-color: #0056b3;
+}

@@ -14,8 +14,8 @@ const Tab2: React.FC = () => {
         swap 
           ? <></>
           : 
-          // <PublicsLayout />
-          <ShipmentForm />
+          <PublicsLayout />
+          // <ShipmentForm />
       }
         
     </IonPage>

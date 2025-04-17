@@ -7,6 +7,7 @@ import { chatboxOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline,
 
 import React from 'react';
 import styles from './AvailableOrders.module.css';
+import DriverCard from "./card/DriverCard";
 
 const OrderCard = ({ type, price, id, from, to, loadDate, unloadDate }) => {
     const typeLabel = type === 'new' ? 'Новый' : 'Торг';
@@ -90,6 +91,7 @@ const PublicsLayouts = () => {
                 loadDate="01.04.2025"
                 unloadDate="03.04.2025"
             />
+            <DriverCard />
         </div>
     );
 }
