@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { getData, Store } from "./Store";
-import { IonAlert, IonButton, IonCard, IonInput, IonItem, IonLabel, IonList, IonModal } from "@ionic/react";
+import { IonAlert, IonButton, IonCard, IonChip, IonIcon, IonInput, IonItem, IonLabel, IonList, IonModal, IonText } from "@ionic/react";
 import { Address, Maskito, TItem, TPanel, TService } from "./Classes";
 import "./Cargos.css";
 import { useHistory } from "react-router";
 import { Files } from "./Files";
+import { arrowBackOutline, locateOutline, locationOutline } from "ionicons/icons";
 
 export function Cargos() {
     const [ page, setPage ] = useState(0)
@@ -14,16 +15,6 @@ export function Cargos() {
 
     const elem = <>
         <div className="a-container">
-            <TPanel info ={{
-                title: "Грузы",
-                onClick1: ()=>{
-                    setPage( 0 )
-                },
-                onClick2: ()=>{
-                    setPage(1)
-                }
-            }} />
-
             {
                   page === 0 
                     ? <List info = {{ setPage: setPage, setServ: setServ, setAlert }}/>
@@ -33,6 +24,7 @@ export function Cargos() {
                     ? <Service info = { serv } setPage = { setPage } />
                 : <></>
             }
+
         </div>  
         <IonAlert
                 isOpen = { alert !== undefined }
@@ -68,7 +60,7 @@ export function Cargos() {
     return elem 
 }
 
-function List(props:{ info }){
+function        List(props:{ info }){
     const [ info, setInfo ]     = useState<any>([])
     const [ modal, setModal ]   = useState<any>()
 
@@ -82,42 +74,6 @@ function List(props:{ info }){
         setInfo( Store.getState().cargos )
     }})
 
-    class Item1 extends TItem {
-        constructor(Props) {
-            super( Props )
-        }
-
-        onClick1 = ( info ) => {
-            props.info.setServ( info )
-            console.log( info )
-            props.info.setPage( 2 )
-        }
-        onClick2 = ( item ) => {
-            props.info.setAlert( item )
-            console.log("alert")
-        }
-        onClick3 = async(info) => {
-            console.log( info )
-            console.log("setStatus")
-            const res = await getData("setStatus", {
-                token:  Store.getState().login.token,
-                guid:   info.guid,
-                status: "Опубликован"
-            })
-            console.log( res )
-            if( res.success ){
-                this.setState(prevState => ({
-                    info: {
-                        ...prevState.info,
-                        status: "Опубликован"
-                    }
-                }));
-
-                console.log( this.state.info )
-            }
-
-        }
-    }
 
     function ModalForm(){
         const [ value, setValue ] = useState({ date: "", sum: 0.00 })
@@ -205,7 +161,7 @@ function List(props:{ info }){
         for( let i = 0; i < info.length; i++ ) {
             elem = <>
                { elem }
-               <Item1 info = { info[i] } />
+               <Item info = { info[i] } setPage = { props.info.setPage }/>
             </>
         }
     else 
@@ -222,6 +178,10 @@ function List(props:{ info }){
         </>
 
     return <>
+        <div className="ml-05 mt-1 a-center fs-09">
+            {/* <IonIcon icon = { arrowBackOutline } className="w-15 h-15" /> */}
+            <b>Мои заказы</b>
+        </div>
         { elem }
         <IonModal
             className="c-modal"
@@ -238,7 +198,7 @@ function List(props:{ info }){
 }
 
 
-function Service(props:{ info, setPage }){
+function        Service(props:{ info, setPage }){
     const info = props.info
     const [ modal,  setModal ]  = useState( false )
     const [ modal1, setModal1 ] = useState( false )
@@ -504,7 +464,7 @@ function Service(props:{ info, setPage }){
 }
 
 
-function NewService(props:{ setPage }){
+function        NewService(props:{ setPage }){
 
     const info = {
         token:                  Store.getState().login.token,
@@ -530,7 +490,22 @@ function NewService(props:{ setPage }){
     const [ modal1, setModal1 ] = useState( false )
 
     const elem = <>
-        <IonCard className="c-card">
+        <div className="flex mt-05 ml-05">
+            <div><IonIcon icon = { arrowBackOutline } className="w-15 h-15"/></div>
+            <div className="a-center fs-09 w-90">
+                <div><b>Создание заказа</b></div>                
+            </div>
+        </div>
+
+        <div className="cr-card">
+            <div>Название заказа</div>
+            <div className="c-input">
+                <IonInput
+                
+                />
+            </div>
+        </div>
+        {/* <IonCard className="c-card">
             <div className="a-center fs-14 pb-1"> <b>Описание заказа</b> </div>
             <div className="bg-1">
 
@@ -725,7 +700,76 @@ function NewService(props:{ setPage }){
                 </div>
             </IonCard>
 
-        </IonModal>
+        </IonModal> */}
+    </>
+
+    return elem
+}
+
+function        Item(props:{ info, setPage }){
+    const info = props.info
+
+    function Curs( summ ){
+        let str = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format( summ )
+        str = '₽ ' + str.replace('₽', '')
+        return str 
+    }
+
+    const elem = <>
+        <div className="cr-card mt-1"
+            onClick={()=>{
+                props.setPage( 1 )
+            }}
+        >
+            <div  className="flex fl-space">
+                <div className="flex">
+                    <div className="cr-chip" >{ info.status }</div>
+                    <IonText class="ml-1 fs-07">{ "ID: " + info.guid.substring(0, 6) }</IonText>
+                </div>
+                <IonText className="fs-08 cl-prim">
+                    <b> { Curs( info.price ) } </b>
+                </IonText>
+            </div>
+            <div className="fs-08 mt-05">
+                <b>{ info.name }</b>
+            </div>
+            <div className="flex fl-space mt-05">
+                <div className="flex">
+                    <IonIcon icon = { locationOutline } color="danger"/>
+                    <div className="fs-08">
+                        <div className="ml-1 fs-09 cl-gray">Откуда:</div>
+                        <div className="ml-1 fs-09"><b>{ info.address.city }</b></div>                    
+                    </div>
+                </div>
+                <div>
+                    <div className="fs-08">
+                        <div className="ml-1 fs-09 cl-gray">Дата загрузки:</div>
+                        <div className="ml-1 fs-09"><b>{ info.address.date.substring(0, 10) }</b></div>                    
+                    </div>
+                </div>
+            </div>
+            <div className="flex fl-space mt-05">
+                <div className="flex">
+                    <IonIcon icon = { locationOutline } color="success"/>
+                    <div className="fs-08">
+                        <div className="ml-1 fs-09 cl-gray">Куда:</div>
+                        <div className="ml-1 fs-09"><b>{ info.destiny.city }</b></div>                    
+                    </div>
+                </div>
+                <div>
+                    <div className="fs-08">
+                        <div className="ml-1 fs-09 cl-gray">Дата выгрузки:</div>
+                        <div className="ml-1 fs-09"><b>{ info.destiny.date.substring(0, 10) }</b></div>                    
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div className="fs-08 mt-1 cr-detali">Детали груза:</div>
+                <div>
+                    { info.description }
+                </div>
+            </div>
+        </div>
     </>
 
     return elem

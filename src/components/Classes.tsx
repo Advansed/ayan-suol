@@ -846,3 +846,17 @@ export function Phone(phone): string {
     }
     return str
 }
+
+export function IInput(props:{ value, placeholder  }) {
+    
+    return (
+        <IonInput
+            value={ props.value }
+            onIonInput={(e) => {
+                props.value = e.detail.value
+            }}
+            placeholder =  { props.placeholder } //"+7 (xxx) xxx-xxxx"
+        />
+
+    );
+}

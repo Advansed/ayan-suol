@@ -1,16 +1,18 @@
-import { useEffect, useRef, useState } from "react"
-import { getData, Store } from "./Store"
-import { IonButton, IonCard, IonCheckbox, IonChip, IonIcon, IonInput, IonModal } from "@ionic/react"
+import { useEffect, useState } from "react"
+import { exec, getData, Store } from "./Store"
+import { IonButton, IonCard, IonCheckbox, IonIcon, IonInput, IonLabel, IonLoading, IonSegment, IonSegmentButton, IonTextarea, IonToggle } from "@ionic/react"
 import './profile.css'
-import { addOutline, cameraOutline, trashOutline } from "ionicons/icons"
+import { arrowBackOutline, chevronForwardOutline, personOutline } from "ionicons/icons"
 import { takePicture } from "./Files"
-import { createGesture, Gesture } from '@ionic/core';
+import { IInput } from "./Classes"
 
 
 export function Profile() {
-    const [ info, setInfo ] = useState<any>()
-    const [ upd, setUpd ] = useState(0)
+    const [ info,   setInfo ]   = useState<any>()
+    const [ upd,    setUpd ]    = useState(0)
+    const [ page,   setPage ]   = useState(0)
 
+    let swap = Store.getState().swap
     
     useEffect(() => {
 
@@ -74,238 +76,711 @@ export function Profile() {
         };
     }
 
-    return (
-        <IonCard className="c-card">
-
-            <div className="flex mr-1">
-                <img src = { info?.image?.dataUrl } alt="as" className="p-img"/>
-                <div className="ml-1 p-icon">
-                    <IonIcon icon = { cameraOutline }  className="w-4 h-4" color="dark"
-                        onClick={()=>{
-                            GetPhoto()
-                        }}
-                    />
+    function Item(props: { info }){
+        const info = props.info 
+        const elem = <>
+            <div className="flex mt-1 ml-1 mr-1 fl-space pb-1 pt-1 t-underline"
+                onClick={()=>{
+                    info.onClick()
+                }}
+            >
+                <div className="ml-1">
+                    { info?.title }
                 </div>
-                
+                <IonIcon icon = { chevronForwardOutline } />
             </div>
+        </>
 
-            <div className=" flex pb-1 mt-1">
-                <img src="receipt1.svg" alt="" className="w-2 h-2 ml-1 white-svg"  />
-                <div className="ml-1 w-80 mr-1 t-underline">
-                    <IonInput
-                        placeholder="ФИО"
-                        value={ info?.dimensions}
-                        onIonInput = {(e)=>{
-                            info.name = e.detail.value as string ;
-                        }}
-                    ></IonInput>
-                </div>                    
-            </div>
-            <div className=" flex pb-1 mt-1">
-                <img src="receipt1.svg" alt="" className="w-2 h-2 ml-1 white-svg"  />
-                <div className="ml-1 w-80 mr-1 t-underline">
-                    <IonInput
-                        placeholder="ФИО"
-                        value={ info?.dimensions}
-                        onIonInput = {(e)=>{
-                            info.name = e.detail.value as string ;
-                        }}
-                    ></IonInput>
-                </div>                    
-            </div>
-
-            <div className="mt-1">
-                <div className="fs-11">Электронная почта </div>
-                <div className="c-input ml-1 mt-05">
-                    <IonInput
-                        placeholder="email"
-                        value={ info?.email }
-                        onIonInput={(e)=>{
-                            info.email = e.detail.value as string;
-                        }}
-                    >
-                    </IonInput>
-                </div>
-            </div>       
-
-            <div className="mt-1">
-                <div className="fs-11">Пароль </div>
-                <div className="c-input ml-1 mt-05">
-                    <IonInput
-                        placeholder="Пароль"
-                        value={ info?.password }
-                        type="password"
-                        onIonInput={(e)=>{
-                            info.password = e.detail.value as string;
-                        }}
-                    >
-                    </IonInput>
-                </div>
-            </div>     
-
-            <div className="mt-1">
-                <div className="fs-11"> Транспорт </div>
-                    <div className="pt-1 pb-1 a-right mr-1">
-                        <IonCheckbox
-                            checked = { info?.driver } 
-                            onIonChange={(e) => {
-                                console.log(e )
-                                info.driver = e.detail.checked
-                            }}
-                            >
-                            Стать водителем
-                        </IonCheckbox>
-                    </div>
-                <div>
-                    
-                </div>
-            </div>     
-
-            <div className="mt-1">
-                <IonButton
-                    expand="block"
-                    color={"tertiary"}
-                    onClick={()=>{
-                        console.log( info )
-                        Save({
-                            name:       info.name,
-                            email:      info.email,
-                            password:   info.password,
-                            driver:     info.driver,
-                            tags:       info.tags
-                        })
-
-                        Store.dispatch({ type: "swap", data: info.driver })
-                    }}
-                >
-                      Сохранить      
-                </IonButton>
-            </div>  
-            
-        </IonCard>
-    )
-}
-
-
-function Body(props:{ info }){
-
-    
-    const body = () => {
-        return (
-            <div className='a-container' style={{ background: 'white', padding: 12, color: 'black' }}>
-                <div className="p-topBar">
-                    <div className="p-topBar-text">Мой профиль</div>
-                </div>
-                <div>
-                    <div className="p-container">
-                        <div className="p-container-flex">
-                            <div className="p-container-flex">
-                                <img src='profileImg.jpeg' width={40} height={40} />
-                                <div>
-                                    <div className="p-container-Name">{info.name}</div>
-                                    <div className="p-container-Name">Фамилия</div>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="p-container-Name">Водитель</div>
-                            </div>
-                        </div>
-                        <div className="p-StatCard-container-flex">
-                            <div className="p-StatCard">
-                                <div className="p-StatCard-title">124</div>
-                                <div className="p-StatCard-text">Выполнено заказов</div>
-                            </div>
-                            <div className="p-StatCard">
-                                <div className="p-StatCard-title">4,9</div>
-                                <div className="p-StatCard-text">Рейтинг</div>
-                            </div>
-                            <div className="p-StatCard">
-                                <div className="p-StatCard-title">15</div>
-                                <div className="p-StatCard-text">Заявки</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="p-container-dropdown">
-                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(0)}>
-                            <div>Купить заявки</div>
-                            <div><img src='chevron-down.svg' /></div>
-                        </div>
-                        <div className={whichDropDown == 0 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
-                            testText
-                        </div>
-                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(1)}>
-                            <div>Личные данные</div>
-                            <div><img src='chevron-down.svg' /></div>
-                        </div>
-                        <div className={whichDropDown == 1 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
-                            testText
-                        </div>
-                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(2)}>
-                            <div>Транспорт</div>
-                            <div><img src='chevron-down.svg' /></div>
-                        </div>
-                        <div className={whichDropDown == 2 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
-                            testText
-                        </div>
-                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(3)}>
-                            <div>Безопасность</div>
-                            <div><img src='chevron-down.svg' /></div>
-                        </div>
-                        <div className={whichDropDown == 3 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
-                            testText
-                        </div>
-                        <div className="p-container-dropdown-item" onClick={()=>setWhichDropDown(4)}>
-                            <div>Уведомления</div>
-                            <div><img src='chevron-down.svg' /></div>
-                        </div>
-                        <div className={whichDropDown == 4 ? 'p-container-hidden-item-active' : "p-container-hidden-item"}>
-                            testText
-                        </div>
-                    </div>
-
-
-
-                    {/* <div className="p-roleChooseText">
-                    Настройте аккаунт для доступа<br />
-                    к платформе грузоперевозок
-                </div> */}
-                    <div className="p-roleChoose">
-                        <button
-                            className={typeClient == 'company' ? 'p-ActiveButton' : 'p-Button'}
-                            onClick={() => { setTypeClient('company'); setOpenModal(true) }}>
-                            Я заказчик
-                        </button>
-                        <button
-                            className={typeClient == 'cargos' ? 'p-ActiveButton' : 'p-Button'}
-                            onClick={() => { setTypeClient('cargos'); setOpenModal(true) }}>
-                            Я водитель</button>
-                    </div>
-                </div>
-
-                <div className="p-BottomBar">
-                    <div className="p-BottomBar-text">Готово</div>
-                </div>
-                <Modal
-                    open={openModal}
-                    onClose={() => setOpenModal(false)}
-                    aria-labelledby="modal-modal-title"
-                    aria-describedby="modal-modal-description"
-                >
-                    <Box sx={modalStyle}>
-                        {/* <Typography id="modal-modal-title" variant="h6" component="h2">
-                            Text in a modal
-                        </Typography>
-                        <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                            Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
-                        </Typography> */}
-                        {typeClient == 'company' ? regCompanyContainer() : null}
-                        {typeClient == 'cargos' ? regCargosContainer() : null}
-                    </Box>
-                </Modal>
-            </div>
-        )
+        return elem
     }
 
-    return body()
+    function Personal(){
+
+        async function Save(){
+            info.token = Store.getState().login.token
+            const res = await getData("profile", info)
+            console.log(res)
+        }
+
+        useEffect(()=>{
+            return ()=>{
+                Save()
+            }
+        }, [])
+
+        const elem = <>
+            <div>
+    
+                <div className=""
+                    onClick={()=>{
+                        setPage(0)
+                    }}
+                >
+                    <IonIcon icon = { arrowBackOutline } className="ml-1 mt-1 w-15 h-15"/>
+                </div>
+    
+                <div className="mt-1 ml-1 mr-1 fs-09">
+
+                    <div className = "fs-12"> <b>Личные информация</b></div>
+                    
+                    <div className="mt-1">
+                        <div>Имя, Фамилия</div>
+                        <div className="c-input ">
+                            <IonInput
+                                placeholder="Имя"
+                                value={ info?.name }
+                                onIonInput={(e)=>{
+                                    info.name = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>email</div>
+                        <div className="c-input">
+                            <IonInput
+                                placeholder="email"
+                                value={ info?.email }
+                                onIonInput={(e)=>{
+                                    info.email = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>Телефон</div>
+                        <div className="c-input">
+                            <IonInput
+                                value={ info?.phone }
+                                placeholder="Телефон"
+                                readonly 
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>О себе</div>
+                        <div className="c-input">
+                            <IonTextarea
+                                placeholder="о себе"
+                            >
+    
+                            </IonTextarea>
+                        </div>
+                    </div>
+                    
+                </div>
+        
+            </div>
+       </>
+    
+        return elem
+    }
+    
+    function Transport(){
+        const [info, setInfo] = useState<any>(Store.getState().transport);
+
+
+        async function Save(){
+            info.token = Store.getState().login.token
+            const res = await getData("setTransport", info)
+            console.log(res)
+        }
+
+        Store.subscribe({num: 201, type: "", func: ()=>{
+            setInfo( Store.getState().transport )
+        }})
+
+        useEffect(()=>{
+
+            setInfo( Store.getState().transport)
+           
+            return ()=>{
+                Save()
+            }
+        }, [ ])
+
+        const elem = <>
+            <div>
+    
+                <div className=""
+                    onClick={()=>{
+                        setPage(0)
+                    }}
+                >
+                    <IonIcon icon = { arrowBackOutline } className="ml-1 mt-1 w-15 h-15"/>
+                </div>
+    
+                <div className="mt-1 ml-1 mr-1 fs-09">
+
+                    <div className = "fs-12"> <b>Информация о транспорте</b></div>
+                    
+                    <div className="mt-1">
+                        <div>Тип транспорта</div>
+                        <div className="c-input ">
+                            <IonInput
+                                placeholder="Тип транспорта"
+                                value={ info?.ТипТранспорта }
+                                onIonInput={(e)=>{
+                                    info.ТипТранспорта = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>Грузоподъемность</div>
+                        <div className="c-input">
+                            <IonInput
+                                placeholder="Грузоподъемность"
+                                value={ info?.Грузоподъемность }
+                                onIonInput={(e)=>{
+                                    info.Грузоподъемность = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>Год выпуска</div>
+                        <div className="c-input">
+                            <IonInput
+                                placeholder="Год выпуска"
+                                value={ info?.ГодВыпуска }
+                                onIonInput={(e)=>{
+                                    info.ГодВыпуска = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>Гос. номер</div>
+                        <div className="c-input">
+                            <IonInput
+                                placeholder="Гос. номер"
+                                value={ info?.ГосНомер }
+                                onIonInput={(e)=>{
+                                    info.ГосНомер = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>Опыт вождения</div>
+                        <div className="c-input">
+                            <IonInput
+                                placeholder="Опыт вождения"
+                                value={ info?.Опыт }
+                                onIonInput={(e)=>{
+                                    info.Опыт = e.detail.value as string;
+                                    console.log( info )
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>Документы</div>
+                    </div>
+                    
+                </div>
+        
+            </div>
+       </>
+    
+        return elem
+    }
+
+    function Password(){
+        const [ load, setLoad ] = useState( false )
+        const [info, setInfo] = useState<any>({
+            oldpassword:    "",
+            password1:      "",
+            password2:      "",
+        });
+
+
+
+        const elem = <>
+            <div>
+                <IonLoading  isOpen = { load } message = "Подождите..."/>
+                <div className=""
+                    onClick={()=>{
+                        setPage(0)
+                    }}
+                >
+                    <IonIcon icon = { arrowBackOutline } className="ml-1 mt-1 w-15 h-15"/>
+                </div>
+    
+                <div className="mt-1 ml-1 mr-1 fs-09">
+
+                    <div className = "fs-12"> <b>Безопасность</b></div>
+                    
+                    <div className="mt-1">
+                        <div>Старый пароль</div>
+                        <div className="c-input ">
+                            <IonInput
+                                placeholder="Старый пароль"
+                                value={ info?.oldpassword }
+                                type= "password"
+                                onIonInput={(e)=>{
+                                    info.oldpassword = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>Пароль</div>
+                        <div className="c-input">
+                            <IonInput
+                                placeholder="Пароль"
+                                value={ info?.password1 }
+                                type= "password"
+                                onIonInput={(e)=>{
+                                    info.password1 = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>Подтверждение пароля</div>
+                        <div className="c-input">
+                            <IonInput
+                                placeholder="Пароль"
+                                value={ info?.password2 }
+                                type= "password"
+                                onIonInput={(e)=>{
+                                    info.password2 = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                </div>  
+
+                <div className="ml-1 mr-1 mt-1 flex fl-space">
+                    <div></div>
+                    <IonButton
+                        mode = "ios"
+                        onClick={ async () =>{
+                            setLoad( true)
+                            if(info.password1 === info.password2 ){
+                                console.log("set password")
+                                info.token = Store.getState().login.token
+                                const res = await getData("setPassword", info)
+                                console.log(res)
+                                if(res.success){
+                                   setPage( 0 )
+                                } else 
+                                    alert(res.message)   
+                                setLoad( false)   
+                            }
+                            else{
+                                alert("Пароли не совпадают")
+                                setLoad( false )
+                            }
+                        }}
+                    >
+                        Изменить пароль
+                    </IonButton>                
+                </div>      
+            </div>
+       </>
+    
+        return elem
+    }
+
+    function Notifications(){
+        const [ load, setLoad ] = useState( false )
+        const [info, setInfo] = useState<any>( Store.getState().login.notifications );
+
+        async function Save(){
+            const res = await getData("profile",{
+                token: Store.getState().login.token,
+                notifications: info
+            })
+            console.log(res)
+        }
+
+        useEffect(()=>{
+            return ()=>{
+                Save()
+            }
+        },[])
+        const elem = <>
+            <div>
+                <IonLoading  isOpen = { load } message = "Подождите..."/>
+                <div className=""
+                    onClick={()=>{
+                        setPage(0)
+                    }}
+                >
+                    <IonIcon icon = { arrowBackOutline } className="ml-1 mt-1 w-15 h-15"/>
+                </div>
+    
+                <div className="mt-1 ml-1 mr-1 fs-09">
+
+                    <div className = "fs-12"> <b>Уведомления</b></div>
+                    
+                    <div className="flex fl-space">
+
+                        <div className="mt-1">
+                            <div>
+                                <b>email уведомления</b>
+                            </div>
+                            <div className="fs-08 cl-gray">
+                                Получать уведомления на email
+                            </div>
+                        </div>
+
+                        <IonToggle  mode = "ios"
+                            checked={ info.email }
+                            onIonChange={(e)=>{ 
+                                info.email = e.detail.checked
+                            }}
+                        />
+
+                    </div>
+                    
+                    <div className="flex fl-space">
+
+                        <div className="mt-1">
+                            <div>
+                                <b>SMS уведомления</b>
+                            </div>
+                            <div className="fs-08 cl-gray">
+                                Получать уведомления на SMS
+                            </div>
+                        </div>
+
+                        <IonToggle  mode = "ios"
+                            checked={ info.sms }
+                            onIonChange={(e)=>{ 
+                                info.sms = e.detail.checked
+                            }}
+                        />
+
+                    </div>
+
+                    <div className="flex fl-space">
+
+                        <div className="mt-1">
+                            <div>
+                                <b>Новые заказы</b>
+                            </div>
+                            <div className="fs-08 cl-gray">
+                                Получать уведомления о новых заказах
+                            </div>
+                        </div>
+
+                        <IonToggle  mode = "ios"
+                            checked={ info.orders }
+                            onIonChange={(e)=>{ 
+                                info.orders = e.detail.checked
+                            }}
+                        />
+
+                    </div>
+
+                    <div className="flex fl-space">
+
+                        <div className="mt-1">
+                            <div>
+                                <b>Маркетинговые уведомления</b>
+                            </div>
+                            <div className="fs-08 cl-gray">
+                                Новости, акции, спецпредложения
+                            </div>
+                        </div>
+
+                        <IonToggle  mode = "ios"
+                            checked={ info.market }
+                            onIonChange={(e)=>{ 
+                                info.market = e.detail.checked
+                                console.log( info )
+                            }}
+                        />
+
+                    </div>
+
+                </div>  
+
+            </div>
+       </>
+    
+        return elem
+    }
+    
+    function Orgs(){
+        const [info, setInfo] = useState<any>(Store.getState().orgs);
+
+
+        async function Save(){
+            info.token = Store.getState().login.token
+            const res = await getData("setOrgs", info)
+            console.log(res)
+        }
+
+        Store.subscribe({num: 201, type: "", func: ()=>{
+            setInfo( Store.getState().orgs )
+        }})
+
+        useEffect(()=>{
+
+            setInfo( Store.getState().orgs)
+           
+            return ()=>{
+                Save()
+            }
+        }, [ ])
+
+        const elem = <>
+            <div>
+    
+                <div className=""
+                    onClick={()=>{
+                        setPage(0)
+                    }}
+                >
+                    <IonIcon icon = { arrowBackOutline } className="ml-1 mt-1 w-15 h-15"/>
+                </div>
+    
+                <div className="mt-1 ml-1 mr-1 fs-09">
+
+                    <div className = "fs-12"> <b>Информация о компании</b></div>
+                    
+                    <div className="mt-1">
+                        <div>Наименование</div>
+                        <div className="c-input ">
+                            <IonInput
+                                placeholder="Наименование"
+                                value={ info?.Наименование }
+                                onIonInput={(e)=>{
+                                    info.Наименование = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>ИНН</div>
+                        <div className="c-input">
+                            <IonInput
+                                placeholder="ИНН"
+                                value={ info?.ИНН }
+                                onIonInput={(e)=>{
+                                    info.ИНН = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>Телефон</div>
+                        <div className="c-input">
+                            <IonInput
+                                placeholder="Телефон"
+                                value={ info?.Телефон }
+                                onIonInput={(e)=>{
+                                    info.Телефон = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>Адрес</div>
+                        <div className="c-input">
+                            <IonInput
+                                placeholder="Адрес"
+                                value={ info?.Адрес }
+                                onIonInput={(e)=>{
+                                    info.Адрес = e.detail.value as string;
+                                }}
+                            >
+    
+                            </IonInput>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>Описание</div>
+                        <div className="c-input">
+                            <IonTextarea
+                                placeholder="Описание"
+                                value={ info?.Описание }
+                                onIonInput={(e)=>{
+                                    info.Описание = e.detail.value as string;
+                                    console.log( info )
+                                }}
+                            >
+    
+                            </IonTextarea>
+                        </div>
+                    </div>
+                    <div className="mt-05">
+                        <div>Документы</div>
+                    </div>
+                    
+                </div>
+        
+            </div>
+       </>
+    
+        return elem
+    }
+
+
+    let elem = <>
+        <div>
+            <div className="h-3 bg-2 flex fl-center fs-14">
+                <div className="">Мой профиль</div>  
+            </div>
+
+            <div className="borders ml-1 mr-1 mt-1">
+
+                <div className="flex fl-space fs-08">
+                    <div className="flex">
+                        <IonIcon  icon = { personOutline } className="w-15 h-15"/>
+                        <div className="ml-1"> { info?.name } </div>
+                    </div>
+                    <span> { swap ?  "Водитель" : "Заказчик"} </span>
+                </div>
+
+                <div className="flex mt-1 fl-space">
+                    <div className="bg-3 pb-05 pt-05 pl-05 pr-05">
+                        <div className="a-center">
+                            <b> { info?.ratings?.orders } </b>
+                        </div>
+                        <div className="fs-07 a-center mt-05">
+                            Выполнено заказов
+                        </div>
+
+                    </div>
+                    <div className="bg-3 pb-05 pt-05 pl-05 pr-05">
+                        <div className="a-center">
+                            <b> { info?.ratings?.rate } </b>
+                        </div>
+                        <div className="fs-07 a-center mt-05">
+                            Рейтинг
+                        </div>
+                    </div>
+                    
+                    {
+                        swap 
+                            ? <>
+                                <div className="bg-3 pb-05 pt-05 pl-05 pr-05">
+                                    <div className="a-center">
+                                        <b> { info?.ratings?.invoices } </b>
+                                    </div>
+                                    <div className="fs-07 a-center mt-05">
+                                        Заявки
+                                    </div>
+                                </div>
+                            
+                            </>
+                            : <>
+                                <div className="bg-3 pb-05 pt-05 pl-05 pr-05">
+                                    <div className="a-center">
+                                        <b> { info?.ratings?.payd } </b>
+                                    </div>
+                                    <div className="fs-07 a-center mt-05">
+                                        Оплачено
+                                    </div>
+                                </div>
+                            </>
+                    }
+                </div>
+            </div>
+
+            {
+                swap 
+                   ? <>
+
+                        <Item info = {{ title: "Купить заявки", onClick: ()=>{}}}/>
+
+                        <Item info = {{ title: "Личные данные", onClick: ()=>{ setPage(1)}}}/>
+
+                        <Item info = {{ title: "Транспорт",     onClick: ()=>{ setPage(2)}}}/>
+
+                        <Item info = {{ title: "Безопасность",  onClick: ()=>{ setPage(3)}}}/>
+
+                        <Item info = {{ title: "Уведомления",   onClick: ()=>{ setPage(4)}}}/>
+
+                    </>
+                   : <>
+
+                        <Item info = {{ title: "Личные данные", onClick: ()=>{ setPage(1)}}}/>
+
+                        <Item info = {{ title: "Компания",      onClick: ()=>{ setPage(5)}}}/>
+
+                        <Item info = {{ title: "Безопасность",  onClick: ()=>{ setPage(3)}}}/>
+
+                        <Item info = {{ title: "Уведомления",   onClick: ()=>{ setPage(4)}}}/>
+
+                    </>
+            }
+
+
+            <div className="p-bottom w-100">
+                <IonSegment value={ swap ? "driver" : "customer" }
+                    className="w-100"
+                    mode = "ios"
+                    onIonChange={(e)=>{ 
+                        swap = e.detail.value === "driver" ? true : false
+                        Store.dispatch({ type: "swap", data: swap })
+                    }}
+                >
+                    <IonSegmentButton value="customer">
+                    <IonLabel>Я заказчик</IonLabel>
+                    </IonSegmentButton>
+                    <IonSegmentButton value="driver">
+                    <IonLabel>Я водитель</IonLabel>
+                    </IonSegmentButton>
+                </IonSegment>
+                <IonButton
+                    className="h-4"
+                    expand="block"
+                    mode = "ios"
+                >
+                    Готово
+                </IonButton>
+            </div>
+
+        </div>
+    </>
+
+    elem = <>
+        {
+              page === 0 ? elem
+            : page === 1 ? <Personal />
+            : page === 2 ? <Transport />
+            : page === 3 ? <Password />
+            : page === 4 ? <Notifications />
+            : page === 5 ? <Orgs />
+            : <></>
+        }
+    </>
+
+    return elem
 }
+

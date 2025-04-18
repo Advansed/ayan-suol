@@ -43,3 +43,9 @@
 .white-svg {
     filter: invert(100%) brightness(100%) contrast(100%);
 }
+
+
+.p-bottom {
+     position: absolute;
+     bottom: 0;
+}

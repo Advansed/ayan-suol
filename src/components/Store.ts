@@ -15,7 +15,8 @@ export const i_state = {
     back:                               0,
     message:                            '',
     cargos:                             [],
-    transports:                         [],
+    transport:                          new Object(),
+    orgs:                               new Object(),     
     profile:                            [],
 
 }
@@ -138,6 +139,8 @@ Store.subscribe({ num: 1001, type: "login", func: ()=>{
     const params = { token: Store.getState().login.token }
 
     exec("getCargos", params, "cargos")
-        
+      
+    exec("getTransport", params, "transport")
+
 }})
 

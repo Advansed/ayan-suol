@@ -253,13 +253,14 @@
 }
 
 .bg-2 {
-    background: linear-gradient(164.84deg, #1B7DB6 8.63%, #0F3C79 89.24%); /**var(--ion-item-background, var(--ion-background-color, #fff));**/
+    background: var(--main-color);
     color: white; 
 }
 
 .bg-3 {
-    background: white;
+    background: var(--dop-color);
     color: #3f64a9;     
+    border-radius: 5px;
 }
 
 .cl-green {
@@ -316,7 +317,7 @@
 .a-container {
     width: 100vw;
     height: 100vh;
-    background: url("26785882.png") no-repeat center center/cover;
+    /* background: url("26785882.png") no-repeat center center/cover; */
 }
 
 :root {
