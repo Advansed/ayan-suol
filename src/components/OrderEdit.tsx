@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./OrderEdit.module.css";
 
-const OrderEdit = () => {
+export function OrderEdit(){
     return (
         <div className={styles.container}>
             <button className={styles.backButton}>←</button>
@@ -94,5 +94,3 @@ const OrderEdit = () => {
         </div>
     );
 };
-
-export default OrderEdit;

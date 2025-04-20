@@ -2,7 +2,7 @@
 import React from 'react';
 import styles from './ShipmentForm.module.css';
 
-const ShipmentForm = () => {
+export function ShipmentForm(){
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -90,5 +90,3 @@ const ShipmentForm = () => {
     </div>
   );
 };
-
-export default ShipmentForm;

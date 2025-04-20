@@ -69,7 +69,7 @@ const OrderCard = ({ type, price, id, from, to, loadDate, unloadDate }) => {
     );
 };
 
-const PublicsLayouts = () => {
+export function PublicsLayout() {
     return (
         <div className={styles.container}>
             <h2 className={styles.heading}>Доступные заказы</h2>
@@ -95,4 +95,3 @@ const PublicsLayouts = () => {
         </div>
     );
 }
-export default PublicsLayouts

@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './OrderHistory.module.css';
 
-const OrderHistory = () => {
+export function OrderHistory(){
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>История заказов</h1>
@@ -74,5 +74,3 @@ const OrderHistory = () => {
     </div>
   );
 };
-
-export default OrderHistory;
