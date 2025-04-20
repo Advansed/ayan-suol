@@ -1,0 +1,114 @@
+.container {
+    /* padding: 1.25em; */
+    padding: 8px;
+    color: black;
+    background-color: #f8f9fa;
+    font-family: sans-serif;
+  }
+  
+  .title {
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 1.25em;
+  }
+  
+  .card {
+    background-color: white;
+    border-radius: 0.75em;
+    padding: 1em;
+    margin-bottom: 1.25em;
+    box-shadow: 0 0 0.3125em rgba(0, 0, 0, 0.05);
+    overflow: scroll;
+  }
+  
+  .subtitle {
+    font-size: 1.125em;
+    font-weight: 600;
+    margin-bottom: 0.25em;
+  }
+  
+  .description {
+    font-size: 0.875em;
+    color: #555;
+    margin-bottom: 0.75em;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: auto;
+  }
+  
+  .table th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875em;
+    padding: 0.5em;
+    border-bottom: 0.0625em solid #ddd;
+    color: #333;
+  }
+  
+  .table td {
+    padding: 0.5em;
+    font-size: 0.875em;
+    border-bottom: 0.0625em solid #eee;
+    color: #333;
+  }
+  
+  .statusDone {
+    background-color: #47cf88;
+    color: white;
+    padding: 0.25em 0.75em;
+    border-radius: 1em;
+    font-size: 0.8125em;
+    font-weight: 500;
+  }
+  
+  .statusCancelled {
+    background-color: #999;
+    color: white;
+    padding: 0.25em 0.75em;
+    border-radius: 1em;
+    font-size: 0.8125em;
+    font-weight: 500;
+  }
+  
+  .analyticsCard {
+    background-color: white;
+    border-radius: 0.75em;
+    padding: 1em;
+    box-shadow: 0 0 0.3125em rgba(0, 0, 0, 0.05);
+  }
+  
+  .analyticsGrid {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.25em;
+    margin-top: 0.75em;
+  }
+  
+  .analyticsItem {
+    background-color: #c9daff;
+    border-radius: 0.75em;
+    /* flex: 1; */
+    padding: 1em;
+    text-align: left;
+    display: grid;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .analyticsValue {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #1f3bb3;
+    text-align: center;
+  }
+  
+  .analyticsLabel {
+    font-size: 0.8125em;
+    color: #555;
+    margin-top: 0.25em;
+  }
+  
