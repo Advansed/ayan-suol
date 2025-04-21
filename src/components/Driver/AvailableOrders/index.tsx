@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { TItem, TPanel } from "./Classes";
-import { getData, Store } from "./Store";
+import { TItem, TPanel } from "../../Classes";
+import { getData, Store } from "../../Store";
 import { IonButton, IonCard, IonIcon, IonInput, IonLabel, IonModal } from "@ionic/react";
 import { chatboxOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, createOutline, trashOutline } from "ionicons/icons";
 
 
 import React from 'react';
 import styles from './AvailableOrders.module.css';
-import DriverCard from "./card/DriverCard";
+import DriverCard from "../../card/DriverCard";
 
 const OrderCard = ({ type, price, id, from, to, loadDate, unloadDate }) => {
     const typeLabel = type === 'new' ? 'Новый' : 'Торг';
