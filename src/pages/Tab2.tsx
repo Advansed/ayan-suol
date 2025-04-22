@@ -8,6 +8,7 @@ import {OrderEdit} from '../components/OrderEdit';
 import {OrderHistory} from '../components/OrderHistory';
 import { MyOrders } from '../components/Driver/MyOrders';
 import { DriverOrder } from '../components/Driver/DriverOrder';
+import { DriverOrderHistory } from '../components/Driver/DriverOrderHistory';
 
 const Tab2: React.FC = () => {
   const swap = Store.getState().swap;
@@ -24,7 +25,8 @@ const Tab2: React.FC = () => {
 
         // <PublicsLayout /> //Водитель Доступные заказы
         // <MyOrders /> //Водитель Мои заказы
-        <DriverOrder />//Водитель принятый заказ
+        // <DriverOrder />//Водитель принятый заказ
+        <DriverOrderHistory />
         }
 
     </IonPage>
