@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './MyOrder.module.css';
 // import { FaMapMarkerAlt } from 'react-icons/fa';
 
-export function MyOrder(){
+export function MyOrders(){
   return (
     <div className={styles.container}>
       <h2 className={styles.title}>Мои заказы</h2>

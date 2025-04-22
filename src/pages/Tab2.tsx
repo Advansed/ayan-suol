@@ -6,7 +6,8 @@ import {ShipmentForm} from '../components/ShipmentForm-Layout';
 import { Store } from '../components/Store';
 import {OrderEdit} from '../components/OrderEdit';
 import {OrderHistory} from '../components/OrderHistory';
-import { MyOrder } from '../components/Driver/MyOrders';
+import { MyOrders } from '../components/Driver/MyOrders';
+import { DriverOrder } from '../components/Driver/DriverOrder';
 
 const Tab2: React.FC = () => {
   const swap = Store.getState().swap;
@@ -22,7 +23,8 @@ const Tab2: React.FC = () => {
           // <ShipmentForm /> // Заказчик Создание и редакция заказа
 
         // <PublicsLayout /> //Водитель Доступные заказы
-        <MyOrder /> //Водитель Мои заказы
+        // <MyOrders /> //Водитель Мои заказы
+        <DriverOrder />//Водитель принятый заказ
         }
 
     </IonPage>

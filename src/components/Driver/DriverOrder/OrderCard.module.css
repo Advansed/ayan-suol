@@ -1,0 +1,110 @@
+.container {
+    /* max-width: 400px; */
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+    background-color: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    color: black;
+  }
+  
+  .status {
+    background-color: #e6f0ff;
+    color: #007aff;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .title {
+    font-size: 12px;
+    color: #88888850;
+    font-weight: bold;
+    /* margin-bottom: 8px; */
+  }
+  .headerFlex{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap:8px
+  }
+  .price {
+    color: #007aff;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: right;
+  }
+  
+  .section {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .label {
+    font-weight: bold;
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  
+  .value {
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  
+  .details {
+    background-color: #eaf3ff;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 16px;
+  }
+  
+  .buttonPrimary {
+    background-color: #007aff;
+    color: white;
+    padding: 10px 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    width: 100%;
+    cursor: pointer;
+  }
+  
+  .inputGroup {
+    margin-bottom: 12px;
+  }
+  
+  .input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: transparent;
+    font-size: 14px;
+  }
+  
+  .buttonDanger {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    padding: 10px;
+    margin: 16px;
+    border-radius: 8px;
+    border: none;
+    width: calc(100% - 32px);
+    cursor: pointer;
+  }
+  
