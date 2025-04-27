@@ -5,8 +5,10 @@ const OrderCard = ({ order }) => {
     return (
         <div className={styles.card}>
             <div className={styles.header}>
-                <span className={styles.status}>Выполнено</span>
-                <span className={styles.id}>ID:{order.id}</span>
+                <div>
+                    <span className={styles.status}>Выполнено</span>
+                    <span className={styles.id}>ID:{order.id}</span>
+                </div>
                 <span className={styles.price}>₽ {order.price.toLocaleString()}</span>
             </div>
 

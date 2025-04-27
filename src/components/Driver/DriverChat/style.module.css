@@ -1,0 +1,218 @@
+.container {
+    padding: 16px;
+    font-family: Arial, sans-serif;
+    background: white;
+    color: black;
+  }
+  
+  .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    text-align: center;
+    justify-content: center;
+  }
+  
+  .backButton {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+  }
+  
+  .title {
+    /* margin-left: 12px; */
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .orderCard {
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+  }
+  
+  .status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .newBadge {
+    background-color: #4caf50;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+  
+  .orderId {
+    font-size: 12px;
+    color: gray;
+  }
+  
+  .price {
+    color: #007aff;
+    font-weight: bold;
+  }
+  
+  .routeInfo {
+    margin-top: 12px;
+  }
+  
+  .label {
+    font-size: 12px;
+    color: gray;
+  }
+  
+  .location {
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  .date {
+    font-size: 14px;
+  }
+  
+  .detailsBox {
+    background: #e3edff;
+    padding: 8px;
+    border-radius: 8px;
+    margin-top: 12px;
+  }
+  
+  .detailsTitle {
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  
+  .detailsText {
+    font-size: 14px;
+  }
+  
+  .customerInfo {
+    margin-bottom: 16px;
+  }
+  
+  .customerCard {
+    display: flex;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 8px;
+  }
+  
+  .avatar {
+    width: 48px;
+    height: 48px;
+    background: #d9d9d9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 12px;
+  }
+  
+  .customerName {
+    font-weight: bold;
+  }
+  
+  .rating {
+    font-size: 14px;
+    margin: 4px 0;
+  }
+  
+  .reviewsButton {
+    background-color: #d2e1ff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .messages {
+    margin-bottom: 16px;
+  }
+  
+  .messageFrom, .messageTo {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  
+  .avatarSmall {
+    width: 32px;
+    height: 32px;
+    background: #d9d9d9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 8px;
+  }
+  
+  .messageContent {
+    background: #f0f4ff;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 80%;
+  }
+  
+  .messageTo .messageContent {
+    background: #d1e6ff;
+  }
+  
+  .actionSection {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .priceInput {
+    flex: 1;
+    padding: 8px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
+  
+  .submitButton {
+    background-color: #4c8dff;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  .messageInputSection {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .messageInput {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #ccc;
+  }
+  
+  .sendButton {
+    background-color: #4c8dff;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  
