@@ -1,6 +1,6 @@
 .container {
   max-width: 40em;
-  margin: 0 auto;
+  /* margin: 0 auto; */
   padding: 1.25em;
   font-family: sans-serif;
   background: #fff;
@@ -11,6 +11,7 @@
   font-size: 1.5em;
   font-weight: bold;
   margin-bottom: 1em;
+  text-align: center;
 }
 
 .backButton {
@@ -113,3 +114,91 @@ textarea {
 .orderEditInput{
   background: transparent;
 }
+
+.offerSection {
+  border: 0.0625em solid #ccc;
+  border-radius: 0.5em;
+  padding: 1em;
+  margin-bottom: 16px;
+}
+
+.offerTitle {
+  font-size: 16px;
+  font-weight: bold;
+  color: #5e5873;
+  margin-bottom: 12px;
+}
+
+.offerPriceWrapper {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.offerPriceLabel {
+  font-size: 14px;
+  color: #5e5873;
+  margin-bottom: 4px;
+}
+
+.offerPriceInput {
+  width: 100%;
+  border: none;
+  font-size: 16px;
+  color: #5e5873;
+  outline: none;
+  background: transparent;
+}
+
+.feeSection {
+  background-color: #e7f1ff;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  color: #5e5873;
+  margin-bottom: 12px;
+}
+
+.feeRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.totalPrice {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: bold;
+  color: #5e5873;
+}
+
+.commentSection {
+  margin-bottom: 16px;
+}
+
+.commentTitle {
+  font-size: 14px;
+  color: #5e5873;
+  margin-bottom: 12px;
+}
+
+.commentTextarea {
+  width: 100%;
+  min-height: 60px;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  color: #5e5873;
+  border: 1px solid #dfe3e7;
+  resize: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.commentTextarea::placeholder {
+  color: #b9b9c3;
+}
+

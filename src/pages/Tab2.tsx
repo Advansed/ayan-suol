@@ -11,6 +11,7 @@ import { DriverOrder } from '../components/Driver/DriverOrder';
 import { DriverOrderHistory } from '../components/Driver/DriverOrderHistory';
 import DriverChat from '../components/Driver/DriverChat';
 import { PublicsLayoutCustomer } from '../components/Customer/AvailableOrders';
+import {DriverOrderEdit} from '../components/Driver/DriverOrderEdit';
 
 const Tab2: React.FC = () => {
   const swap = Store.getState().swap;
@@ -21,18 +22,30 @@ const Tab2: React.FC = () => {
         swap
           ? <></>
           :
-          // Tab2
-          // <PublicsLayoutCustomer /> //Заказчик Доступные заказы
-          <OrderEdit /> // Заказчик редактирование заказа
-          // <OrderHistory /> //Заказчик история заказов
-          // <ShipmentForm /> // Заказчик Создание и редакция заказа
-
-        // <PublicsLayout /> //Водитель Доступные заказы
-        // <MyOrders /> //Водитель Мои заказы
-        // <DriverOrder />//Водитель принятый заказ
-        // <DriverOrderHistory />//Водитель история заказов
-        // Связаться с заказчиком
-        // <DriverChat />
+          <div style={{height: '100vh', overflowY:'scroll'}}>            
+          {/* // Tab2 */}
+        
+          {/* // <PublicsLayoutCustomer /> //Заказчик Доступные заказы */}
+        
+          {/* // <OrderEdit /> // Заказчик редактирование заказа  */}
+        
+          {/* // <OrderHistory /> //Заказчик история заказов */}
+        
+          {/* // <ShipmentForm /> // Заказчик Создание и редакция заказа */}
+        
+        {/* // <PublicsLayout /> //Водитель Доступные заказы */}
+        
+        {/* // <MyOrders /> //Водитель Мои заказы */}
+        
+        {/* // <DriverOrder />//Водитель принятый заказ */}
+        
+        {/* // <DriverOrderHistory />//Водитель история заказов */}
+        
+        <DriverOrderEdit />  
+        {/* //Водитель редактирвоания заказа */}
+        
+        {/* // <DriverChat /> // Чат с заказчиком */}
+        </div>
         }
 
     </IonPage>
