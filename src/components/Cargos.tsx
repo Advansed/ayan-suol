@@ -766,6 +766,12 @@ function        Page1(props:{ info, setPage, setUpd }){
         </div>
         <div>
           { items }
+          <>                    
+            <div  className="ml-1 mt-1">
+              <b><strong>Доставленные заказы (N)</strong></b>
+            </div>
+          </>
+          <DeliveryCard />
         </div>
     </>
 
@@ -777,6 +783,7 @@ function        Page1(props:{ info, setPage, setUpd }){
 
 
 import styles from './DriverCard.module.css';
+import DeliveryCard from "./cards/DeliveredOrder";
 
 const           DriverCard = (props:{ info }) => {
 
