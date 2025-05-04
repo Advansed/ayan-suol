@@ -203,7 +203,8 @@
 .h-35 { height: 3.5em }
 .h-4 { height: 4em }
 .hs-10 { height: 10em }
-
+.gap-4px { gap: 4px }
+.gap-8px { gap: 8px }
 .flex { display: flex; align-items: center; }
 .flex-b { display: flex; align-items: end; }
 .flex-l { display: flex }

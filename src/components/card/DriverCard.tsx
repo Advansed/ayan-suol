@@ -2,17 +2,22 @@ import React from 'react';
 import styles from './DriverCard.module.css';
 
 const DriverCard = () => {
+    const typeDriver = 'Choosen';
     return (
         <div className={styles.driverCard}>
             {/* <div className={styles.driverHeader}>Назначенные водители (2)</div> */}
-
             <div className={styles.driverInfo}>
-                <div className={styles.driverAvatar}>Ават<br />арка</div>
-                <div className={styles.driverNameRating}>
-                    <span className={styles.driverName}>Иванов Сергей</span>
-                    <span className={styles.driverRating}>⭐ 4.9 (12 отзывов)</span>
+                <div className={styles.driverInfoFlex}>
+                    <div className={styles.driverAvatar}>Ават<br />арка</div>
+                    <div className={styles.driverNameRating}>
+                        <span className={styles.driverName}>Иванов Сергей</span>
+                        <span className={styles.driverRating}>⭐ 4.9 (12 отзывов)</span>
+                    </div>
                 </div>
-                <div className={styles.driverPrice}>₽25 000</div>
+                <div>
+                    <div className={styles.driverPrice}>25 000 ₽</div>
+                    <div className={styles.driverWeight}>75 тонн</div>
+                </div>
             </div>
 
             <div className={styles.driverInfoRow}>
@@ -30,9 +35,18 @@ const DriverCard = () => {
                 Промышленное оборудование, общий вес около 15 тонн. Требуется тягач с полуприцепом и опыт перевозки негабаритных грузов.
             </div>
 
-            <button className={styles.driverButton}>
+            {typeDriver === '2' ? <button className={styles.driverButton}>
                 💬 Связаться
-            </button>
+            </button> :
+                <div className={styles.driverInfoFlex}>
+                    <button className={styles.driverButton}>
+                        💬 Связаться
+                    </button>
+                    <button className={styles.driverButton}>
+                        Выбрать водителя
+                    </button>
+                </div>
+            }
         </div>
     );
 };

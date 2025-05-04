@@ -18,6 +18,12 @@
   display: flex;
   align-items: center;
   margin-bottom: 0.75em;
+  justify-content: space-between;
+}
+
+.driverInfoFlex{
+  display: flex;
+  gap: 8px
 }
 
 .driverAvatar {
@@ -55,6 +61,15 @@
   font-size: 1.25em;
   font-weight: bold;
   color: #0071f0;
+  text-decoration: underline;
+}
+
+.driverWeight{
+  margin-left: auto;
+  font-size: 0.9em;
+  font-weight: bold;
+  text-align: center;
+  color: #888888;
 }
 
 .driverInfoRow {

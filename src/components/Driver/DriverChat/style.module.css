@@ -100,6 +100,7 @@
   .customerCard {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     background: #f9f9f9;
     padding: 12px;
     border-radius: 10px;
@@ -128,7 +129,8 @@
   }
   
   .reviewsButton {
-    background-color: #d2e1ff;
+    background-color: #BAD3FA;
+    color: black;
     border: none;
     padding: 6px 12px;
     border-radius: 8px;
@@ -140,10 +142,21 @@
     margin-bottom: 16px;
   }
   
-  .messageFrom, .messageTo {
+  .messageFrom {
     display: flex;
+    justify-content: flex-start;
+    gap:4px;
     align-items: flex-start;
     margin-bottom: 8px;
+  }
+
+  .messageTo {
+    display: flex;
+    justify-content: flex-end;
+    gap:4px;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    margin-left: auto;
   }
   
   .avatarSmall {
@@ -155,18 +168,20 @@
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    margin-right: 8px;
+    /* margin-right: 8px; */
   }
   
   .messageContent {
-    background: #f0f4ff;
+    background: #BAD3FA;
     padding: 10px;
     border-radius: 10px;
     max-width: 80%;
   }
   
   .messageTo .messageContent {
-    background: #d1e6ff;
+    background: #2563EB;
+    color: white;
+    /* font-weight: 200; */
   }
   
   .actionSection {
@@ -184,17 +199,20 @@
   }
   
   .submitButton {
-    background-color: #4c8dff;
+    background-color: #2563EB;
     color: white;
     border: none;
+    /* width: 100%; */
     padding: 10px;
+    font-weight: 700;
     border-radius: 8px;
     cursor: pointer;
   }
   
   .messageInputSection {
+    margin-top: 12px;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 8px;
   }
   

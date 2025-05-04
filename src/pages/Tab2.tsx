@@ -24,7 +24,7 @@ const Tab2: React.FC = () => {
           :
           <div style={{height: '100vh', overflowY:'scroll'}}>            
           {/* // Tab2 */}
-        
+          <DriverChat />
           {/* // <PublicsLayoutCustomer /> //Заказчик Доступные заказы */}
         
           {/* // <OrderEdit /> // Заказчик редактирование заказа  */}
@@ -41,7 +41,7 @@ const Tab2: React.FC = () => {
         
         {/* // <DriverOrderHistory />//Водитель история заказов */}
         
-        <DriverOrderEdit />  
+        {/* <DriverOrderEdit />   */}
         {/* //Водитель редактирвоания заказа */}
         
         {/* // <DriverChat /> // Чат с заказчиком */}
