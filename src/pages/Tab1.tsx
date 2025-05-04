@@ -1,7 +1,7 @@
-import { IonButton, IonModal, IonPage } from '@ionic/react';
+import { IonButton, IonContent, IonModal, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import './Tab1.css';
 import { Cargos } from '../components/Cargos';
-import { Store } from '../components/Store';
+import { exec, Store } from '../components/Store';
 import { DrCargos  } from '../components/drCargos';
 import { useState } from 'react';
 
@@ -15,28 +15,40 @@ const Tab1: React.FC = () => {
   
   const swap = Store.getState().swap;
 
-  const transportInfo = {
-    isNew: true,
-    id: '12460',
-    price: '120 000',
-    title: 'Перевозка промышленного оборудования',
-    fromLocation: 'Казань',
-    toLocation: 'Уфа',
-    loadDate: '01.04.2025',
-    loadTime: '10:00-15:00',
-    unloadDate: '03.04.2025',
-    unloadTime: '10:00-15:00',
-    cargoDetails: 'Промышленное оборудование, общий вес около 15 тонн. Требуется тягач с полуприцепом. Стандартная перевозка негабаритных грузов.'
+  const handleRefresh = async (event: CustomEvent) => {
+    // Здесь ваша логика обновления, например, запрос к API
+    setTimeout(() => {
+      console.log("refresh")
+      const params = { token: Store.getState().login.token }
+
+      exec("getCargos", params, "cargos")
+      event.detail.complete();
+    }, 1500);
   };
+  
 
 
   return (
     <IonPage>
-      {
-        swap
-          ? <DrCargos />
-          : <Cargos />
-      }
+      <IonContent>
+          <IonRefresher
+              slot="fixed" 
+              pullMin ={ 120 }              
+              onIonRefresh={handleRefresh}
+          >
+              <IonRefresherContent
+                pullingIcon="arrow-down-outline"
+                pullingText="Потяните вниз для обновления"
+                refreshingSpinner="crescent"
+                refreshingText="Обновление..."
+              />
+          </IonRefresher>   
+          {
+              swap
+                ? <DrCargos />
+                : <Cargos />
+          }
+      </IonContent>
 
       <IonModal 
         isOpen={message !== "" } 

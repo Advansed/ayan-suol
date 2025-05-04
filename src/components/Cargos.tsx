@@ -3,7 +3,7 @@ import { exec, getData, Store } from "./Store";
 import { IonAlert, IonButton, IonCard, IonCardContent, IonIcon, IonInput, IonLabel, IonLoading, IonText, IonTextarea } from "@ionic/react";
 import "./Cargos.css";
 import { useHistory } from "react-router";
-import { addCircleOutline, arrowBackOutline, calendarOutline, chatbubbleOutline, cloudUploadOutline, locationOutline, trashBinOutline } from "ionicons/icons";
+import { addCircleOutline, arrowBackOutline, calendarOutline, chatboxEllipsesOutline, chatbubbleOutline, cloudUploadOutline, locationOutline, personCircleOutline, trashBinOutline } from "ionicons/icons";
 
 export function Cargos() {
     const [ page,   setPage ]   = useState<any>(0)
@@ -22,7 +22,7 @@ export function Cargos() {
                 : page === 1 
                     ? <NewService setPage = { setPage } />
                 : page.type === "edit"
-                    ? <Service info = { page } setPage = { setPage } />
+                    ? <Service info = { page } setPage = { setPage } setUpd = { Upd }/>
                 : page.type === "open"
                     ? <Page1 info = { page } setPage = { setPage }  setUpd = { Upd }/>
                 : <></>
@@ -413,7 +413,7 @@ function        Body(props: { info }) {
     );
 }
   
-function        Service(props: { info, setPage }) {
+function        Service(props: { info, setPage, setUpd }) {
     const info = props.info;
     const [load, setLoad] = useState(false);
     const [modal1, setModal1] = useState(false);
@@ -426,7 +426,10 @@ function        Service(props: { info, setPage }) {
             icon={arrowBackOutline} 
             className="w-15 h-15"
             onClick={() => {
-              props.setPage(0);
+              info.type = "open"
+              props.setPage( info );
+              props.setUpd()
+              console.log( "backsd")
             }}
           />
           <div className="a-center w-90 fs-09"><b>Создать новый заказ</b></div>
@@ -545,9 +548,14 @@ function        Body1(props: { info }) {
             <div className="cr-chip">{info.status}</div>
             <IonText class="ml-1 fs-07">{"ID: " + info?.guid.substring(0, 6)}</IonText>
           </div>
-          <IonText className="fs-08 cl-prim">
-            <b>{Curs(info.price)}</b>
-          </IonText>
+          <div>
+            <IonText className="fs-09 cl-prim">
+              <b>{Curs(info.price)}</b>
+            </IonText>
+            <div className="fs-08 cl-black">
+              <b>{ info.weight + ' тонн' }</b>
+            </div>
+          </div>
         </div>
         <div className="fs-08 mt-05">
           <b>{info.name}</b>
@@ -686,10 +694,12 @@ function        Item1(props: { info, setPage, setUpd }) {
 function        Page1(props:{ info, setPage, setUpd }){
     const info = props.info
     const [ load, setLoad ]         = useState<any>([])
-    const [ invoices, setInvoices]  = useState([])
+    const [ invoices, setInvoices]  = useState<any>([])
+    const [ upd,      setUpd]  = useState<any>([])
 
-    Store.subscribe({num: 102, type: "cargos", func: ()=>{
+    Store.subscribe({num: 102, type: "invoices", func: ()=>{
       setInvoices( Store.getState().invoices )
+      setUpd( upd + 1 )
       console.log("subscribe 102")
      }})
 
@@ -700,14 +710,46 @@ function        Page1(props:{ info, setPage, setUpd }){
         }
     },[])
 
-    let items = <></>
+    let len = 0
+    let items = <>
+    </>
 
-    for(let i = 0;i < invoices.length;i++){
+    for( let i = 0; i < invoices.length; i++ ){
+      if(!invoices[i].accepted) {
+        len = len + 1
+        if( len === 1) 
+          items = <>                    
+            <div  className="ml-1 mt-1">
+              <b><strong>Предложения от водителей ({ len })</strong></b>
+            </div>
+          </>
         items = <>
-          { items }
-          <DriverCard info = { invoices[i] }/>
+          { 
+            items 
+          }
+          <DriverCard info = { invoices[i]} />
         </>
+      }
     }
+
+    for( let i = 0; i < invoices.length; i++ ){
+      if(invoices[i].accepted) {
+        len = len + 1
+        if( len === 1) 
+          items = <>                    
+            <div  className="ml-1 mt-1">
+              <b><strong>Назначенные водители ({ len })</strong></b>
+            </div>
+          </>
+        items = <>
+          { 
+            items 
+          }
+          <DriverCard info = { invoices[i]} />
+        </>
+      }
+    }
+
 
     const elem = <>
         <div>
@@ -722,6 +764,9 @@ function        Page1(props:{ info, setPage, setUpd }){
             </div>
             <Item1 info ={ info } setPage = { props.setPage } setUpd = { props.setUpd }/>
         </div>
+        <div>
+          { items }
+        </div>
     </>
 
 
@@ -731,61 +776,124 @@ function        Page1(props:{ info, setPage, setUpd }){
 }
 
 
-interface DriverInfo {
-  name: string;
-  rating: number;
-  ratingCount: number;
-  price: string;
-  transport: string;
-  weight: string;
-  completedOrders: string;
-  comment: string;
-}
+import styles from './DriverCard.module.css';
 
-function      DriverCard(props: { info: DriverInfo }) {
-  const { info } = props;
+const           DriverCard = (props:{ info }) => {
 
-  return (
-    <IonCard className="borders mt-1 bg-1">
-      <div className="flex fl-space p-1">
-        <div>
-          <div className="fs-12 fs-bold">{info.name}</div>
-          <div className="flex">
-            <span className="cl-yellow">★ {info.rating.toFixed(1)}</span>
-            <span className="cl-gray ml-05 fs-08">({info.ratingCount})</span>
+  const info = props.info ;
+        function Curs(summ) {
+        let str = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(summ);
+        str = '₽ ' + str.replace('₽', '');
+        return str;
+    }
+      return (
+        <div className="cr-card mt-1"
+            // onClick={() => { info.type = "open"; props.setPage(info); }}
+        >
+            <div className="flex fl-space">
+              <div className="flex">
+                <IonIcon icon = { personCircleOutline } color="primary" className="w-2 h-2"/>
+                <div className="fs-09 ml-05">
+                  <div><b>{ info.client }</b></div>
+                  <div>⭐ { info.rating }</div>
+                </div>
+              </div>
+              <div className="fs-09 cl-prim">
+                <div><b>{ Curs( info.price ) }</b></div>
+                <div className="cl-black fs-08"><b>{ info.weight + ' тонн' }</b></div>                
+              </div>
+            </div>
+
+            {/* <div className={styles.driverInfo}>
+               <div className={styles.driverAvatar}>Ават<br />арка</div>
+               <div className={styles.driverNameRating}>
+                   <span className={styles.driverName}>{ info.client }</span>
+                   <span className={styles.driverRating}>⭐ { info.rating }</span>
+               </div>
+               <div className={styles.driverPrice}>
+                {Curs(info.price)}
+                <br/>
+                <span className={styles.driverCapacity}>{info.capacity} тонн</span>
+               </div>
+           </div> */}
+
+           <div className={styles.driverInfoRow}>
+               🚚 <span className={styles.driverLabel}>&nbsp;Транспорт:</span>&nbsp;{ info.transport }
+           </div>
+           <div className={styles.driverInfoRow}>
+               ⚖️ <span className={styles.driverLabel}>&nbsp;Грузоподъёмность:</span>&nbsp; { info.capacity }
+           </div>
+           <div className={styles.driverInfoRow}>
+               📦 <span className={styles.driverLabel}>&nbsp;Выполнено заказов:</span>&nbsp;{ info.ratingCount }
+           </div>
+
+           <div className={styles.driverComment}>
+               <b>Комментарий водителя:</b><br />
+               { info.comment ? info.comment : 'Без комментов'}
+           </div>
+
+          <div className={styles.flexContainer}>
+          <IonButton
+              className="w-50 cr-button-2"
+              mode="ios"
+              fill="clear"
+              color="primary"
+              onClick={(e) => {
+                e.stopPropagation(); // Предотвращаем всплытие события клика
+              }}
+            >
+              <IonIcon icon = { chatboxEllipsesOutline} className="w-06 h-06"/>
+              <span className="ml-1 fs-08"> Чат</span>
+            </IonButton>
+            {
+              info.accepted
+                ? <></>
+                : <>
+                    <IonButton
+                      className="w-50 cr-button-1"
+                      mode="ios"
+                      color="primary"
+                      onClick={async(e) => {
+                        e.stopPropagation(); // Предотвращаем всплытие события клика
+                        const res = await getData("setInv", {
+                            token:    Store.getState().login.token,
+                            id:       info.guid,
+                            status:   "Принято"
+                        })
+                        console.log(res)
+                        if( res.success )
+                          exec("getInv", { token: Store.getState().login.token, guid: info.cargo }, "invoices")
+                      }}
+                    >
+                      <span className="ml-1 fs-08"> Выбрать</span>
+                    </IonButton>
+                </>
+            }
+            <IonButton
+              className="w-50 cr-button-1"
+              mode="ios"
+              color="warning"
+              onClick={async(e) => {
+                e.stopPropagation(); // Предотвращаем всплытие события клика
+                const res = await getData("setInv", {
+                    token:    Store.getState().login.token,
+                    id:       info.guid,
+                    status:   "Отказано"
+                })
+                console.log(res)
+                if( res.success ){
+                  exec("getInv", { token: Store.getState().login.token, guid: info.cargo }, "invoices")
+                  console.log( "success")
+                }
+                  
+              }}
+            >
+              <span className="ml-1 fs-08"> Отказать</span>
+            </IonButton>
           </div>
-        </div>
-        <div className="cl-prim fs-15 fs-bold">{info.price}</div>
+  
       </div>
-
-      <IonCardContent className="pt-05">
-        <div className="mb-1">
-          <div className="flex mb-05">
-            <IonIcon icon={ "transport.svg" } className="mr-1" />
-            <span>Транспорт: {info.transport}</span>
-          </div>
-          <div className="flex mb-05">
-            <IonIcon icon={ "capacity.svg" } className="mr-1" />
-            <span>Взял веса: {info.weight}</span>
-          </div>
-          <div className="flex mb-05">
-            <IonIcon icon={ "briefcase.svg" } className="mr-1" />
-            <span>Выполнено заказов: {info.completedOrders}</span>
-          </div>
-        </div>
-
-        <div className="borders-wp bg-3 p-1 mb-1">
-          <div className="fs-08 fs-bold">Комментарий водителя:</div>
-          <div className="fs-08">{info.comment}</div>
-        </div>
-
-        <IonButton expand="block" className="bg-2 w-100">
-          <IonIcon icon={ chatbubbleOutline } slot="start" />
-          Связаться
-        </IonButton>
-      </IonCardContent>
-    </IonCard>
-  );
-}
+    )
+};
 
 export default DriverCard;

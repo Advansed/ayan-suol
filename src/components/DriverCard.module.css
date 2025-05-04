@@ -1,0 +1,104 @@
+.driverCard {
+    border: 0.0625em solid #e0e0e0;
+    border-radius: 0.75em;
+    padding: 1em;
+    max-width: 30em;
+    background-color: #fff;
+    box-shadow: 0 0.125em 0.375em rgba(0, 0, 0, 0.05);
+    color: black;
+  }
+  
+  .driverHeader {
+    font-size: 1.125em;
+    font-weight: bold;
+    margin-bottom: 0.75em;
+  }
+  
+  .driverInfo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75em;
+  }
+  
+  .driverAvatar {
+    width: 3em;
+    height: 3em;
+    background-color: #e0ecff;
+    color: #1e4ecf;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75em;
+    text-align: center;
+    font-size: 0.75em;
+    line-height: 1.2;
+  }
+  
+  .driverNameRating {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .driverName {
+    font-weight: 600;
+  }
+  
+  .driverRating {
+    color: #888;
+    font-size: 0.875em;
+  }
+  
+  .driverPrice {
+    margin-left: auto;
+    text-align: right;
+    font-size: 1.25em;
+    font-weight: bold;
+    color: #0071f0;
+  }
+  
+  .driverInfoRow {
+    display: flex;
+    align-items: center;
+    margin: 0.25em 0;
+    font-size: 0.8em;
+  }
+  
+  .driverLabel {
+    font-weight: 500;
+  }
+  
+  .driverComment {
+    background-color: #dfeeff;
+    border-radius: 0.5em;
+    padding: 0.75em;
+    margin: 0.75em 0;
+    font-size: 0.75em;
+    color: #333;
+  }
+  
+  .driverButton {
+    background-color: #3b82f6;
+    color: white;
+    font-weight: 500;
+    padding: 0.625em 1.25em;
+    border-radius: 0.5em;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    font-size: 0.85em;
+  }
+  .flexContainer {
+    display: flex;
+    /* gap:      0.1em; */
+  }
+  .driverCapacity{
+    font-size: 0.75em;
+    color: #888888;
+    text-align: center;
+  }
