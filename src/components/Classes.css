@@ -117,7 +117,6 @@
 
 .c-input {
     border: 1px solid var(--main-color);
-    width: auto;
     padding-left: 1em;
     padding-right: 1em;
     border-radius: 5px;
@@ -159,3 +158,25 @@
     box-sizing: border-box; /* Чтобы граница не выходила за пределы элемента */
   }
 
+  .custom-input {
+    min-height: 1.5em; /* Общая высота контейнера */
+    font-size: 0.9em;
+    --padding-top: 0;
+    --padding-bottom: 0;
+}
+  
+.custom-input ion-input {
+    --padding-top: 0;
+    --padding-bottom: 0;
+    --padding-start: 0;
+    --padding-end: 0;
+}
+  
+.custom-input .input-wrapper {
+    min-height: 1.5em !important;
+}
+  
+.custom-input .native-input {
+    min-height: 1.5em !important;
+    padding: 6px 0 !important; 
+}

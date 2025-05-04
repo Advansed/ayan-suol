@@ -88,7 +88,7 @@ const App: React.FC = () => {
           <IonTabBar slot="bottom">
             <IonTabButton tab="tab1" href="/tab1">
               <IonIcon aria-hidden="true" icon={ giftOutline } />
-              <IonLabel>{ swap ? "Заказы" : "Создать заказ"}</IonLabel>
+              <IonLabel>{ swap ? "Заказы" : "Заказы"}</IonLabel>
             </IonTabButton>
             <IonTabButton tab="tab2" href="/tab2">
               <IonIcon aria-hidden="true" icon={ walkOutline } />

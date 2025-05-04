@@ -1,27 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { getData, Store } from "./Store";
-import { IonAlert, IonButton, IonCard, IonChip, IonIcon, IonInput, IonItem, IonLabel, IonList, IonModal, IonText } from "@ionic/react";
-import { Address, Maskito, TItem, TPanel, TService } from "./Classes";
+import { exec, getData, Store } from "./Store";
+import { IonAlert, IonButton, IonCard, IonCardContent, IonIcon, IonInput, IonLabel, IonLoading, IonText, IonTextarea } from "@ionic/react";
 import "./Cargos.css";
 import { useHistory } from "react-router";
-import { Files } from "./Files";
-import { arrowBackOutline, locateOutline, locationOutline } from "ionicons/icons";
+import { addCircleOutline, arrowBackOutline, calendarOutline, chatbubbleOutline, cloudUploadOutline, locationOutline, trashBinOutline } from "ionicons/icons";
 
 export function Cargos() {
-    const [ page, setPage ] = useState(0)
-    const [ serv, setServ ] = useState<any>()
-    const [ alert, setAlert ] = useState<any>()
+    const [ page,   setPage ]   = useState<any>(0)
+    const [ upd,    setUpd ]    = useState(0)
+    const [ alert,  setAlert ]  = useState<any>()
 
+    function Upd() {
+        setUpd( upd + 1 )
+    }
 
     const elem = <>
         <div className="a-container">
             {
                   page === 0 
-                    ? <List info = {{ setPage: setPage, setServ: setServ, setAlert }}/>
+                    ? <List info = {{ setPage: setPage, setAlert }}/>
                 : page === 1 
                     ? <NewService setPage = { setPage } />
-                : page === 2
-                    ? <Service info = { serv } setPage = { setPage } />
+                : page.type === "edit"
+                    ? <Service info = { page } setPage = { setPage } />
+                : page.type === "open"
+                    ? <Page1 info = { page } setPage = { setPage }  setUpd = { Upd }/>
                 : <></>
             }
 
@@ -72,88 +75,10 @@ function        List(props:{ info }){
 
     Store.subscribe({num: 101, type: "cargos", func: ()=>{
         setInfo( Store.getState().cargos )
+        console.log("subscribe")
+        console.log( Store.getState().cargos )
     }})
 
-
-    function ModalForm(){
-        const [ value, setValue ] = useState({ date: "", sum: 0.00 })
-
-        const elem = <>
-            <IonCard className="c-card">
-                <div className="fs-12">
-                    Укажите дату отправки груза и сумму
-                </div>
-                <div className="flex fl-space mt-1">
-                    <div>Дата отправки</div>
-                    <div className="c-input">
-                        <IonInput
-                            type = "date"
-                            value={ value.date }
-                            placeholder="__.__.____"
-                            onIonInput={ (e)=>{
-                                setValue({...value, date: e.detail.value as string })
-                            }}
-                        >
-
-                        </IonInput>
-
-                    </div>
-                </div>    
-                <div className="flex fl-space mt-1">
-                    <div>Сумма</div>
-                    <div className="c-input">
-                        <IonInput
-                            className = "a-right"
-                            type = "number"
-                            placeholder="0.00"
-                            value = { value.sum}
-                            onIonInput={ (e)=>{
-                                setValue({...value, sum: parseFloat( e.detail.value as string ) })
-                            }}
-                        >
-
-                        </IonInput>
-
-                    </div>
-                </div>    
-                <div className="flex mt-1">
-                    <div className="w-50">
-                        <IonButton
-                            expand="block"
-                            mode="ios"
-                            color= "warning"
-                            onClick={()=>{
-                                setModal( undefined )
-                            }}
-                        >
-                            Oтменить
-                        </IonButton>
-                    </div>
-                    <div className="w-50">
-                        <IonButton
-                            expand="block"
-                            mode = "ios"
-                            color= "success"
-                            onClick={async()=>{
-                                modal.token = Store.getState().login.token
-                                modal.date = value.date
-                                modal.sum = value.sum
-                                const res = await getData("SaveTransport", modal )
-                                if(res.success){
-                                    hist.push("/tab2")
-                                } else Store.dispatch({ type: "error", data: res.error})
-                                setModal( undefined )
-                            }}  
-                        >
-                            Опубликовать
-                        </IonButton>
-                    </div>
-                </div>
-            </IonCard>        
-        </>
-
-        return elem 
-    }
 
     let elem = <></>
 
@@ -164,613 +89,703 @@ function        List(props:{ info }){
                <Item info = { info[i] } setPage = { props.info.setPage }/>
             </>
         }
-    else 
-        elem = <>
-            <IonCard className="c-card">
-                <div className=" fs-14 a-center"
-                    onClick={()=>{
-                        props.info.setPage( 1 )
-                    }}
-                >
-                    Создать груз
-                </div>
-            </IonCard>
-        </>
 
     return <>
         <div className="ml-05 mt-1 a-center fs-09">
             {/* <IonIcon icon = { arrowBackOutline } className="w-15 h-15" /> */}
             <b>Мои заказы</b>
         </div>
+
+        <div className="c-card mt-1 ml-1 mr-1 flex"
+            onClick={()=>{ props.info.setPage( 1 )}}
+        >
+            <IonIcon icon = { addCircleOutline} className="w-15 h-15"/>
+            <div className="ml-1 a-center w-70">Создать новый груз</div>
+        </div>
         { elem }
-        <IonModal
-            className="c-modal"
-            isOpen= { modal !== undefined }
-            onDidDismiss={ ()=> setModal( undefined )}
-            // onClick = { ()=>{ setModal( false )}}
-        >
-            <div className="cr-div">
-                <ModalForm />
-            </div>
-        </IonModal>
 
     </>
 }
 
-
-function        Service(props:{ info, setPage }){
-    const info = props.info
-    const [ modal,  setModal ]  = useState( false )
-    const [ modal1, setModal1 ] = useState( false )
-
-    const elem = <>
-        <IonCard className="c-card">
-            <div className="a-center fs-14 pb-1"> <b>Описание заказа</b> </div>
-            <div className="bg-1">
-
-
-                <div className=" flex pb-1 pt-1 cl-black "> 
-                    <div className="circle-1 w-15 h-15 ml-1 w-20"></div>
-                    <div className="ml-1 w-80 mr-1 roboto t-underline"
-                        onClick={()=>{ setModal( true )}}
-                    >
-                        <div> { info.address.address } </div>
-                        <div> { "lat: " + info.address.lat  + ", lng: " + info.address.long } </div>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 cl-black">
-                    <img src="calendar.svg" alt="" className="w-2 h-2 ml-1" />
-                    <div className="ml-1 w-80 mr-1 t-underline">
-                        <IonLabel position="stacked"> Дата отправки </IonLabel>
-                        <IonInput
-                            type = "date"
-                            value={ info?.date1 }
-                            onIonInput = {(e)=>{
-                                info.date1 = e.detail.value;
-                            }}
-                        >
-
-                        </IonInput>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 pt-1 cl-black">
-                    <div className="circle-1 w-15 h-15 ml-1 w-20"></div>
-                    <div className="ml-1 w-80 mr-1 roboto t-underline"
-                        onClick={()=>{ setModal1( true )}}
-                    >
-                        <div> { info.destiny.address } </div>
-                        <div> { "lat: " + info.destiny.lat  + ", lng: " + info.destiny.long } </div>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 cl-black">
-                    <img src="calendar1.svg" alt="" className="w-2 h-2 ml-1" />
-                    <div className="ml-1 w-80 mr-1 t-underline">
-                    <IonLabel position="stacked"> Дата доставки </IonLabel>
-                        <IonInput
-                            type = "date"
-                            value={ info?.date1 }
-                            onIonInput = {(e)=>{
-                                info.date1 = e.detail.value;
-                            }}
-                        >
-
-                        </IonInput>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 cl-black">
-                    <img src="grid 6.svg" alt="" className="w-2 h-2 ml-1" />
-                    <div className="ml-1 w-80 mr-1 t-underline">
-                        {/* <IonLabel position="stacked"> Габариты </IonLabel> */}
-                        <IonInput
-                            placeholder="ШхВхГ"
-                            value={ info?.dimensions}
-                            onIonInput = {(e)=>{
-                                info.dimensions = e.detail.value as string ;
-                            }}
-                        ></IonInput>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 cl-black">
-                    <img src="Weight.svg" alt="" className="w-2 h-2 ml-1" />
-                    <div className="ml-1 w-80 mr-1 t-underline">
-                        <IonLabel position="stacked"> Вес </IonLabel>
-                        <IonInput
-                            placeholder="Вес"
-                            value={ info?.weight}
-                            type = "number"
-                            onIonInput = {(e)=>{
-                                info.weight = parseInt(e.detail.value as string);
-                            }}
-                        >
-
-                        </IonInput>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 cl-black">
-                    <img src="donate.svg" alt="" className="w-2 h-2 ml-1" />
-                    <div className="ml-1 w-80 mr-1 t-underline">
-                        {/* <IonLabel position="stacked"> Цена </IonLabel> */}
-                        <IonInput
-                            placeholder="Цена"
-                            value={ info?.price}
-                            type="number"
-                            onIonInput = {(e)=>{
-                                info.price = parseFloat(e.detail.value as string);
-                            }}
-                        >
-
-                        </IonInput>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 cl-black">
-                    <img src="receipt1.svg" alt="" className="w-2 h-2 ml-1" />
-                    <div className="ml-1 w-80 mr-1 t-underline">
-                        <IonLabel position="stacked"> Описание </IonLabel>
-                        <IonInput
-                            placeholder="Описание"
-                            value={ info?.name }
-                            onIonInput = {(e)=>{
-                                info.name = e.detail.value;
-                            }}
-                        >
-
-                        </IonInput>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 cl-black">
-                    <img src="phone.svg" alt="" className="w-2 h-2 ml-1" />
-                    <div className="ml-1 w-80 mr-1 t-underline">
-                        {/* <IonLabel position="stacked"> Телефон </IonLabel> */}
-                        <Maskito  
-                            placeholder= "+7 (XXX) XXX-XXXX"
-                            mask = { ['+', '7', ' ', '(', /\d/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, '-', /\d/, /\d/] }
-                            value = { info?.phone }
-                            onIonInput = {(e)=>{
-                                info.login = e.detail.value;
-                            }}
-                        />
-                    </div>                    
-                </div>
-
-                <div className="flex">
-                    <IonButton
-                        className="w-50"
-                        color = "success"
-                        onClick={async()=>{
-                            console.log("save")
-                            info.token = Store.getState().login.token
-                            const res = await getData("SaveCargos", info )
-                            console.log( res )
-                            if(res.success){
-                                let cargos = Store.getState().cargos
-                                let index = -1
-                                cargos.forEach((elem, ind) => {
-                                    if(elem.guid === info.guid){
-                                        index = ind
-                                    }
-                                });
-                                if( index !== -1){
-                                    cargos.splice(index, 1, info)
-                                    Store.dispatch({type: "cargos", data: cargos})
-                                    props.setPage( 0 )
-                                }
-                                console.log( cargos)
-                                Store.dispatch({type: "cargos", data: cargos})
-                                props.setPage( 0 )
-                            } else Store.dispatch({ type: "error", data: res.error })
-                        }}
-                    >
-                        <b>Сохранить</b>
-                    </IonButton>
-                    <IonButton
-                        className="w-50"
-                        color = "warning"
-                        onClick={()=>{
-                            props.setPage( 0 )
-                            
-                        }}
-                    >
-                        <b>Отменить</b>
-                    </IonButton>
-                </div>
-
-            </div>
-        </IonCard>
-
-        <IonModal
-            className="c-modal"
-            isOpen = { modal }
-            onDidDismiss={ ()=> setModal( false )}
-        >
-            <IonCard className="c-card mt-4">
-                <div className="a-center fs-14">
-                    <b> Адрес </b>
-                </div>
-                <div className="pb-4 cl-black">
-                    <Address info = { info.address }
-                    />
-                </div>
-                <div className="pt-4">
-                    <div className="flex">
-                        <IonButton
-                            className="w-50"
-                            onClick={()=>{
-                                setModal( false )
-                            }}
-                        >
-                            Сохранить
-                        </IonButton>               
-                        <IonButton
-                            className="w-50"
-                            onClick={()=>{
-                                setModal( false )
-                            }}
-                        >
-                            Отменить
-                        </IonButton>               
-                    </div>
-                </div>
-            </IonCard>
-
-        </IonModal>
-
-        <IonModal
-            className="c-modal"
-            isOpen = { modal1 }
-            onDidDismiss={ ()=> setModal1( false )}
-        >
-            <IonCard className="c-card mt-4">
-                <div className="a-center fs-14">
-                    <b> Адрес </b>
-                </div>
-                <div className="pb-4 cl-black">
-                    <Address info = { info.destiny }
-                    />
-                </div>
-                <div className="pt-4">
-                    <div className="flex">
-                        <IonButton
-                            className="w-50"
-                            onClick={()=>{
-                                setModal1( false )
-                            }}
-                        >
-                            Сохранить
-                        </IonButton>               
-                        <IonButton
-                            className="w-50"
-                            onClick={()=>{
-                                setModal1( false )
-                            }}
-                        >
-                            Отменить
-                        </IonButton>               
-                    </div>
-                </div>
-            </IonCard>
-
-        </IonModal>
-    </>
-
-    return elem
-}
-
-
-function        NewService(props:{ setPage }){
-
+function        NewService(props: { setPage }) {
     const info = {
-        token:                  Store.getState().login.token,
-        name:                   "",
-        address:            {
-            lat:                "",
-            long:               "",
-            address:            "",
-        },
-        destiny:        {
-            lat:                "",
-            long:               "",
-            address:            "",
-        },
-        dimensions:            "",
-        weight:                 0,
-        price:               0.00,
-        phone:                 "",
-        files:                 [],
+      guid:         "",  
+      token:        Store.getState().login.token,
+      name:         "",
+      description:  "",
+      address: {
+        lat:        "",
+        long:       "",
+        address:    "",
+        date:       "",
+        city:       ""
+      },
+      destiny: {
+        lat:        "",
+        long:       "",
+        address:    "",
+        date:       "",
+        city:       ""
+      },
+      dimensions:   "",
+      face:         "",
+      weight:       0,
+      volume:       0,
+      price:        0.00,
+      phone:        "",
+      files:        [],
     }
-
-    const [ modal,  setModal ]  = useState( false )
-    const [ modal1, setModal1 ] = useState( false )
-
-    const elem = <>
-        <div className="flex mt-05 ml-05">
-            <div><IonIcon icon = { arrowBackOutline } className="w-15 h-15"/></div>
-            <div className="a-center fs-09 w-90">
-                <div><b>Создание заказа</b></div>                
-            </div>
-        </div>
-
-        <div className="cr-card">
-            <div>Название заказа</div>
-            <div className="c-input">
-                <IonInput
-                
-                />
-            </div>
-        </div>
-        {/* <IonCard className="c-card">
-            <div className="a-center fs-14 pb-1"> <b>Описание заказа</b> </div>
-            <div className="bg-1">
-
-                <div className=" flex pb-1 pt-1 cl-black ">
-                    <div className="circle-1 w-15 h-15 ml-1 w-20"></div>
-                    <div className="ml-1 w-80 mr-1 roboto t-underline"
-                        onClick={()=>{ setModal( true )}}
-                    >
-                        <div> { info.address.address } </div>
-                        <div> { "lat: " + info.address.lat  + ", lng: " + info.address.long } </div>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 pt-1 cl-black">
-                    <div className="circle-1 w-15 h-15 ml-1 w-20"></div>
-                    <div className="ml-1 w-80 mr-1 roboto t-underline"
-                        onClick={()=>{ setModal1( true )}}
-                    >
-                        <div> { info.destiny.address } </div>
-                        <div> { "lat: " + info.destiny.lat  + ", lng: " + info.destiny.long } </div>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 cl-black">
-                    <img src="grid 6.svg" alt="" className="w-2 h-2 ml-1" />
-                    <div className="ml-1 w-80 mr-1 t-underline">
-                        <IonInput
-                            placeholder="ШхВхГ"
-                            value={ info?.dimensions}
-                            onIonInput = {(e)=>{
-                                info.dimensions = e.detail.value as string ;
-                            }}
-                        ></IonInput>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 cl-black">
-                    <img src="Weight.svg" alt="" className="w-2 h-2 ml-1" />
-                    <div className="ml-1 w-80 mr-1 t-underline">
-                        <IonInput
-                            placeholder="Вес"
-                            value={ info?.weight}
-                            type = "number"
-                            onIonInput = {(e)=>{
-                                info.weight = parseInt( e.detail.value as string );
-                            }}
-                        >
-
-                        </IonInput>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 cl-black">
-                    <img src="donate.svg" alt="" className="w-2 h-2 ml-1" />
-                    <div className="ml-1 w-80 mr-1 t-underline">
-                        <IonInput
-                            placeholder="Цена"
-                            value={ info?.price}
-                            type="number"
-                            onIonInput = {(e)=>{
-                                info.price = parseFloat( e.detail.value as string );
-                            }}
-                        >
-
-                        </IonInput>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 cl-black">
-                    <img src="receipt1.svg" alt="" className="w-2 h-2 ml-1" />
-                    <div className="ml-1 w-80 mr-1 t-underline">
-                        <IonInput
-                            placeholder="Описание"
-                            value={ info?.name }
-                            onIonInput = {(e)=>{
-                                info.name = e.detail.value as string ;
-                            }}
-                        >
-
-                        </IonInput>
-                    </div>                    
-                </div>
-
-                <div className=" flex pb-1 cl-black">
-                    <img src="phone.svg" alt="" className="w-2 h-2 ml-1" />
-                    <div className="ml-1 w-80 mr-1 t-underline">
-                        <Maskito  
-                            placeholder= "+7 (XXX) XXX-XXXX"
-                            mask = { ['+', '7', ' ', '(', /\d/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, '-', /\d/, /\d/] }
-                            value = { info?.phone }
-                            onIonInput = {(e)=>{
-                                info.phone = e.detail.value;
-                            }}
-                        />
-                    </div>                    
-                </div>
-
-                <div>
-                    <Files  info = { info.files } />
-                </div>
-                <div className="flex">
-                    <IonButton
-                        className="w-50"
-                        color = "success"
-                        onClick={()=>{
-                            props.setPage( 0 )
-                        }}
-                    >
-                        <b>Сохранить</b>
-                    </IonButton>
-                    <IonButton
-                        className="w-50"
-                        color = "warning"
-                        onClick={()=>{
-                            props.setPage( 0 )
-                            
-                        }}
-                    >
-                        <b>Отменить</b>
-                    </IonButton>
-                </div>
-            </div>
-        </IonCard>
-        <IonModal
-            className="c-modal"
-            isOpen = { modal }
-            onDidDismiss={ ()=> setModal( false )}
-        >
-            <IonCard className="c-card mt-4">
-                <div className="a-center fs-14">
-                    <b> Адрес </b>
-                </div>
-                <div className="pb-4 cl-black">
-                    <Address info = { info.address }
-                    />
-                </div>
-                <div className="pt-4">
-                    <div className="flex">
-                        <IonButton
-                            className="w-50"
-                            onClick={()=>{
-                                setModal( false )
-                            }}
-                        >
-                            Сохранить
-                        </IonButton>               
-                        <IonButton
-                            className="w-50"
-                            onClick={()=>{
-                                setModal( false )
-                            }}
-                        >
-                            Отменить
-                        </IonButton>               
-                    </div>
-                </div>
-            </IonCard>
-
-        </IonModal>
-        <IonModal
-            className="c-modal"
-            isOpen = { modal1 }
-            onDidDismiss={ ()=> setModal1( false )}
-        >
-            <IonCard className="c-card mt-4">
-                <div className="a-center fs-14">
-                    <b> Адрес </b>
-                </div>
-                <div className="pb-4 cl-black">
-                    <Address info = { info.destiny }
-                    />
-                </div>
-                <div className="pt-4">
-                    <div className="flex">
-                        <IonButton
-                            className="w-50"
-                            onClick={()=>{
-                                setModal1( false )
-                            }}
-                        >
-                            Сохранить
-                        </IonButton>               
-                        <IonButton
-                            className="w-50"
-                            onClick={()=>{
-                                setModal1( false )
-                            }}
-                        >
-                            Отменить
-                        </IonButton>               
-                    </div>
-                </div>
-            </IonCard>
-
-        </IonModal> */}
-    </>
-
-    return elem
-}
-
-function        Item(props:{ info, setPage }){
-    const info = props.info
-
-    function Curs( summ ){
-        let str = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format( summ )
-        str = '₽ ' + str.replace('₽', '')
-        return str 
-    }
-
-    const elem = <>
-        <div className="cr-card mt-1"
-            onClick={()=>{
-                props.setPage( 1 )
+  
+    const [load, setLoad] = useState(false)
+    const [modal1, setModal1] = useState(false)
+      
+    const elem = (
+      <>
+        <IonLoading isOpen={load} message={"Подождите..."} />
+        <div className="flex ml-05 mt-05">
+          <IonIcon 
+            icon={arrowBackOutline} 
+            className="w-15 h-15"
+            onClick={() => {
+              props.setPage(0)
             }}
-        >
-            <div  className="flex fl-space">
-                <div className="flex">
-                    <div className="cr-chip" >{ info.status }</div>
-                    <IonText class="ml-1 fs-07">{ "ID: " + info.guid.substring(0, 6) }</IonText>
-                </div>
-                <IonText className="fs-08 cl-prim">
-                    <b> { Curs( info.price ) } </b>
-                </IonText>
+          />
+          <div className="a-center w-90 fs-09"><b>Создать новый заказ</b></div>
+        </div>
+  
+        <Body info={ info } />
+  
+        <div className="flex mt-05">
+          <div className="w-50"></div>
+          <div 
+            className="cr-card flex w-50"
+            onClick={async () => {
+              setLoad(true)
+              info.token = Store.getState().login.token
+              console.log(info)
+  
+              const res = await getData("saveCargo", info)
+                
+              if( res.success ) {
+                    props.setPage(0)
+                    const params = { token: Store.getState().login.token };
+                    exec("getCargos", params, "cargos");
+              }
+              setLoad(false)
+              console.log(res)
+            }}
+          >
+            <IonIcon icon={cloudUploadOutline} className="w-15 h-15" color="success" />
+            <b className="fs-09 ml-1">Сохранить</b>
+          </div>
+          {/* <div 
+            className="cr-card flex w-50"
+            onClick={async () => {
+              info.token = Store.getState().login.token
+              const res = await getData("delCargos", info)
+              if( res.success ) {
+                props.setPage(0)
+                const params = { token: Store.getState().login.token };
+                exec("getCargos", params, "cargos");
+              }
+          
+              console.log(res)
+            }}
+          >
+            <IonIcon icon={trashBinOutline} className="w-15 h-15" color="danger" />
+            <b className="fs-09 ml-1">Удалить</b>
+          </div> */}
+        </div>
+      </>
+    );
+  
+    return elem;
+}
+
+function        Body(props: { info }) {
+    const info = props.info;
+    
+    return (
+      <div className="h-80 scroll">
+        <div className="cr-card mt-05">
+          <div className="fs-09"><b>Основная информация</b></div>
+          <div>
+            <div className="fs-08 mt-05"> Название </div>
+            <div className="c-input">
+              <IonInput 
+                className="custom-input"
+                value={info?.name}
+                onIonInput={(e) => {
+                  info.name = (e.detail.value as string)
+                }}
+              />
             </div>
-            <div className="fs-08 mt-05">
-                <b>{ info.name }</b>
+          </div>
+          <div>
+            <div className="fs-08 mt-05"> Город отправления </div>
+            <div className="flex">
+              <IonIcon icon={locationOutline} className="w-10 h-15" color="danger"/>
+              <div className="c-input flex w-90">
+                <IonInput 
+                  className="custom-input"
+                  value={info.address.city}
+                  onIonInput={(e) => {
+                    info.address.city = (e.detail.value as string)
+                  }}
+                />
+              </div>
             </div>
-            <div className="flex fl-space mt-05">
-                <div className="flex">
-                    <IonIcon icon = { locationOutline } color="danger"/>
-                    <div className="fs-08">
-                        <div className="ml-1 fs-09 cl-gray">Откуда:</div>
-                        <div className="ml-1 fs-09"><b>{ info.address.city }</b></div>                    
-                    </div>
-                </div>
-                <div>
-                    <div className="fs-08">
-                        <div className="ml-1 fs-09 cl-gray">Дата загрузки:</div>
-                        <div className="ml-1 fs-09"><b>{ info.address.date.substring(0, 10) }</b></div>                    
-                    </div>
-                </div>
+          </div>
+          <div>
+            <div className="fs-08 mt-05"> Город назначение </div>
+            <div className="flex">
+              <IonIcon icon={locationOutline} className="w-10 h-15" color="success"/>
+              <div className="c-input flex w-90">
+                <IonInput 
+                  className="custom-input"
+                  value={info.destiny.city}
+                  onIonInput={(e) => {
+                    info.destiny.city = (e.detail.value as string)
+                  }}
+                />
+              </div>
             </div>
-            <div className="flex fl-space mt-05">
-                <div className="flex">
-                    <IonIcon icon = { locationOutline } color="success"/>
-                    <div className="fs-08">
-                        <div className="ml-1 fs-09 cl-gray">Куда:</div>
-                        <div className="ml-1 fs-09"><b>{ info.destiny.city }</b></div>                    
-                    </div>
+          </div>
+          <div className="flex mt-05">
+            <div className="w-50">
+              <div className="fs-08"> Дата загрузки </div>
+              <div className="flex">
+                <div className="c-input ml-05">
+                  <IonInput 
+                    className="custom-input fs-08"
+                    value={info.address.date.substring(0, 10)}
+                    type="date"
+                    onIonInput={(e) => {
+                      info.address.date = e.detail.value as string
+                    }}
+                  />
                 </div>
-                <div>
-                    <div className="fs-08">
-                        <div className="ml-1 fs-09 cl-gray">Дата выгрузки:</div>
-                        <div className="ml-1 fs-09"><b>{ info.destiny.date.substring(0, 10) }</b></div>                    
-                    </div>
-                </div>
+              </div>
             </div>
+            <div className="w-50 ml-05">
+              <div className="fs-08"> Дата выгрузки </div>
+              <div className="flex">
+                <IonIcon icon={calendarOutline} className="w-2 h-2" color="success"/>
+                <div className="c-input ml-05 mr-1">
+                  <IonInput 
+                    className="custom-input fs-08"
+                    value={info.destiny.date.substring(0, 10)}
+                    type="date"
+                    onIonInput={(e) => {
+                      info.destiny.date = e.detail.value as string
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="fs-08 mt-05"> Цена (₽) </div>
+            <div className="flex">
+              <div className="c-input flex w-100">
+                <IonInput 
+                  className="custom-input"
+                  value={info.price}
+                  onIonInput={(e) => {
+                    info.price = parseFloat(e.detail.value as string)
+                  }}                     
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="cr-card mt-05">
+          <div className="fs-09"><b>Информация о грузе </b></div>
+          <div>
+            <div className="fs-08 mt-05"> Вес (тонна) </div>
+            <div className="c-input">
+              <IonInput 
+                className="custom-input"
+                value={info.price}
+                onIonInput={(e) => {
+                  info.weight = parseFloat(e.detail.value as string)
+                }}                     
+              />
+            </div>
+          </div>
+          <div>
+            <div className="fs-08 mt-05"> Объем </div>
+            <div className="flex">
+              <div className="c-input flex w-100">
+                <IonInput 
+                  className="custom-input"
+                  value={info?.volume}
+                  onIonInput={(e) => {
+                    info.volume = parseFloat(e.detail.value as string)
+                  }}                                                     
+                />
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="fs-08 mt-05"> Описание груза </div>
+            <div className="flex">
+              <div className="c-input flex w-100 fs-08">
+                <IonTextarea 
+                  value={info?.description}
+                  onIonInput={(e) => {
+                    info.description = (e.detail.value as string)
+                  }}                                                     
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="cr-card mt-05">
+          <div className="fs-09"><b>Адрес и контакты </b></div>
+          <div>
+            <div className="fs-08 mt-05"> Адрес погрузки </div>
+            <div className="c-input">
+              <IonInput 
+                className="custom-input"
+                value={info?.address.address}
+                onIonInput={(e) => {
+                  info.address.address = (e.detail.value as string)
+                }}                                                     
+              />
+            </div>
+          </div>
+          <div>
+            <div className="fs-08 mt-05"> Адрес разгрузки </div>
+            <div className="flex">
+              <div className="c-input flex w-100">
+                <IonInput 
+                  className="custom-input"
+                  value={info?.destiny.address}
+                  onIonInput={(e) => {
+                    info.destiny.address = (e.detail.value as string)
+                  }}                                                     
+                />
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="fs-08 mt-05"> Контактное лицо</div>
+            <div className="c-input">
+              <IonInput 
+                className="custom-input"
+                value={info?.face}
+                onIonInput={(e) => {
+                  info.face = (e.detail.value as string)
+                }}                                                                             
+              />
+            </div>
+          </div>
+          <div>
+            <div className="fs-08 mt-05"> Телефон </div>
+            <div className="flex">
+              <div className="c-input flex w-100">
+                <IonInput 
+                  className="custom-input"
+                  value={info?.phone}
+                  onIonInput={(e) => {
+                    info.phone = (e.detail.value as string)
+                  }}                                                     
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <div className="cr-card mt-05">
+          <div className="fs-09"><b> Статус заказа </b></div>
+          <div className="flex">
+            <div className="cr-chip">{info?.status}</div>
+            <IonText class="ml-1 fs-07">{"ID: " + info?.guid.substring(0, 8)}</IonText>
+          </div>
+          <div className="fs-09">
+            Ваш заказ в статусе "Новый", чтобы водители увидели ваш заказ его надо опубликовать
+          </div>
+        </div>
+      </div>
+    );
+}
+  
+function        Service(props: { info, setPage }) {
+    const info = props.info;
+    const [load, setLoad] = useState(false);
+    const [modal1, setModal1] = useState(false);
+  
+    const elem = (
+      <>
+        <IonLoading isOpen={load} message={"Подождите..."} />
+        <div className="flex ml-05 mt-05">
+          <IonIcon 
+            icon={arrowBackOutline} 
+            className="w-15 h-15"
+            onClick={() => {
+              props.setPage(0);
+            }}
+          />
+          <div className="a-center w-90 fs-09"><b>Создать новый заказ</b></div>
+        </div>
+  
+        <Body info={info} />
+  
+        <div className="flex mt-05">
+          <div 
+            className="cr-card flex w-50"
+            onClick={async () => {
+              setLoad(true);
+              info.token = Store.getState().login.token;
+              console.log(info);
+  
+              const res = await getData("saveCargo", info);
+  
+              setLoad(false);
+              console.log(res);
+  
+              if (res.success) {
+                const params = { token: Store.getState().login.token };
+                exec("getCargos", params, "cargos");
+              } else Store.dispatch({ type: "error", data: res.message })
+
+            }}
+          >
+            <IonIcon icon={cloudUploadOutline} className="w-15 h-15" color="success" />
+            <b className="fs-09 ml-1">Сохранить</b>
+          </div>
+          <div 
+            className="cr-card flex w-50"
+            onClick={async () => {
+                setLoad( true )
+                info.token = Store.getState().login.token;
+                const res = await getData("delCargo", info);
+                console.log(res);
+                if(res.success){
+                    exec("getCargos", {
+                        token: Store.getState().login.token
+                    }, "cargos");
+                } else {
+                        Store.dispatch({ type: "error", data: res.message })
+                        console.log("error message ")
+                }
+                setLoad( false )
+            }}
+          >
+            <IonIcon icon={trashBinOutline} className="w-15 h-15" color="danger" />
+            <b className="fs-09 ml-1">Удалить</b>
+          </div>
+        </div>
+  
+        <div className="ml-1 mr-1">
+          {
+            info?.status === "Новый" || info?.status === "В ожидании" || info?.status === "Отменен"
+              ? (
+                <IonButton
+                  mode="ios"
+                  expand="block"
+                  onClick={async () => {
+                    console.log("click")
+                    setLoad( false )
+                    if (info.status === "Новый" || info.status === "Отменен") {
+                      const res = await getData("setStatus", {
+                        token: Store.getState().login.token,
+                        guid: info.guid,
+                        status: "В ожидании"
+                      });
+                      console.log(res);
+                      if (res.success) {
+                        console.log("exec statis");
+                        info.status = "В ожидании";
+                        exec("getCargos", {
+                          token: Store.getState().login.token
+                        }, "cargos");
+                      } else {
+                         Store.dispatch({ type: "error", data: res.message })
+                         console.log("error message ")
+                      }
+                      props.setPage(0);
+                    }
+                    setLoad( false )
+                  }}
+                >
+                  {
+                    info.status === "Новый" || info.status === "Отменен"
+                      ? "Опубликовать"
+                      : "Снять публикацию"
+                  }
+                </IonButton>
+              )
+              : null
+          }
+        </div>
+      </>
+    );
+  
+    return elem;
+}
+
+ // Компонент для отображения информации о заказе
+function        Body1(props: { info }) {
+    const info = props.info;
+
+    function Curs(summ) {
+        let str = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(summ);
+        str = '₽ ' + str.replace('₽', '');
+        return str;
+    }
+    
+    return (
+      <>
+        <div className="flex fl-space">
+          <div className="flex">
+            <div className="cr-chip">{info.status}</div>
+            <IonText class="ml-1 fs-07">{"ID: " + info?.guid.substring(0, 6)}</IonText>
+          </div>
+          <IonText className="fs-08 cl-prim">
+            <b>{Curs(info.price)}</b>
+          </IonText>
+        </div>
+        <div className="fs-08 mt-05">
+          <b>{info.name}</b>
+        </div>
+        <div className="flex fl-space mt-05">
+          <div className="flex">
+            <IonIcon icon={locationOutline} color="danger"/>
+            <div className="fs-08">
+              <div className="ml-1 fs-09 cl-gray">Откуда:</div>
+              <div className="ml-1 fs-09"><b>{info?.address.city}</b></div>                    
+            </div>
+          </div>
+          <div>
+            <div className="fs-08">
+              <div className="ml-1 fs-09 cl-gray">Дата загрузки:</div>
+              <div className="ml-1 fs-09"><b>{info?.address.date.substring(0, 10)}</b></div>                    
+            </div>
+          </div>
+        </div>
+        <div className="flex fl-space mt-05">
+          <div className="flex">
+            <IonIcon icon={locationOutline} color="success"/>
+            <div className="fs-08">
+              <div className="ml-1 fs-09 cl-gray">Куда:</div>
+              <div className="ml-1 fs-09"><b>{info?.destiny.city}</b></div>                    
+            </div>
+          </div>
+          <div>
+            <div className="fs-08">
+              <div className="ml-1 fs-09 cl-gray">Дата выгрузки:</div>
+              <div className="ml-1 fs-09"><b>{info?.destiny.date.substring(0, 10)}</b></div>                    
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className="fs-08 mt-1 cr-detali">
+            <b>Детали груза:</b>
             <div>
-                <div className="fs-08 mt-1 cr-detali">Детали груза:</div>
-                <div>
-                    { info.description }
-                </div>
+              {info.description}
             </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+  
+  // Основной компонент элемента заказа
+function        Item(props: { info, setPage }) {
+    const info = props.info;
+  
+    const elem = (
+        <div className="cr-card mt-1"
+            onClick={() => { info.type = "open"; props.setPage(info); }}
+        >
+        
+        {/* Основное содержимое элемента заказа */}
+        <Body1 info={info} />
+  
+      </div>
+    );
+  
+    return elem;
+}
+
+function        Item1(props: { info, setPage, setUpd }) {
+    const info = props.info;
+  
+    const elem = (
+      <div 
+        className="cr-card mt-1"
+        onClick={() => { info.type = "open";  props.setPage(info);  }}
+      >
+        {/* Основное содержимое элемента заказа */}
+        <Body1 info={info} />
+  
+        {/* Кнопки действий внизу */}
+        <div className="flex">
+          <IonButton
+            className="w-50 cr-button-2"
+            mode="ios"
+            fill="clear"
+            color="primary"
+            onClick={(e) => {
+              e.stopPropagation(); // Предотвращаем всплытие события клика
+              info.type = "edit";
+              props.setPage(info);
+              props.setUpd()
+            }}
+          >
+            <IonLabel className="fs-08">Изменить заказ</IonLabel>
+          </IonButton>
+          <IonButton
+            className="w-50 cr-button-1"
+            mode="ios"
+            onClick={async (e) => {
+              e.stopPropagation(); // Предотвращаем всплытие события клика
+              if (info.status === "Новый") {
+                const res = await getData("Publish", {
+                  token: Store.getState().login.token,
+                  guid: info.guid
+                });
+                console.log(res);
+                if (res.success) {
+                  exec("getCargos", {
+                    token: Store.getState().login.token
+                  }, "cargos");
+                }    
+                props.setPage(0);
+              } else {
+                const res = await getData("setStatus", {
+                  token: Store.getState().login.token,
+                  guid: info.guid,
+                  status: "ОтменитьПубликацию"
+                });
+                console.log(res);
+                if (res.success) {
+                  exec("getCargos", {
+                    token: Store.getState().login.token
+                  }, "cargos");
+                }    
+                props.setPage(0);
+              }
+            }}
+          >
+            <IonLabel className="fs-08">
+              {info.status === "Новый" ? "Опубликовать" : "Отменить"}
+            </IonLabel>
+          </IonButton>
+        </div>
+      </div>
+    );
+  
+    return elem;
+}
+
+function        Page1(props:{ info, setPage, setUpd }){
+    const info = props.info
+    const [ load, setLoad ]         = useState<any>([])
+    const [ invoices, setInvoices]  = useState([])
+
+    Store.subscribe({num: 102, type: "cargos", func: ()=>{
+      setInvoices( Store.getState().invoices )
+      console.log("subscribe 102")
+     }})
+
+    useEffect(()=>{
+        exec("getInv", { token: Store.getState().login.token, guid: info.guid }, "invoices")
+        return ()=>{
+          Store.unSubscribe( 102 )
+        }
+    },[])
+
+    let items = <></>
+
+    for(let i = 0;i < invoices.length;i++){
+        items = <>
+          { items }
+          <DriverCard info = { invoices[i] }/>
+        </>
+    }
+
+    const elem = <>
+        <div>
+            <IonLoading isOpen = { load } message={"Подождите..."}/>
+            <div className="flex ml-05 mt-05">
+                <IonIcon icon = { arrowBackOutline } className="w-15 h-15"
+                    onClick={()=>{
+                        props.setPage( 0 )
+                    }}
+                />
+                <div className="a-center w-90 fs-09"><b>{ "В ожидании #" + info.guid.substring(0, 8) }</b></div>
+            </div>
+            <Item1 info ={ info } setPage = { props.setPage } setUpd = { props.setUpd }/>
         </div>
     </>
 
+
+    
     return elem
+
 }
+
+
+interface DriverInfo {
+  name: string;
+  rating: number;
+  ratingCount: number;
+  price: string;
+  transport: string;
+  weight: string;
+  completedOrders: string;
+  comment: string;
+}
+
+function      DriverCard(props: { info: DriverInfo }) {
+  const { info } = props;
+
+  return (
+    <IonCard className="borders mt-1 bg-1">
+      <div className="flex fl-space p-1">
+        <div>
+          <div className="fs-12 fs-bold">{info.name}</div>
+          <div className="flex">
+            <span className="cl-yellow">★ {info.rating.toFixed(1)}</span>
+            <span className="cl-gray ml-05 fs-08">({info.ratingCount})</span>
+          </div>
+        </div>
+        <div className="cl-prim fs-15 fs-bold">{info.price}</div>
+      </div>
+
+      <IonCardContent className="pt-05">
+        <div className="mb-1">
+          <div className="flex mb-05">
+            <IonIcon icon={ "transport.svg" } className="mr-1" />
+            <span>Транспорт: {info.transport}</span>
+          </div>
+          <div className="flex mb-05">
+            <IonIcon icon={ "capacity.svg" } className="mr-1" />
+            <span>Взял веса: {info.weight}</span>
+          </div>
+          <div className="flex mb-05">
+            <IonIcon icon={ "briefcase.svg" } className="mr-1" />
+            <span>Выполнено заказов: {info.completedOrders}</span>
+          </div>
+        </div>
+
+        <div className="borders-wp bg-3 p-1 mb-1">
+          <div className="fs-08 fs-bold">Комментарий водителя:</div>
+          <div className="fs-08">{info.comment}</div>
+        </div>
+
+        <IonButton expand="block" className="bg-2 w-100">
+          <IonIcon icon={ chatbubbleOutline } slot="start" />
+          Связаться
+        </IonButton>
+      </IonCardContent>
+    </IonCard>
+  );
+}
+
+export default DriverCard;

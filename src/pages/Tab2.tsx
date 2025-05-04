@@ -10,8 +10,13 @@ const Tab2: React.FC = () => {
     <IonPage>
       {
         swap 
-          ? <></>
-          : <Publics />
+          ? <>
+            <div>
+
+            </div>
+          </>
+          : <>
+          </>
       }
         
     </IonPage>

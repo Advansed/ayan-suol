@@ -41,3 +41,22 @@
     background-color: #BAD3FA;
     border-radius: 5px;
 }
+
+.cr-button-1{
+
+    min-height: 1.5em;
+    --border-radius: 5px !important;
+    --padding-top:   0.5em;
+    --padding-bottom:   0.5em;
+}
+
+.cr-button-2{
+
+    min-height: 1.5em;
+    --border-radius: 5px !important;
+    --padding-top:   0.5em;
+    --padding-bottom:   0.5em;
+    border: 1px solid silver;
+    border-radius: 5px;
+
+}

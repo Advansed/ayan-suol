@@ -1,0 +1,115 @@
+.container {
+    max-width: 40em;
+    margin: 0 auto;
+    padding: 1.25em;
+    font-family: sans-serif;
+    background: #fff;
+    color: #000;
+  }
+  
+  .pageTitle {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 1em;
+  }
+  
+  .backButton {
+    background: none;
+    border: none;
+    font-size: 1.25em;
+    cursor: pointer;
+    margin-bottom: 0.5em;
+  }
+  
+  .section {
+    border: 0.0625em solid #ccc;
+    border-radius: 0.5em;
+    padding: 1em;
+    margin-bottom: 1em;
+  }
+  
+  .section h2 {
+    font-size: 1.125em;
+    margin-bottom: 0.75em;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 0.75em;
+    font-size: 0.9em;
+  }
+  
+  input,
+  textarea {
+    width: 100%;
+    padding: 0.625em;
+    font-size: 1em;
+    margin-top: 0.25em;
+    border-radius: 0.375em;
+    border: 0.0625em solid #ccc;
+    box-sizing: border-box;
+  }
+  
+  .flexRow {
+    display: flex;
+    gap: 1em;
+    margin-bottom: 1em;
+  }
+  
+  .flexItem {
+    flex: 1;
+  }
+  
+  .statusBox {
+    border: 0.0625em solid #ccc;
+    border-radius: 0.5em;
+    padding: 1em;
+    background: #f8f8f8;
+    font-size: 0.9em;
+    margin-bottom: 1.5em;
+  }
+  
+  .statusBadge {
+    background-color: #fcdc58;
+    color: #333;
+    padding: 0.3em 0.6em;
+    border-radius: 1em;
+    font-weight: bold;
+    font-size: 0.9em;
+    margin-right: 0.5em;
+  }
+  
+  .orderId {
+    font-size: 0.9em;
+    color: #777;
+  }
+  
+  .actions {
+    display: flex;
+    gap: 1em;
+  }
+  
+  .saveButton {
+    flex: 1;
+    background-color: #007bff;
+    color: white;
+    padding: 0.875em;
+    font-size: 1em;
+    border: none;
+    border-radius: 0.375em;
+    cursor: pointer;
+  }
+  
+  .deleteButton {
+    flex: 1;
+    background-color: white;
+    color: red;
+    border: 0.0625em solid red;
+    padding: 0.875em;
+    font-size: 1em;
+    border-radius: 0.375em;
+    cursor: pointer;
+  }
+.orderEditInput{
+    background: transparent;
+}

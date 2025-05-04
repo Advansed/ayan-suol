@@ -1,0 +1,69 @@
+
+
+.error-modal {
+    --width: 80%;
+    --height: 60%;
+    --border-radius: 10px;
+    --box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Контейнер для центрирования внутри модального окна */
+  .error-modal-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    background-color: var(--ion-color-light);
+  }
+  
+  /* Стилизация содержимого модального окна */
+  .error-modal-content {
+    width: 90%;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  /* Заголовок ошибки */
+  .error-modal-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: var(--ion-color-danger);
+  }
+  
+  /* Текст сообщения об ошибке */
+  .error-modal-message {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.4;
+    color: var(--ion-color-dark);
+  }
+  
+  /* Кнопка закрытия */
+  .error-modal-button {
+    --background: var(--ion-color-primary);
+    --background-activated: var(--ion-color-primary-shade);
+    --color: var(--ion-color-primary-contrast);
+    --border-radius: 8px;
+    margin-top: 1rem;
+    font-weight: 500;
+  }
+  
+  /* Анимация появления модального окна */
+  .error-modal-enter {
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  /* Медиа-запрос для разных размеров экрана */
+  @media (max-width: 576px) {
+    .error-modal {
+      --width: 90%;
+      --height: 50%;
+    }
+  }
