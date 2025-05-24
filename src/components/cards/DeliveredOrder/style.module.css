@@ -1,0 +1,144 @@
+.deliveryCard {
+    border-radius: 1em;
+    margin: 1em;
+    box-shadow: 0 0.125em 0.5em rgba(0, 0, 0, 0.1);
+    border: 0.0625em solid #e0e0e0;
+  }
+  
+  .cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.25em;
+  }
+  
+  .driverInfo {
+    display: flex;
+    align-items: center;
+  }
+  
+  .avatar {
+    width: 4em;
+    height: 4em;
+    border-radius: 50%;
+    background-color: #e6ecff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5em;
+  }
+  
+  .avatarText {
+    color: #5474c9;
+    font-size: 0.875em;
+  }
+  
+  .nameRating h2 {
+    margin: 0;
+    color: black;
+    margin-bottom: 0.5em;
+    font-size: 1.375em;
+    font-weight: 600;
+  }
+  
+  .rating {
+    display: flex;
+    align-items: center;
+  }
+  
+  .starIcon {
+    color: #ffc107;
+    margin-right: 0.25em;
+    font-size: 1.125em;
+  }
+  
+  .priceContainer {
+    text-align: right;
+  }
+  
+  .price {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #4283f4;
+  }
+  
+  .priceCaption {
+    color: #8f9bb3;
+    font-size: 0.875em;
+    font-weight: 200;
+  }
+  
+  .infoRow {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5em;
+  }
+  
+  .infoIcon {
+    font-size: 1.5em;
+    margin-right: 0.5em;
+    color: #222;
+  }
+  
+  .infoLabel {
+    color: black;
+    font-weight: 400;
+    font-size: 1.125em;
+  }
+  
+  .infoValue {
+    font-size: 1.125em;
+    color: black;
+    font-weight: 200;
+  }
+  
+  .statusText {
+    font-size: 1.25em;
+    font-weight: 400;
+    margin-top: 0.5em;
+    text-align: left;
+    color: black;
+  }
+  
+  .checkboxContainer {
+    display: flex;
+    align-items: center;
+    border: 0.0625em solid transparent;
+    padding: 0.5em;
+  }
+  
+  .statusCheckbox {
+    --size: 1.5em;
+    margin-right: 1em;
+    --border-width: 0.125em;
+    --border-color: #ccc;
+    --background-checked: #4283f4;
+    --checkmark-color: white;
+    --border-color-checked: #4283f4;
+  }
+  
+  .checkboxText {
+    flex: 1;
+  }
+  
+  .checkboxTitle {
+    font-weight: 400;
+    font-size: 1.125em;
+    color: black;
+  }
+  
+  .checkboxDescription {
+    color: #8f9bb3;
+    font-size: 0.875em;
+  }
+  
+  .confirmButton {
+    --background: #2663eb;
+    --background-activated: #3a75db;
+    --border-radius: 0.75em;
+    margin-top: 1em;
+    height: 3.25em;
+    font-size: 1.125em;
+    --box-shadow: none;
+  }
+  
