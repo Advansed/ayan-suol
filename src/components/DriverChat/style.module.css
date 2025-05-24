@@ -1,0 +1,505 @@
+.container {
+    padding: 16px;
+    font-family: Arial, sans-serif;
+    background: white;
+    color: black;
+    height: 95vh;
+    overflow: scroll;
+  }
+  
+  .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    text-align: center;
+    justify-content: center;
+  }
+  
+  .backButton {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+  }
+  
+  .title {
+    /* margin-left: 12px; */
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .orderCard {
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+  }
+  
+  .status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .newBadge {
+    background-color: #4caf50;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+  
+  .orderId {
+    font-size: 12px;
+    color: gray;
+  }
+  
+  .price {
+    color: #007aff;
+    font-weight: bold;
+  }
+  
+  .routeInfo {
+    margin-top: 12px;
+  }
+  
+  .label {
+    font-size: 12px;
+    color: gray;
+  }
+  
+  .location {
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  .date {
+    font-size: 14px;
+  }
+  
+  .detailsBox {
+    background: #e3edff;
+    padding: 8px;
+    border-radius: 8px;
+    margin-top: 12px;
+  }
+  
+  .detailsTitle {
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  
+  .detailsText {
+    font-size: 14px;
+  }
+  
+  .customerInfo {
+    margin-bottom: 16px;
+  }
+  
+  .customerCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f9f9f9;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 8px;
+  }
+  
+  .avatar {
+    width: 48px;
+    height: 48px;
+    background: #d9d9d9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 12px;
+  }
+  
+  .customerName {
+    font-weight: bold;
+  }
+  
+  .rating {
+    font-size: 14px;
+    margin: 4px 0;
+  }
+  
+  .reviewsButton {
+    background-color: #BAD3FA;
+    color: black;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .messages {
+    height: 33vh;
+    overflow: scroll;
+    margin-bottom: 16px;
+  }
+  
+  .messageFrom {
+    display: flex;
+    justify-content: flex-start;
+    gap:4px;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+
+  .messageTo {
+    display: flex;
+    justify-content: flex-end;
+    gap:4px;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    margin-left: auto;
+  }
+  
+  .avatarSmall {
+    width: 32px;
+    height: 32px;
+    background: #d9d9d9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    /* margin-right: 8px; */
+  }
+  
+  .messageContent {
+    background: #BAD3FA;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 80%;
+  }
+  
+  .messageTo .messageContent {
+    background: #2563EB;
+    color: white;
+    /* font-weight: 200; */
+  }
+  
+  .actionSection {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .priceInput {
+    flex: 1;
+    padding: 8px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
+  
+  .submitButton {
+    background-color: #2563EB;
+    color: white;
+    border: none;
+    /* width: 100%; */
+    padding: 10px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  .messageInputSection {
+    margin-top: 12px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  
+  .messageInput {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #ccc;
+  }
+  
+  .sendButton {
+    background-color: #4c8dff;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  
+  /* Дополнительные стили для улучшенного чата */
+
+.messageText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.messageTime {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.priceOfferMessage {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.quickReplies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+.quickReplyButton {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quickReplyButton:hover {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+  transform: translateY(-1px);
+}
+
+.priceInput {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #2c3e50;
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.priceInput:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.priceInput::placeholder {
+  color: #adb5bd;
+  font-weight: normal;
+}
+
+.submitButton {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #218838, #1ea080);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.submitButton:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.sendButton {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sendButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.sendButton:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.messageInput {
+  flex: 1;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  line-height: 1.4;
+  transition: border-color 0.2s ease;
+}
+
+.messageInput:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.messageInput::placeholder {
+  color: #adb5bd;
+}
+
+.actionSection {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border-top: 1px solid #e9ecef;
+}
+
+.messageInputSection {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: #f8f9fa;
+  scroll-behavior: smooth;
+}
+
+.messageContent {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  max-width: 70%;
+}
+
+.messageTo {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.messageTo .messageContent {
+  flex-direction: row-reverse;
+  background: #007bff;
+  color: white;
+  border-radius: 18px 18px 4px 18px;
+  padding: 12px 16px;
+}
+
+.messageFrom {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+.messageFrom .messageContent {
+  background: white;
+  color: #2c3e50;
+  border-radius: 18px 18px 18px 4px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.avatarSmall {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6c757d, #495057);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.messageTo .avatarSmall {
+  background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+/* Анимации */
+@keyframes messageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.messageContent {
+  animation: messageAppear 0.3s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .quickReplies {
+    padding: 8px 12px;
+  }
+  
+  .quickReplyButton {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  
+  .actionSection {
+    padding: 12px;
+  }
+  
+  .messageInputSection {
+    padding: 12px;
+  }
+  
+  .messageContent {
+    max-width: 85%;
+  }
+}

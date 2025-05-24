@@ -25,10 +25,13 @@ export function Cargos() {
                     ? <Service info = { page } setPage = { setPage } setUpd = { Upd }/>
                 : page.type === "open"
                     ? <Page1 info = { page } setPage = { setPage }  setUpd = { Upd }/>
+                : page.type === "chat"
+                    ? <DriverChat info = { page } setPage = { setPage }  setUpd = { Upd }/>
                 : <></>
             }
 
         </div>  
+        {console.log(page.type,'asdkasdksa')}
         <IonAlert
                 isOpen = { alert !== undefined }
                 onDidDismiss={ ()=> { setAlert( undefined ) }}
@@ -727,7 +730,7 @@ function        Page1(props:{ info, setPage, setUpd }){
           { 
             items 
           }
-          <DriverCard info = { invoices[i]} />
+          <DriverCard info = { invoices[i]} setPage={ props.setPage} />
         </>
       }
     }
@@ -745,7 +748,9 @@ function        Page1(props:{ info, setPage, setUpd }){
           { 
             items 
           }
-          <DriverCard info = { invoices[i]} />
+          <DriverCard info = { invoices[i]} 
+          setPage={props.setPage} 
+          />
         </>
       }
     }
@@ -766,12 +771,12 @@ function        Page1(props:{ info, setPage, setUpd }){
         </div>
         <div>
           { items }
-          <>                    
+          {/* <>                    
             <div  className="ml-1 mt-1">
               <b><strong>Доставленные заказы (N)</strong></b>
             </div>
           </>
-          <DeliveryCard />
+          <DeliveryCard /> */}
         </div>
     </>
 
@@ -784,8 +789,9 @@ function        Page1(props:{ info, setPage, setUpd }){
 
 import styles from './DriverCard.module.css';
 import DeliveryCard from "./cards/DeliveredOrder";
+import DriverChat from "./DriverChat";
 
-const           DriverCard = (props:{ info }) => {
+const           DriverCard = (props:{ info, setPage }) => {
 
   const info = props.info ;
         function Curs(summ) {
@@ -846,6 +852,8 @@ const           DriverCard = (props:{ info }) => {
               fill="clear"
               color="primary"
               onClick={(e) => {
+                // info.type = 'chat'
+                info.type = "chat"; props.setPage(info); 
                 e.stopPropagation(); // Предотвращаем всплытие события клика
               }}
             >
