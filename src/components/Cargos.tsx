@@ -603,7 +603,7 @@ function        Body1(props: { info }) {
         </div>
       </>
     );
-  }
+}
   
   // Основной компонент элемента заказа
 function        Item(props: { info, setPage }) {
@@ -718,7 +718,7 @@ function        Page1(props:{ info, setPage, setUpd }){
     </>
 
     for( let i = 0; i < invoices.length; i++ ){
-      if(!invoices[i].accepted) {
+      if(invoices[i].status === "Заказано") {
         len = len + 1
         if( len === 1) 
           items = <>                    
@@ -736,7 +736,7 @@ function        Page1(props:{ info, setPage, setUpd }){
     }
 
     for( let i = 0; i < invoices.length; i++ ){
-      if(invoices[i].accepted) {
+      if(invoices[i].status === "Принято") {
         len = len + 1
         if( len === 1) 
           items = <>                    
@@ -755,6 +755,23 @@ function        Page1(props:{ info, setPage, setUpd }){
       }
     }
 
+    for( let i = 0; i < invoices.length; i++ ){
+      if(invoices[i].status === "Доставлено") {
+        len = len + 1
+        if( len === 1) 
+          items = <>                    
+            <div  className="ml-1 mt-1">
+              <b><strong>Доставленные ({ len })</strong></b>
+            </div>
+          </>
+        items = <>
+          { 
+            items 
+          }
+          <DriverCard1 info = { invoices[i]} />
+        </>
+      }
+    }
 
     const elem = <>
         <div>
@@ -816,19 +833,6 @@ const           DriverCard = (props:{ info, setPage }) => {
                 <div className="cl-black fs-08"><b>{ info.weight + ' тонн' }</b></div>                
               </div>
             </div>
-
-            {/* <div className={styles.driverInfo}>
-               <div className={styles.driverAvatar}>Ават<br />арка</div>
-               <div className={styles.driverNameRating}>
-                   <span className={styles.driverName}>{ info.client }</span>
-                   <span className={styles.driverRating}>⭐ { info.rating }</span>
-               </div>
-               <div className={styles.driverPrice}>
-                {Curs(info.price)}
-                <br/>
-                <span className={styles.driverCapacity}>{info.capacity} тонн</span>
-               </div>
-           </div> */}
 
            <div className={styles.driverInfoRow}>
                🚚 <span className={styles.driverLabel}>&nbsp;Транспорт:</span>&nbsp;{ info.transport }
@@ -911,4 +915,89 @@ const           DriverCard = (props:{ info, setPage }) => {
     )
 };
 
-export default DriverCard;
+const           DriverCard1 = (props:{ info }) => {
+
+  const info = props.info ;
+        function Curs(summ) {
+        let str = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(summ);
+        str = '₽ ' + str.replace('₽', '');
+        return str;
+    }
+      return (
+        <div className="cr-card mt-1"
+            // onClick={() => { info.type = "open"; props.setPage(info); }}
+        >
+            <div className="flex fl-space">
+              <div className="flex">
+                <IonIcon icon = { personCircleOutline } color="primary" className="w-2 h-2"/>
+                <div className="fs-09 ml-05">
+                  <div><b>{ info.client }</b></div>
+                  <div>⭐ { info.rating }</div>
+                </div>
+              </div>
+              <div className="fs-09 cl-prim">
+                <div><b>{ Curs( info.price ) }</b></div>
+                <div className="cl-black fs-08"><b>{ info.weight + ' тонн' }</b></div>                
+              </div>
+            </div>
+
+           <div className={styles.driverInfoRow}>
+               🚚 <span className={styles.driverLabel}>&nbsp;Транспорт:</span>&nbsp;{ info.transport }
+           </div>
+           <div className={styles.driverInfoRow}>
+               ⚖️ <span className={styles.driverLabel}>&nbsp;Грузоподъёмность:</span>&nbsp; { info.capacity }
+           </div>
+           <div className={styles.driverInfoRow}>
+               📦 <span className={styles.driverLabel}>&nbsp;Выполнено заказов:</span>&nbsp;{ info.ratingCount }
+           </div>
+
+           <div className={styles.driverComment}>
+               <b>Комментарий водителя:</b><br />
+               { info.comment ? info.comment : 'Без комментов'}
+           </div>
+
+          <div className={styles.flexContainer}>
+          <IonButton
+              className="w-50 cr-button-2"
+              mode="ios"
+              fill="clear"
+              color="primary"
+              onClick={(e) => {
+                e.stopPropagation(); // Предотвращаем всплытие события клика
+              }}
+            >
+              <IonIcon icon = { chatboxEllipsesOutline} className="w-06 h-06"/>
+              <span className="ml-1 fs-08"> Чат</span>
+            </IonButton>
+            {
+              info.accepted
+                ? <></>
+                : <></>
+            }
+            <IonButton
+              className="w-50 cr-button-1"
+              mode="ios"
+              color="warning"
+              onClick={async(e) => {
+                e.stopPropagation(); // Предотвращаем всплытие события клика
+                const res = await getData("setInv", {
+                    token:    Store.getState().login.token,
+                    id:       info.guid,
+                    status:   "Отказано"
+                })
+                console.log(res)
+                if( res.success ){
+                  exec("getInv", { token: Store.getState().login.token, guid: info.cargo }, "invoices")
+                  console.log( "success")
+                }
+                  
+              }}
+            >
+              <span className="ml-1 fs-08"> Отказать</span>
+            </IonButton>
+          </div>
+  
+      </div>
+    )
+};
+
