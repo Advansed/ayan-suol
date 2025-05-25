@@ -46,20 +46,26 @@ for(const [key, value] of Object.entries(i_state)){
 }
 
 
-export async function   getData(method : string, params){
-
+export async function getData(method: string, params: any) {
+    const { signal, ...requestParams } = params;
+    
     const res = await axios.post(
-            URL + method, params
+        URL + method, 
+        requestParams,
+        { signal } // Передаем signal в axios
     ).then(response => response.data)
-        .then((data) => {
-            if(data.Код === 200) console.log(data) 
-            return data
-        }).catch(error => {
-          console.log(error)
-          return {error: true, message: error}
-        })
+    .then((data) => {
+        if(data.Код === 200) console.log(data) 
+        return data
+    }).catch(error => {
+        if (error.name === 'AbortError') {
+            throw error; // Пробрасываем AbortError
+        }
+        console.log(error)
+        return {error: true, message: error}
+    })
+    
     return res
-
 }
 
 
