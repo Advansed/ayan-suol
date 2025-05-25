@@ -1,9 +1,35 @@
 import React, { useEffect, useState } from "react";
 import { exec, getData, Store } from "./Store";
-import { IonAlert, IonButton, IonCard, IonCardContent, IonIcon, IonInput, IonLabel, IonLoading, IonText, IonTextarea } from "@ionic/react";
+import { IonAlert, IonButton, IonIcon, IonLabel, IonLoading } from "@ionic/react";
+import { addCircleOutline, arrowBackOutline, chatboxEllipsesOutline, cloudUploadOutline, personCircleOutline, trashBinOutline } from "ionicons/icons";
+import { CargoBody } from "./CargoBody";
+import styles from './DriverCard.module.css';
+import DriverChat from "./DriverChat";
+import socketService from "./Sockets";
 import "./Cargos.css";
-import { useHistory } from "react-router";
-import { addCircleOutline, arrowBackOutline, calendarOutline, chatboxEllipsesOutline, chatbubbleOutline, cloudUploadOutline, locationOutline, personCircleOutline, trashBinOutline } from "ionicons/icons";
+
+
+interface CargoInfo {
+  guid: string;
+  name: string;
+  description: string;
+  address: {
+      city: string;
+      date: string;
+      address: string;
+  };
+  destiny: {
+      city: string;
+      date: string;
+      address: string;
+  };
+  weight: number;
+  volume: number;
+  price: number;
+  phone: string;
+  face: string;
+  status: string;
+}
 
 export function Cargos() {
     const [ page,   setPage ]   = useState<any>(0)
@@ -67,48 +93,62 @@ export function Cargos() {
     return elem 
 }
 
-function        List(props:{ info }){
-    const [ info, setInfo ]     = useState<any>([])
-    const [ modal, setModal ]   = useState<any>()
+function        List(props: { info: { setPage: (page: any) => void, setAlert: (alert: any) => void } }) {
+  const [cargos, setCargos] = useState<any>([])
+  
+  useEffect(() => {
 
-    const hist = useHistory()
+      setCargos(Store.getState().cargos)
+      
+      // Подписка на изменения cargos
+      Store.subscribe({
+          num: 101, 
+          type: "cargos", 
+          func: () => {
+              setCargos(Store.getState().cargos)
+              console.log("subscribe")
+              console.log(Store.getState().cargos)
+          }
+      })
+      
+      // Очистка подписки при размонтировании
+      return () => {
+          Store.unSubscribe(101)
+      }
 
-    useEffect(()=>{
-        setInfo( Store.getState().cargos )    
-    },[])
+  }, [])
 
-    Store.subscribe({num: 101, type: "cargos", func: ()=>{
-        setInfo( Store.getState().cargos )
-        console.log("subscribe")
-        console.log( Store.getState().cargos )
-    }})
+  let elem = <></>
 
+  if (cargos.length > 0) {
+      for (let i = 0; i < cargos.length; i++) {
+          elem = (
+              <>
+                  {elem}
+                  <Item info={cargos[i]} setPage={props.info.setPage} />
+              </>
+          )
+      }
+  }
 
-    let elem = <></>
+  return (
+      <>
+          <div className="ml-05 mt-1 a-center fs-09">
+              <b>Мои заказы</b>
+          </div>
 
-    if( info.length > 0 ) 
-        for( let i = 0; i < info.length; i++ ) {
-            elem = <>
-               { elem }
-               <Item info = { info[i] } setPage = { props.info.setPage }/>
-            </>
-        }
+          <div 
+              className="c-card mt-1 ml-1 mr-1 flex"
+              onClick={() => { props.info.setPage(1) }}
+          >
+              <IonIcon icon={addCircleOutline} className="w-15 h-15" />
+              <div className="ml-1 a-center w-70">Создать новый груз</div>
+          </div>
 
-    return <>
-        <div className="ml-05 mt-1 a-center fs-09">
-            {/* <IonIcon icon = { arrowBackOutline } className="w-15 h-15" /> */}
-            <b>Мои заказы</b>
-        </div>
+          {elem}
 
-        <div className="c-card mt-1 ml-1 mr-1 flex"
-            onClick={()=>{ props.info.setPage( 1 )}}
-        >
-            <IonIcon icon = { addCircleOutline} className="w-15 h-15"/>
-            <div className="ml-1 a-center w-70">Создать новый груз</div>
-        </div>
-        { elem }
-
-    </>
+      </>
+  )
 }
 
 function        NewService(props: { setPage }) {
@@ -157,7 +197,7 @@ function        NewService(props: { setPage }) {
           <div className="a-center w-90 fs-09"><b>Создать новый заказ</b></div>
         </div>
   
-        <Body info={ info } />
+        <CargoBody info={info} mode="edit" />
   
         <div className="flex mt-05">
           <div className="w-50"></div>
@@ -182,239 +222,11 @@ function        NewService(props: { setPage }) {
             <IonIcon icon={cloudUploadOutline} className="w-15 h-15" color="success" />
             <b className="fs-09 ml-1">Сохранить</b>
           </div>
-          {/* <div 
-            className="cr-card flex w-50"
-            onClick={async () => {
-              info.token = Store.getState().login.token
-              const res = await getData("delCargos", info)
-              if( res.success ) {
-                props.setPage(0)
-                const params = { token: Store.getState().login.token };
-                exec("getCargos", params, "cargos");
-              }
-          
-              console.log(res)
-            }}
-          >
-            <IonIcon icon={trashBinOutline} className="w-15 h-15" color="danger" />
-            <b className="fs-09 ml-1">Удалить</b>
-          </div> */}
         </div>
       </>
     );
   
     return elem;
-}
-
-function        Body(props: { info }) {
-    const info = props.info;
-    
-    return (
-      <div className="h-80 scroll">
-        <div className="cr-card mt-05">
-          <div className="fs-09"><b>Основная информация</b></div>
-          <div>
-            <div className="fs-08 mt-05"> Название </div>
-            <div className="c-input">
-              <IonInput 
-                className="custom-input"
-                value={info?.name}
-                onIonInput={(e) => {
-                  info.name = (e.detail.value as string)
-                }}
-              />
-            </div>
-          </div>
-          <div>
-            <div className="fs-08 mt-05"> Город отправления </div>
-            <div className="flex">
-              <IonIcon icon={locationOutline} className="w-10 h-15" color="danger"/>
-              <div className="c-input flex w-90">
-                <IonInput 
-                  className="custom-input"
-                  value={info.address.city}
-                  onIonInput={(e) => {
-                    info.address.city = (e.detail.value as string)
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <div className="fs-08 mt-05"> Город назначение </div>
-            <div className="flex">
-              <IonIcon icon={locationOutline} className="w-10 h-15" color="success"/>
-              <div className="c-input flex w-90">
-                <IonInput 
-                  className="custom-input"
-                  value={info.destiny.city}
-                  onIonInput={(e) => {
-                    info.destiny.city = (e.detail.value as string)
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="flex mt-05">
-            <div className="w-50">
-              <div className="fs-08"> Дата загрузки </div>
-              <div className="flex">
-                <div className="c-input ml-05">
-                  <IonInput 
-                    className="custom-input fs-08"
-                    value={info.address.date.substring(0, 10)}
-                    type="date"
-                    onIonInput={(e) => {
-                      info.address.date = e.detail.value as string
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="w-50 ml-05">
-              <div className="fs-08"> Дата выгрузки </div>
-              <div className="flex">
-                <IonIcon icon={calendarOutline} className="w-2 h-2" color="success"/>
-                <div className="c-input ml-05 mr-1">
-                  <IonInput 
-                    className="custom-input fs-08"
-                    value={info.destiny.date.substring(0, 10)}
-                    type="date"
-                    onIonInput={(e) => {
-                      info.destiny.date = e.detail.value as string
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div className="fs-08 mt-05"> Цена (₽) </div>
-            <div className="flex">
-              <div className="c-input flex w-100">
-                <IonInput 
-                  className="custom-input"
-                  value={info.price}
-                  onIonInput={(e) => {
-                    info.price = parseFloat(e.detail.value as string)
-                  }}                     
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="cr-card mt-05">
-          <div className="fs-09"><b>Информация о грузе </b></div>
-          <div>
-            <div className="fs-08 mt-05"> Вес (тонна) </div>
-            <div className="c-input">
-              <IonInput 
-                className="custom-input"
-                value={info.price}
-                onIonInput={(e) => {
-                  info.weight = parseFloat(e.detail.value as string)
-                }}                     
-              />
-            </div>
-          </div>
-          <div>
-            <div className="fs-08 mt-05"> Объем </div>
-            <div className="flex">
-              <div className="c-input flex w-100">
-                <IonInput 
-                  className="custom-input"
-                  value={info?.volume}
-                  onIonInput={(e) => {
-                    info.volume = parseFloat(e.detail.value as string)
-                  }}                                                     
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <div className="fs-08 mt-05"> Описание груза </div>
-            <div className="flex">
-              <div className="c-input flex w-100 fs-08">
-                <IonTextarea 
-                  value={info?.description}
-                  onIonInput={(e) => {
-                    info.description = (e.detail.value as string)
-                  }}                                                     
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="cr-card mt-05">
-          <div className="fs-09"><b>Адрес и контакты </b></div>
-          <div>
-            <div className="fs-08 mt-05"> Адрес погрузки </div>
-            <div className="c-input">
-              <IonInput 
-                className="custom-input"
-                value={info?.address.address}
-                onIonInput={(e) => {
-                  info.address.address = (e.detail.value as string)
-                }}                                                     
-              />
-            </div>
-          </div>
-          <div>
-            <div className="fs-08 mt-05"> Адрес разгрузки </div>
-            <div className="flex">
-              <div className="c-input flex w-100">
-                <IonInput 
-                  className="custom-input"
-                  value={info?.destiny.address}
-                  onIonInput={(e) => {
-                    info.destiny.address = (e.detail.value as string)
-                  }}                                                     
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <div className="fs-08 mt-05"> Контактное лицо</div>
-            <div className="c-input">
-              <IonInput 
-                className="custom-input"
-                value={info?.face}
-                onIonInput={(e) => {
-                  info.face = (e.detail.value as string)
-                }}                                                                             
-              />
-            </div>
-          </div>
-          <div>
-            <div className="fs-08 mt-05"> Телефон </div>
-            <div className="flex">
-              <div className="c-input flex w-100">
-                <IonInput 
-                  className="custom-input"
-                  value={info?.phone}
-                  onIonInput={(e) => {
-                    info.phone = (e.detail.value as string)
-                  }}                                                     
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-  
-        <div className="cr-card mt-05">
-          <div className="fs-09"><b> Статус заказа </b></div>
-          <div className="flex">
-            <div className="cr-chip">{info?.status}</div>
-            <IonText class="ml-1 fs-07">{"ID: " + info?.guid.substring(0, 8)}</IonText>
-          </div>
-          <div className="fs-09">
-            Ваш заказ в статусе "Новый", чтобы водители увидели ваш заказ его надо опубликовать
-          </div>
-        </div>
-      </div>
-    );
 }
   
 function        Service(props: { info, setPage, setUpd }) {
@@ -439,7 +251,7 @@ function        Service(props: { info, setPage, setUpd }) {
           <div className="a-center w-90 fs-09"><b>Создать новый заказ</b></div>
         </div>
   
-        <Body info={info} />
+        <CargoBody info={info} mode="edit" />
   
         <div className="flex mt-05">
           <div 
@@ -535,93 +347,14 @@ function        Service(props: { info, setPage, setUpd }) {
     return elem;
 }
 
- // Компонент для отображения информации о заказе
-function        Body1(props: { info }) {
-    const info = props.info;
-
-    function Curs(summ) {
-        let str = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(summ);
-        str = '₽ ' + str.replace('₽', '');
-        return str;
-    }
-    
-    return (
-      <>
-        <div className="flex fl-space">
-          <div className="flex">
-            <div className="cr-chip">{info.status}</div>
-            <IonText class="ml-1 fs-07">{"ID: " + info?.guid.substring(0, 6)}</IonText>
-          </div>
-          <div>
-            <IonText className="fs-09 cl-prim">
-              <b>{Curs(info.price)}</b>
-            </IonText>
-            <div className="fs-08 cl-black">
-              <b>{ info.weight + ' тонн' }</b>
-            </div>
-          </div>
+function        Item(props: { info: CargoInfo, setPage: (page: any) => void }) {    return (
+        <div className="cr-card mt-1" onClick={() => { 
+            const infoWithType = { ...props.info, type: "open" };
+            props.setPage(infoWithType); 
+        }}>
+            <CargoBody info={props.info} mode="view" />
         </div>
-        <div className="fs-08 mt-05">
-          <b>{info.name}</b>
-        </div>
-        <div className="flex fl-space mt-05">
-          <div className="flex">
-            <IonIcon icon={locationOutline} color="danger"/>
-            <div className="fs-08">
-              <div className="ml-1 fs-09 cl-gray">Откуда:</div>
-              <div className="ml-1 fs-09"><b>{info?.address.city}</b></div>                    
-            </div>
-          </div>
-          <div>
-            <div className="fs-08">
-              <div className="ml-1 fs-09 cl-gray">Дата загрузки:</div>
-              <div className="ml-1 fs-09"><b>{info?.address.date.substring(0, 10)}</b></div>                    
-            </div>
-          </div>
-        </div>
-        <div className="flex fl-space mt-05">
-          <div className="flex">
-            <IonIcon icon={locationOutline} color="success"/>
-            <div className="fs-08">
-              <div className="ml-1 fs-09 cl-gray">Куда:</div>
-              <div className="ml-1 fs-09"><b>{info?.destiny.city}</b></div>                    
-            </div>
-          </div>
-          <div>
-            <div className="fs-08">
-              <div className="ml-1 fs-09 cl-gray">Дата выгрузки:</div>
-              <div className="ml-1 fs-09"><b>{info?.destiny.date.substring(0, 10)}</b></div>                    
-            </div>
-          </div>
-        </div>
-        <div>
-          <div className="fs-08 mt-1 cr-detali">
-            <b>Детали груза:</b>
-            <div>
-              {info.description}
-            </div>
-          </div>
-        </div>
-      </>
     );
-}
-  
-  // Основной компонент элемента заказа
-function        Item(props: { info, setPage }) {
-    const info = props.info;
-  
-    const elem = (
-        <div className="cr-card mt-1"
-            onClick={() => { info.type = "open"; props.setPage(info); }}
-        >
-        
-        {/* Основное содержимое элемента заказа */}
-        <Body1 info={info} />
-  
-      </div>
-    );
-  
-    return elem;
 }
 
 function        Item1(props: { info, setPage, setUpd }) {
@@ -633,7 +366,7 @@ function        Item1(props: { info, setPage, setUpd }) {
         onClick={() => { info.type = "open";  props.setPage(info);  }}
       >
         {/* Основное содержимое элемента заказа */}
-        <Body1 info={info} />
+        <CargoBody info={props.info} mode="view" />
   
         {/* Кнопки действий внизу */}
         <div className="flex">
@@ -861,12 +594,6 @@ function        Page1(props:{ info, setPage, setUpd }){
     return elem
 
 }
-
-
-import styles from './DriverCard.module.css';
-import DeliveryCard from "./cards/DeliveredOrder";
-import DriverChat from "./DriverChat";
-import socketService from "./Sockets";
 
 const           DriverCard = (props:{ info, setPage }) => {
 
