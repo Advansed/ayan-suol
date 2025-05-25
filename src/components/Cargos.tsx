@@ -8,6 +8,7 @@ import DriverChat from "./DriverChat";
 import socketService from "./Sockets";
 import "./Cargos.css";
 import { CargoService } from "./CargoService";
+import { DriverInfo, InvoiceSection } from "./DriverCard";
 
 export function Cargos() {
     const [ page,   setPage ]   = useState<any>(0)
@@ -139,435 +140,85 @@ function        Item(props: { info: CargoInfo, setPage: (page: any) => void }) {
     );
 }
 
-function        Item1(props: { info, setPage, setUpd }) {
-    const info = props.info;
-  
-    const elem = (
-      <div 
-        className="cr-card mt-1"
-        onClick={() => { info.type = "open";  props.setPage(info);  }}
-      >
-        {/* Основное содержимое элемента заказа */}
-        <CargoBody info={props.info} mode="view" />
-  
-        {/* Кнопки действий внизу */}
-        <div className="flex">
-          <IonButton
-            className="w-50 cr-button-2"
-            mode="ios"
-            fill="clear"
-            color="primary"
-            onClick={(e) => {
-              e.stopPropagation(); // Предотвращаем всплытие события клика
-              info.type = "edit";
-              props.setPage(info);
-              props.setUpd()
-            }}
-          >
-            <IonLabel className="fs-08">Изменить заказ</IonLabel>
-          </IonButton>
-          <IonButton
-            className="w-50 cr-button-1"
-            mode="ios"
-            onClick={async (e) => {
-              e.stopPropagation(); // Предотвращаем всплытие события клика
-              if (info.status === "Новый") {
-                const res = await getData("Publish", {
-                  token: Store.getState().login.token,
-                  guid: info.guid
-                });
-                console.log(res);
-                if (res.success) {
-                  exec("getCargos", {
-                    token: Store.getState().login.token
-                  }, "cargos");
-                }    
-                props.setPage(0);
-              } else {
-                const res = await getData("setStatus", {
-                  token: Store.getState().login.token,
-                  guid: info.guid,
-                  status: "ОтменитьПубликацию"
-                });
-                console.log(res);
-                if (res.success) {
-                  exec("getCargos", {
-                    token: Store.getState().login.token
-                  }, "cargos");
-                }    
-                props.setPage(0);
-              }
-            }}
-          >
-            <IonLabel className="fs-08">
-              {info.status === "Новый" ? "Опубликовать" : "Отменить"}
-            </IonLabel>
-          </IonButton>
-        </div>
-      </div>
-    );
-  
-    return elem;
-}
+function        Page1(props: { info: any, setPage: (page: any) => void, setUpd: () => void }) {
+  const info = props.info;
+  const [load, setLoad] = useState<any>([]);
+  const [invoices, setInvoices] = useState<DriverInfo[]>([]);
+  const [upd, setUpd] = useState<any>([]);
 
-function        Page1(props:{ info, setPage, setUpd }){
-    const info = props.info
-    const [ load, setLoad ]         = useState<any>([])
-    const [ invoices, setInvoices]  = useState<any>([])
-    const [ upd,      setUpd]  = useState<any>([])
+  Store.subscribe({num: 102, type: "invoices", func: () => {
+      setInvoices(Store.getState().invoices);
+      setUpd(upd + 1);
+  }});
 
-    async function Connect(){
-      try {
-            
-        await socketService.connect( Store.getState().login.token );
+  useEffect(() => {
+      exec("getInv", { token: Store.getState().login.token, guid: info.guid }, "invoices");
+      return () => Store.unSubscribe(102);
+  }, []);
 
-          console.log('Socket подключен успешно');
-            
-            // Настройка обработчиков уведомлений
-            setupSocketHandlers();
-            
-        } catch (error) {
-            console.error('Ошибка подключения socket:', error);
-        }
-    }
+  // Группируем предложения по статусу
+  const groupedInvoices = {
+      ordered: invoices.filter(inv => inv.status === "Заказано"),
+      accepted: invoices.filter(inv => inv.status === "Принято"),
+      delivered: invoices.filter(inv => inv.status === "Доставлено")
+  };
 
-    function setupSocketHandlers() {
-      // Обработка новых сообщений в чате
-      socketService.onMessage('newMessage', (data) => {
-          // Обновляем состояние чата если нужно
-          console.log('Новое сообщение через socket:', data);
-      });
-  
-      // Обработка уведомлений о новых грузах для водителей
-      socketService.onNotification('newCargoAvailable', (data) => {
-          if (Store.getState().swap) { // Если пользователь - водитель
-              // Можно добавить в состояние уведомлений
-              Store.dispatch({ 
-                  type: "notification", 
-                  data: { 
-                      type: "newCargo", 
-                      message: `Новый груз: ${data.from} → ${data.to}` 
-                  }
-              });
-          }
-      });
-  
-      // Обработка предложений цены
-      socketService.onNotification('newPriceOffer', (data) => {
-          Store.dispatch({ 
-              type: "notification", 
-              data: { 
-                  type: "priceOffer", 
-                  message: `Новое предложение: ${data.price} руб.` 
-              }
-          });
-      });
-    }
-  
-    
-    Store.subscribe({num: 102, type: "invoices", func: ()=>{
+  return (
+      <div>
+          <IonLoading isOpen={load} message={"Подождите..."} />
+          
+          {/* Header */}
+          <div className="flex ml-05 mt-05">
+              <IonIcon icon={arrowBackOutline} className="w-15 h-15"
+                  onClick={() => props.setPage(0)}
+              />
+              <div className="a-center w-90 fs-09">
+                  <b>{"В ожидании #" + info.guid.substring(0, 8)}</b>
+              </div>
+          </div>
 
-
-      setInvoices( Store.getState().invoices )
-      setUpd( upd + 1 )
-      console.log("subscribe 102")
-     }})
-
-    useEffect(()=>{
-
-        Connect();
-
-        exec("getInv", { token: Store.getState().login.token, guid: info.guid }, "invoices")
-
-        return ()=>{
-          Store.unSubscribe( 102 )
-          socketService.disconnect()
-          console.log( "disconnect" )
-        }
-
-    },[])
-
-    let len = 0
-    let items = <>
-    </>
-
-    for( let i = 0; i < invoices.length; i++ ){
-      if(invoices[i].status === "Заказано") {
-        len = len + 1
-        if( len === 1) 
-          items = <>                    
-            <div  className="ml-1 mt-1">
-              <b><strong>Предложения от водителей ({ len })</strong></b>
-            </div>
-          </>
-        items = <>
-          { 
-            items 
-          }
-          <DriverCard info = { invoices[i]} setPage={ props.setPage} />
-        </>
-      }
-    }
-
-    for( let i = 0; i < invoices.length; i++ ){
-      if(invoices[i].status === "Принято") {
-        len = len + 1
-        if( len === 1) 
-          items = <>                    
-            <div  className="ml-1 mt-1">
-              <b><strong>Назначенные водители ({ len })</strong></b>
-            </div>
-          </>
-        items = <>
-          { 
-            items 
-          }
-          <DriverCard1 info = { invoices[i]} 
-            setPage={props.setPage} 
-          />
-        </>
-      }
-    }
-
-    for( let i = 0; i < invoices.length; i++ ){
-      if(invoices[i].status === "Доставлено") {
-        len = len + 1
-        if( len === 1) 
-          items = <>                    
-            <div  className="ml-1 mt-1">
-              <b><strong>Доставленные ({ len })</strong></b>
-            </div>
-          </>
-        items = <>
-          { 
-            items 
-          }
-          <DriverCard1 info = { invoices[i] } setPage = { props.setPage } />
-        </>
-      }
-    }
-
-    const elem = <>
-        <div>
-            <IonLoading isOpen = { load } message={"Подождите..."}/>
-            <div className="flex ml-05 mt-05">
-                <IonIcon icon = { arrowBackOutline } className="w-15 h-15"
-                    onClick={()=>{
-                        props.setPage( 0 )
-                    }}
-                />
-                <div className="a-center w-90 fs-09"><b>{ "В ожидании #" + info.guid.substring(0, 8) }</b></div>
-            </div>
-            <Item1 info ={ info } setPage = { props.setPage } setUpd = { props.setUpd }/>
-        </div>
-        <div>
-          { items }
-          {/* <>                    
-            <div  className="ml-1 mt-1">
-              <b><strong>Доставленные заказы (N)</strong></b>
-            </div>
-          </>
-          <DeliveryCard /> */}
-        </div>
-    </>
-
-
-    
-    return elem
-
-}
-
-const           DriverCard = (props:{ info, setPage }) => {
-
-  const info = props.info ;
-        function Curs(summ) {
-        let str = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(summ);
-        str = '₽ ' + str.replace('₽', '');
-        return str;
-    }
-      return (
-        <div className="cr-card mt-1"
-            // onClick={() => { info.type = "open"; props.setPage(info); }}
-        >
-            <div className="flex fl-space">
+          {/* Карточка груза */}
+          <div className="cr-card mt-1" onClick={() => { 
+              props.setPage({ ...info, type: "edit" }); 
+          }}>
+              <CargoBody info={info} mode="view" />
+              
+              {/* Кнопки управления */}
               <div className="flex">
-                <IonIcon icon = { personCircleOutline } color="primary" className="w-2 h-2"/>
-                <div className="fs-09 ml-05">
-                  <div><b>{ info.client }</b></div>
-                  <div>⭐ { info.rating }</div>
-                </div>
-              </div>
-              <div className="fs-09 cl-prim">
-                <div><b>{ Curs( info.price ) }</b></div>
-                <div className="cl-black fs-08"><b>{ info.weight + ' тонн' }</b></div>                
-              </div>
-            </div>
-
-           <div className={styles.driverInfoRow}>
-               🚚 <span className={styles.driverLabel}>&nbsp;Транспорт:</span>&nbsp;{ info.transport }
-           </div>
-           <div className={styles.driverInfoRow}>
-               ⚖️ <span className={styles.driverLabel}>&nbsp;Грузоподъёмность:</span>&nbsp; { info.capacity }
-           </div>
-           <div className={styles.driverInfoRow}>
-               📦 <span className={styles.driverLabel}>&nbsp;Выполнено заказов:</span>&nbsp;{ info.ratingCount }
-           </div>
-
-           <div className={styles.driverComment}>
-               <b>Комментарий водителя:</b><br />
-               { info.comment ? info.comment : 'Без комментов'}
-           </div>
-
-          <div className={styles.flexContainer}>
-          <IonButton
-              className="w-50 cr-button-2"
-              mode="ios"
-              fill="clear"
-              color="primary"
-              onClick={(e) => {
-                // info.type = 'chat'
-                info.type = "chat"; props.setPage(info); 
-                e.stopPropagation(); // Предотвращаем всплытие события клика
-              }}
-            >
-              <IonIcon icon = { chatboxEllipsesOutline} className="w-06 h-06"/>
-              <span className="ml-1 fs-08"> Чат</span>
-            </IonButton>
-            {
-              info.accepted
-                ? <></>
-                : <>
-                    <IonButton
-                      className="w-50 cr-button-1"
+                  <IonButton
+                      className="w-50 cr-button-2"
                       mode="ios"
+                      fill="clear"
                       color="primary"
-                      onClick={async(e) => {
-                        e.stopPropagation(); // Предотвращаем всплытие события клика
-                        const res = await getData("setInv", {
-                            token:    Store.getState().login.token,
-                            id:       info.guid,
-                            status:   "Принято"
-                        })
-                        console.log(res)
-                        if( res.success )
-                          exec("getInv", { token: Store.getState().login.token, guid: info.cargo }, "invoices")
+                      onClick={(e) => {
+                          e.stopPropagation();
+                          props.setPage({ ...info, type: "edit" });
+                          props.setUpd();
                       }}
-                    >
-                      <span className="ml-1 fs-08"> Выбрать</span>
-                    </IonButton>
-                </>
-            }
-            <IonButton
-              className="w-50 cr-button-1"
-              mode="ios"
-              color="warning"
-              onClick={async(e) => {
-                e.stopPropagation(); // Предотвращаем всплытие события клика
-                const res = await getData("setInv", {
-                    token:    Store.getState().login.token,
-                    id:       info.guid,
-                    status:   "Отказано"
-                })
-                console.log(res)
-                if( res.success ){
-                  exec("getInv", { token: Store.getState().login.token, guid: info.cargo }, "invoices")
-                  console.log( "success")
-                }
-                  
-              }}
-            >
-              <span className="ml-1 fs-08"> Отказать</span>
-            </IonButton>
-          </div>
-  
-      </div>
-    )
-};
-
-const           DriverCard1 = (props:{ info, setPage }) => {
-
-  const info = props.info ;
-        function Curs(summ) {
-        let str = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(summ);
-        str = '₽ ' + str.replace('₽', '');
-        return str;
-    }
-      return (
-        <div className="cr-card mt-1"
-            // onClick={() => { info.type = "open"; props.setPage(info); }}
-        >
-            <div className="flex fl-space">
-              <div className="flex">
-                <IonIcon icon = { personCircleOutline } color="primary" className="w-2 h-2"/>
-                <div className="fs-09 ml-05">
-                  <div><b>{ info.client }</b></div>
-                  <div>⭐ { info.rating }</div>
-                </div>
+                  >
+                      <IonLabel className="fs-08">Изменить заказ</IonLabel>
+                  </IonButton>
               </div>
-              <div className="fs-09 cl-prim">
-                <div><b>{ Curs( info.price ) }</b></div>
-                <div className="cl-black fs-08"><b>{ info.weight + ' тонн' }</b></div>                
-              </div>
-            </div>
-
-           <div className={styles.driverInfoRow}>
-               🚚 <span className={styles.driverLabel}>&nbsp;Транспорт:</span>&nbsp;{ info.transport }
-           </div>
-           <div className={styles.driverInfoRow}>
-               ⚖️ <span className={styles.driverLabel}>&nbsp;Грузоподъёмность:</span>&nbsp; { info.capacity }
-           </div>
-           <div className={styles.driverInfoRow}>
-               📦 <span className={styles.driverLabel}>&nbsp;Выполнено заказов:</span>&nbsp;{ info.ratingCount }
-           </div>
-
-           <div className={styles.driverComment}>
-               <b>Комментарий водителя:</b><br />
-               { info.comment ? info.comment : 'Без комментов'}
-           </div>
-
-          <div className={styles.flexContainer}>
-          <IonButton
-              className="w-50 cr-button-2"
-              mode="ios"
-              fill="clear"
-              color="primary"
-              onClick={(e) => {
-                info.type = "chat"; props.setPage(info); 
-                e.stopPropagation(); // Предотвращаем всплытие события клика
-              }}
-            >
-              <IonIcon icon = { chatboxEllipsesOutline} className="w-06 h-06"/>
-              <span className="ml-1 fs-08"> Чат</span>
-            </IonButton>
-            {
-              info.accepted
-                ? <></>
-                : <></>
-            }
-            <IonButton
-              className="w-50 cr-button-1"
-              mode="ios"
-              color="warning"
-              onClick={async(e) => {
-                e.stopPropagation(); // Предотвращаем всплытие события клика
-                const res = await getData("setInv", {
-                    token:    Store.getState().login.token,
-                    id:       info.guid,
-                    status:   "Отказано"
-                })
-                console.log(res)
-                if( res.success ){
-                  exec("getInv", { token: Store.getState().login.token, guid: info.cargo }, "invoices")
-                  console.log( "success")
-                }
-                  
-              }}
-            >
-              <span className="ml-1 fs-08"> Отказать</span>
-            </IonButton>
           </div>
-  
-      </div>
-    )
-};
 
+          {/* Секции с предложениями */}
+          <InvoiceSection 
+              title="Предложения от водителей"
+              invoices={groupedInvoices.ordered}
+              mode="active"
+              setPage={props.setPage}
+          />
+          <InvoiceSection 
+              title="Назначенные водители"
+              invoices={groupedInvoices.accepted}
+              mode="active"
+              setPage={props.setPage}
+          />
+          <InvoiceSection 
+              title="Доставленные"
+              invoices={groupedInvoices.delivered}
+              mode="completed"
+          />
+      </div>
+  );
+}
