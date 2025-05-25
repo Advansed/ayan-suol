@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react"
-import { exec, getData, Store } from "./Store"
-import { IonButton, IonCard, IonCheckbox, IonIcon, IonInput, IonLabel, IonLoading, IonSegment, IonSegmentButton, IonTextarea, IonToggle } from "@ionic/react"
+import { useEffect, useState, useRef, useCallback } from "react"
+import { getData, Store } from "./Store"
+import { IonButton, IonIcon, IonInput, IonLabel, IonLoading, IonSegment, IonSegmentButton, IonTextarea, IonToggle } from "@ionic/react"
 import './profile.css'
 import { arrowBackOutline, chevronForwardOutline, personOutline } from "ionicons/icons"
 import { takePicture } from "./Files"
-import { IInput } from "./Classes"
-
 
 export function Profile() {
     const [ info,   setInfo ]   = useState<any>()
@@ -41,11 +39,9 @@ export function Profile() {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
       
-        // Загружаем изображение из строки Base64
         const img = new Image();
         img.src = base64String;
       
-        // Ждем загрузки изображения
         img.onload = function() {
           // Рассчитываем новые размеры, сохраняя пропорции
           let width = img.width;
@@ -110,7 +106,6 @@ export function Profile() {
 
         const elem = <>
             <div>
-    
                 <div className=""
                     onClick={()=>{
                         setPage(0)
@@ -173,9 +168,7 @@ export function Profile() {
                             </IonTextarea>
                         </div>
                     </div>
-                    
                 </div>
-        
             </div>
        </>
     
@@ -207,7 +200,6 @@ export function Profile() {
 
         const elem = <>
             <div>
-    
                 <div className=""
                     onClick={()=>{
                         setPage(0)
@@ -294,13 +286,9 @@ export function Profile() {
                     <div className="mt-05">
                         <div>Документы</div>
                     </div>
-                    
                 </div>
-        
             </div>
-       </>
-    
-        return elem
+        )
     }
 
     function Password(){
@@ -440,7 +428,6 @@ export function Profile() {
                     <div className = "fs-12"> <b>Уведомления</b></div>
                     
                     <div className="flex fl-space">
-
                         <div className="mt-1">
                             <div>
                                 <b>email уведомления</b>
@@ -456,7 +443,6 @@ export function Profile() {
                                 info.email = e.detail.checked
                             }}
                         />
-
                     </div>
                     
                     <div className="flex fl-space">
@@ -476,11 +462,9 @@ export function Profile() {
                                 info.sms = e.detail.checked
                             }}
                         />
-
                     </div>
 
                     <div className="flex fl-space">
-
                         <div className="mt-1">
                             <div>
                                 <b>Новые заказы</b>
@@ -783,4 +767,3 @@ export function Profile() {
 
     return elem
 }
-
