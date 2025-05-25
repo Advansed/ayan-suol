@@ -31,7 +31,7 @@ export function Cargos() {
             }
 
         </div>  
-        {console.log(page.type,'asdkasdksa')}
+
         <IonAlert
                 isOpen = { alert !== undefined }
                 onDidDismiss={ ()=> { setAlert( undefined ) }}
@@ -61,6 +61,7 @@ export function Cargos() {
                     },
                 ]}
         ></IonAlert>
+        
     </>
 
     return elem 
@@ -700,17 +701,75 @@ function        Page1(props:{ info, setPage, setUpd }){
     const [ invoices, setInvoices]  = useState<any>([])
     const [ upd,      setUpd]  = useState<any>([])
 
+    async function Connect(){
+      try {
+            
+        await socketService.connect( Store.getState().login.token );
+
+          console.log('Socket подключен успешно');
+            
+            // Настройка обработчиков уведомлений
+            setupSocketHandlers();
+            
+        } catch (error) {
+            console.error('Ошибка подключения socket:', error);
+        }
+    }
+
+    function setupSocketHandlers() {
+      // Обработка новых сообщений в чате
+      socketService.onMessage('newMessage', (data) => {
+          // Обновляем состояние чата если нужно
+          console.log('Новое сообщение через socket:', data);
+      });
+  
+      // Обработка уведомлений о новых грузах для водителей
+      socketService.onNotification('newCargoAvailable', (data) => {
+          if (Store.getState().swap) { // Если пользователь - водитель
+              // Можно добавить в состояние уведомлений
+              Store.dispatch({ 
+                  type: "notification", 
+                  data: { 
+                      type: "newCargo", 
+                      message: `Новый груз: ${data.from} → ${data.to}` 
+                  }
+              });
+          }
+      });
+  
+      // Обработка предложений цены
+      socketService.onNotification('newPriceOffer', (data) => {
+          Store.dispatch({ 
+              type: "notification", 
+              data: { 
+                  type: "priceOffer", 
+                  message: `Новое предложение: ${data.price} руб.` 
+              }
+          });
+      });
+    }
+  
+    
     Store.subscribe({num: 102, type: "invoices", func: ()=>{
+
+
       setInvoices( Store.getState().invoices )
       setUpd( upd + 1 )
       console.log("subscribe 102")
      }})
 
     useEffect(()=>{
+
+        Connect();
+
         exec("getInv", { token: Store.getState().login.token, guid: info.guid }, "invoices")
+
         return ()=>{
           Store.unSubscribe( 102 )
+          socketService.disconnect()
+          console.log( "disconnect" )
         }
+
     },[])
 
     let len = 0
@@ -748,8 +807,8 @@ function        Page1(props:{ info, setPage, setUpd }){
           { 
             items 
           }
-          <DriverCard info = { invoices[i]} 
-          setPage={props.setPage} 
+          <DriverCard1 info = { invoices[i]} 
+            setPage={props.setPage} 
           />
         </>
       }
@@ -768,7 +827,7 @@ function        Page1(props:{ info, setPage, setUpd }){
           { 
             items 
           }
-          <DriverCard1 info = { invoices[i]} />
+          <DriverCard1 info = { invoices[i] } setPage = { props.setPage } />
         </>
       }
     }
@@ -807,6 +866,7 @@ function        Page1(props:{ info, setPage, setUpd }){
 import styles from './DriverCard.module.css';
 import DeliveryCard from "./cards/DeliveredOrder";
 import DriverChat from "./DriverChat";
+import socketService from "./Sockets";
 
 const           DriverCard = (props:{ info, setPage }) => {
 
@@ -915,7 +975,7 @@ const           DriverCard = (props:{ info, setPage }) => {
     )
 };
 
-const           DriverCard1 = (props:{ info }) => {
+const           DriverCard1 = (props:{ info, setPage }) => {
 
   const info = props.info ;
         function Curs(summ) {
@@ -963,6 +1023,7 @@ const           DriverCard1 = (props:{ info }) => {
               fill="clear"
               color="primary"
               onClick={(e) => {
+                info.type = "chat"; props.setPage(info); 
                 e.stopPropagation(); // Предотвращаем всплытие события клика
               }}
             >
