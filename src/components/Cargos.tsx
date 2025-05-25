@@ -2,34 +2,12 @@ import React, { useEffect, useState } from "react";
 import { exec, getData, Store } from "./Store";
 import { IonAlert, IonButton, IonIcon, IonLabel, IonLoading } from "@ionic/react";
 import { addCircleOutline, arrowBackOutline, chatboxEllipsesOutline, cloudUploadOutline, personCircleOutline, trashBinOutline } from "ionicons/icons";
-import { CargoBody } from "./CargoBody";
+import { CargoBody, CargoInfo } from "./CargoBody";
 import styles from './DriverCard.module.css';
 import DriverChat from "./DriverChat";
 import socketService from "./Sockets";
 import "./Cargos.css";
-
-
-interface CargoInfo {
-  guid: string;
-  name: string;
-  description: string;
-  address: {
-      city: string;
-      date: string;
-      address: string;
-  };
-  destiny: {
-      city: string;
-      date: string;
-      address: string;
-  };
-  weight: number;
-  volume: number;
-  price: number;
-  phone: string;
-  face: string;
-  status: string;
-}
+import { CargoService } from "./CargoService";
 
 export function Cargos() {
     const [ page,   setPage ]   = useState<any>(0)
@@ -46,9 +24,9 @@ export function Cargos() {
                   page === 0 
                     ? <List info = {{ setPage: setPage, setAlert }}/>
                 : page === 1 
-                    ? <NewService setPage = { setPage } />
+                    ? <CargoService mode="create" setPage={setPage} />
                 : page.type === "edit"
-                    ? <Service info = { page } setPage = { setPage } setUpd = { Upd }/>
+                    ? <CargoService mode="edit" info={page} setPage={setPage} setUpd={Upd} />
                 : page.type === "open"
                     ? <Page1 info = { page } setPage = { setPage }  setUpd = { Upd }/>
                 : page.type === "chat"
@@ -149,202 +127,6 @@ function        List(props: { info: { setPage: (page: any) => void, setAlert: (a
 
       </>
   )
-}
-
-function        NewService(props: { setPage }) {
-    const info = {
-      guid:         "",  
-      token:        Store.getState().login.token,
-      name:         "",
-      description:  "",
-      address: {
-        lat:        "",
-        long:       "",
-        address:    "",
-        date:       "",
-        city:       ""
-      },
-      destiny: {
-        lat:        "",
-        long:       "",
-        address:    "",
-        date:       "",
-        city:       ""
-      },
-      dimensions:   "",
-      face:         "",
-      weight:       0,
-      volume:       0,
-      price:        0.00,
-      phone:        "",
-      files:        [],
-    }
-  
-    const [load, setLoad] = useState(false)
-    const [modal1, setModal1] = useState(false)
-      
-    const elem = (
-      <>
-        <IonLoading isOpen={load} message={"Подождите..."} />
-        <div className="flex ml-05 mt-05">
-          <IonIcon 
-            icon={arrowBackOutline} 
-            className="w-15 h-15"
-            onClick={() => {
-              props.setPage(0)
-            }}
-          />
-          <div className="a-center w-90 fs-09"><b>Создать новый заказ</b></div>
-        </div>
-  
-        <CargoBody info={info} mode="edit" />
-  
-        <div className="flex mt-05">
-          <div className="w-50"></div>
-          <div 
-            className="cr-card flex w-50"
-            onClick={async () => {
-              setLoad(true)
-              info.token = Store.getState().login.token
-              console.log(info)
-  
-              const res = await getData("saveCargo", info)
-                
-              if( res.success ) {
-                    props.setPage(0)
-                    const params = { token: Store.getState().login.token };
-                    exec("getCargos", params, "cargos");
-              }
-              setLoad(false)
-              console.log(res)
-            }}
-          >
-            <IonIcon icon={cloudUploadOutline} className="w-15 h-15" color="success" />
-            <b className="fs-09 ml-1">Сохранить</b>
-          </div>
-        </div>
-      </>
-    );
-  
-    return elem;
-}
-  
-function        Service(props: { info, setPage, setUpd }) {
-    const info = props.info;
-    const [load, setLoad] = useState(false);
-    const [modal1, setModal1] = useState(false);
-  
-    const elem = (
-      <>
-        <IonLoading isOpen={load} message={"Подождите..."} />
-        <div className="flex ml-05 mt-05">
-          <IonIcon 
-            icon={arrowBackOutline} 
-            className="w-15 h-15"
-            onClick={() => {
-              info.type = "open"
-              props.setPage( info );
-              props.setUpd()
-              console.log( "backsd")
-            }}
-          />
-          <div className="a-center w-90 fs-09"><b>Создать новый заказ</b></div>
-        </div>
-  
-        <CargoBody info={info} mode="edit" />
-  
-        <div className="flex mt-05">
-          <div 
-            className="cr-card flex w-50"
-            onClick={async () => {
-              setLoad(true);
-              info.token = Store.getState().login.token;
-              console.log(info);
-  
-              const res = await getData("saveCargo", info);
-  
-              setLoad(false);
-              console.log(res);
-  
-              if (res.success) {
-                const params = { token: Store.getState().login.token };
-                exec("getCargos", params, "cargos");
-              } else Store.dispatch({ type: "error", data: res.message })
-
-            }}
-          >
-            <IonIcon icon={cloudUploadOutline} className="w-15 h-15" color="success" />
-            <b className="fs-09 ml-1">Сохранить</b>
-          </div>
-          <div 
-            className="cr-card flex w-50"
-            onClick={async () => {
-                setLoad( true )
-                info.token = Store.getState().login.token;
-                const res = await getData("delCargo", info);
-                console.log(res);
-                if(res.success){
-                    exec("getCargos", {
-                        token: Store.getState().login.token
-                    }, "cargos");
-                } else {
-                        Store.dispatch({ type: "error", data: res.message })
-                        console.log("error message ")
-                }
-                setLoad( false )
-            }}
-          >
-            <IonIcon icon={trashBinOutline} className="w-15 h-15" color="danger" />
-            <b className="fs-09 ml-1">Удалить</b>
-          </div>
-        </div>
-  
-        <div className="ml-1 mr-1">
-          {
-            info?.status === "Новый" || info?.status === "В ожидании" || info?.status === "Отменен"
-              ? (
-                <IonButton
-                  mode="ios"
-                  expand="block"
-                  onClick={async () => {
-                    console.log("click")
-                    setLoad( false )
-                    if (info.status === "Новый" || info.status === "Отменен") {
-                      const res = await getData("setStatus", {
-                        token: Store.getState().login.token,
-                        guid: info.guid,
-                        status: "В ожидании"
-                      });
-                      console.log(res);
-                      if (res.success) {
-                        console.log("exec statis");
-                        info.status = "В ожидании";
-                        exec("getCargos", {
-                          token: Store.getState().login.token
-                        }, "cargos");
-                      } else {
-                         Store.dispatch({ type: "error", data: res.message })
-                         console.log("error message ")
-                      }
-                      props.setPage(0);
-                    }
-                    setLoad( false )
-                  }}
-                >
-                  {
-                    info.status === "Новый" || info.status === "Отменен"
-                      ? "Опубликовать"
-                      : "Снять публикацию"
-                  }
-                </IonButton>
-              )
-              : null
-          }
-        </div>
-      </>
-    );
-  
-    return elem;
 }
 
 function        Item(props: { info: CargoInfo, setPage: (page: any) => void }) {    return (

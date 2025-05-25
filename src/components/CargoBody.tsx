@@ -1,6 +1,28 @@
 import { IonIcon, IonInput, IonText, IonTextarea } from "@ionic/react";
 import { calendarOutline, locationOutline } from "ionicons/icons";
 
+export interface CargoInfo {
+    guid: string;
+    name: string;
+    description: string;
+    address: {
+        city: string;
+        date: string;
+        address: string;
+    };
+    destiny: {
+        city: string;
+        date: string;
+        address: string;
+    };
+    weight: number;
+    volume: number;
+    price: number;
+    phone: string;
+    face: string;
+    status: string;
+  }
+  
 // ОБЪЕДИНЕННЫЙ КОМПОНЕНТ CargoBody
 export interface CargoBodyProps {
     info: any;
@@ -332,17 +354,3 @@ export function CargoBody({ info, mode, readonly = false }: CargoBodyProps) {
     );
 }
 
-// ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ:
-
-// Замена Body:
-// <Body info={info} />
-// ↓
-// <CargoBody info={info} mode="edit" />
-
-// Замена Body1:  
-// <Body1 info={info} />
-// ↓
-// <CargoBody info={info} mode="view" />
-
-// Режим только для чтения:
-// <CargoBody info={info} mode="edit" readonly={true} />
