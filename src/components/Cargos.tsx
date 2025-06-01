@@ -8,6 +8,7 @@ import "./Cargos.css";
 import { CargoService } from "./CargoService";
 import { DriverInfo, InvoiceSection } from "./DriverCard";
 
+
 export function Cargos() {
     const [page, setPage] = useState<any>(0)
     const [upd, setUpd] = useState(0)
@@ -189,7 +190,7 @@ function Page1(props: { info: any, setPage: (page: any) => void, setUpd: () => v
         }
     }, [safeSetState, upd]);
 
-    // Загрузка данных с AbortController
+    // Socket.IO подключение и загрузка данных
     useEffect(() => {
         isMountedRef.current = true
         
@@ -204,6 +205,10 @@ function Page1(props: { info: any, setPage: (page: any) => void, setUpd: () => v
 
             try {
                 safeSetState(() => setLoad(true))
+                
+                // Подключаемся к Socket.IO
+                const token = Store.getState().login.token;
+                const userId = Store.getState().login.phone;
                 
                 // Выполняем запрос с возможностью отмены
                 await execWithAbort(
@@ -225,14 +230,36 @@ function Page1(props: { info: any, setPage: (page: any) => void, setUpd: () => v
             }
         }
 
+        // Функция для перезагрузки предложений
+        const refreshInvoices = async () => {
+            if (!isMountedRef.current) return;
+            
+            try {
+                await execWithAbort(
+                    "getInv", 
+                    { 
+                        token: Store.getState().login.token, 
+                        guid: info.guid 
+                    }, 
+                    "invoices"
+                );
+            } catch (error) {
+                console.error('Ошибка обновления предложений:', error);
+            }
+        };
+
         loadData()
 
         // Cleanup функция
         return () => {
             isMountedRef.current = false
+            
+            // Отменяем HTTP запросы
             if (abortControllerRef.current) {
                 abortControllerRef.current.abort()
             }
+            
+            // Покидаем комнату груза и очищаем обработчики
         }
     }, [info.guid, safeSetState]);
 
@@ -285,13 +312,13 @@ function Page1(props: { info: any, setPage: (page: any) => void, setUpd: () => v
             <InvoiceSection 
                 title="Предложения от водителей"
                 invoices={groupedInvoices.ordered}
-                mode="active"
+                mode="offered"
                 setPage={props.setPage}
             />
             <InvoiceSection 
                 title="Назначенные водители"
                 invoices={groupedInvoices.accepted}
-                mode="active"
+                mode="assigned"
                 setPage={props.setPage}
             />
             <InvoiceSection 
@@ -302,7 +329,6 @@ function Page1(props: { info: any, setPage: (page: any) => void, setUpd: () => v
         </div>
     );
 }
-
 // Вспомогательная функция для выполнения exec с поддержкой AbortController
 async function execWithAbort(method: string, params: any, name: string, signal?: AbortSignal) {
     // Добавляем signal к параметрам если поддерживается

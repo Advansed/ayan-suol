@@ -1,6 +1,7 @@
 import { combineReducers  } from 'redux'
 import axios from 'axios'
 import { Reducer } from 'react';
+import socketService from "./Sockets";
 
 export const reducers: Array<Reducer<any, any>> = []
 
@@ -142,14 +143,39 @@ export async function exec( method, params, name ){
     
 }
 
+async function Connect( token ){
+    try {
+        await socketService.connect(token);
+        
+        console.log('Socket.IO подключен успешно');
+                       
+        // Настраиваем обработчики событий
+        setupSocketHandlers();
+                       
+    } catch (socketError) {
+        console.error('Ошибка подключения Socket.IO:', socketError);
+        // Продолжаем работу без Socket.IO
+    }
+
+}
+
+        // Настройка обработчиков Socket событий
+const setupSocketHandlers = () => {
+            
+    // Общий обработчик уведомлений
+    socketService.onNotification('notification', (data) => {
+        console.log( "notification" )
+    });
+};
+
 Store.subscribe({ num: 1001, type: "login", func: ()=>{ 
 
     const params = { token: Store.getState().login.token }
 
-    exec("getCargos", params, "cargos")
+   // exec("getCargos", params, "cargos")
       
-    exec("getTransport", params, "transport")
+   // exec("getTransport", params, "transport")
 
-
+    Connect( Store.getState().login.token )
 }})
 

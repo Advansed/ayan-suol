@@ -22,7 +22,7 @@ export interface DriverInfo {
 
 interface DriverCardProps {
     info: DriverInfo;
-    mode: 'active' | 'completed';
+    mode: 'offered' | 'assigned' | 'completed';
     setPage?: (page: any) => void;
 }
 
@@ -84,8 +84,7 @@ export const DriverCard = ({ info, mode, setPage }: DriverCardProps) => {
         }
     };
 
-    const shouldShowAcceptButton = mode === 'active' && !info.accepted;
-    const shouldShowRejectButton = mode === 'active' || mode === 'completed';
+    const shouldShowAcceptButton = mode === 'offered' && !info.accepted;
 
     return (
         <div className="cr-card mt-1">
@@ -136,7 +135,7 @@ export const DriverCard = ({ info, mode, setPage }: DriverCardProps) => {
                     <span className="ml-1 fs-08">Чат</span>
                 </IonButton>
 
-                {shouldShowAcceptButton && (
+                { shouldShowAcceptButton && (
                     <IonButton
                         className="w-50 cr-button-1"
                         mode="ios"
@@ -147,7 +146,7 @@ export const DriverCard = ({ info, mode, setPage }: DriverCardProps) => {
                     </IonButton>
                 )}
 
-                {shouldShowRejectButton && (
+                { true && (
                     <IonButton
                         className="w-50 cr-button-1"
                         mode="ios"
@@ -166,7 +165,7 @@ export const DriverCard = ({ info, mode, setPage }: DriverCardProps) => {
 export const InvoiceSection = ({ title, invoices, mode, setPage }: {
     title: string;
     invoices: DriverInfo[];
-    mode: 'active' | 'completed';
+    mode: 'offered' | 'assigned' | 'completed';
     setPage?: (page: any) => void;
 }) => {
     if (invoices.length === 0) return null;
