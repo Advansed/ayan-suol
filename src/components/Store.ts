@@ -1,14 +1,13 @@
 import { combineReducers  } from 'redux'
 import axios from 'axios'
 import { Reducer } from 'react';
-import socketService from "./Sockets";
+import { socketService } from './Sockets';
 
 export const reducers: Array<Reducer<any, any>> = []
 
 export let listeners: Array<any> = []
 
 export const i_state = {
-
     auth:                               false,
     swap:                               false,
     login:                              "",
@@ -16,6 +15,7 @@ export const i_state = {
     back:                               0,
     message:                            '',
     cargos:                             [],
+    works:                              [],
     transport:                          new Object(),
     orgs:                               new Object(),     
     profile:                            [],
@@ -23,7 +23,6 @@ export const i_state = {
     invoices:                           [],
     error:                              "",
 }
-
 
 for(const [key, value] of Object.entries(i_state)){
     reducers.push(
@@ -36,16 +35,13 @@ for(const [key, value] of Object.entries(i_state)){
                         } else {
                             return action.data
                         }
-
                     } else return action.data
                 }
                 default: return state;
             }       
         }
-
     )
 }
-
 
 export async function getData(method: string, params: any) {
     const { signal, ...requestParams } = params;
@@ -69,8 +65,7 @@ export async function getData(method: string, params: any) {
     return res
 }
 
-
-function                create_Store(reducer, initialState) {
+function create_Store(reducer, initialState) {
     const currentReducer = reducer;
     let currentState = initialState;
     return {
@@ -109,19 +104,13 @@ function                create_Store(reducer, initialState) {
 
 const reduct: any = {}
 
-
 Object.keys(i_state).map((e, i)=>{ reduct[e] = reducers[i]})
 
+const rootReducer = combineReducers( reduct )
 
-const                   rootReducer = combineReducers( reduct )
+export const Store = create_Store(rootReducer, i_state)
 
-
-export const Store   =  create_Store(rootReducer, i_state)
-
-
-//export const URL = "https://fhd.aostng.ru/services/hs/API/V1/"
 export const URL = "https://gruzreis.ru/services/hs/api/v1/"
-
 
 export function Phone(phone): string {
     if(phone === undefined) return ""
@@ -135,47 +124,120 @@ export function Phone(phone): string {
 }
 
 export async function exec( method, params, name ){
-
     const res = await getData( method,  params )
     console.log( method );
     console.log( res );
     Store.dispatch({ type: name, data: res.data})
-    
 }
 
-async function Connect( token ){
+// Функция подключения к Socket.IO
+async function Connect( token, driver ){     
+    
     try {
-        await socketService.connect(token);
-        
+        await socketService.connect(token);                  
         console.log('Socket.IO подключен успешно');
-                       
+        
+        // Отправляем токен для аутентификации
+        socketService.emit('authenticate', { token: token, driver: driver });
+        
         // Настраиваем обработчики событий
-        setupSocketHandlers();
-                       
+        if( driver )
+            setupSocketHandlers1();                             
+        else 
+            setupSocketHandlers2();                             
     } catch (socketError) {
         console.error('Ошибка подключения Socket.IO:', socketError);
         // Продолжаем работу без Socket.IO
-    }
+    }  
 
 }
 
-        // Настройка обработчиков Socket событий
-const setupSocketHandlers = () => {
-            
+// Настройка обработчиков Socket событий
+const setupSocketHandlers1 = () => {
+    // Получаем прямой доступ к socket для подписки на события
+    const socket = socketService.getSocket();
+    if (!socket) return;
+
+    // Обработчик подтверждения аутентификации
+    socket.on('authenticated', (data) => {
+        if (data.success) {
+            console.log('Socket.IO аутентификация успешна');
+        } else {
+            console.error('Socket.IO аутентификация не удалась:', data.message);
+        }
+    });
+
     // Общий обработчик уведомлений
-    socketService.onNotification('notification', (data) => {
+    socket.on('notification', (data) => {
         console.log( "notification" )
     });
+
+    // Обработчик получения списка грузов
+    socket.on('getWorks', (res) => {
+        if( res.success){
+            console.log( "Works received", res );
+            Store.dispatch({ type: "works", data: res.data });    
+        }
+    });
+
+
 };
 
-Store.subscribe({ num: 1001, type: "login", func: ()=>{ 
+const setupSocketHandlers2 = () => {
+    // Получаем прямой доступ к socket для подписки на события
+    const socket = socketService.getSocket();
+    if (!socket) return;
 
-    const params = { token: Store.getState().login.token }
+    // Обработчик подтверждения аутентификации
+    socket.on('authenticated', (data) => {
+        if (data.success) {
+            console.log('Socket.IO аутентификация успешна');
+        } else {
+            console.error('Socket.IO аутентификация не удалась:', data.message);
+        }
+    });
 
-   // exec("getCargos", params, "cargos")
-      
-   // exec("getTransport", params, "transport")
+    // Общий обработчик уведомлений
+    socket.on('notification', (data) => {
+        console.log( "notification" )
+    });
 
-    Connect( Store.getState().login.token )
+    // Обработчик получения списка грузов
+    socket.on('getCargos', (res) => {
+        if( res.success){
+            console.log( "getCargos received", res );
+            Store.dispatch({ type: "cargos", data: res.data });    
+        }
+    });
+
+    socket.on('getInv', (res) => {
+        if( res.success){
+            console.log( "inv received", res );
+            Store.dispatch({ type: "invoices", data: res.data });    
+        }
+    });
+
+};
+
+// Подписка на изменение состояния login
+Store.subscribe({ num: 1001, type: "login", func: ()=>{
+    
+    const loginData = Store.getState().login;
+    
+    if (loginData && loginData.token) {
+        // Подключаемся к Socket.IO
+        Connect( loginData.token, loginData.driver )
+    }
+
 }})
 
+Store.subscribe({ num: 1002, type: "swap", func: ()=>{
+    const loginData = Store.getState().login;
+    if (loginData && loginData.token) {
+
+        socketService.disconnect()
+
+        Connect( loginData.token, loginData.driver )
+
+    }
+}})

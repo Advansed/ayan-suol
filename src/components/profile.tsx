@@ -4,6 +4,7 @@ import { IonButton, IonIcon, IonInput, IonLabel, IonLoading, IonSegment, IonSegm
 import './profile.css'
 import { arrowBackOutline, chevronForwardOutline, personOutline } from "ionicons/icons"
 import { takePicture } from "./Files"
+import socketService from "./Sockets"
 
 export function Profile() {
     const [info, setInfo]       = useState<any>()
@@ -992,6 +993,9 @@ export function Profile() {
                     onIonChange={(e) => { 
                         swap = e.detail.value === "driver" ? true : false
                         Store.dispatch({ type: "swap", data: swap })
+
+                        socketService.emit("setDriver", { token: Store.getState().login.token })
+                        
                     }}
                 >
                     <IonSegmentButton value="customer">

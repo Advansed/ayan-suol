@@ -3,6 +3,7 @@ import { exec, getData, Store } from "./Store";
 import { chatboxEllipsesOutline, personCircleOutline } from "ionicons/icons";
 import styles from './DriverCard.module.css';
 import "./Cargos.css";
+import socketService from "./Sockets";
 
 
 export interface DriverInfo {
@@ -46,20 +47,17 @@ export const DriverCard = ({ info, mode, setPage }: DriverCardProps) => {
         e.stopPropagation();
         
         try {
-            const res = await getData("setInv", {
-                token: Store.getState().login.token,
-                id: info.guid,
-                status: "Принято"
-            });
             
-            if (res.success) {
-                exec("getInv", { 
-                    token: Store.getState().login.token, 
-                    guid: info.cargo 
-                }, "invoices");
-            }
+            socketService.emit('setInv', {
+                token:      Store.getState().login.token,
+                id:         info.guid,
+                status:     "Принято"
+            });
+
         } catch (error) {
+
             console.error("Ошибка при принятии заказа:", error);
+
         }
     };
 
@@ -67,24 +65,22 @@ export const DriverCard = ({ info, mode, setPage }: DriverCardProps) => {
         e.stopPropagation();
         
         try {
-            const res = await getData("setInv", {
-                token: Store.getState().login.token,
-                id: info.guid,
-                status: "Отказано"
-            });
             
-            if (res.success) {
-                exec("getInv", { 
-                    token: Store.getState().login.token, 
-                    guid: info.cargo 
-                }, "invoices");
-            }
+            socketService.emit('setInv', {
+                token:      Store.getState().login.token,
+                id:         info.guid,
+                status:     "Отказано"
+            });
+
         } catch (error) {
-            console.error("Ошибка при отказе от заказа:", error);
+
+            console.error("Ошибка при принятии заказа:", error);
+
         }
     };
 
     const shouldShowAcceptButton = mode === 'offered' && !info.accepted;
+    const shouldShowCompleteButton = mode === 'completed' && !info.accepted;
 
     return (
         <div className="cr-card mt-1">
@@ -146,7 +142,7 @@ export const DriverCard = ({ info, mode, setPage }: DriverCardProps) => {
                     </IonButton>
                 )}
 
-                { true && (
+                { !shouldShowCompleteButton && (
                     <IonButton
                         className="w-50 cr-button-1"
                         mode="ios"
@@ -156,6 +152,18 @@ export const DriverCard = ({ info, mode, setPage }: DriverCardProps) => {
                         <span className="ml-1 fs-08">Отказать</span>
                     </IonButton>
                 )}
+
+                { shouldShowCompleteButton && (
+                    <IonButton
+                        className="w-50 cr-button-1"
+                        mode="ios"
+                        color="success"
+                        onClick={handleReject}
+                    >
+                        <span className="ml-1 fs-08">Завершить</span>
+                    </IonButton>
+                )}
+
             </div>
         </div>
     );

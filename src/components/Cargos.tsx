@@ -1,12 +1,13 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import { exec, getData, Store } from "./Store";
-import { IonAlert, IonButton, IonIcon, IonLabel, IonLoading } from "@ionic/react";
-import { addCircleOutline, arrowBackOutline, chatboxEllipsesOutline, cloudUploadOutline, personCircleOutline, trashBinOutline } from "ionicons/icons";
+import React, { useEffect, useState, useRef } from "react";
+import { getData, Store } from "./Store";
+import { IonAlert, IonButton, IonIcon, IonLabel } from "@ionic/react";
+import { addCircleOutline, arrowBackOutline } from "ionicons/icons";
 import { CargoBody, CargoInfo } from "./CargoBody";
 import DriverChat from "./DriverChat";
 import "./Cargos.css";
 import { CargoService } from "./CargoService";
 import { DriverInfo, InvoiceSection } from "./DriverCard";
+import socketService from "./Sockets";
 
 
 export function Cargos() {
@@ -69,6 +70,7 @@ export function Cargos() {
 
 function List(props: { info: { setPage: (page: any) => void, setAlert: (alert: any) => void } }) {
     const [cargos, setCargos] = useState<any>([])
+    const [ upd, setUpd ] = useState( 0 )
     const isMountedRef = useRef(true)  // Флаг для проверки монтирования
     const subscriptionIdRef = useRef<number | null>(null)  // Ref для ID подписки
     
@@ -81,31 +83,24 @@ function List(props: { info: { setPage: (page: any) => void, setAlert: (alert: a
         }
         
         // Создаем уникальный ID для подписки
-        const subscriptionId = Date.now() + Math.random()
-        subscriptionIdRef.current = subscriptionId
-        
-        // Подписка на изменения cargos с проверкой монтирования
-        Store.subscribe({
-            num: subscriptionId, 
-            type: "cargos", 
-            func: () => {
-                if (isMountedRef.current) {
-                    setCargos(Store.getState().cargos)
-                    console.log("subscribe - component mounted")
-                    console.log(Store.getState().cargos)
-                }
-            }
-        })
-        
+        Store.subscribe({ num: 11, type: "cargos", func: ()=>{
+            setCargos( Store.getState().cargos)
+            console.log("subscribe 11")
+            setUpd( upd + 1)
+        }})     
+
         // Cleanup функция
         return () => {
             isMountedRef.current = false
             if (subscriptionIdRef.current !== null) {
-                Store.unSubscribe(subscriptionIdRef.current)
+                Store.unSubscribe( 11 )
             }
         }
     }, []) // Пустой массив зависимостей
-
+    
+    console.log("List cargos")
+    console.log( cargos)
+    
     let elem = <></>
 
     if (cargos.length > 0) {
@@ -150,118 +145,66 @@ function Item(props: { info: CargoInfo, setPage: (page: any) => void }) {
 }
 
 function Page1(props: { info: any, setPage: (page: any) => void, setUpd: () => void }) {
-    const info = props.info;
-    const [load, setLoad] = useState<any>([]);
+    const [cargoInfo, setCargoInfo] = useState(props.info); // Локальное состояние для info
     const [invoices, setInvoices] = useState<DriverInfo[]>([]);
-    const [upd, setUpd] = useState<any>([]);
     
-    // Refs для отслеживания состояния компонента и управления запросами
-    const isMountedRef = useRef(true)
-    const abortControllerRef = useRef<AbortController | null>(null)
-    const subscriptionIdRef = useRef<number | null>(null)
-
-    // Функция для безопасного обновления состояния
-    const safeSetState = useCallback((setter: () => void) => {
-        if (isMountedRef.current) {
-            setter()
-        }
-    }, [])
-
-    // Подписка на Store с cleanup
+    // Подписка на Store
     useEffect(() => {
-        const subscriptionId = Date.now() + Math.random()
-        subscriptionIdRef.current = subscriptionId
+        // Устанавливаем начальное состояние из Store
+        let jarr: any = []
 
-        Store.subscribe({
-            num: subscriptionId, 
+        Store.getState().invoices.forEach(elem => {
+            if (cargoInfo.guid === elem.cargo) jarr.push(elem);
+        });
+        console.log(jarr)
+
+        setInvoices(jarr);
+
+        Store.subscribe({ 
+            num: 12, 
             type: "invoices", 
             func: () => {
-                safeSetState(() => {
-                    setInvoices(Store.getState().invoices);
-                    setUpd(upd + 1);
-                })
-            }
-        });
+                let jarr: any = []
 
-        return () => {
-            if (subscriptionIdRef.current !== null) {
-                Store.unSubscribe(subscriptionIdRef.current);
-            }
-        }
-    }, [safeSetState, upd]);
-
-    // Socket.IO подключение и загрузка данных
-    useEffect(() => {
-        isMountedRef.current = true
+                Store.getState().invoices.forEach(elem => {
+                    if (cargoInfo.guid === elem.cargo) jarr.push(elem);
+                });
+                console.log(jarr)
         
-        const loadData = async () => {
-            // Отменяем предыдущий запрос если он есть
-            if (abortControllerRef.current) {
-                abortControllerRef.current.abort()
+                setInvoices(jarr);               
+                console.log("subscribe 12 - invoices updated")
             }
+        })     
 
-            // Создаем новый AbortController
-            abortControllerRef.current = new AbortController()
-
-            try {
-                safeSetState(() => setLoad(true))
-                
-                // Подключаемся к Socket.IO
-                const token = Store.getState().login.token;
-                const userId = Store.getState().login.phone;
-                
-                // Выполняем запрос с возможностью отмены
-                await execWithAbort(
-                    "getInv", 
-                    { 
-                        token: Store.getState().login.token, 
-                        guid: info.guid 
-                    }, 
-                    "invoices",
-                    abortControllerRef.current.signal
-                );
-                
-            } catch ( error:any ) {
-                if (error.name !== 'AbortError') {
-                    console.error('Error loading invoices:', error)
-                }
-            } finally {
-                safeSetState(() => setLoad(false))
-            }
-        }
-
-        // Функция для перезагрузки предложений
-        const refreshInvoices = async () => {
-            if (!isMountedRef.current) return;
-            
-            try {
-                await execWithAbort(
-                    "getInv", 
-                    { 
-                        token: Store.getState().login.token, 
-                        guid: info.guid 
-                    }, 
-                    "invoices"
-                );
-            } catch (error) {
-                console.error('Ошибка обновления предложений:', error);
+        const socket = socketService.getSocket();
+        const handlePublish = () => {
+            console.log("publish")
+            // Обновляем статус только если текущий статус "Новый"
+            if (cargoInfo.status === "Новый") {
+                setCargoInfo(prev => ({
+                    ...prev,
+                    status: "В ожидании"
+                }));
             }
         };
 
-        loadData()
-
-        // Cleanup функция
-        return () => {
-            isMountedRef.current = false
-            
-            // Отменяем HTTP запросы
-            if (abortControllerRef.current) {
-                abortControllerRef.current.abort()
-            }
-            
-            // Покидаем комнату груза и очищаем обработчики
+        if (socket) {
+            socket.on("Publish", handlePublish);
         }
-    }, [info.guid, safeSetState]);
+
+        return () => {
+            Store.unSubscribe(12);
+            // Очистка socket listener
+            if (socket) {
+                socket.off("Publish", handlePublish);
+            }
+        }
+    }, [cargoInfo.guid, cargoInfo.status]); // Добавляем зависимости
+
+    // Обновляем локальное состояние при изменении props.info
+    useEffect(() => {
+        setCargoInfo(props.info);
+    }, [props.info]);
 
     // Группируем предложения по статусу
     const groupedInvoices = {
@@ -272,23 +215,21 @@ function Page1(props: { info: any, setPage: (page: any) => void, setUpd: () => v
 
     return (
         <div>
-            <IonLoading isOpen={load} message={"Подождите..."} />
-            
             {/* Header */}
             <div className="flex ml-05 mt-05">
                 <IonIcon icon={arrowBackOutline} className="w-15 h-15"
                     onClick={() => props.setPage(0)}
                 />
                 <div className="a-center w-90 fs-09">
-                    <b>{"В ожидании #" + info.guid.substring(0, 8)}</b>
+                    <b>{"В ожидании #" + cargoInfo.guid.substring(0, 8)}</b>
                 </div>
             </div>
 
             {/* Карточка груза */}
             <div className="cr-card mt-1" onClick={() => { 
-                props.setPage({ ...info, type: "edit" }); 
+                props.setPage({ ...cargoInfo, type: "edit" }); 
             }}>
-                <CargoBody info={info} mode="view" />
+                <CargoBody info={cargoInfo} mode="view" />
                 
                 {/* Кнопки управления */}
                 <div className="flex">
@@ -299,12 +240,29 @@ function Page1(props: { info: any, setPage: (page: any) => void, setUpd: () => v
                         color="primary"
                         onClick={(e) => {
                             e.stopPropagation();
-                            props.setPage({ ...info, type: "edit" });
+                            props.setPage({ ...cargoInfo, type: "edit" });
                             props.setUpd();
                         }}
                     >
                         <IonLabel className="fs-08">Изменить заказ</IonLabel>
                     </IonButton>
+                    {cargoInfo.status === "Новый" && (
+                        <IonButton
+                            className="w-50 cr-button-2"
+                            mode="ios"
+                            color="primary"
+                            onClick={(e) => {
+                                e.stopPropagation();
+
+                                socketService.emit("Publish", {
+                                    token: Store.getState().login.token,
+                                    guid: cargoInfo.guid
+                                });
+                            }}
+                        >
+                            <IonLabel className="fs-08"> Опубликовать </IonLabel>
+                        </IonButton>
+                    )}
                 </div>
             </div>
 
@@ -328,26 +286,4 @@ function Page1(props: { info: any, setPage: (page: any) => void, setUpd: () => v
             />
         </div>
     );
-}
-// Вспомогательная функция для выполнения exec с поддержкой AbortController
-async function execWithAbort(method: string, params: any, name: string, signal?: AbortSignal) {
-    // Добавляем signal к параметрам если поддерживается
-    const paramsWithSignal = signal ? { ...params, signal } : params;
-    
-    try {
-        const res = await getData(method, paramsWithSignal);
-        
-        // Проверяем, не был ли запрос отменен
-        if (signal?.aborted) {
-            throw new DOMException('Request aborted', 'AbortError');
-        }
-        
-        console.log(method);
-        console.log(res);
-        Store.dispatch({ type: name, data: res.data });
-        
-    } catch (error) {
-        // Пробрасываем ошибку для обработки в вызывающем коде
-        throw error;
-    }
 }

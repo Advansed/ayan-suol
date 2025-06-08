@@ -1,93 +1,128 @@
 import React, { useEffect, useState } from 'react';
-import { IonIcon } from '@ionic/react';
-import { locationOutline, navigateOutline } from 'ionicons/icons';
-import './drCargos.css'
+import './drCargos.css';
+import { Store } from './Store';
+import { CargoBody, CargoInfo, CargoBodyProps } from './CargoBody';
+import { IonButton, IonLabel } from '@ionic/react';
 
+// Типы для состояния страницы
+interface PageState {
+  info: CargoInfo;
+  type: 'view' | 'edit' | 'create';
+}
 
-export function DrCargos() {
-  const elem = <>
-      <List />
-  </>
+// Пропсы для основного компонента
+interface DrCargosProps {
+  // Можно добавить пропсы если нужно
+}
+
+// Пропсы для Page1
+interface Page1Props {
+  setPage: (page: PageState | number) => void;
+}
+
+export function DrCargos(props: DrCargosProps) {
+  const [page, setPage] = useState<PageState | number>(0);
+
+  const elem = (
+    <div className="a-container">
+      {page === 0 ? (
+        <Page1 setPage={setPage} />
+      ) : (
+        <></>
+      )}
+    </div>
+  );
 
   return elem;
 }
 
-function List(){
-  const [ info, setInfo ] = useState<any>([])
+function Page1(props: Page1Props) {
+  const [info, setInfo] = useState<CargoInfo[]>([]);
 
-  useEffect(()=>{
+  useEffect(() => {
+    // Функция для обновления списка работ из Store
+    const updateWorks = (): void => {
+      const works = Store.getState().works;
+      // Проверяем что данные являются массивом
+      if (Array.isArray(works)) {
+        setInfo(works as CargoInfo[]);
+      } else {
+        setInfo([]);
+      }
+    };
+
+    // Подписываемся на изменения в Store
+    Store.subscribe({ num: 2011, type: "works", func: updateWorks });
+
+    // Получаем начальные данные
+    updateWorks();
+
+    // Отписываемся при размонтировании компонента
+    return () => {
+      Store.unSubscribe(2011);
+    };
+  }, []);
+
+  let elem: JSX.Element = <></>;
+
+  // Генерируем элементы списка
+  for (let i = 0; i < info.length; i++) {
+    const cargoItem = info[i];
     
-  },[])
-
-  let elem = <></>
-
-  for( let i = 0; i < info.length;i++){
-    elem = <>
-      { elem }
-      <Item info = { info[i] }/>
-    </>
+    elem = (
+      <>
+        {elem}
+        <div 
+          className='cr-card mt-1'
+          onClick={() => {
+            props.setPage({ 
+              info: cargoItem, 
+              type: "view" as const
+            });
+          }}
+        >
+          <CargoBody info={cargoItem} mode="view" />
+                
+          {/* Кнопки управления */}
+          <div className="flex">
+          <IonButton
+                className="w-50 cr-button-2"
+                mode="ios"
+                fill="clear"
+                color="primary"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    //props.setPage({ ...cargoInfo, type: "edit" });
+                }}
+            >
+              <IonLabel className="fs-08">Чат с заказчиком</IonLabel>
+            </IonButton>
+            <IonButton
+                className="w-50 cr-button-2"
+                mode="ios"
+                color="primary"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    //props.setPage({ ...cargoInfo, type: "edit" });
+                }}
+            >
+              <IonLabel className="fs-08">Предложить</IonLabel>
+            </IonButton>
+          </div>
+        </div>
+      </>
+    );
   }
-  return elem 
-}
 
-export function Item(props: { info: any }) {
-  const { info } = props;
-  
-  return (
-<div className="transport-card fs-09">
-    {/* Header with ID and Price */}
-    <div className="card-header">
-      <div className="id-container">
-        {info.isNew && (
-          <span className="new-badge">Новый</span>
-        )}
-        <span className="id-text">ID: {info.id}</span>
+  // Финальная разметка
+  elem = (
+    <>
+      <div className="a-center w-90 fs-09 mt-1">
+        <b>{"Доступные заказы"}</b>
       </div>
-      <div className="price">{info.price} ₽</div>
-    </div>
-    
-    {/* Title */}
-    <div className="card-title">
-      <h3>{info.title}</h3>
-    </div>
-    
-    {/* Locations */}
-    <div className="locations-container">
-      <div className="location-row">
-        <div className="location-icon">
-          <IonIcon icon={locationOutline} />
-        </div>
-        <div className="location-info">
-          <div className="location-label">Откуда</div>
-          <div className="location-name">{info.fromLocation}</div>
-        </div>
-        <div className="date-info">
-          <div className="date-label">Дата загрузки</div>
-          <div className="date-value">{info.loadDate} <span className="time">{info.loadTime}</span></div>
-        </div>
-      </div>
-      
-      <div className="location-row">
-        <div className="location-icon destination">
-          <IonIcon icon={navigateOutline} />
-        </div>
-        <div className="location-info">
-          <div className="location-label">Куда</div>
-          <div className="location-name">{info.toLocation}</div>
-        </div>
-        <div className="date-info">
-          <div className="date-label">Дата выгрузки</div>
-          <div className="date-value">{info.unloadDate} <span className="time">{info.unloadTime}</span></div>
-        </div>
-      </div>
-    </div>
-    
-    {/* Cargo details */}
-    <div className="cargo-details">
-      <div className="cargo-label">Детали груза:</div>
-      <div className="cargo-text">{info.cargoDetails}</div>
-    </div>
-  </div>    
+      {elem}
+    </>
   );
-}
 
+  return elem;
+}

@@ -3,6 +3,7 @@ import { CargoBody, CargoInfo } from "./CargoBody";
 import { getData, Store } from "./Store";
 import { IonIcon, IonLoading } from "@ionic/react";
 import { arrowBackOutline, cloudUploadOutline, trashBinOutline } from "ionicons/icons";
+import socketService from "./Sockets";
 
 interface CargoServiceProps {
     mode: 'create' | 'edit';
@@ -66,19 +67,23 @@ export function CargoService({ mode, info: initialInfo, setPage, setUpd }: Cargo
         setValidationErrors([]);
         setLoad(true);
         try {
-            const res = await getData("saveCargo", info);
-            if (res.success) {
-                // Логика успешного сохранения
-            }
+
+            socketService.emit("saveCargo", info )
+            console.log("emit save")
+
+            setPage( 0 )
+
         } finally {
             setLoad(false);
         }
     };
 
+
     const handleDelete = async () => {
         // Логика удаления
     };
 
+    
     const handleBack = () => {
         if (mode === 'create') {
             setPage(0);
