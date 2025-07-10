@@ -42,12 +42,12 @@ import '@ionic/react/css/palettes/dark.system.css';
 /* Theme variables */
 import './theme/variables.css';
 import { useState, useEffect } from 'react';
-import Login from './components/Login_/Login';
 import { setupSocketHandlers, Store } from './components/Store';
 import socketService from './components/Sockets';
 
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { isPlatform } from '@ionic/react';
+import { Login } from './components/Login';
 
 setupIonicReact({
   mode: 'ios', // или 'md' для Material Design
