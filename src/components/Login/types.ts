@@ -24,18 +24,18 @@ export interface User {
 }
 
 export interface AuthState {
-  isAuthenticated: boolean
-  user: User | null
-  isLoading: boolean
-  error: string
-  currentForm: 'login' | 'register' | 'recovery'
-  formData: Record<string, any>
-  formErrors: Record<string, string>
+  isAuthenticated:  boolean
+  user:             User | null
+  isLoading:        boolean
+  error:            string
+  currentForm:      'login' | 'register' | 'recovery'
+  formData:         Record<string, any>
+  formErrors:       Record<string, string>
   registrationStep: number
   registrationData: RegistrationData
-  recoveryStep: number
-  recoveryData: RecoveryData
-  socketStatus: 'connected' | 'disconnected' | 'connecting'
+  recoveryStep:     number
+  recoveryData:     RecoveryData
+  socketStatus:     'connected' | 'disconnected' | 'connecting'
 }
 
 export interface LoginCredentials {

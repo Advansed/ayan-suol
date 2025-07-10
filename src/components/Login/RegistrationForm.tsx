@@ -25,10 +25,7 @@ interface RegistrationFormProps {
 
 const StepPersonalInfo: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
   const handleNext = useCallback(() => {
-    auth.updateRegistrationData('phone', auth.formData.phone || '')
-    auth.updateRegistrationData('name', auth.formData.name || '')
-    auth.updateRegistrationData('email', auth.formData.email || '')
-    
+    console.log( auth.formData)
     auth.submitRegistrationStep()
   }, [auth])
 
@@ -126,7 +123,18 @@ const StepVerification: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
       </div>
 
       <div className="fs-11 a-center mb-2">
-        Для верификации номера позвоните по этот бесплатный номер
+        Мы вам отправили СМС на ваш номер
+        Для верификации номера введите СМС
+      </div>
+
+      <div className="l-input-1 mt-1">
+        <input
+          className   = 'w-100'
+          placeholder = "0000"
+          maxLength   = { 4 }
+          value       = { auth.recoveryData.pincode || '' }
+          onChange={(e) => auth.updateRecoveryData('pincode', e.target.value)}
+        />
       </div>
 
       <div className="a-center fs-14 mt-2 mb-2">
@@ -135,7 +143,7 @@ const StepVerification: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
 
       <FormButtons
         onNext={handleCall}
-        nextText="Позвонить"
+        nextText="Отправить"
         loading={auth.isLoading}
       />
 
@@ -275,7 +283,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ auth }) => {
   const steps = [
     <StepPersonalInfo key="personal" auth={auth} />,
     <StepVerification key="verification" auth={auth} />,
-    <StepConfirmCall key="confirm" auth={auth} />,
+    // <StepConfirmCall key="confirm" auth={auth} />,
     <StepSetPassword key="password" auth={auth} />
   ]
 

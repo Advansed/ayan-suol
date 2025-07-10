@@ -93,22 +93,22 @@ const StepNewPassword: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
 
       <PasswordInput
         placeholder="Пароль"
-        value={auth.recoveryData.password || ''}
-        onChange={(value) => auth.updateRecoveryData('password', value)}
+        value={auth.formData.password || ''}
+        onChange={(value) => auth.updateFormData('password', value)}
         error={auth.formErrors.password}
       />
 
       <PasswordInput
         placeholder="Подтверждение"
-        value={auth.recoveryData.password1 || ''}
-        onChange={(value) => auth.updateRecoveryData('password1', value)}
+        value={auth.formData.password1 || ''}
+        onChange={(value) => auth.updateFormData('password1', value)}
         error={auth.formErrors.password1}
       />
 
       <FormButtons 
         onNext={handleSubmit}
         nextText="Сохранить пароль"
-        disabled={!auth.recoveryData.password || auth.recoveryData.password !== auth.recoveryData.password1}
+        disabled={!auth.formData.password || auth.formData.password !== auth.formData.password1}
         loading={auth.isLoading}
       />
     </>

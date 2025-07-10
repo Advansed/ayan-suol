@@ -6,28 +6,27 @@ import socketService from '../Sockets'
 import { Store } from '../Store'
 
 const INITIAL_STATE: AuthState = {
-  isAuthenticated: false,
-  user: null,
-  isLoading: false,
-  error: '',
-  currentForm: 'login',
-  formData: {},
-  formErrors: {},
-  registrationStep: 0,
-  registrationData: {
-    phone: '',
-    name: '',
-    email: ''
+  isAuthenticated:      false,
+  user:                 null,
+  isLoading:            false,
+  error:                '',
+  currentForm:          'login',
+  formData:             {},
+  formErrors:           {},
+  registrationStep:     0,
+  registrationData:     {
+    token:              '',
+    phone:              '',
+    name:               '',
+    email:              ''
   },
-  recoveryStep: 0,
-  recoveryData: {
-    token:      '',
-    phone:      '', 
-    password:   '',
-    password1:  '',
-    pincode:    '',
+  recoveryStep:         0,
+  recoveryData:         {
+    token:              '',
+    phone:              '', 
+    pincode:            ''
   },
-  socketStatus: 'disconnected'
+  socketStatus:         'disconnected'
 }
 
 export const useAuth = (): UseAuthReturn => {
@@ -58,6 +57,7 @@ export const useAuth = (): UseAuthReturn => {
     updateState({
       registrationData: { ...state.registrationData, [field]: value }
     })
+    console.log( state.registrationData )
   }, [state.registrationData, updateState])
 
   const updateRecoveryData = useCallback((field: string, value: any) => {
@@ -209,19 +209,16 @@ export const useAuth = (): UseAuthReturn => {
   }, [updateState])
 
   const checkSMS                = useCallback(async (data: RecoveryData) => {
+
     updateState({ isLoading: true, error: '' })
 
     try {
-      const phone = Phone(data.phone)
-      if (phone.length !== 12) {
-        updateState({ error: 'Введите корректный номер телефона', isLoading: false })
-        return
-      }
+      console.log( state.formData )
+      console.log( data )
 
       console.log("check_sms")
       const success = socketService.emit('check_sms', {
         token:    data.token,
-        phone:    phone,
         pincode:  data.pincode
       })
 
@@ -255,20 +252,17 @@ export const useAuth = (): UseAuthReturn => {
   }, [state.registrationStep, updateState])
 
   const submitRegistrationStep  = useCallback(async () => {
+    console.log( state.formData )
     switch (state.registrationStep) {
       case 0:
-        await register(state.registrationData as RegistrationData)
+        await register(state.formData as RegistrationData)
         break
       case 1:
-        window.open(`tel:${state.registrationData.call_phone}`)
-        updateState({ registrationStep: 2 })
-        break
+        await checkSMS( state.recoveryData )
+        break      
       case 2:
-        socketService.emit('test_call', state.registrationData)
-        break
-      case 3:
         const passwordData: PasswordData = {
-          token: state.registrationData.token || '',
+          token: state.recoveryData.token || '',
           password: state.formData.password || '',
           password1: state.formData.password1 || ''
         }
@@ -312,8 +306,8 @@ export const useAuth = (): UseAuthReturn => {
       case 2:
         const passwordData: PasswordData = {
           token:      state.recoveryData.token || '',
-          password:   state.recoveryData.password || '',
-          password1:  state.recoveryData.password1 || '',
+          password:   state.formData.password || '',
+          password1:  state.formData.password1 || '',
           phone:      state.recoveryData.phone
         }
 
@@ -375,11 +369,11 @@ export const useAuth = (): UseAuthReturn => {
       updateState({ isLoading: false })
       
       if (response.success) {
-        updateRegistrationData('status', response.data.status)
-        updateRegistrationData('check_id', response.data.check_id)
-        updateRegistrationData('call_phone', response.data.call_phone)
-        updateRegistrationData('token', response.data.token)
+            
+        updateRecoveryData('token',     response.data.token)
+
         nextRegistrationStep()
+
       } else {
         updateState({ error: response.message || 'Ошибка регистрации' })
       }
@@ -396,7 +390,7 @@ export const useAuth = (): UseAuthReturn => {
       
       if (response.success) {
         
-        updateRecoveryData('token',       response.data.token)
+        updateRecoveryData('token',     response.data.token)
 
         nextRecoveryStep()
 
@@ -419,6 +413,7 @@ export const useAuth = (): UseAuthReturn => {
       if (response.success) {
         console.log( "success" )
         nextRecoveryStep()
+        nextRegistrationStep()
       } else console.log( "unsuccess" )
     }
 
