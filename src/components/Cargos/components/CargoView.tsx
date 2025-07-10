@@ -59,7 +59,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
         return (
             <div className="cr-card mt-1">
                 <div className="fs-09 mb-1">
-                    <b>{title}</b>
+                    <b>{title + ''}</b>
                     <span className="ml-1 fs-08 cl-gray">({invoices.length})</span>
                 </div>
                 
@@ -76,7 +76,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
                             </div>
                             <div className="text-right">
                                 <div className="fs-08">
-                                    <b>{formatters.currency(invoice.price)}</b>
+                                    <b>{formatters.currency(invoice.price )}</b>
                                 </div>
                                 <div className="fs-07 cl-gray">
                                     {formatters.relativeDate(invoice.createdAt)}

@@ -30,13 +30,18 @@ export interface CargoAddress {
 
 // Предложение от водителя
 export interface CargoInvoice {
-    id: string;
-    driverId: string;
-    driverName: string;
-    driverPhone: string;
-    price: number;
-    status: string;
-    createdAt: string;
+    id:                 string;
+    cargo:              string;
+    driverId:           string;
+    driverName:         string;
+    driverPhone:        string;
+    transport:          string;
+    price:              number;
+    weight:             number;
+    volume:             number;
+    status:             string;
+    createdAt:          string;
+    rating:             number;
 }
 
 // Основная информация о грузе

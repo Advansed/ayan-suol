@@ -84,7 +84,7 @@ const Tab1: React.FC = () => {
         {/* Основной контент */}
         {
           swap
-            ? <DrCargos />
+            ? <></> //<DrCargos />
             : <Cargos />
         }
       </IonContent>
