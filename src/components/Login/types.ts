@@ -54,11 +54,14 @@ export interface RegistrationData {
 }
 
 export interface RecoveryData {
-  phone: string
-  token?: string
-  status?: string
-  check_id?: string
-  call_phone?: string
+  phone:          string
+  token?:         string
+  status?:        string
+  check_id?:      string
+  call_phone?:    string
+  password?:      string
+  password1?:     string
+  pincode?:        string
   user_data?: {
     name: string
   }

@@ -14,11 +14,11 @@ interface RecoveryFormProps {
 // Шаг 1: Ввод телефона
 const StepPhone: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
   const handleSubmit = () => {
-    if (!auth.formData.phone?.trim()) {
-      auth.updateFormData('phoneError', 'Введите номер телефона')
+    if (!auth.recoveryData.phone?.trim()) {
+      auth.updateRecoveryData('phoneError', 'Введите номер телефона')
       return
     }
-    console.log(auth.formData)
+    console.log(auth.recoveryData)
     auth.submitRecoveryStep()
   }
 
@@ -29,8 +29,8 @@ const StepPhone: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
       
       <MaskedInput
         placeholder="+7 (XXX) XXX-XXXX"
-        value={auth.formData.phone || ''}
-        onChange={(value) => auth.updateFormData('phone', value)}
+        value={auth.recoveryData.phone || ''}
+        onChange={(value) => auth.updateRecoveryData('phone', value)}
         error={auth.formErrors.phone}
       />
 
@@ -52,16 +52,17 @@ const StepVerifyCall: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
     <>
       <div className="a-center"><h2>Подтверждение</h2></div>
       <div className="fs-11 a-center mb-2">
-        Мы позвоним на номер {auth.recoveryData.call_phone}.<br/>
-        Введите последние 4 цифры номера с которого поступит звонок
+        Мы отправили на ваш номер СМС.<br/>
+        Введите полученный СМС для подтверждения вашего номера
       </div>
 
-      <div className="l-input">
+      <div className="l-input-1">
         <input
-          placeholder="0000"
-          maxLength={4}
-          value={auth.formData.token || ''}
-          onChange={(e) => auth.updateFormData('token', e.target.value)}
+          className   = 'w-100'
+          placeholder = "0000"
+          maxLength   = { 4 }
+          value       = { auth.recoveryData.pincode || '' }
+          onChange={(e) => auth.updateRecoveryData('pincode', e.target.value)}
         />
       </div>
 
@@ -78,8 +79,8 @@ const StepVerifyCall: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
 // Шаг 3: Новый пароль
 const StepNewPassword: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
   const handleSubmit = () => {
-    if (auth.formData.password !== auth.formData.password1) {
-      auth.updateFormData('password1Error', 'Пароли не совпадают')
+    if (auth.recoveryData.password !== auth.recoveryData.password1) {
+      auth.updateRecoveryData('password1Error', 'Пароли не совпадают')
       return
     }
     auth.submitRecoveryStep()
@@ -92,22 +93,22 @@ const StepNewPassword: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
 
       <PasswordInput
         placeholder="Пароль"
-        value={auth.formData.password || ''}
-        onChange={(value) => auth.updateFormData('password', value)}
+        value={auth.recoveryData.password || ''}
+        onChange={(value) => auth.updateRecoveryData('password', value)}
         error={auth.formErrors.password}
       />
 
       <PasswordInput
         placeholder="Подтверждение"
-        value={auth.formData.password1 || ''}
-        onChange={(value) => auth.updateFormData('password1', value)}
+        value={auth.recoveryData.password1 || ''}
+        onChange={(value) => auth.updateRecoveryData('password1', value)}
         error={auth.formErrors.password1}
       />
 
       <FormButtons 
         onNext={handleSubmit}
         nextText="Сохранить пароль"
-        disabled={!auth.formData.password || auth.formData.password !== auth.formData.password1}
+        disabled={!auth.recoveryData.password || auth.recoveryData.password !== auth.recoveryData.password1}
         loading={auth.isLoading}
       />
     </>

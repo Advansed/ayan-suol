@@ -1,10 +1,7 @@
-/**
- * 🔥 ГЛАВНЫЙ ХУК useAuth - ВСЯ ЛОГИКА АУТЕНТИФИКАЦИИ
- */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AuthState, LoginCredentials, RegistrationData, RecoveryData, PasswordData, UseAuthReturn, SocketResponse } from './types'
-import { validateField, validateForm, formatPhone, Phone, secureStorage, STORAGE_KEYS } from './utils'
+import { validateField, validateForm, Phone, secureStorage, STORAGE_KEYS } from './utils'
 import socketService from '../Sockets'
 import { Store } from '../Store'
 
@@ -24,7 +21,11 @@ const INITIAL_STATE: AuthState = {
   },
   recoveryStep: 0,
   recoveryData: {
-    phone: ''
+    token:      '',
+    phone:      '', 
+    password:   '',
+    password1:  '',
+    pincode:    '',
   },
   socketStatus: 'disconnected'
 }
@@ -114,7 +115,7 @@ export const useAuth = (): UseAuthReturn => {
   // ОСНОВНЫЕ ДЕЙСТВИЯ
   // ======================
 
-  const login = useCallback(async (credentials: LoginCredentials) => {
+  const login                   = useCallback(async (credentials: LoginCredentials) => {
     updateState({ isLoading: true, error: '' })
 
     try {
@@ -147,7 +148,7 @@ export const useAuth = (): UseAuthReturn => {
     }
   }, [updateState])
 
-  const register = useCallback(async (userData: RegistrationData) => {
+  const register                = useCallback(async (userData: RegistrationData) => {
     updateState({ isLoading: true, error: '' })
 
     try {
@@ -180,7 +181,34 @@ export const useAuth = (): UseAuthReturn => {
     }
   }, [updateState])
 
-  const recoverPassword = useCallback(async (data: RecoveryData) => {
+  const recoverPassword         = useCallback(async (data: RecoveryData) => {
+    updateState({ isLoading: true, error: '' })
+
+    try {
+      const phone = Phone(data.phone)
+      if (phone.length !== 12) {
+        updateState({ error: 'Введите корректный номер телефона', isLoading: false })
+        return
+      }
+      console.log( data )
+      const success = socketService.emit('check_restore', {
+        phone: phone
+      })
+
+      if (!success) {
+        throw new Error('Нет подключения к серверу')
+      }
+
+    } catch (error) {
+      console.error('Recovery error:', error)
+      updateState({ 
+        error: error instanceof Error ? error.message : 'Ошибка восстановления', 
+        isLoading: false 
+      })
+    }
+  }, [updateState])
+
+  const checkSMS                = useCallback(async (data: RecoveryData) => {
     updateState({ isLoading: true, error: '' })
 
     try {
@@ -190,8 +218,11 @@ export const useAuth = (): UseAuthReturn => {
         return
       }
 
-      const success = socketService.emit('check_restore', {
-        phone: phone
+      console.log("check_sms")
+      const success = socketService.emit('check_sms', {
+        token:    data.token,
+        phone:    phone,
+        pincode:  data.pincode
       })
 
       if (!success) {
@@ -211,19 +242,19 @@ export const useAuth = (): UseAuthReturn => {
   // РЕГИСТРАЦИЯ ШАГИ
   // ======================
 
-  const nextRegistrationStep = useCallback(() => {
+  const nextRegistrationStep    = useCallback(() => {
     updateState({ 
       registrationStep: Math.min(state.registrationStep + 1, 3) 
     })
   }, [state.registrationStep, updateState])
 
-  const prevRegistrationStep = useCallback(() => {
+  const prevRegistrationStep    = useCallback(() => {
     updateState({ 
       registrationStep: Math.max(state.registrationStep - 1, 0) 
     })
   }, [state.registrationStep, updateState])
 
-  const submitRegistrationStep = useCallback(async () => {
+  const submitRegistrationStep  = useCallback(async () => {
     switch (state.registrationStep) {
       case 0:
         await register(state.registrationData as RegistrationData)
@@ -270,24 +301,20 @@ export const useAuth = (): UseAuthReturn => {
   }, [state.recoveryStep, updateState])
 
   const submitRecoveryStep = useCallback(async () => {
-    console.log(" submit recovery step", state.formData )
     switch (state.recoveryStep) {
       case 0:
         await recoverPassword(state.recoveryData)
         break
       case 1:
-        window.open(`tel:${state.recoveryData.call_phone}`)
-        updateState({ recoveryStep: 2 })
+        await checkSMS(state.recoveryData)
+        // updateState({ recoveryStep: 2 })
         break
       case 2:
-        socketService.emit('test_restore_call', state.recoveryData)
-        break
-      case 3:
         const passwordData: PasswordData = {
-          token: state.recoveryData.token || '',
-          password: state.formData.password || '',
-          password1: state.formData.password1 || '',
-          phone: state.recoveryData.phone
+          token:      state.recoveryData.token || '',
+          password:   state.recoveryData.password || '',
+          password1:  state.recoveryData.password1 || '',
+          phone:      state.recoveryData.phone
         }
 
         const errors = validateForm('password', passwordData)
@@ -360,32 +387,39 @@ export const useAuth = (): UseAuthReturn => {
 
     // Обработчик восстановления
     const handleRestore = (response: SocketResponse) => {
+
+      console.log("on... check_restore")
+      console.log(response.data)
       if (!isMountedRef.current) return
 
       updateState({ isLoading: false })
       
       if (response.success) {
-        updateRecoveryData('status', response.data.status)
-        updateRecoveryData('check_id', response.data.check_id)
-        updateRecoveryData('call_phone', response.data.call_phone)
-        updateRecoveryData('token', response.data.token)
-        updateRecoveryData('user_data', response.data.user_data)
+        
+        updateRecoveryData('token',       response.data.token)
+
         nextRecoveryStep()
+
       } else {
+
         updateState({ error: response.message || 'Пользователь с таким номером не найден' })
+
       }
     }
 
     // Обработчик проверки звонка
     const handleTestCall = (response: SocketResponse) => {
+      
       if (!isMountedRef.current) return
 
-      if (response.data.check_status === 400) {
-        updateState({ error: response.data.check_status_text })
-      }
-      if (response.data.check_status === 401) {
-        nextRegistrationStep()
-      }
+      updateState({ isLoading: false })
+
+      console.log( response )
+
+      if (response.success) {
+        console.log( "success" )
+        nextRecoveryStep()
+      } else console.log( "unsuccess" )
     }
 
     // Обработчик проверки звонка для восстановления
@@ -420,8 +454,7 @@ export const useAuth = (): UseAuthReturn => {
     socket.on('authorization', handleAuth)
     socket.on('check_registration', handleRegistration)
     socket.on('check_restore', handleRestore)
-    socket.on('test_call', handleTestCall)
-    socket.on('test_restore_call', handleTestRestoreCall)
+    socket.on('check_sms', handleTestCall)
     socket.on('save_password', handleSavePassword)
 
     return () => {
@@ -431,7 +464,7 @@ export const useAuth = (): UseAuthReturn => {
         socket.off('authorization', handleAuth)
         socket.off('check_registration', handleRegistration)
         socket.off('check_restore', handleRestore)
-        socket.off('test_call', handleTestCall)
+        socket.off('check_sms', handleTestCall)
         socket.off('test_restore_call', handleTestRestoreCall)
         socket.off('save_password', handleSavePassword)
       }
