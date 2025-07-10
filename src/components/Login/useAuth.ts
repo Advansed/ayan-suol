@@ -270,7 +270,7 @@ export const useAuth = (): UseAuthReturn => {
   }, [state.recoveryStep, updateState])
 
   const submitRecoveryStep = useCallback(async () => {
-    console.log(" submit recovery step", state.recoveryData )
+    console.log(" submit recovery step", state.formData )
     switch (state.recoveryStep) {
       case 0:
         await recoverPassword(state.recoveryData)
