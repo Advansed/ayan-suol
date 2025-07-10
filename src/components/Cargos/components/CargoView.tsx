@@ -20,6 +20,7 @@ import {
 import { CargoInfo, CargoInvoice } from '../types';
 import { CargoCard } from './CargoCard';
 import { statusUtils, formatters } from '../utils';
+import { DriverCard } from '../../DriverCards';
 
 interface CargoViewProps {
     cargo: CargoInfo;
@@ -51,60 +52,44 @@ export const CargoView: React.FC<CargoViewProps> = ({
         await onPublish();
     };
 
-    const renderInvoiceSection = (title: string, invoices: CargoInvoice[], type: string) => {
+    const mapInvoiceToDriver = (invoice: any): any => ({
+        guid: invoice.id,
+        cargo: invoice.cargo,
+        recipient: invoice.driverId,
+        client: invoice.driverName,
+        weight: invoice.weight,
+        status: invoice.status,
+        transport: invoice.transport,
+        capacity: `${invoice.weight} т`,
+        rating: invoice.rating || 4.5,
+        ratingCount: 12,
+        rate: invoice.rating || 4.5,
+        price: invoice.price,
+        accepted: invoice.status === 'Принято'
+    });
+
+    const renderInvoiceSection = (title: string, invoices: CargoInvoice[], type: 'offered' | 'assigned' | 'delivered' | 'completed') => {
         if (!invoices || invoices.length === 0) {
             return null;
         }
 
         return (
-            <div className="cr-card mt-1">
+            <>
+            <div className="ml-1 mt-1">
                 <div className="fs-09 mb-1">
                     <b>{title + ''}</b>
                     <span className="ml-1 fs-08 cl-gray">({invoices.length})</span>
                 </div>
+            </div>
                 
                 {invoices.map((invoice) => (
-                    <div key={invoice.id} className="cr-card mt-05" style={{ backgroundColor: '#f8f9fa' }}>
-                        <div className="flex fl-space">
-                            <div>
-                                <div className="fs-08">
-                                    <b>{invoice.driverName}</b>
-                                </div>
-                                <div className="fs-07 cl-gray">
-                                    {formatters.phone(invoice.driverPhone)}
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <div className="fs-08">
-                                    <b>{formatters.currency(invoice.price )}</b>
-                                </div>
-                                <div className="fs-07 cl-gray">
-                                    {formatters.relativeDate(invoice.createdAt)}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {type === 'offered' && (
-                            <div className="flex mt-05">
-                                <IonButton
-                                    size="small"
-                                    fill="clear"
-                                    color="success"
-                                >
-                                    <IonLabel>Принять</IonLabel>
-                                </IonButton>
-                                <IonButton
-                                    size="small"
-                                    fill="clear"
-                                    color="danger"
-                                >
-                                    <IonLabel>Отклонить</IonLabel>
-                                </IonButton>
-                            </div>
-                        )}
-                    </div>
+                    <DriverCard
+                        info={ mapInvoiceToDriver( invoice ) }
+                        mode= { type }
+                    />
                 ))}
-            </div>
+
+            </>
         );
     };
 

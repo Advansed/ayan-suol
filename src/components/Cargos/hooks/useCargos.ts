@@ -30,13 +30,13 @@ export const useCargos = (): UseCargosReturn => {
     }, [currentPage]);
 
     const goBack = useCallback(() => {
-        if (navigationHistory.length > 0) {
-            const previousPage = navigationHistory[navigationHistory.length - 1];
-            setNavigationHistory(prev => prev.slice(0, -1));
-            setCurrentPage(previousPage);
-        } else {
+        // if (navigationHistory.length > 0) {
+        //     const previousPage = navigationHistory[navigationHistory.length - 1];
+        //     setNavigationHistory(prev => prev.slice(0, -1));
+        //     setCurrentPage(previousPage);
+        // } else {
             setCurrentPage({ type: 'list' });
-        }
+        // }
     }, [navigationHistory]);
 
     // ======================
@@ -58,7 +58,7 @@ export const useCargos = (): UseCargosReturn => {
             console.log('Creating cargo:', newCargo);
 
             // Отправляем через socket
-            socketService.emit(SOCKET_EVENTS.SAVE_CARGO, newCargo);
+            socketService.emit(SOCKET_EVENTS.SAVE_CARGO, { token: Store.getState().login.token, ...newCargo});
 
             // Добавляем в локальный Store (оптимистичное обновление)
             const currentCargos = Store.getState().cargos || [];
@@ -100,7 +100,7 @@ export const useCargos = (): UseCargosReturn => {
             console.log('Updating cargo:', updatedCargo);
 
             // Отправляем через socket
-            socketService.emit(SOCKET_EVENTS.SAVE_CARGO, updatedCargo);
+            socketService.emit(SOCKET_EVENTS.SAVE_CARGO, { token: Store.getState().login.token, ...updatedCargo});
 
             // Обновляем в локальном Store
             const updatedCargos = currentCargos.map((c: CargoInfo) => 
@@ -320,12 +320,12 @@ export const useCargos = (): UseCargosReturn => {
         };
 
         // Подписываемся на события
-        socket.on(SOCKET_EVENTS.CARGO_UPDATED, handleCargoUpdated);
+        socket.on(SOCKET_EVENTS.SAVE_CARGO, handleCargoUpdated);
         socket.on(SOCKET_EVENTS.NEW_OFFER, handleNewOffer);
         socket.on('publish', handlePublish);
 
         return () => {
-            socket.off(SOCKET_EVENTS.CARGO_UPDATED, handleCargoUpdated);
+            socket.off(SOCKET_EVENTS.SAVE_CARGO, handleCargoUpdated);
             socket.off(SOCKET_EVENTS.NEW_OFFER, handleNewOffer);
             socket.off('publish', handlePublish);
         };

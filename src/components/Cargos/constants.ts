@@ -141,13 +141,13 @@ export const POPULAR_CITIES = [
 
 // WebSocket события
 export const SOCKET_EVENTS = {
-    SAVE_CARGO: 'save_cargo',
-    DELETE_CARGO: 'delete_cargo', 
-    PUBLISH_CARGO: 'publish',
-    CARGO_UPDATED: 'cargo_updated',
-    NEW_OFFER: 'new_offer',
-    CONNECT: 'connect',
-    DISCONNECT: 'disconnect'
+    SAVE_CARGO:         'save_cargo',
+    DELETE_CARGO:       'delete_cargo', 
+    PUBLISH_CARGO:      'publish',
+    CARGO_UPDATED:      'cargo_updated',
+    NEW_OFFER:          'new_offer',
+    CONNECT:            'connect',
+    DISCONNECT:         'disconnect'
 };
 
 // Таймауты
