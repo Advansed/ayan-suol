@@ -11,8 +11,8 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
-             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+            // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
@@ -22,11 +22,32 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    // Добавьте эту секцию для решения конфликтов
+    packagingOptions {
+        pickFirst '**/kotlin-stdlib-*.jar'
+        pickFirst 'kotlin/**'
+    }
 }
 
 repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+// Добавьте эту секцию для принудительного разрешения конфликтов
+configurations.all {
+    resolutionStrategy {
+        force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
+        eachDependency { details ->
+            if (details.requested.group == 'org.jetbrains.kotlin') {
+                if (details.requested.name == 'kotlin-stdlib-jdk7' ||
+                        details.requested.name == 'kotlin-stdlib-jdk8') {
+                    details.useTarget 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
+                }
+            }
+        }
     }
 }
 
@@ -39,7 +60,12 @@ dependencies {
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
-    implementation project(':capacitor-cordova-android-plugins')
+
+    // Исключите конфликтующие зависимости из capacitor-cordova-android-plugins
+    implementation(project(':capacitor-cordova-android-plugins')) {
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+    }
 }
 
 apply from: 'capacitor.build.gradle'

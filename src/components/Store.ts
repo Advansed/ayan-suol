@@ -1,7 +1,9 @@
 import { combineReducers  } from 'redux'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { Reducer } from 'react';
 import { socketService } from './Sockets';
+import { v4 as uuidv4 } from 'uuid';
 
 export const reducers: Array<Reducer<any, any>> = []
 
@@ -22,6 +24,9 @@ export const i_state = {
     publish:                            [],
     invoices:                           [],
     error:                              "",
+    new_cargos:                         0,
+    socketConnected:                    false,  // Добавлено состояние подключения сокета
+    socketAuthenticated:                false,  // Добавлено состояние аутентификации сокета
 }
 
 for(const [key, value] of Object.entries(i_state)){
@@ -110,6 +115,80 @@ const rootReducer = combineReducers( reduct )
 
 export const Store = create_Store(rootReducer, i_state)
 
+// useSelector hook для работы с Store
+export function useSelector<T>(selector: (state: any) => T, subscriptionId: number): T {
+    const [selectedState, setSelectedState] = useState<T>(selector(Store.getState()))
+    const isMountedRef = useRef(true)
+
+    useEffect(() => {
+        isMountedRef.current = true
+        
+        // Устанавливаем начальное состояние
+        setSelectedState(selector(Store.getState()))
+
+        // Определяем какие поля state нас интересуют для подписки
+        const currentState = Store.getState()
+        const selectedValue = selector(currentState)
+        
+        // Находим ключ в state, который соответствует нашему селектору
+        const stateKey = Object.keys(currentState).find(key => 
+            currentState[key] === selectedValue
+        ) || 'state'
+
+        // Подписываемся на изменения
+        Store.subscribe({
+            num: subscriptionId,
+            type: stateKey,
+            func: () => {
+                if (isMountedRef.current) {
+                    const newState = selector(Store.getState())
+                    setSelectedState(newState)
+                }
+            }
+        })
+
+        // Cleanup функция
+        return () => {
+            isMountedRef.current = false
+            Store.unSubscribe(subscriptionId)
+        }
+    }, [])
+
+    return selectedState
+}
+
+// Альтернативная версия useSelector для прямого доступа к полю
+export function useStoreField<K extends keyof typeof i_state>(fieldName: K, subscriptionId: number): typeof i_state[K] {
+    const [fieldValue, setFieldValue] = useState(Store.getState()[fieldName])
+    const isMountedRef = useRef(true)
+
+    useEffect(() => {
+        isMountedRef.current = true
+        
+        // Устанавливаем начальное состояние
+        setFieldValue(Store.getState()[fieldName])
+
+        // Подписываемся на изменения конкретного поля
+        Store.subscribe({
+            num: subscriptionId,
+            type: fieldName as string,
+            func: () => {
+                if (isMountedRef.current) {
+                    setFieldValue(Store.getState()[fieldName])
+                }
+            }
+        })
+
+        // Cleanup функция
+        return () => {
+            isMountedRef.current = false
+            Store.unSubscribe(subscriptionId)
+        }
+    }, [fieldName])
+
+    return fieldValue
+}
+
 export const URL = "https://gruzreis.ru/services/hs/api/v1/"
 
 export function Phone(phone): string {
@@ -130,30 +209,11 @@ export async function exec( method, params, name ){
     Store.dispatch({ type: name, data: res.data})
 }
 
-// Функция подключения к Socket.IO
-async function Connect( token, driver ){     
-    
-    try {
-        await socketService.connect(token);                  
-        console.log('Socket.IO подключен успешно');
-        
-        // Отправляем токен для аутентификации
-        socketService.emit('authenticate', { token: token, driver: driver });
-        
-        // Настраиваем обработчики событий
-        if( driver )
-            setupSocketHandlers1();                             
-        else 
-            setupSocketHandlers2();                             
-    } catch (socketError) {
-        console.error('Ошибка подключения Socket.IO:', socketError);
-        // Продолжаем работу без Socket.IO
-    }  
+// Функция подключения к Socket.IO с улучшенной обработкой
 
-}
 
 // Настройка обработчиков Socket событий
-const setupSocketHandlers1 = () => {
+export const setupSocketHandlers = () => {
     // Получаем прямой доступ к socket для подписки на события
     const socket = socketService.getSocket();
     if (!socket) return;
@@ -162,8 +222,13 @@ const setupSocketHandlers1 = () => {
     socket.on('authenticated', (data) => {
         if (data.success) {
             console.log('Socket.IO аутентификация успешна');
+            Store.dispatch({ type: "socketAuthenticated", data: true });
+            if(Store.getState().auth){
+                socket.emit("re_authorize", { token: Store.getState().login.token })
+            }
         } else {
             console.error('Socket.IO аутентификация не удалась:', data.message);
+            Store.dispatch({ type: "socketAuthenticated", data: false });
         }
     });
 
@@ -172,72 +237,70 @@ const setupSocketHandlers1 = () => {
         console.log( "notification" )
     });
 
-    // Обработчик получения списка грузов
-    socket.on('getWorks', (res) => {
-        if( res.success){
-            console.log( "Works received", res );
-            Store.dispatch({ type: "works", data: res.data });    
-        }
+    // Обработчики регистрации
+    socket.on('check_registration', (res) => {
+        console.log('Ответ на проверку регистрации:', res);
     });
 
-
-};
-
-const setupSocketHandlers2 = () => {
-    // Получаем прямой доступ к socket для подписки на события
-    const socket = socketService.getSocket();
-    if (!socket) return;
-
-    // Обработчик подтверждения аутентификации
-    socket.on('authenticated', (data) => {
-        if (data.success) {
-            console.log('Socket.IO аутентификация успешна');
-        } else {
-            console.error('Socket.IO аутентификация не удалась:', data.message);
-        }
+    socket.on('test_call', (res) => {
+        console.log('Ответ на тест звонка:', res);
     });
 
-    // Общий обработчик уведомлений
-    socket.on('notification', (data) => {
-        console.log( "notification" )
-    });
-
-    // Обработчик получения списка грузов
-    socket.on('getCargos', (res) => {
+    socket.on('get_cargos', (res) => {
         if( res.success){
             console.log( "getCargos received", res );
             Store.dispatch({ type: "cargos", data: res.data });    
         }
     });
 
-    socket.on('getInv', (res) => {
+    // Водительская
+    socket.on('get_works', (res) => {
         if( res.success){
-            console.log( "inv received", res );
-            Store.dispatch({ type: "invoices", data: res.data });    
+            console.log( "Works received", res );
+            Store.dispatch({ type: "works", data: res.data });    
         }
     });
 
+    socket.on('get_transport', (res) => {
+        if( res.success){
+            console.log( "Transport received", res );
+            Store.dispatch({ type: "transport", data: res.data });    
+        }
+    });
+
+    socket.on('get_orgs', (res) => {
+        if( res.success){
+            console.log( "Orgs received", res );
+            Store.dispatch({ type: "orgs", data: res.data });    
+        }
+    });
+
+    socket.on("new_cargo_notification", ()=> { 
+
+        const news = Store.getState().new_cargos
+        Store.dispatch({ type: "new_cargos", data: news + 1 })
+
+    })
+
+    // Обработчики ошибок подключения
+    socket.on('connect_error', (error) => {
+        console.error('Ошибка подключения сокета:', error);
+        Store.dispatch({ type: "socketConnected", data: false });
+        Store.dispatch({ type: "socketAuthenticated", data: false });
+    });
+
+
+    socket.on('disconnect', () => {
+        console.log('Сокет отключен');
+        Store.dispatch({ type: "socketConnected", data: false });
+        Store.dispatch({ type: "socketAuthenticated", data: false });
+    });
+
+    
+    socket.on('connect', () => {
+        console.log('Сокет подключен');
+        Store.dispatch({ type: "socketConnected", data: true });
+    });
+    
 };
 
-// Подписка на изменение состояния login
-Store.subscribe({ num: 1001, type: "login", func: ()=>{
-    
-    const loginData = Store.getState().login;
-    
-    if (loginData && loginData.token) {
-        // Подключаемся к Socket.IO
-        Connect( loginData.token, loginData.driver )
-    }
-
-}})
-
-Store.subscribe({ num: 1002, type: "swap", func: ()=>{
-    const loginData = Store.getState().login;
-    if (loginData && loginData.token) {
-
-        socketService.disconnect()
-
-        Connect( loginData.token, loginData.driver )
-
-    }
-}})

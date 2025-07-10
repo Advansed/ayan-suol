@@ -1,4 +1,3 @@
-
 .transport-card {
     width: auto;
     margin: 1em;
@@ -110,3 +109,109 @@
     font-size: 14px;
     color: #333;
   }
+
+  .sbl-item {
+    font-size: 0.9em;
+    padding-bottom: 1em;
+  }
+
+/* ИСПРАВЛЕННЫЕ СТИЛИ ДЛЯ LOTTIE АНИМАЦИИ */
+
+.empty-state-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 300px);
+    padding: 2em 1em;
+    position: relative;
+    text-align: center;
+}
+
+.empty-state-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 2em;
+}
+
+.empty-state-text h3 {
+    margin: 0;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.empty-state-text p {
+    margin: 0.5em 0 0 0;
+    color: #9ca3af;
+    line-height: 1.4;
+    max-width: 280px;
+}
+
+/* КОНТЕЙНЕР ДЛЯ LOTTIE АНИМАЦИИ */
+.lottie-container-bottom {
+    position: relative;
+    width: 100vw;
+    height: 200px;
+    overflow: hidden;
+    margin-top: auto;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.lottie-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Убираем класс full-bottom, он не нужен */
+.full-bottom {
+    /* Удаляем или оставляем пустым */
+}
+
+.empty-active-orders {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 200px);
+}
+
+.empty-active-orders .empty-state-container {
+    min-height: 100%;
+}
+
+/* Адаптивные размеры для разных экранов */
+@media (max-width: 768px) {
+    .empty-state-container {
+        min-height: calc(100vh - 250px);
+        padding: 1.5em 1em;
+    }
+    
+    .lottie-container-bottom {
+        height: 180px;
+    }
+}
+
+@media (max-width: 480px) {
+    .empty-state-container {
+        min-height: calc(100vh - 200px);
+        padding: 1em;
+    }
+    
+    .lottie-container-bottom {
+        height: 70%;
+    }
+    
+    .empty-state-text p {
+        max-width: 250px;
+        font-size: 0.85em;
+    }
+}

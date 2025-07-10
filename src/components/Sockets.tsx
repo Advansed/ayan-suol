@@ -1,5 +1,6 @@
 // src/services/SocketService.ts
 import { io, Socket } from 'socket.io-client';
+import { Store } from './Store';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -34,6 +35,7 @@ class SocketService {
       // Обработка отключения
       this.socket.on('disconnect', () => {
         console.log('Отключен от Socket.IO сервера');
+        Store.dispatch({type: "socketConnected", data: false })
         this.isConnected = false;
       });
 
@@ -77,6 +79,7 @@ class SocketService {
       socketId: this.socket?.id,
     };
   }
+  
   getSocket(): Socket | null {
     return this.socket;
 }

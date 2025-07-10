@@ -3,7 +3,7 @@
     width: 90%;
     margin: auto;
     padding: 20px;
-    background-color: var(--main-color);
+    background-color:  var(--main-color);
     border-radius: 10px;
     color: white;
   }

@@ -1,10 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from "react"
 import { getData, Store } from "./Store"
-import { IonButton, IonIcon, IonInput, IonLabel, IonLoading, IonSegment, IonSegmentButton, IonTextarea, IonToggle } from "@ionic/react"
+import { IonButton, IonIcon, IonInput, IonLabel, IonLoading, IonSegment, IonSegmentButton, IonSpinner, IonTextarea, IonToggle } from "@ionic/react"
 import './profile.css'
 import { arrowBackOutline, chevronForwardOutline, personOutline } from "ionicons/icons"
 import { takePicture } from "./Files"
 import socketService from "./Sockets"
+import Transport from "./Transport"
+import { Orgs } from "./Orgs"
 
 export function Profile() {
     const [info, setInfo]       = useState<any>()
@@ -161,51 +163,102 @@ export function Profile() {
     function Personal() {
         // Refs для управления состоянием
         const personalMountedRef = useRef(true)
-        const personalAbortControllerRef = useRef<AbortController | null>(null)
-
-        // Безопасная функция сохранения
+        const [isSaving, setIsSaving] = useState(false)
+        const [hasChanges, setHasChanges] = useState(false)
+        const [localInfo, setLocalInfo] = useState({ ...info })
+    
+        // Функция сохранения через Socket.IO
         const personalSave = useCallback(async () => {
-            if (!personalMountedRef.current) return
-
-            if (personalAbortControllerRef.current) {
-                personalAbortControllerRef.current.abort()
-            }
-
-            personalAbortControllerRef.current = new AbortController()
-
+            if (!personalMountedRef.current || !localInfo || isSaving) return
+    
+            setIsSaving(true)
+    
             try {
                 const saveData = {
-                    ...info,
-                    token: Store.getState().login.token,
-                    signal: personalAbortControllerRef.current.signal
+                    ...localInfo,
+                    token: Store.getState().login.token
                 }
-                const res = await getData("profile", saveData)
                 
-                if (personalMountedRef.current) {
-                    console.log('Personal info saved:', res)
+                // Отправляем данные через Socket.IO
+                const success = socketService.emit('profile', saveData)
+                
+                if (!success) {
+                    console.error('Socket not connected, unable to save profile')
+                    Store.dispatch({ 
+                        type: "message", 
+                        data: { type: "error", message: "Нет подключения к серверу" } 
+                    })
+                    setIsSaving(false)
                 }
-            } catch (error:any) {
-                if (error.name !== 'AbortError' && personalMountedRef.current) {
-                    console.error('Error saving personal info:', error)
-                }
+            } catch (error) {
+                console.error('Error saving personal info:', error)
+                Store.dispatch({ 
+                    type: "message", 
+                    data: { type: "error", message: "Ошибка при сохранении" } 
+                })
+                setIsSaving(false)
             }
-        }, [info])
-
+        }, [localInfo, isSaving])
+    
         useEffect(() => {
             personalMountedRef.current = true
-
+    
+            // Настройка обработчиков Socket событий
+            const socket = socketService.getSocket()
+            if (socket) {
+                // Обработчик успешного сохранения профиля
+                socket.on('profile', (response) => {
+                    if (personalMountedRef.current) {
+                        setIsSaving(false)
+                        
+                        if (response.success) {
+                            console.log('Profile saved successfully:', response.data)
+                            setHasChanges(false)
+                            
+                            // Обновляем оригинальные данные
+                            Object.assign(info, localInfo)
+                            
+                            Store.dispatch({ type: "login", data: response.data })
+                        } else {
+                            console.error('Error saving profile:', response.message)
+                            Store.dispatch({ 
+                                type: "message", 
+                                data: { type: "error", message: response.message } 
+                            })
+                        }
+                    }
+                })
+            }
+    
             return () => {
                 personalMountedRef.current = false
-                if (personalAbortControllerRef.current) {
-                    personalAbortControllerRef.current.abort()
-                }
-                // Сохраняем только если компонент все еще смонтирован
-                if (info) {
-                    personalSave()
+                
+                // Убираем обработчики событий
+                if (socket) {
+                    socket.off('profile')
                 }
             }
-        }, [personalSave])
-
+        }, [localInfo])
+    
+        // Обработчик изменения полей
+        const handleFieldChange = useCallback((field: string, value: string) => {
+            setLocalInfo(prev => {
+                const updated = { ...prev, [field]: value }
+                
+                // Проверяем, есть ли изменения
+                const changed = JSON.stringify(updated) !== JSON.stringify(info)
+                setHasChanges(changed)
+                
+                return updated
+            })
+        }, [info])
+    
+        // Сброс изменений
+        const handleReset = useCallback(() => {
+            setLocalInfo({ ...info })
+            setHasChanges(false)
+        }, [info])
+    
         return (
             <div>
                 <div className=""
@@ -215,228 +268,89 @@ export function Profile() {
                 >
                     <IonIcon icon={arrowBackOutline} className="ml-1 mt-1 w-15 h-15"/>
                 </div>
-
+    
                 <div className="mt-1 ml-1 mr-1 fs-09">
-                    <div className="fs-12"> <b>Личные информация</b></div>
+                    <div className="fs-12"> 
+                        <b>Личная информация</b>
+                    </div>
                     
                     <div className="mt-1">
                         <div>Имя, Фамилия</div>
-                        <div className="c-input ">
+                        <div className="c-input">
                             <IonInput
                                 placeholder="Имя"
-                                value={info?.name}
+                                value={localInfo?.name}
                                 onIonInput={(e) => {
-                                    if (info) {
-                                        info.name = e.detail.value as string;
-                                    }
+                                    handleFieldChange('name', e.detail.value as string)
                                 }}
                             />
                         </div>
                     </div>
+                    
                     <div className="mt-05">
-                        <div>email</div>
+                        <div>Email</div>
                         <div className="c-input">
                             <IonInput
                                 placeholder="email"
-                                value={info?.email}
+                                type="email"
+                                value={localInfo?.email}
                                 onIonInput={(e) => {
-                                    if (info) {
-                                        info.email = e.detail.value as string;
-                                    }
+                                    handleFieldChange('email', e.detail.value as string)
                                 }}
                             />
                         </div>
                     </div>
+                    
                     <div className="mt-05">
                         <div>Телефон</div>
                         <div className="c-input">
                             <IonInput
-                                value={info?.phone}
+                                value={localInfo?.phone}
                                 placeholder="Телефон"
                                 readonly 
                             />
                         </div>
                     </div>
+                    
                     <div className="mt-05">
                         <div>О себе</div>
                         <div className="c-input">
                             <IonTextarea
-                                placeholder="о себе"
-                                value={info?.description}
+                                placeholder="О себе"
+                                value={localInfo?.description}
                                 onIonInput={(e) => {
-                                    if (info) {
-                                        info.description = e.detail.value as string;
-                                    }
+                                    handleFieldChange('description', e.detail.value as string)
                                 }}
+                                rows={4}
                             />
                         </div>
                     </div>
-                </div>
-            </div>
-        )
-    }
     
-    function Transport() {
-        const [transportInfo, setTransportInfo] = useState<any>(Store.getState().transport);
-        
-        // Refs для управления состоянием
-        const transportMountedRef = useRef(true)
-        const transportAbortControllerRef = useRef<AbortController | null>(null)
-        const transportSubscriptionIdRef = useRef<number | null>(null)
-
-        // Безопасная функция сохранения
-        const transportSave = useCallback(async () => {
-            if (!transportMountedRef.current) return
-
-            if (transportAbortControllerRef.current) {
-                transportAbortControllerRef.current.abort()
-            }
-
-            transportAbortControllerRef.current = new AbortController()
-
-            try {
-                const saveData = {
-                    ...transportInfo,
-                    token: Store.getState().login.token,
-                    signal: transportAbortControllerRef.current.signal
-                }
-                const res = await getData("setTransport", saveData)
-                
-                if (transportMountedRef.current) {
-                    console.log('Transport info saved:', res)
-                }
-            } catch (error:any) {
-                if (error.name !== 'AbortError' && transportMountedRef.current) {
-                    console.error('Error saving transport info:', error)
-                }
-            }
-        }, [transportInfo])
-
-        useEffect(() => {
-            transportMountedRef.current = true
-
-            // Создаем уникальный ID для подписки
-            const subscriptionId = Date.now() + Math.random()
-            transportSubscriptionIdRef.current = subscriptionId
-
-            setTransportInfo(Store.getState().transport)
-
-            // Подписка на изменения transport
-            Store.subscribe({
-                num: subscriptionId, 
-                type: "transport", 
-                func: () => {
-                    if (transportMountedRef.current) {
-                        setTransportInfo(Store.getState().transport)
-                    }
-                }
-            })
-           
-            return () => {
-                transportMountedRef.current = false
-                if (transportSubscriptionIdRef.current !== null) {
-                    Store.unSubscribe(transportSubscriptionIdRef.current)
-                }
-                if (transportAbortControllerRef.current) {
-                    transportAbortControllerRef.current.abort()
-                }
-                // Сохраняем только если есть данные для сохранения
-                if (transportInfo) {
-                    transportSave()
-                }
-            }
-        }, [transportSave])
-
-        return (
-            <div>
-                <div className=""
-                    onClick={() => {
-                        setPage(0)
-                    }}
-                >
-                    <IonIcon icon={arrowBackOutline} className="ml-1 mt-1 w-15 h-15"/>
-                </div>
-
-                <div className="mt-1 ml-1 mr-1 fs-09">
-                    <div className="fs-12"> <b>Информация о транспорте</b></div>
-                    
-                    <div className="mt-1">
-                        <div>Тип транспорта</div>
-                        <div className="c-input ">
-                            <IonInput
-                                placeholder="Тип транспорта"
-                                value={transportInfo?.ТипТранспорта}
-                                onIonInput={(e) => {
-                                    if (transportInfo) {
-                                        transportInfo.ТипТранспорта = e.detail.value as string;
-                                        setTransportInfo({...transportInfo});
-                                    }
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <div className="mt-05">
-                        <div>Грузоподъемность</div>
-                        <div className="c-input">
-                            <IonInput
-                                placeholder="Грузоподъемность"
-                                value={transportInfo?.Грузоподъемность}
-                                onIonInput={(e) => {
-                                    if (transportInfo) {
-                                        transportInfo.Грузоподъемность = e.detail.value as string;
-                                        setTransportInfo({...transportInfo});
-                                    }
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <div className="mt-05">
-                        <div>Год выпуска</div>
-                        <div className="c-input">
-                            <IonInput
-                                placeholder="Год выпуска"
-                                value={transportInfo?.ГодВыпуска}
-                                onIonInput={(e) => {
-                                    if (transportInfo) {
-                                        transportInfo.ГодВыпуска = e.detail.value as string;
-                                        setTransportInfo({...transportInfo});
-                                    }
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <div className="mt-05">
-                        <div>Гос. номер</div>
-                        <div className="c-input">
-                            <IonInput
-                                placeholder="Гос. номер"
-                                value={transportInfo?.ГосНомер}
-                                onIonInput={(e) => {
-                                    if (transportInfo) {
-                                        transportInfo.ГосНомер = e.detail.value as string;
-                                        setTransportInfo({...transportInfo});
-                                    }
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <div className="mt-05">
-                        <div>Опыт вождения</div>
-                        <div className="c-input">
-                            <IonInput
-                                placeholder="Опыт вождения"
-                                value={transportInfo?.Опыт}
-                                onIonInput={(e) => {
-                                    if (transportInfo) {
-                                        transportInfo.Опыт = e.detail.value as string;
-                                        setTransportInfo({...transportInfo});
-                                    }
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <div className="mt-05">
-                        <div>Документы</div>
+                    {/* Кнопки управления */}
+                    <div className="mt-2 flex fl-space">
+                        <IonButton
+                            fill="clear"
+                            color="medium"
+                            onClick={handleReset}
+                            disabled={!hasChanges || isSaving}
+                        >
+                            Отменить
+                        </IonButton>
+                        
+                        <IonButton
+                            onClick={personalSave}
+                            disabled={!hasChanges || isSaving}
+                            className="ml-1"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <IonSpinner name="crescent" className="mr-05" />
+                                    Сохранение...
+                                </>
+                            ) : (
+                                'Сохранить'
+                            )}
+                        </IonButton>
                     </div>
                 </div>
             </div>
@@ -747,7 +661,7 @@ export function Profile() {
         )
     }
     
-    function Orgs() {
+    function Orgs_() {
         const [orgInfo, setOrgInfo] = useState<any>(Store.getState().orgs);
 
         // Refs для управления состоянием
@@ -987,14 +901,15 @@ export function Profile() {
             )}
 
             <div className="p-bottom w-100">
-                <IonSegment value={swap ? "driver" : "customer"}
+                <IonSegment 
+                    value={swap ? "driver" : "customer"}
                     className="w-100"
                     mode="ios"
                     onIonChange={(e) => { 
                         swap = e.detail.value === "driver" ? true : false
                         Store.dispatch({ type: "swap", data: swap })
 
-                        socketService.emit("setDriver", { token: Store.getState().login.token })
+                        socketService.emit("set_driver", { token: Store.getState().login.token })
                         
                     }}
                 >
@@ -1020,10 +935,10 @@ export function Profile() {
         <>
             {page === 0 ? elem
             : page === 1 ? <Personal />
-            : page === 2 ? <Transport />
+            : page === 2 ? <Transport setPage={ setPage } />
             : page === 3 ? <Password />
             : page === 4 ? <Notifications />
-            : page === 5 ? <Orgs />
+            : page === 5 ? <Orgs setPage={ setPage } />
             : <></>}
         </>
     )
