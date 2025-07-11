@@ -1,17 +1,32 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { IonLoading, IonSegment, IonSegmentButton } from '@ionic/react'
 import { ProfileHeader } from './components/ProfileHeader'
 import { ProfileStats } from './components/ProfileStats'
 import { ProfileMenu } from './components/ProfileMenu'
-import { Security, Notifications, Transport, Company } from './pages/other-pages'
+import { Security, Notifications } from './pages/other-pages'
+// import Transport from '../Transport'  // Настоящий компонент Transport
+// import { Orgs } from '../Orgs'  // Настоящий компонент Company
 import { PROFILE_PAGES, ROLE_TYPES, MENU_ITEMS, UI_TEXT } from './constants'
 import { useProfile } from './hooks/useProfile'
 import { Store } from '../Store'
 import { PersonalInfo } from './pages/personalInfo'
+import Transport from '../Transport'
+import { Orgs } from '../Orgs'
 
 export const Profile: React.FC = () => {
   const { user, isLoading, isDriver } = useProfile()
   const [currentPage, setCurrentPage] = useState<number>( PROFILE_PAGES.MAIN )
+
+// Во второй версии Profile
+useEffect(() => {
+
+  const loadings = document.querySelectorAll('ion-loading');
+  loadings.forEach(loading => {
+    loading.setAttribute('is-open', 'false');
+    loading.remove(); // Принудительное удаление
+  });
+
+}, []);
 
   const menuItems = useMemo(() => {
     const common = [
@@ -53,11 +68,13 @@ export const Profile: React.FC = () => {
   if (currentPage === PROFILE_PAGES.NOTIFICATIONS) {
     return <Notifications onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
+
   if (currentPage === PROFILE_PAGES.TRANSPORT) {
-    return <Transport onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
-  }
+    return <Transport setPage={setCurrentPage} />  // Добавить setPage
+  }  
+
   if (currentPage === PROFILE_PAGES.COMPANY) {
-    return <Company onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
+    return <Orgs setPage={setCurrentPage} />  // Использовать Orgs
   }
 
   // Главная страница
