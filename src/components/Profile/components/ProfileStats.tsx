@@ -19,7 +19,7 @@ export const ProfileStats: React.FC<Props> = React.memo(({ ratings, isDriver }) 
     <StatBlock value={ratings.orders} label={STAT_LABELS.ORDERS} />
     <StatBlock value={ratings.rate} label={STAT_LABELS.RATING} />
     <StatBlock 
-      value={isDriver ? ratings.invoices : ratings.payd} 
+      value={isDriver ? ratings.invoices : ratings.payd } 
       label={isDriver ? STAT_LABELS.INVOICES : STAT_LABELS.PAID} 
     />
   </div>

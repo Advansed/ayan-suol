@@ -16,7 +16,7 @@ export const ProfileHeader: React.FC<Props> = React.memo(({ user, isDriver }) =>
         <IonIcon icon={personOutline} className="w-15 h-15"/>
         <div className="ml-1">{user.name}</div>
       </div>
-      <span>{isDriver ? UI_TEXT.DRIVER : UI_TEXT.CUSTOMER}</span>
+      <span>{user.driver ? UI_TEXT.DRIVER : UI_TEXT.CUSTOMER}</span>
     </div>
   </div>
 ))

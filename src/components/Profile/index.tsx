@@ -36,7 +36,10 @@ export const Profile: React.FC = () => {
     }
   }, [isDriver])
 
+  console.log( isLoading)
+  console.log( !user )
   if (isLoading || !user) {
+    console.log( "useLoading")
     return <IonLoading isOpen={true} message={UI_TEXT.LOADING} />
   }
 
@@ -58,6 +61,7 @@ export const Profile: React.FC = () => {
   }
 
   // Главная страница
+  console.log( "Главная страница")
   return (
     <div>
       <div className="h-3 bg-2 flex fl-center fs-14">

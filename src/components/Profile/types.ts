@@ -1,22 +1,31 @@
 export interface User {
-  id: string
+  guid: string          // было id
   name: string
   email: string
   phone?: string
-  image?: {
-    dataUrl: string
-    format: string
-  }
+  image?: string        // упростить, в данных просто string
   token: string
-  ratings: UserRatings
-  isDriver: boolean
+  driver: boolean       // было isDriver
+  ratings: {
+    orders:   number
+    invoices: number
+    rate:     number
+    payd:     number        // убрать invoices
+  }
+  description?: string  // добавить
+  notifications?: {     // добавить
+    email: boolean
+    sms: boolean
+    orders: boolean
+    market: boolean
+  }
 }
 
 export interface UserRatings {
-  orders: number
-  rate: number
-  invoices: number
-  payd: number
+  orders:     number
+  rate:       number
+  invoices:   number
+  payd:       number
 }
 
 export interface Company {

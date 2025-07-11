@@ -6,7 +6,7 @@ import { useProfileSave } from '../hooks/useProfileSave'
 import { FIELD_LABELS } from '../constants'
 
 interface Props {
-  user: User
+  user: User 
   onBack: () => void
 }
 

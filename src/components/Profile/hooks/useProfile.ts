@@ -10,9 +10,12 @@ export const useProfile = () => {
   useEffect(() => {
     // Получаем начальные данные
     const loginData = Store.getState().login
-    if (loginData) {
-      setUser(loginData)
-      setIsLoading(false)
+    console.log("useeffect")
+    console.log( loginData )
+    if( loginData ) {
+      setUser( loginData )
+      setIsLoading( false )
+      console.log("загружен", loginData )
     }
 
     // Подписка на изменения
@@ -25,6 +28,7 @@ export const useProfile = () => {
       func: () => {
         const data = Store.getState().login
         setUser(data)
+        setIsLoading(false)
       }
     })
 
@@ -35,7 +39,7 @@ export const useProfile = () => {
     }
   }, [])
 
-  const isDriver = Store.getState().swap
+  const isDriver = Store.getState().swap || user?.driver || false
 
   return { user, isLoading, isDriver }
 }
