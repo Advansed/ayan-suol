@@ -1,11 +1,11 @@
 import { IonButton, IonContent, IonModal, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import './Tab1.css';
-import { Cargos, CargoInfo }     from '../components/Cargos/';
+import { Cargos }     from '../components/Cargos/';
 import { Store }      from '../components/Store';
-import { DrCargos }   from '../components/drCargos';
 import { useState }   from 'react';
 import socketService  from '../components/Sockets';
 import { arrowUpCircleOutline } from 'ionicons/icons';
+import { Works } from '../components/Works';
 
 const Tab1: React.FC = () => {
   const [message, setMessage] = useState("");
@@ -84,7 +84,7 @@ const Tab1: React.FC = () => {
         {/* Основной контент */}
         {
           swap
-            ? <></> //<DrCargos />
+            ? <Works />
             : <Cargos />
         }
       </IonContent>
