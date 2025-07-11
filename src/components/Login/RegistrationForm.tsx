@@ -111,6 +111,28 @@ const StepVerification: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
     auth.submitRegistrationStep()
   }, [auth])
 
+  const handlePinChange = (value: string, index: number) => {
+    const pin = (auth.recoveryData.pincode || '').split('')
+    pin[index] = value.slice(-1) // Только последний символ
+    const newPin = pin.join('')
+    auth.updateRecoveryData('pincode', newPin)
+    
+    // Автофокус на следующее поле
+    if (value && index < 3) {
+      const nextInput = document.querySelector(`input[data-pin-index="${index + 1}"]`) as HTMLInputElement
+      nextInput?.focus()
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === 'Backspace' && !pin[index] && index > 0) {
+      const prevInput = document.querySelector(`input[data-pin-index="${index - 1}"]`) as HTMLInputElement
+      prevInput?.focus()
+    }
+  }
+
+  const pin = (auth.recoveryData.pincode || '').split('')
+
   const navigationLinks = [{
     text: 'Есть аккаунт? Авторизироваться',
     onClick: auth.showLoginForm
@@ -123,18 +145,23 @@ const StepVerification: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
       </div>
 
       <div className="fs-11 a-center mb-2">
-        Мы вам отправили СМС на ваш номер
+        Мы вам отправили СМС на ваш номер<br/>
         Для верификации номера введите СМС
       </div>
 
-      <div className="l-input-1 mt-1">
-        <input
-          className   = 'w-100'
-          placeholder = "0000"
-          maxLength   = { 4 }
-          value       = { auth.recoveryData.pincode || '' }
-          onChange={(e) => auth.updateRecoveryData('pincode', e.target.value)}
-        />
+      <div className="pin-inputs" style={{display: 'flex', gap: '10px', justifyContent: 'center'}}>
+        {[0,1,2,3].map(i => (
+          <input
+            key={i}
+            data-pin-index={i}
+            className="pin-input"
+            style={{width: '50px', height: '50px', textAlign: 'center', fontSize: '20px'}}
+            maxLength={1}
+            value={pin[i] || ''}
+            onChange={(e) => handlePinChange(e.target.value, i)}
+            onKeyDown={(e) => handleKeyDown(e, i)}
+          />
+        ))}
       </div>
 
       <div className="a-center fs-14 mt-2 mb-2">

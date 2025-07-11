@@ -283,3 +283,19 @@
 .a-container {
     padding-bottom: 2em;
 }
+
+.gradient-button {
+  background: linear-gradient(to right, #3b82f6, #9333ea);
+  color: white;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.gradient-button:hover {
+  background: linear-gradient(to right, #2563eb, #7c3aed);
+}

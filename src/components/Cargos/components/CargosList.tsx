@@ -22,6 +22,7 @@ import {
 } from 'ionicons/icons';
 import { CargoInfo, CargoFilters, CargoStatus } from '../types';
 import { CargoCard } from './CargoCard';
+import { Plus, Package, Truck } from "lucide-react";
 
 interface CargosListProps {
     cargos: CargoInfo[];
@@ -114,13 +115,14 @@ export const CargosList: React.FC<CargosListProps> = ({
             </div>
 
             {/* Кнопка создания нового груза */}
-            <div
-                className="c-card mt-1 ml-1 mr-1 flex"
-                onClick={onCreateNew}
-                style={{ cursor: 'pointer' }}
-            >
-                <IonIcon icon={addCircleOutline} className="w-15 h-15" />
-                <div className="ml-1 a-center w-70">Создать новый груз</div>
+            <div className="mb-4 ml-1 mr-1 mt-1">
+                <div 
+                    className="gradient-button"
+                    onClick={onCreateNew}
+                >
+                    <Package className="w-6 h-6" />
+                <span className="ml-3 font-semibold">Создать новый груз</span>
+                </div>
             </div>
 
             {/* Поиск */}
