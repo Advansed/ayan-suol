@@ -197,3 +197,33 @@ export interface WorkGroup {
     works: WorkInfo[];
     count: number;
 }
+
+
+// В types/index.ts обновить UseWorksReturn:
+
+export interface UseWorksReturn {
+    // Существующие поля
+    works: WorkInfo[];
+    isLoading: boolean;
+    currentPage: WorkPageType;
+    filters: WorkFilters;
+    searchQuery: string;
+    
+    // Архив (добавить)
+    archiveWorks: WorkInfo[];
+    isArchiveLoading: boolean;
+    
+    // Существующие методы
+    navigateTo: (page: WorkPageType) => void;
+    goBack: () => void;
+    setFilters: (filters: WorkFilters) => void;
+    setSearchQuery: (query: string) => void;
+    createOffer: (data: CreateOfferData) => Promise<boolean>;
+    markCompleted: (guid: string) => Promise<boolean>;
+    cancelOffer: (offerId: string) => Promise<boolean>;
+    getWork: (guid: string) => WorkInfo | undefined;
+    refreshWorks: () => Promise<void>;
+    
+    // Архив (добавить)
+    loadArchiveWorks: () => Promise<void>;
+}

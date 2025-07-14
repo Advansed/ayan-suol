@@ -16,6 +16,9 @@ export const useWorks = (): UseWorksReturn => {
     const [currentPage, setCurrentPage] = useState<WorkPageType>({ type: 'list' });
     const [filters, setFilters] = useState<WorkFilters>({});
     const [searchQuery, setSearchQuery] = useState('');
+    
+    const [archiveWorks, setArchiveWorks] = useState<WorkInfo[]>([]);
+    const [isArchiveLoading, setIsArchiveLoading] = useState(false);
 
     // История навигации для кнопки "Назад"
     const [navigationHistory, setNavigationHistory] = useState<WorkPageType[]>([{ type: 'list' }]);
@@ -138,6 +141,23 @@ export const useWorks = (): UseWorksReturn => {
             setIsLoading(false);
         }
     }, []);
+
+  const loadArchiveWorks = useCallback(async (): Promise<void> => {
+        setIsArchiveLoading(true);
+        const socket = socketService.getSocket();
+        
+        if (!socket) {
+            setIsArchiveLoading(false);
+            return;
+        }
+
+        socket.emit("hist_works", {
+            token: Store.getState().login.token
+        });
+
+
+    }, []);
+    
 
     // ======================
     // УТИЛИТЫ
@@ -272,15 +292,30 @@ export const useWorks = (): UseWorksReturn => {
             }
         };
 
+        const handleHistWorks = (res: any) => {
+            console.log("hist_works response:", res);
+            setIsArchiveLoading(false);
+            
+            if (res.success && res.data) {
+                setArchiveWorks(res.data);
+            } else {
+                setArchiveWorks([]);
+            }
+            
+            socket.off("hist_works", handleHistWorks);
+        };
+
         // Подписываемся на события
         socket.on(WORK_SOCKET_EVENTS.SET_OFFER, handleOfferResponse);
         socket.on(WORK_SOCKET_EVENTS.WORK_UPDATED, handleWorkUpdated);
         socket.on(WORK_SOCKET_EVENTS.DELIVERED, handleDelivered);
+        socket.on("hist_works", handleHistWorks);
 
         return () => {
             socket.off(WORK_SOCKET_EVENTS.SET_OFFER, handleOfferResponse);
             socket.off(WORK_SOCKET_EVENTS.WORK_UPDATED, handleWorkUpdated);
             socket.off(WORK_SOCKET_EVENTS.DELIVERED, handleDelivered);
+            socket.off( "hist_works", handleHistWorks)
         };
     }, [refreshWorks]);
 
@@ -312,6 +347,10 @@ export const useWorks = (): UseWorksReturn => {
 
         // Утилиты
         getWork,
-        refreshWorks
+        refreshWorks,
+
+        archiveWorks,
+        isArchiveLoading,
+        loadArchiveWorks
     };
 };
