@@ -1,7 +1,9 @@
 import React from 'react'
-import { IonInput, IonSpinner, IonButton, IonLabel } from '@ionic/react'
+import { IonInput, IonSpinner, IonButton, IonLabel, IonIcon } from '@ionic/react'
 import { useMaskito } from '@maskito/react'
 import { MaskitoOptions } from '@maskito/core'
+import { closeOutline } from 'ionicons/icons'
+
 
 // ======================
 // МАСКИРОВАННЫЙ ВВОД ТЕЛЕФОНА
@@ -164,13 +166,19 @@ export const ErrorAlert: React.FC<ErrorAlertProps> = ({ error, onClose }) => {
   if (!error) return null
   
   return (
-    <div className="error-alert cr-card mt-05" onClick={onClose}>
-      <div className="fs-11 cl-red a-center">
-        <b>{error}</b>
+    <div className="error-modal-overlay" onClick={onClose}>
+      <div className="error-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="fs-11 cl-red a-center">
+          <b>{error}</b>
+        </div>
+        <IonButton fill="clear" size="small" onClick={onClose}>
+          <IonIcon icon={ closeOutline } />
+        </IonButton>
       </div>
     </div>
   )
 }
+
 
 // ======================
 // СПИННЕР ЗАГРУЗКИ

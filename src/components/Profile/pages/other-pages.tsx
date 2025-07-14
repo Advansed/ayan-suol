@@ -29,10 +29,9 @@ export const Security: React.FC<PageProps> = ({ onBack }) =>
 export const Notifications: React.FC<PageProps> = ({ onBack }) =>
   <PageWrapper title={MENU_ITEMS.NOTIFICATIONS} onBack={onBack} />
 
-// Transport.tsx
-export const Transport: React.FC<PageProps> = ({ onBack }) =>
-  <PageWrapper title={MENU_ITEMS.TRANSPORT} onBack={onBack} />
-
 // Company.tsx
 export const Company: React.FC<PageProps> = ({ onBack }) =>
   <PageWrapper title={MENU_ITEMS.COMPANY} onBack={onBack} />
+
+// Transport теперь импортируется отдельно
+export { Transport } from './Transport'

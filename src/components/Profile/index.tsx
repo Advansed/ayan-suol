@@ -3,15 +3,12 @@ import { IonLoading, IonSegment, IonSegmentButton } from '@ionic/react'
 import { ProfileHeader } from './components/ProfileHeader'
 import { ProfileStats } from './components/ProfileStats'
 import { ProfileMenu } from './components/ProfileMenu'
-import { Security, Notifications } from './pages/other-pages'
-// import Transport from '../Transport'  // Настоящий компонент Transport
-// import { Orgs } from '../Orgs'  // Настоящий компонент Company
+import { Security, Notifications, Transport } from './pages/other-pages'
 import { PROFILE_PAGES, ROLE_TYPES, MENU_ITEMS, UI_TEXT } from './constants'
 import { useProfile } from './hooks/useProfile'
 import { Store } from '../Store'
-import { PersonalInfo } from './pages/personalInfo'
-import Transport from '../Transport'
 import { Orgs } from '../Orgs'
+import { PersonalInfo } from './pages/personalInfo'
 
 export const Profile: React.FC = () => {
   const { user, isLoading, isDriver } = useProfile()
@@ -70,7 +67,7 @@ useEffect(() => {
   }
 
   if (currentPage === PROFILE_PAGES.TRANSPORT) {
-    return <Transport setPage={setCurrentPage} />  // Добавить setPage
+    return <Transport  onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)}/>  // Добавить setPage
   }  
 
   if (currentPage === PROFILE_PAGES.COMPANY) {

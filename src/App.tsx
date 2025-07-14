@@ -13,7 +13,7 @@ import {
   setupIonicReact
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { bicycleOutline, chatboxEllipses, chatboxEllipsesOutline, contractOutline, ellipse, giftOutline, personOutline, square, triangle, walkOutline } from 'ionicons/icons';
+import { archiveOutline, bicycleOutline, chatboxEllipses, chatboxEllipsesOutline, contractOutline, ellipse, giftOutline, personOutline, square, triangle, walkOutline } from 'ionicons/icons';
 import Tab1 from './pages/Tab1';
 import Tab2 from './pages/Tab2';
 import Tab3 from './pages/Tab3';
@@ -351,6 +351,11 @@ const App: React.FC = () => {
             <IonTabButton tab="tab1" href="/tab1">
               <IonIcon aria-hidden="true" icon={ contractOutline } />
               <IonLabel>{swap ? "Работы" : "Заказы"}</IonLabel>
+            </IonTabButton>
+
+            <IonTabButton tab="tab4" href="/tab4">
+              <IonIcon aria-hidden="true" icon={ archiveOutline } />
+              <IonLabel>Архив</IonLabel>
             </IonTabButton>
 
             <IonTabButton tab="tab2" href="/tab2"

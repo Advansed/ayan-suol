@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { IonIcon, IonInput, IonButton } from '@ionic/react'
+import { IonIcon, IonButton } from '@ionic/react'
 import { arrowBackOutline } from 'ionicons/icons'
 import { User } from '../types'
 import { useProfileSave } from '../hooks/useProfileSave'
 import { FIELD_LABELS } from '../constants'
+import './personalInfo.css'
 
 interface Props {
   user: User 
@@ -39,51 +40,55 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
   }
 
   return (
-    <div>
+    <div className="personal-info">
       <IonIcon 
         icon={arrowBackOutline} 
-        className="ml-1 mt-1 w-15 h-15" 
+        className="back-icon" 
         onClick={onBack}
       />
       
-      <div className="mt-1 ml-1 mr-1 fs-09">
-        <div className="fs-12"><b>{FIELD_LABELS.TITLE}</b></div>
+      <div className="pers-content">
+        <div className="title"><b>{FIELD_LABELS.TITLE}</b></div>
         
-        <div className="mt-1">
-          <div>{FIELD_LABELS.NAME}</div>
-          <div className="c-input">
-            <IonInput
+        <div className="field">
+          <div className="label">{FIELD_LABELS.NAME}</div>
+          <div className="pers-input-wrapper">
+            <input
+              type="text"
+              className="custom-text-input"
               value={form.name}
-              onIonInput={e => setForm({...form, name: e.detail.value!})}
+              onChange={e => setForm({...form, name: e.target.value})}
             />
           </div>
         </div>
         
-        <div className="mt-05">
-          <div>{FIELD_LABELS.EMAIL}</div>
-          <div className="c-input">
-            <IonInput
+        <div className="field">
+          <div className="label">{FIELD_LABELS.EMAIL}</div>
+          <div className="pers-input-wrapper">
+            <input
               type="email"
+              className="custom-text-input"
               value={form.email}
-              onIonInput={e => setForm({...form, email: e.detail.value!})}
+              onChange={e => setForm({...form, email: e.target.value})}
             />
           </div>
         </div>
         
-        <div className="mt-05">
-          <div>{FIELD_LABELS.PHONE}</div>
-          <div className="c-input">
-            <IonInput
+        <div className="field">
+          <div className="label">{FIELD_LABELS.PHONE}</div>
+          <div className="pers-input-wrapper">
+            <input
               type="tel"
+              className="custom-text-input"
               value={form.phone}
-              onIonInput={e => setForm({...form, phone: e.detail.value!})}
+              onChange={e => setForm({...form, phone: e.target.value})}
             />
           </div>
         </div>
 
-        {error && <div className="c-red mt-1">{error}</div>}
+        {error && <div className="error-msg">{error}</div>}
         
-        <div className="flex mt-1">
+        <div className="buttons">
           <IonButton 
             disabled={!hasChanges || isSaving}
             onClick={handleSave}
