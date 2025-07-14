@@ -89,7 +89,11 @@ useEffect(() => {
       <div className="p-bottom w-100">
         <IonSegment 
           value={isDriver ? ROLE_TYPES.DRIVER : ROLE_TYPES.CUSTOMER}
-          onIonChange={e => Store.dispatch({ type: "swap" })}
+          onIonChange={e => {
+
+            const swap = Store.getState().swap
+            Store.dispatch({ type: "swap", data: !swap })}
+          }
         >
           <IonSegmentButton value={ROLE_TYPES.DRIVER}>{UI_TEXT.DRIVER}</IonSegmentButton>
           <IonSegmentButton value={ROLE_TYPES.CUSTOMER}>{UI_TEXT.CUSTOMER}</IonSegmentButton>

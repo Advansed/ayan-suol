@@ -344,6 +344,7 @@ export const useAuth = (): UseAuthReturn => {
     const handleAuth = (response: SocketResponse) => {
       if (!isMountedRef.current) return
 
+      console.log(response)
       updateState({ isLoading: false })
       
       if (response.success) {

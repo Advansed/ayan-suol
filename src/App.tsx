@@ -48,6 +48,7 @@ import socketService from './components/Sockets';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { isPlatform } from '@ionic/react';
 import { Login } from './components/Login';
+import Tab4 from './pages/Tab4';
 
 setupIonicReact({
   mode: 'ios', // или 'md' для Material Design
@@ -339,6 +340,10 @@ const App: React.FC = () => {
 
             <Route path="/tab3">
               <Tab3 />
+            </Route>
+
+            <Route path="/tab4">
+              <Tab4 />
             </Route>
 
             <Route exact path="/">

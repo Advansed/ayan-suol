@@ -8,14 +8,20 @@ import { arrowUpCircleOutline } from 'ionicons/icons';
 import { Works } from '../components/Works';
 
 const Tab1: React.FC = () => {
-  const [message, setMessage] = useState("");
+  const [ message, setMessage ] = useState("");
+  const [ swap, setSwap ] = useState( Store.getState().swap )
   
   Store.subscribe({ num: 501, type: "error", func: () => {
     console.log(Store.getState().error);
     setMessage(Store.getState().error);
   }});
+
+  Store.subscribe({ num: 502, type: "swap", func: () => {
+    setSwap( Store.getState().swap );
+    console.log("swap 502")
+  }});
    
-  const swap = Store.getState().swap;
+  
 
   // Функция обновления данных
   const handleRefresh = async (event: CustomEvent) => {

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { IonButton, IonInput, IonLabel, IonLoading, IonTextarea } from '@ionic/react';
+import { IonButton, IonIcon, IonLoading } from '@ionic/react';
+import { arrowBackOutline } from 'ionicons/icons';
 import Select from "react-tailwindcss-select";
 import { WorkInfo, CreateOfferData, DriverTransport } from '../types';
 import { Store } from '../../Store';
 import socketService from '../../Sockets';
-import { SelectValue } from 'react-tailwindcss-select/dist/components/type';
+import { workFormatters } from '../utils';
+import './WorkOffer.css';
 
-// Тип для опций селекта
 interface SelectOption {
     value: string;
     label: string;
@@ -32,6 +33,7 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack }) => {
     });
     
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     // Формируем опции транспорта
     const transportOptions: SelectOption[] = Store.getState().transport.map((elem: DriverTransport) => ({
@@ -46,6 +48,8 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack }) => {
             setLoading(false);
             if (data.success) {
                 onBack();
+            } else {
+                setError("Ошибка при отправке предложения");
             }
         };
 
@@ -61,111 +65,187 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack }) => {
     }, [onBack]);
 
     const handleSubmit = () => {
+        // Валидация
+        if (selectedTransport.value === "Выберите..") {
+            setError("Выберите транспорт");
+            return;
+        }
+        
+        if (!formData.price || formData.price <= 0) {
+            setError("Укажите корректную цену");
+            return;
+        }
+        
+        if (!formData.weight || formData.weight <= 0) {
+            setError("Укажите корректный вес");
+            return;
+        }
+
+        setError("");
+        setLoading(true);
+
         // Формируем данные для отправки
         const offerData = {
             token: Store.getState().login.token,
-            guid: work.cargo,        // ID груза
+            guid: work.cargo,
             recipient: work.recipient,
             price: formData.price,
-            transport: selectedTransport,
             weight: formData.weight,
+            volume: work.volume,
+            transport: selectedTransport.value,
             comment: formData.comment
         };
-        
-        socketService.emit("set_offer", offerData);
-        setLoading(true);
-    };
 
-    const handleTransportChange = ( option ) => {
-        if (option) {
-
-            setSelectedTransport( option );
-            setFormData({...formData, transportId: option.value});
+        const socket = socketService.getSocket();
+        if (socket) {
+            console.log( offerData )
+            socket.emit("set_offer", offerData);
+        } else {
+            setLoading(false);
+            setError("Ошибка подключения");
         }
     };
 
+    const handleReset = () => {
+        setFormData({
+            workId: work.guid,
+            transportId: "",
+            price: work.price,
+            weight: work.weight,
+            comment: ""
+        });
+        setSelectedTransport({ value: "Выберите..", label: "Выберите.." });
+        setError("");
+    };
+
+    const hasChanges = () => {
+        return selectedTransport.value !== "Выберите.." ||
+               formData.price !== work.price ||
+               formData.weight !== work.weight ||
+               formData.comment !== "";
+    };
+
     return (
-        <>
-            <IonLoading isOpen={loading} message="Подождите..." />
+        <div className="work-offer-info">
+            <IonIcon 
+                icon={arrowBackOutline} 
+                className="back-icon" 
+                onClick={onBack}
+            />
             
-            <div className='cr-card ml-1 mt-1'>
-                <div className="fs-09"><b>Ваше предложение</b></div>
+            <div className="content">
+                <div className="title"><b>Создание предложения</b></div>
                 
-                {/* Выбор транспорта */}
-                <div className="fs-08 mt-1">Выбрать машину</div>
-                <div className="c-input mt-05 fs-08">
-                    <Select 
-                        options={transportOptions} 
-                        value={selectedTransport} 
-                        primaryColor="red" 
-                        onChange={ handleTransportChange }
-                        classNames={{
-                            listItem: () => "sbl-item"
-                        }}
-                    />
+                {/* Информация о работе */}
+                <div className="work-info-section">
+                    <div className="work-info-item">
+                        <span className="work-info-label">Маршрут:</span>
+                        <span className="work-info-value">
+                            {work.address?.city} → {work.destiny?.city}
+                        </span>
+                    </div>
+                    <div className="work-info-item">
+                        <span className="work-info-label">Груз:</span>
+                        <span className="work-info-value">{work.name}</span>
+                    </div>
+                    <div className="work-info-item">
+                        <span className="work-info-label">Вес/Объем:</span>
+                        <span className="work-info-value">
+                            {workFormatters.weight(work.weight)} / {workFormatters.volume(work.volume)}
+                        </span>
+                    </div>
+                    <div className="work-info-item">
+                        <span className="work-info-label">Цена заказчика:</span>
+                        <span className="work-info-value">
+                            {workFormatters.currency(work.price)}
+                        </span>
+                    </div>
                 </div>
-                
-                {/* Вес */}
-                <div className="fs-08 mt-1">Вес который готовы забрать(т)</div>
-                <div className="c-input mt-05">
-                    <IonInput
-                        className="custom-input"
-                        value={formData.weight}
-                        type="number"
-                        onIonInput={(e) => {
-                            setFormData({...formData, weight: parseFloat(e.detail.value as string) || 0});
-                        }}
-                    />
+
+                {/* Форма предложения */}
+                <div className="field">
+                    <div className="label">Выберите транспорт</div>
+                    <div className="transport-select">
+                        <Select
+                            value={selectedTransport}
+                            onChange={(value: any) => {
+                                setSelectedTransport(value || { value: "Выберите..", label: "Выберите.." });
+                                setFormData({...formData, transportId: value?.value || ""});
+                            }}
+                            options={transportOptions}
+                            primaryColor={"blue"}
+                            classNames={{
+                                menuButton: () => "flex text-sm text-gray-500 border border-gray-300 rounded shadow-sm transition-all duration-300 focus:outline-none bg-white hover:border-gray-400 focus:border-blue-500 focus:ring focus:ring-blue-500/20",
+                                menu: "absolute z-10 w-full bg-white shadow-lg border rounded py-1 mt-1.5 text-sm text-gray-700",
+                                listItem: () => "list-none py-1.5 px-2 hover:bg-blue-500 hover:text-white"
+                            }}
+                        />
+                    </div>
                 </div>
-                
-                {/* Цена */}
-                <div className="fs-08 mt-1">Предлагаемая цена (₽)</div>
-                <div className="c-input mt-05">
-                    <IonInput
-                        className="custom-input"
-                        value={formData.price}
-                        type="number"
-                        onIonInput={(e) => {
-                            setFormData({...formData, price: parseFloat(e.detail.value as string) || 0});
-                        }}
-                    />
+
+                <div className="field">
+                    <div className="label">Ваша цена (₽)</div>
+                    <div className="offer-input-wrapper">
+                        <input
+                            type="number"
+                            className="custom-text-input"
+                            value={formData.price}
+                            onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
+                            placeholder="Введите цену"
+                        />
+                    </div>
                 </div>
-                
-                {/* Комментарий */}
-                <div className="fs-08 mt-1">Комментарий к предложению</div>
-                <div className="c-input mt-05">
-                    <IonTextarea
-                        className="custom-input pt-05 pb-05 pl-05 pr-05"
-                        value={formData.comment}
-                        onIonInput={(e) => {
-                            setFormData({...formData, comment: e.detail.value as string});
-                        }}
-                    />
+
+                <div className="field">
+                    <div className="label">Вес (тонн)</div>
+                    <div className="offer-input-wrapper">
+                        <input
+                            type="number"
+                            className="custom-text-input"
+                            value={formData.weight}
+                            onChange={(e) => setFormData({...formData, weight: Number(e.target.value)})}
+                            placeholder="Введите вес"
+                            step="0.1"
+                        />
+                    </div>
                 </div>
-                
-                {/* Кнопки */}
-                <div className='flex mt-05'>
+
+                <div className="field">
+                    <div className="label">Комментарий (необязательно)</div>
+                    <div className="offer-input-wrapper">
+                        <textarea
+                            className="custom-textarea"
+                            value={formData.comment}
+                            onChange={(e) => setFormData({...formData, comment: e.target.value})}
+                            placeholder="Дополнительная информация..."
+                            rows={4}
+                        />
+                    </div>
+                </div>
+
+                {error && <div className="error-msg">{error}</div>}
+
+                <div className="buttons">
                     <IonButton
-                        className="w-50 cr-button-2"
-                        mode="ios"
-                        fill="clear"
-                        color="primary"
-                        onClick={onBack}
-                    >
-                        <IonLabel className="fs-08">Вернуться</IonLabel>
-                    </IonButton>
-                    
-                    <IonButton
-                        className="w-50 cr-button-2"
-                        mode="ios"
-                        color="primary"
                         onClick={handleSubmit}
-                        disabled={!formData.transportId || formData.transportId === "Выберите.."}
+                        disabled={!hasChanges() || loading}
                     >
-                        <IonLabel className="fs-08">Предложить</IonLabel>
+                        Отправить предложение
+                    </IonButton>
+                    <IonButton
+                        fill="outline"
+                        onClick={handleReset}
+                        disabled={loading}
+                    >
+                        Сбросить
                     </IonButton>
                 </div>
             </div>
-        </>
+
+            <IonLoading
+                isOpen={loading}
+                message="Отправка предложения..."
+            />
+        </div>
     );
 };
