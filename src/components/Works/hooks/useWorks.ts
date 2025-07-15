@@ -292,30 +292,17 @@ export const useWorks = (): UseWorksReturn => {
             }
         };
 
-        const handleHistWorks = (res: any) => {
-            console.log("hist_works response:", res);
-            setIsArchiveLoading(false);
-            
-            if (res.success && res.data) {
-                setArchiveWorks(res.data);
-            } else {
-                setArchiveWorks([]);
-            }
-            
-            socket.off("hist_works", handleHistWorks);
-        };
+
 
         // Подписываемся на события
         socket.on(WORK_SOCKET_EVENTS.SET_OFFER, handleOfferResponse);
         socket.on(WORK_SOCKET_EVENTS.WORK_UPDATED, handleWorkUpdated);
         socket.on(WORK_SOCKET_EVENTS.DELIVERED, handleDelivered);
-        socket.on("hist_works", handleHistWorks);
 
         return () => {
             socket.off(WORK_SOCKET_EVENTS.SET_OFFER, handleOfferResponse);
             socket.off(WORK_SOCKET_EVENTS.WORK_UPDATED, handleWorkUpdated);
             socket.off(WORK_SOCKET_EVENTS.DELIVERED, handleDelivered);
-            socket.off( "hist_works", handleHistWorks)
         };
     }, [refreshWorks]);
 

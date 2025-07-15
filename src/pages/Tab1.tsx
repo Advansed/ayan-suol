@@ -19,6 +19,7 @@ const Tab1: React.FC = () => {
   Store.subscribe({ num: 502, type: "swap", func: () => {
     setSwap( Store.getState().swap );
     console.log("swap 502")
+    console.log(Store.getState().swap)
   }});
    
   

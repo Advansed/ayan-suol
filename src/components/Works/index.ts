@@ -32,6 +32,7 @@ export {
     WorkCard, 
     WorksList, 
     WorkView,
-    WorkOffer
+    WorkOffer,
+    WorkArchive
 } from './components';
 

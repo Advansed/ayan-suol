@@ -10,6 +10,7 @@ import { WorksList, WorkView, WorkOffer } from './components';
 export const Works: React.FC = () => {
     const {
         works,
+        archiveWorks,
         isLoading,
         currentPage,
         navigateTo,
@@ -60,6 +61,16 @@ export const Works: React.FC = () => {
                     <WorkOffer
                         work={currentPage.work}
                         onBack={goBack}
+                    />
+                );
+
+            case 'archive':
+                return (
+                    <WorksList
+                        works={archiveWorks}
+                        isLoading={isLoading}
+                        onWorkClick={handleWorkClick}
+                        onOfferClick={handleOfferClick}
                     />
                 );
 

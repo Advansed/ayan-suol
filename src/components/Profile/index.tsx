@@ -48,8 +48,6 @@ useEffect(() => {
     }
   }, [isDriver])
 
-  console.log( isLoading)
-  console.log( !user )
   if (isLoading || !user) {
     console.log( "useLoading")
     return <IonLoading isOpen={true} message={UI_TEXT.LOADING} />
@@ -92,6 +90,7 @@ useEffect(() => {
           onIonChange={e => {
 
             const swap = Store.getState().swap
+            console.log(swap)
             Store.dispatch({ type: "swap", data: !swap })}
           }
         >

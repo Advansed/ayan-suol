@@ -104,7 +104,8 @@ export interface WorkFilters {
 export type WorkPageType = 
     | { type: 'list' }
     | { type: 'view'; work: WorkInfo }
-    | { type: 'offer'; work: WorkInfo };
+    | { type: 'offer'; work: WorkInfo }
+    | { type: 'archive' };
 
 // Состояние формы предложения
 export interface OfferFormState {

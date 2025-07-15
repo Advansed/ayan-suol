@@ -8,7 +8,9 @@ export const WorkArchive: React.FC = () => {
     useEffect(() => {
         loadArchiveWorks();
         console.log( archiveWorks )
-    }, [loadArchiveWorks]);
+    }, []);
+
+    console.log( archiveWorks )
 
     const handleWorkClick = (work) => {
         console.log('Archive work clicked:', work);
