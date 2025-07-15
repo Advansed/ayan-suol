@@ -356,6 +356,7 @@ export const useAuth = (): UseAuthReturn => {
         Store.dispatch({ type: "auth", data: true })
         
         if (response.data.driver) {
+          console.log("useAuth 1", true)
           Store.dispatch({ type: "swap", data: true })
         }
       } else {
@@ -439,6 +440,7 @@ export const useAuth = (): UseAuthReturn => {
         Store.dispatch({ type: "auth", data: true })
         
         if (response.data.driver) {
+          console.log("useAuth 2", true)
           Store.dispatch({ type: "swap", data: true })
         }
       } else {

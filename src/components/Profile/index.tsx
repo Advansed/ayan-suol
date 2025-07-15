@@ -9,6 +9,7 @@ import { useProfile } from './hooks/useProfile'
 import { Store } from '../Store'
 import { Orgs } from '../Orgs'
 import { PersonalInfo } from './pages/personalInfo'
+import socketService from '../Sockets'
 
 export const Profile: React.FC = () => {
   const { user, isLoading, isDriver } = useProfile()
@@ -73,7 +74,6 @@ useEffect(() => {
   }
 
   // Главная страница
-  console.log( "Главная страница")
   return (
     <div>
       <div className="h-3 bg-2 flex fl-center fs-14">
@@ -89,10 +89,10 @@ useEffect(() => {
           value={isDriver ? ROLE_TYPES.DRIVER : ROLE_TYPES.CUSTOMER}
           onIonChange={e => {
 
-            const swap = Store.getState().swap
-            console.log(swap)
-            Store.dispatch({ type: "swap", data: !swap })}
-          }
+              socketService.emit("set_driver", { token: Store.getState().login.token })
+              console.log("emit... set_driver")
+
+          }}
         >
           <IonSegmentButton value={ROLE_TYPES.DRIVER}>{UI_TEXT.DRIVER}</IonSegmentButton>
           <IonSegmentButton value={ROLE_TYPES.CUSTOMER}>{UI_TEXT.CUSTOMER}</IonSegmentButton>
