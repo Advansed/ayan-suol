@@ -1,3 +1,4 @@
+// src/components/Profile/hooks/useProfile.ts
 import { useEffect, useState, useRef } from 'react'
 import { Store } from '../../Store'
 import { User } from '../types'
@@ -33,15 +34,18 @@ export const useProfile = () => {
     // Socket обработчик set_driver
     const socket = socketService.getSocket()
     if (socket) {
-      socket.on('set_driver', (data: boolean) => {
-        console.log("on... set_driver", data)
+      socket.on('set_driver', (res) => {
+        console.log("on... set_driver", res.data)
 
-        if (user) {
-          const updatedUser = { ...user, driver: data }
+        // Получаем актуальные данные напрямую из Store
+        const currentUser = Store.getState().login
+        if (currentUser) {
+          console.log("user", currentUser)
+          const updatedUser = { ...currentUser, driver: res.data }
           setUser(updatedUser)
           Store.dispatch({ type: 'login', data: updatedUser })
         }
-        Store.dispatch({ type: 'swap', data })
+        Store.dispatch({ type: 'swap', data: res.data })
       })
     }
 
@@ -49,12 +53,11 @@ export const useProfile = () => {
       if (subscriptionRef.current) {
         Store.unSubscribe(subscriptionRef.current)
       }
-      // Отписка от socket события
       if (socket) {
         socket.off('set_driver')
       }
     }
-  }, [])
+  }, []) // Убираем user из зависимостей
 
   const isDriver = user?.driver || false
   console.log('user.driver', user?.driver)
