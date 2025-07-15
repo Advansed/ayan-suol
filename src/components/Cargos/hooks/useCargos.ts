@@ -203,8 +203,8 @@ export const useCargos = (): UseCargosReturn => {
             // Пока используем существующие данные из Store
             console.log('Refreshing cargos...');
             
-            // Имитация задержки
-            await new Promise(resolve => setTimeout(resolve, 500));
+            socketService.emit("get_cargos", { token: Store.getState().login.token })
+            socketService.emit("get_orgs", { token: Store.getState().login.token })
             
         } catch (error) {
             console.error('Error refreshing cargos:', error);

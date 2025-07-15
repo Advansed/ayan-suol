@@ -1,36 +1,37 @@
-.transport-info {
+.company-info {
   padding: 1rem;
 }
 
-.transport-info .back-icon {
+.company-info .back-icon {
   width: 24px;
   height: 24px;
   cursor: pointer;
   margin-bottom: 1rem;
 }
 
-.transport-info .content {
+.company-info .content {
   max-width: 500px;
   margin: 0 auto;
 }
 
-.transport-info .title {
+.company-info .title {
   text-align: center;
   font-size: 1.1rem;
   margin-bottom: 1.5rem;
 }
 
-.transport-info .field {
+.company-info .field {
   margin-bottom: 1rem;
 }
 
-.transport-info .label {
+.company-info .label {
   font-size: 0.9rem;
   color: #666;
   margin-bottom: 0.3rem;
 }
 
-.transport-info .custom-input {
+.company-info .custom-input,
+.company-info .custom-textarea {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #ddd;
@@ -39,29 +40,24 @@
   transition: border-color 0.3s;
 }
 
-.transport-info .custom-input:focus {
+.company-info .custom-input:focus,
+.company-info .custom-textarea:focus {
   outline: none;
   border-color: #086CA2;
 }
 
-.transport-info .button-group {
-  margin-top: 1.5rem;
+.company-info .custom-textarea {
+  resize: vertical;
 }
 
-.transport-info .save-button {
+.company-info .save-button {
+  margin-top: 1.5rem;
   --background: #086CA2;
   --border-radius: 8px;
   font-weight: bold;
-  margin-bottom: 0.5rem;
 }
 
-.transport-info .reset-button {
-  --border-radius: 8px;
-  --border-color: #086CA2;
-  --color: #086CA2;
-}
-
-.transport-info .success-message {
+.company-info .success-message {
   background-color: #e8f5e8;
   color: #2e7d32;
   padding: 0.75rem;
@@ -71,7 +67,7 @@
   font-weight: bold;
 }
 
-.transport-info .error-message {
+.company-info .error-message {
   background-color: #ffebee;
   color: #c62828;
   padding: 0.75rem;

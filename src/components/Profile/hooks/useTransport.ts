@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Store } from '../../Store'
+import { Store, useStoreField } from '../../Store'
 import socketService from '../../Sockets'
 
 interface TransportInfo {
@@ -11,84 +11,64 @@ interface TransportInfo {
   exp?: number
 }
 
-export const useTransportSave = () => {
-  const [transport, setTransport] = useState<TransportInfo | null>(null)
+export const useTransport = () => {
+  const transport = useStoreField('transport', 12346)?.[0]
+  console.log( transport )
+  const token = Store.getState().login?.token
+  
+  const [form, setForm] = useState<TransportInfo>(transport || {})
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasChanges, setHasChanges] = useState(false)
 
-  // Загружаем данные транспорта из Store
   useEffect(() => {
-    const transportData = Store.getState().transport?.[0]
-    if (transportData) {
-      setTransport(transportData)
-    }
+    setForm(transport || {})
+  }, [transport])
+
+  useEffect(() => {
+    const changed = JSON.stringify(form) !== JSON.stringify(transport || {})
+    setHasChanges(changed)
+  }, [form, transport])
+
+  const updateField = useCallback((field: keyof TransportInfo, value: any) => {
+    setForm(prev => ({ ...prev, [field]: value }))
   }, [])
 
-  const save = useCallback(async (data: TransportInfo) => {
+  const save = useCallback(async () => {
+    if (!hasChanges) return true
+    
     setIsSaving(true)
     setError(null)
-
+    
     try {
-      const socket = socketService.getSocket()
-      if (!socket) {
-        throw new Error('Нет подключения к серверу')
-      }
-
-      const token = Store.getState().login?.token
-      if (!token) {
-        throw new Error('Необходима авторизация')
-      }
-
-      const saveData = {
-        ...data,
+      socketService.emit('transport', { 
+        ...form, 
         token,
-        guid: transport?.guid
-      }
-
-      // Отправляем данные на сервер
-      const success = socketService.emit('transport', saveData)
-      
-      if (!success) {
-        throw new Error('Ошибка при отправке данных')
-      }
-
-      // Ждем ответа от сервера
-      return new Promise((resolve) => {
-        const handleResponse = (response: any) => {
-          setIsSaving(false)
-          
-          if (response?.success && response?.data) {
-            // Обновляем данные в Store
-            Store.dispatch({ type: 'transport', data: [response.data] })
-            setTransport(response.data)
-            resolve(true)
-          } else {
-            setError(response?.message || 'Ошибка сохранения')
-            resolve(false)
-          }
-        }
-
-        socket.once('save_transport', handleResponse)
-
-        // Таймаут на случай если сервер не ответит
-        setTimeout(() => {
-          socket.off('save_transport', handleResponse)
-          setIsSaving(false)
-          setError('Превышено время ожидания ответа от сервера')
-          resolve(false)
-        }, 10000)
+        guid: transport?.guid 
       })
-    } catch (err) {
+      
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       setIsSaving(false)
-      setError(err instanceof Error ? err.message : 'Неизвестная ошибка')
+      return true
+    } catch (err) {
+      setError('Ошибка сохранения')
+      setIsSaving(false)
       return false
     }
+  }, [form, hasChanges, token, transport?.guid])
+
+  const reset = useCallback(() => {
+    setForm(transport || {})
   }, [transport])
 
   return {
-    transport,
+    form,
+    updateField,
     save,
+    reset,
     isSaving,
-    error
+    error,
+    hasChanges
   }
 }

@@ -1,158 +1,125 @@
 import React, { useState, useEffect } from 'react'
 import { IonIcon, IonButton } from '@ionic/react'
-import { arrowBackOutline } from 'ionicons/icons'
-import { useTransportSave } from '../hooks/useTransport'
+import { arrowBackOutline, saveOutline } from 'ionicons/icons'
+import { useTransport } from '../hooks/useTransport'
 import './Transport.css'
 
 interface Props {
   onBack: () => void
 }
 
-interface TransportData {
-  type: string
-  capacity: string
-  year: string
-  number: string
-  exp: string
-}
-
 export const Transport: React.FC<Props> = ({ onBack }) => {
-  const { transport, save, isSaving, error } = useTransportSave()
-  
-  const [form, setForm] = useState<TransportData>({
-    type: transport?.type || '',
-    capacity: transport?.capacity?.toString() || '',
-    year: transport?.year?.toString() || '',
-    number: transport?.number || '',
-    exp: transport?.exp?.toString() || ''
-  })
-  
-  const [hasChanges, setHasChanges] = useState(false)
+  const { form, updateField, save, reset, isSaving, error, hasChanges } = useTransport()
+  const [showSuccess, setShowSuccess] = useState(false)
 
-  useEffect(() => {
-    const changed = 
-      form.type !== (transport?.type || '') ||
-      form.capacity !== (transport?.capacity?.toString() || '') ||
-      form.year !== (transport?.year?.toString() || '') ||
-      form.number !== (transport?.number || '') ||
-      form.exp !== (transport?.exp?.toString() || '')
-    setHasChanges(changed)
-  }, [form, transport])
-
-  const handleSave = () => {
-    if (hasChanges) {
-      save({
-        type: form.type,
-        capacity: Number(form.capacity) || 0,
-        year: Number(form.year) || 0,
-        number: form.number,
-        exp: Number(form.exp) || 0
-      })
+  const handleSave = async () => {
+    const success = await save()
+    if (success) {
+      setShowSuccess(true)
+      setTimeout(() => setShowSuccess(false), 2000)
     }
-  }
-
-  const handleReset = () => {
-    setForm({
-      type: transport?.type || '',
-      capacity: transport?.capacity?.toString() || '',
-      year: transport?.year?.toString() || '',
-      number: transport?.number || '',
-      exp: transport?.exp?.toString() || ''
-    })
   }
 
   return (
     <div className="transport-info">
-      <IonIcon 
-        icon={arrowBackOutline} 
-        className="back-icon" 
-        onClick={onBack}
-      />
+      <div className='flex'>
+        <IonIcon 
+          icon={arrowBackOutline} 
+          className="back-icon" 
+          onClick={onBack}
+        />
+
+      </div>
       
       <div className="content">
         <div className="title"><b>Информация о транспорте</b></div>
+
+        {showSuccess && (
+          <div className="success-message">
+            ✓ Данные успешно сохранены
+          </div>
+        )}
+
+        {error && (
+          <div className="error-message">{error}</div>
+        )}
         
         <div className="field">
           <div className="label">Тип транспорта</div>
-          <div className="trans-input-wrapper">
-            <input
-              type="text"
-              className="custom-text-input"
-              placeholder="Например: Грузовик"
-              value={form.type}
-              onChange={e => setForm({...form, type: e.target.value})}
-            />
-          </div>
-        </div>
-        
-        <div className="field">
-          <div className="label">Грузоподъемность (тонн)</div>
-          <div className="trans-input-wrapper">
-            <input
-              type="number"
-              className="custom-text-input"
-              placeholder="0"
-              value={form.capacity}
-              onChange={e => setForm({...form, capacity: e.target.value})}
-            />
-          </div>
-        </div>
-        
-        <div className="field">
-          <div className="label">Год выпуска</div>
-          <div className="trans-input-wrapper">
-            <input
-              type="number"
-              className="custom-text-input"
-              placeholder="2020"
-              value={form.year}
-              onChange={e => setForm({...form, year: e.target.value})}
-            />
-          </div>
-        </div>
-        
-        <div className="field">
-          <div className="label">Гос. номер</div>
-          <div className="trans-input-wrapper">
-            <input
-              type="text"
-              className="custom-text-input"
-              placeholder="А123БВ 777"
-              value={form.number}
-              onChange={e => setForm({...form, number: e.target.value})}
-            />
-          </div>
-        </div>
-        
-        <div className="field">
-          <div className="label">Опыт вождения (лет)</div>
-          <div className="trans-input-wrapper">
-            <input
-              type="number"
-              className="custom-text-input"
-              placeholder="0"
-              value={form.exp}
-              onChange={e => setForm({...form, exp: e.target.value})}
-            />
-          </div>
+          <input
+            type="text"
+            className="custom-input"
+            placeholder="Тип транспорта"
+            value={form?.type || ''}
+            onChange={(e) => updateField('type', e.target.value)}
+          />
         </div>
 
-        {error && <div className="error-msg">{error}</div>}
-        
-        <div className="buttons">
+        <div className="field">
+          <div className="label">Грузоподъемность (т)</div>
+          <input
+            type="number"
+            className="custom-input"
+            placeholder="Грузоподъемность"
+            value={form?.capacity || ''}
+            onChange={(e) => updateField('capacity', Number(e.target.value))}
+          />
+        </div>
+
+        <div className="field">
+          <div className="label">Год выпуска</div>
+          <input
+            type="number"
+            className="custom-input"
+            placeholder="Год выпуска"
+            value={form?.year || ''}
+            onChange={(e) => updateField('year', Number(e.target.value))}
+          />
+        </div>
+
+        <div className="field">
+          <div className="label">Гос. номер</div>
+          <input
+            type="text"
+            className="custom-input"
+            placeholder="Гос. номер"
+            value={form?.number || ''}
+            onChange={(e) => updateField('number', e.target.value)}
+          />
+        </div>
+
+        <div className="field">
+          <div className="label">Стаж вождения (лет)</div>
+          <input
+            type="number"
+            className="custom-input"
+            placeholder="Стаж вождения"
+            value={form?.exp || ''}
+            onChange={(e) => updateField('exp', Number(e.target.value))}
+          />
+        </div>
+
+        <div className="button-group">
           <IonButton 
-            disabled={!hasChanges || isSaving}
+            expand="block" 
             onClick={handleSave}
+            disabled={isSaving || !hasChanges}
+            className="save-button"
           >
+            <IonIcon icon={saveOutline} slot="start" />
             {isSaving ? 'Сохранение...' : 'Сохранить'}
           </IonButton>
-          <IonButton 
-            fill="outline"
-            disabled={!hasChanges}
-            onClick={handleReset}
-          >
-            Отменить
-          </IonButton>
+
+          {hasChanges && (
+            <IonButton 
+              expand="block" 
+              fill="outline"
+              onClick={reset}
+              className="reset-button"
+            >
+              Отменить изменения
+            </IonButton>
+          )}
         </div>
       </div>
     </div>

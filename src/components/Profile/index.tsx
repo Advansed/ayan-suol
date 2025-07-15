@@ -3,32 +3,30 @@ import { IonLoading, IonSegment, IonSegmentButton } from '@ionic/react'
 import { ProfileHeader } from './components/ProfileHeader'
 import { ProfileStats } from './components/ProfileStats'
 import { ProfileMenu } from './components/ProfileMenu'
-import { Security, Notifications, Transport } from './pages/other-pages'
+import { Security, Notifications } from './pages/other-pages'
+import { Transport } from './pages/Transport'
+import { Company } from './pages/Company'
+import { PersonalInfo } from './pages/personalInfo'
 import { PROFILE_PAGES, ROLE_TYPES, MENU_ITEMS, UI_TEXT } from './constants'
 import { useProfile } from './hooks/useProfile'
 import { Store } from '../Store'
-import { Orgs } from '../Orgs'
-import { PersonalInfo } from './pages/personalInfo'
 import socketService from '../Sockets'
 
 export const Profile: React.FC = () => {
   const { user, isLoading, isDriver } = useProfile()
-  const [currentPage, setCurrentPage] = useState<number>( PROFILE_PAGES.MAIN )
+  const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
 
-// Во второй версии Profile
-useEffect(() => {
-
-  const loadings = document.querySelectorAll('ion-loading');
-  loadings.forEach(loading => {
-    loading.setAttribute('is-open', 'false');
-    loading.remove(); // Принудительное удаление
-  });
-
-}, []);
+  useEffect(() => {
+    const loadings = document.querySelectorAll('ion-loading')
+    loadings.forEach(loading => {
+      loading.setAttribute('is-open', 'false')
+      loading.remove()
+    })
+  }, [])
 
   const menuItems = useMemo(() => {
     const common = [
-      { title: MENU_ITEMS.PERSONAL_DATA, onClick: () => setCurrentPage( PROFILE_PAGES.PERSONAL) },
+      { title: MENU_ITEMS.PERSONAL_DATA, onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
       { title: MENU_ITEMS.SECURITY, onClick: () => setCurrentPage(PROFILE_PAGES.SECURITY) },
       { title: MENU_ITEMS.NOTIFICATIONS, onClick: () => setCurrentPage(PROFILE_PAGES.NOTIFICATIONS) }
     ]
@@ -50,7 +48,6 @@ useEffect(() => {
   }, [isDriver])
 
   if (isLoading || !user) {
-    console.log( "useLoading")
     return <IonLoading isOpen={true} message={UI_TEXT.LOADING} />
   }
 
@@ -64,13 +61,11 @@ useEffect(() => {
   if (currentPage === PROFILE_PAGES.NOTIFICATIONS) {
     return <Notifications onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
-
   if (currentPage === PROFILE_PAGES.TRANSPORT) {
-    return <Transport  onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)}/>  // Добавить setPage
-  }  
-
+    return <Transport onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
+  }
   if (currentPage === PROFILE_PAGES.COMPANY) {
-    return <Orgs setPage={setCurrentPage} />  // Использовать Orgs
+    return <Company onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
 
   // Главная страница
@@ -88,10 +83,7 @@ useEffect(() => {
         <IonSegment 
           value={isDriver ? ROLE_TYPES.DRIVER : ROLE_TYPES.CUSTOMER}
           onIonChange={e => {
-
-              socketService.emit("set_driver", { token: Store.getState().login.token })
-              console.log("emit... set_driver")
-
+            socketService.emit("set_driver", { token: Store.getState().login.token })
           }}
         >
           <IonSegmentButton value={ROLE_TYPES.DRIVER}>{UI_TEXT.DRIVER}</IonSegmentButton>
@@ -101,4 +93,3 @@ useEffect(() => {
     </div>
   )
 }
-

@@ -1,5 +1,5 @@
 import React from 'react';
-import { IonButton, IonLabel, IonIcon } from '@ionic/react';
+import { IonButton, IonLabel, IonIcon, IonRefresher, IonRefresherContent } from '@ionic/react';
 import { chatboxEllipsesOutline } from 'ionicons/icons';
 import { WorkInfo, WorkStatus } from '../types';
 import { WorkCard } from './WorkCard';
@@ -12,13 +12,15 @@ interface WorksListProps {
     isLoading?: boolean;
     onWorkClick: (work: WorkInfo) => void;
     onOfferClick: (work: WorkInfo) => void;
+    onRefresh?: () => Promise<void>;
 }
 
 export const WorksList: React.FC<WorksListProps> = ({
     works,
     isLoading = false,
     onWorkClick,
-    onOfferClick
+    onOfferClick,
+    onRefresh
 }) => {
     const history = useHistory();
     
@@ -31,6 +33,12 @@ export const WorksList: React.FC<WorksListProps> = ({
         history.push(`/tab2/${work.recipient}:${work.cargo}:${work.client}`);
     };
 
+    const handleRefresh = async (event: any) => {
+        if (onRefresh) {
+            await onRefresh();
+        }
+        event.detail.complete();
+    };
     const EmptyState = () => (
         <div className="empty-state-container">
             <div className="empty-state-content">
@@ -61,80 +69,88 @@ export const WorksList: React.FC<WorksListProps> = ({
     );
 
     return (
-        <div className="bg-2 scroll">
-            {/* Активные работы */}
-            {activeWorks.length > 0 && (
-                <>
-                    <div className="a-center w-90 fs-09 mt-1">
-                        <b>Доступные заказы</b>
-                    </div>
-                    {activeWorks.map((work) => (
-                        <div 
-                            key={work.guid} 
-                            className='cr-card mt-1'
-                            onClick={() => work.status === WorkStatus.IN_WORK && onWorkClick(work)}
-                        >
-                            <WorkCard work = { work } mode="view" />
-                            
-                            <div className="flex">
-                                <IonButton
-                                    className="w-50 cr-button-2"
-                                    mode="ios"
-                                    fill="clear"
-                                    color="primary"
-                                    onClick={(e) => handleChat(work, e)}
-                                >
-                                    <IonLabel className="fs-08">Чат с заказчиком</IonLabel>
-                                </IonButton>
+        <>
+            {/* Refresher */}
+            {onRefresh && (
+                <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+                    <IonRefresherContent></IonRefresherContent>
+                </IonRefresher>
+            )}
+            <div className="bg-2 scroll">
+                {/* Активные работы */}
+                {activeWorks.length > 0 && (
+                    <>
+                        <div className="a-center w-90 fs-09 mt-1">
+                            <b>Доступные заказы</b>
+                        </div>
+                        {activeWorks.map((work) => (
+                            <div 
+                                key={work.guid} 
+                                className='cr-card mt-1'
+                                onClick={() => work.status === WorkStatus.IN_WORK && onWorkClick(work)}
+                            >
+                                <WorkCard work = { work } mode="view" />
                                 
-                                {work.status === WorkStatus.NEW && (
+                                <div className="flex">
                                     <IonButton
                                         className="w-50 cr-button-2"
                                         mode="ios"
+                                        fill="clear"
                                         color="primary"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onOfferClick(work);
-                                        }}
+                                        onClick={(e) => handleChat(work, e)}
                                     >
-                                        <IonLabel className="fs-08">Предложить</IonLabel>
+                                        <IonLabel className="fs-08">Чат с заказчиком</IonLabel>
                                     </IonButton>
-                                )}
+                                    
+                                    {work.status === WorkStatus.NEW && (
+                                        <IonButton
+                                            className="w-50 cr-button-2"
+                                            mode="ios"
+                                            color="primary"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onOfferClick(work);
+                                            }}
+                                        >
+                                            <IonLabel className="fs-08">Предложить</IonLabel>
+                                        </IonButton>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </>
-            )}
+                        ))}
+                    </>
+                )}
 
-            {/* Выполненные работы */}
-            {completedWorks.length > 0 && (
-                <>
-                    <div className="a-center w-90 fs-09 mt-1">
-                        <b>Выполненные</b>
-                    </div>
-                    {completedWorks.map((work) => (
-                        <div key={work.guid} className='cr-card mt-1'>
-                            <WorkCard work = {work} mode="view" />
-                            <div className="flex">
-                                <IonButton
-                                    className="w-50 cr-button-2"
-                                    mode="ios"
-                                    fill="clear"
-                                    color="primary"
-                                    onClick={(e) => handleChat(work, e)}
-                                >
-                                    <IonLabel className="fs-08">Чат с заказчиком</IonLabel>
-                                </IonButton>
+                {/* Выполненные работы */}
+                {completedWorks.length > 0 && (
+                    <>
+                        <div className="a-center w-90 fs-09 mt-1">
+                            <b>Выполненные</b>
+                        </div>
+                        {completedWorks.map((work) => (
+                            <div key={work.guid} className='cr-card mt-1'>
+                                <WorkCard work = {work} mode="view" />
+                                <div className="flex">
+                                    <IonButton
+                                        className="w-50 cr-button-2"
+                                        mode="ios"
+                                        fill="clear"
+                                        color="primary"
+                                        onClick={(e) => handleChat(work, e)}
+                                    >
+                                        <IonLabel className="fs-08">Чат с заказчиком</IonLabel>
+                                    </IonButton>
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </>
-            )}
+                        ))}
+                    </>
+                )}
 
-            {/* Пустое состояние */}
-            {activeWorks.length === 0 && completedWorks.length === 0 && !isLoading && (
-                <EmptyState />
-            )}
-        </div>
+                {/* Пустое состояние */}
+                {activeWorks.length === 0 && completedWorks.length === 0 && !isLoading && (
+                    <EmptyState />
+                )}
+            </div>
+        </>
     );
 };

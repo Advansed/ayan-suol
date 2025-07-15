@@ -71,7 +71,7 @@ const Tab1: React.FC = () => {
     <IonPage>
       <IonContent className='bg-2'>
         {/* Компонент рефрешера */}
-        <IonRefresher 
+        {/* <IonRefresher 
           className='bg-2'
           slot="fixed" 
           onIonRefresh={handleRefresh}
@@ -86,7 +86,7 @@ const Tab1: React.FC = () => {
             refreshingSpinner="circular"
             refreshingText="Обновление..."
           />
-        </IonRefresher>
+        </IonRefresher> */}
 
         {/* Основной контент */}
         {

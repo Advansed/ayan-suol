@@ -45,6 +45,7 @@ export const Works: React.FC = () => {
                         isLoading={isLoading}
                         onWorkClick={handleWorkClick}
                         onOfferClick={handleOfferClick}
+                        onRefresh={ refreshWorks }
                     />
                 );
 

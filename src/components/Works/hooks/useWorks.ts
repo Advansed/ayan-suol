@@ -175,6 +175,8 @@ export const useWorks = (): UseWorksReturn => {
             
             // Запрашиваем обновленные данные
             socketService.emit(WORK_SOCKET_EVENTS.GET_WORKS, { token });
+            socketService.emit("get_orgs", { token });
+            socketService.emit("get_transport", { token });
             
             console.log('Refreshing works...');
             
