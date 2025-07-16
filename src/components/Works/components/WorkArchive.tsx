@@ -24,6 +24,7 @@ export const WorkArchive: React.FC = () => {
     return (
         <WorksList
             works           = { archiveWorks }
+            title           = 'Выполненные работы'
             isLoading       = { isArchiveLoading }
             onWorkClick     = { handleWorkClick }
             onOfferClick    = { handleOfferClick }

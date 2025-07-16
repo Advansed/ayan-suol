@@ -9,6 +9,7 @@ import animationData from './data.json';
 
 interface WorksListProps {
     works: WorkInfo[];
+    title?: string;
     isLoading?: boolean;
     onWorkClick: (work: WorkInfo) => void;
     onOfferClick: (work: WorkInfo) => void;
@@ -17,6 +18,7 @@ interface WorksListProps {
 
 export const WorksList: React.FC<WorksListProps> = ({
     works,
+    title,
     isLoading = false,
     onWorkClick,
     onOfferClick,
@@ -81,7 +83,7 @@ export const WorksList: React.FC<WorksListProps> = ({
                 {activeWorks.length > 0 && (
                     <>
                         <div className="a-center w-90 fs-09 mt-1">
-                            <b>Доступные заказы</b>
+                            <b>{ title ? title : "Доступные заказы"}</b>
                         </div>
                         {activeWorks.map((work) => (
                             <div 

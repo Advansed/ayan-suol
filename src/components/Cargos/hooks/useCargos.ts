@@ -216,6 +216,8 @@ export const useCargos = (): UseCargosReturn => {
     // Фильтрованный список грузов
     const filteredCargos = useCallback(() => {
         let filtered = [...(cargos || [])];
+        console.log("filtered cargo")
+        console.log( filtered )
 
         // Поиск по названию
         if (searchQuery) {

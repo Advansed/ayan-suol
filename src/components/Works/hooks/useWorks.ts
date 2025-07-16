@@ -189,8 +189,13 @@ export const useWorks = (): UseWorksReturn => {
 
     // Фильтрованный и отсортированный список работ
     const filteredWorks = useCallback(() => {
-        let filtered = [...(works || [])];
+        let filtered:any = []
 
+        works.forEach(elem => {
+            if( elem.status !== "Выполнено" ) filtered.push( elem )
+        });
+
+        //let filtered = [...(works || [])];
         // Поиск
         if (searchQuery) {
             filtered = workDataUtils.searchWorks(filtered, searchQuery);
@@ -247,6 +252,19 @@ export const useWorks = (): UseWorksReturn => {
 
         // Сортировка (по умолчанию по дате создания, новые первыми)
         return workDataUtils.sortWorks(filtered, 'createdAt', 'desc');
+    }, [works, searchQuery, filters]);
+
+    // Фильтрованный и отсортированный список работ
+    const filteredArch = useCallback(() => {
+        let filtered:any = []
+
+        works.forEach(elem => {
+            if( elem.status === "Выполнено" ) filtered.push( elem )
+        });
+
+        // Сортировка (по умолчанию по дате создания, новые первыми)
+        return workDataUtils.sortWorks(filtered, 'createdAt', 'desc');
+
     }, [works, searchQuery, filters]);
 
     // ======================
@@ -338,7 +356,7 @@ export const useWorks = (): UseWorksReturn => {
         getWork,
         refreshWorks,
 
-        archiveWorks,
+        archiveWorks: filteredArch(),
         isArchiveLoading,
         loadArchiveWorks
     };
