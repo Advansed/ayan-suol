@@ -2,7 +2,7 @@ import { IonButton, IonContent, IonModal, IonPage, IonRefresher, IonRefresherCon
 import './Tab1.css';
 import { Cargos }     from '../components/Cargos/';
 import { Store }      from '../components/Store';
-import { useState }   from 'react';
+import { useEffect, useState }   from 'react';
 import socketService  from '../components/Sockets';
 import { arrowUpCircleOutline } from 'ionicons/icons';
 import { Works } from '../components/Works';
@@ -11,17 +11,25 @@ const Tab1: React.FC = () => {
   const [ message, setMessage ] = useState("");
   const [ swap, setSwap ] = useState( Store.getState().swap )
   
-  Store.subscribe({ num: 501, type: "error", func: () => {
-    console.log(Store.getState().error);
-    setMessage(Store.getState().error);
-  }});
+  
+  useEffect(()=>{
+      Store.subscribe({ num: 501, type: "error", func: () => {
+        console.log(Store.getState().error);
+        setMessage(Store.getState().error);
+      }});
 
-  Store.subscribe({ num: 502, type: "swap", func: () => {
-    setSwap( Store.getState().swap );
-    console.log("swap 502")
-    console.log(Store.getState().swap)
-  }});
-   
+      Store.subscribe({ num: 502, type: "swap", func: () => {
+        setSwap( Store.getState().swap );
+        console.log("swap 502")
+        console.log(Store.getState().swap)
+      }});
+      
+      return ()=>{
+        Store.unSubscribe( 501 )
+        Store.unSubscribe( 502 )
+      }
+
+  },[])
   
 
   // Функция обновления данных

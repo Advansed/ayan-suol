@@ -2,7 +2,7 @@
  * Компонент детального просмотра груза
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
     IonIcon, 
     IonButton,
@@ -21,6 +21,7 @@ import { CargoInfo, CargoInvoice } from '../types';
 import { CargoCard } from './CargoCard';
 import { statusUtils, formatters } from '../utils';
 import { DriverCard } from '../../DriverCards';
+import { Store } from '../../Store';
 
 interface CargoViewProps {
     cargo: CargoInfo;
@@ -39,8 +40,25 @@ export const CargoView: React.FC<CargoViewProps> = ({
     onPublish,
     isLoading = false
 }) => {
-    const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-    const [showPublishAlert, setShowPublishAlert] = useState(false);
+    const [ showDeleteAlert,     setShowDeleteAlert]    = useState(false);
+    const [ showPublishAlert,    setShowPublishAlert]   = useState(false);
+    const [ currentCargo,        setCurrentCargo]       = useState(cargo);
+
+    // Подписка на обновления cargo
+    useEffect(() => {
+
+        Store.subscribe({num: 201, type: "cargos", func: ()=>{
+            const cargos = Store.getState().cargos
+            const updated = cargos.find((c: CargoInfo) => c.guid === currentCargo.guid);
+            if (updated) setCurrentCargo(updated);
+        } })
+
+        return () => {
+
+            Store.unSubscribe( 201 )
+            
+        };
+    }, []);
 
     const handleDelete = async () => {
         setShowDeleteAlert(false);
@@ -94,9 +112,9 @@ export const CargoView: React.FC<CargoViewProps> = ({
     };
 
     const renderActionButtons = () => {
-        const canEdit = statusUtils.canEdit(cargo.status);
-        const canDelete = statusUtils.canDelete(cargo.status);
-        const canPublish = statusUtils.canPublish(cargo.status);
+        const canEdit = statusUtils.canEdit(currentCargo.status);
+        const canDelete = statusUtils.canDelete(currentCargo.status);
+        const canPublish = statusUtils.canPublish(currentCargo.status);
 
         return (
             <div className="flex mt-05">
@@ -143,10 +161,10 @@ export const CargoView: React.FC<CargoViewProps> = ({
 
     // Группировка предложений по статусу
     const groupedInvoices = {
-        offered: cargo.invoices?.filter(inv => inv.status === "Заказано") || [],
-        accepted: cargo.invoices?.filter(inv => inv.status === "Принято") || [],
-        delivered: cargo.invoices?.filter(inv => inv.status === "Доставлено") || [],
-        completed: cargo.invoices?.filter(inv => inv.status === "Завершен") || []
+        offered: currentCargo.invoices?.filter(inv => inv.status === "Заказано") || [],
+        accepted: currentCargo.invoices?.filter(inv => inv.status === "Принято") || [],
+        delivered: currentCargo.invoices?.filter(inv => inv.status === "Доставлено") || [],
+        completed: currentCargo.invoices?.filter(inv => inv.status === "Завершен") || []
     };
 
     return (
@@ -162,13 +180,13 @@ export const CargoView: React.FC<CargoViewProps> = ({
                     style={{ cursor: 'pointer' }}
                 />
                 <div className="a-center w-90 fs-09">
-                    <b>{cargo.status} #{formatters.shortId(cargo.guid)}</b>
+                    <b>{currentCargo.status} #{formatters.shortId(cargo.guid)}</b>
                 </div>
             </div>
 
             {/* Карточка груза */}
             <div className="cr-card mt-1">
-                <CargoCard cargo={cargo} mode="view" />
+                <CargoCard cargo={ currentCargo } mode="view" />
                 {renderActionButtons()}
             </div>
 
@@ -179,19 +197,19 @@ export const CargoView: React.FC<CargoViewProps> = ({
                     <div className="flex-1 text-center">
                         <div className="fs-08 cl-gray">Создан</div>
                         <div className="fs-08">
-                            {formatters.relativeDate(cargo.createdAt || '')}
+                            {formatters.relativeDate(currentCargo.createdAt || '')}
                         </div>
                     </div>
                     <div className="flex-1 text-center">
                         <div className="fs-08 cl-gray">Цена за тонну</div>
                         <div className="fs-08">
-                            {formatters.currency(cargo.price / cargo.weight)}
+                            {formatters.currency(currentCargo.price / currentCargo.weight)}
                         </div>
                     </div>
                     <div className="flex-1 text-center">
                         <div className="fs-08 cl-gray">Предложений</div>
                         <div className="fs-08">
-                            {cargo.invoices?.length || 0}
+                            {currentCargo.invoices?.length || 0}
                         </div>
                     </div>
                 </div>
@@ -229,7 +247,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
             <div className="cr-card mt-1">
                 <div className="fs-09 mb-1"><b>Рекомендации</b></div>
                 <div className="fs-08 cl-gray">
-                    {statusUtils.getDescription(cargo.status)}
+                    {statusUtils.getDescription(currentCargo.status)}
                 </div>
             </div>
 
