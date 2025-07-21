@@ -215,7 +215,7 @@ export const useCargos = (): UseCargosReturn => {
 
     // Фильтрованный список грузов
     const filteredCargos = useCallback(() => {
-        let filtered = [...(cargos || [])];
+        let filtered = cargos.filter(cargo => cargo.status !== CargoStatus.COMPLETED);//[...(cargos || [])];
         console.log("filtered cargo")
         console.log( filtered )
 

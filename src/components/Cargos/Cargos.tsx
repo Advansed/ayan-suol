@@ -3,9 +3,9 @@
  */
 
 import React from 'react';
-import { PageType, CargoInfo } from './types';
+import { CargoInfo } from './types';
 import { useCargos, useCargoForm } from './hooks';
-import { CargoCard, CargoForm, CargosList, CargoView } from './components';
+import { CargoForm, CargosList, CargoView } from './components';
 
 export const Cargos: React.FC = () => {
     const cargosHook = useCargos();

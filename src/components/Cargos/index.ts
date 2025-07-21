@@ -8,6 +8,8 @@ import './styles.css';
 // Основной компонент
 export { Cargos } from './Cargos';
 
+export { default as CargoArchive } from './components/CargoArchive';
+
 // Основные типы для внешнего использования
 export type { 
     CargoInfo, 
