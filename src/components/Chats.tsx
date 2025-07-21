@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { useIonViewDidEnter, useIonViewDidLeave, useIonViewWillEnter, useIonViewWillLeave, isPlatform } from "@ionic/react";
+import React, { useState, useRef, useCallback, useMemo } from "react";
+import { useIonViewDidEnter, useIonViewDidLeave } from "@ionic/react";
 import socketService from "./Sockets";
 import { Store } from "./Store";
-import { IonIcon, IonInput, useIonRouter } from "@ionic/react";
+import { IonIcon, IonInput, IonRefresher, IonRefresherContent, useIonRouter } from "@ionic/react";
 import './Chats.css'
 import { arrowBackOutline } from "ionicons/icons";
-
 
 interface ChatsProps {
     name: string;
@@ -49,31 +48,7 @@ const MessageComponent = React.memo(({ message, isSent, userInitials }: {
     );
 });
 
-// Мемоизированный компонент группы сообщений
-const MessagesGroup = React.memo(({ messages, userInitials }: { 
-    messages: any; 
-    userInitials: string; 
-}) => {
-    const jarr = messages.message || [];
-    
-    return (
-        <div className="ml-1 mt-1">
-            <div className="fs-08">
-                {messages.date}
-            </div>
-            {jarr.map((msg: any, index: number) => (
-                <MessageComponent
-                    key={`${messages.date}-${index}`}
-                    message={msg}
-                    isSent={msg.sent}
-                    userInitials={userInitials}
-                />
-            ))}
-        </div>
-    );
-});
-
-// Мемоизированный список сообщений
+// Мемоизированный список сообщений  
 const MessagesList = React.memo(({ info, userInitials }: { 
     info: any[]; 
     userInitials: string; 
@@ -81,11 +56,19 @@ const MessagesList = React.memo(({ info, userInitials }: {
     return (
         <>
             {info.map((messageGroup: any, index: number) => (
-                <MessagesGroup 
-                    key={`group-${index}-${messageGroup.date}`}
-                    messages={messageGroup} 
-                    userInitials={userInitials}
-                />
+                <div key={`group-${index}`} className="ml-1 mt-1">
+                    <div className="fs-08">
+                        {messageGroup.date}
+                    </div>
+                    {(messageGroup.message || []).map((msg: any, msgIndex: number) => (
+                        <MessageComponent
+                            key={`${messageGroup.date}-${msgIndex}`}
+                            message={msg}
+                            isSent={msg.sent}
+                            userInitials={userInitials}
+                        />
+                    ))}
+                </div>
             ))}
         </>
     );
@@ -133,9 +116,7 @@ const ChatFooter = React.memo(({
     onKeyUp: (e: any) => void;
 }) => {
     return (
-        <div 
-            className="chat-footer bg-2 pl-05 pr-05"
-        >
+        <div className="chat-footer bg-2 pl-05 pr-05">
             <div className="l-input mr-1">
                 <IonInput
                     type="text"
@@ -199,27 +180,19 @@ export function Chats(props: ChatsProps) {
         cargo: arr[1]
     }), [arr]);
 
-    // Lifecycle хуки Ionic
-    useIonViewWillEnter(() => {
-        console.log('Chat will enter');
-    });
+    // Функция загрузки чата
+    function loadChat() {
+        const socket = socketService.getSocket();
+        if (socket) {
+            socket.emit("get_chat", socketParams);
+        }
+    }
 
-    useIonViewDidEnter(() => {
-        console.log('Chat did enter');
-        setIsVisible(true);
-        setupSocketConnection();
-    });
-
-    useIonViewWillLeave(() => {
-        console.log('Chat will leave');
-    });
-
-    useIonViewDidLeave(() => {
-        console.log('Chat did leave');
-        setIsVisible(false);
-        cleanup();
-    });
-
+    // Функция refresh
+    function refresh(event: CustomEvent) {
+        loadChat();
+        event.detail.complete();
+    }
 
     // Настройка сокет соединения
     const setupSocketConnection = useCallback(() => {
@@ -228,11 +201,8 @@ export function Chats(props: ChatsProps) {
 
         socketRef.current = socket;
         
-        console.log("Setting up chat socket connection");
-        
         // Подписываемся на события чата
         const handleChatData = (res: any) => {
-            console.log("get_chat_on", res.data);
             if (res.success) {
                 setInfo(res.data);
             } else {
@@ -241,27 +211,22 @@ export function Chats(props: ChatsProps) {
         };
 
         const handleNewMessage = (res: any) => {
-            console.log('New message received');
-            socket.emit("get_chat", socketParams);
+            loadChat();
         };
 
         socket.on("get_chat", handleChatData);
         socket.on("send_message", handleNewMessage);
 
         // Загружаем данные чата
-        socket.emit("get_chat", socketParams);
-        console.log("get_chat_emit");
+        loadChat();
     }, [socketParams]);
 
     // Очистка ресурсов
     const cleanup = useCallback(() => {
-        console.log('Cleaning up chat resources');
-        
         if (socketRef.current) {
             socketRef.current.off("get_chat");
             socketRef.current.off("send_message");
         }
-
         setInfo([]);
         setValue("");
     }, []);
@@ -269,8 +234,6 @@ export function Chats(props: ChatsProps) {
     // Мемоизированная функция отправки сообщения
     const sendMessage = useCallback(() => {
         if (!value.trim() || !socketRef.current) return;
-
-        console.log('Sending message:', value);
         
         socketRef.current.emit("send_message", {
             token: Store.getState().login.token,
@@ -299,6 +262,17 @@ export function Chats(props: ChatsProps) {
         hist.push("/tab2");
     }, [hist]);
 
+    // Lifecycle хуки Ionic
+    useIonViewDidEnter(() => {
+        setIsVisible(true);
+        setupSocketConnection();
+    });
+
+    useIonViewDidLeave(() => {
+        setIsVisible(false);
+        cleanup();
+    });
+
     // Не отрисовываем компонент, если он не активен
     if (!isVisible) {
         return null;
@@ -312,9 +286,10 @@ export function Chats(props: ChatsProps) {
                 userInitials={userInitials}
             />
             
-            <div className={ "chat-body1 bg-2" }
-               
-            >
+            <div className="chat-body1 bg-2">
+                <IonRefresher slot="fixed" onIonRefresh={refresh}>
+                    <IonRefresherContent />
+                </IonRefresher>
                 <MessagesList info={info} userInitials={userInitials} />
             </div>
             
