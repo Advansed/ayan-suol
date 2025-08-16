@@ -177,7 +177,7 @@ const StepVerification: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
   React.useEffect(() => {
     const pinString = pin.join('')
     reg.updateFormData('pincode', pinString)
-  }, [pin, reg])
+  }, [pin]) // Убрать reg из зависимостей
 
   const handlePinChange = (value: string, index: number) => {
     const newPin = [...pin]

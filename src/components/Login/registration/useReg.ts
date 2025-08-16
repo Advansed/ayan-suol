@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import socketService from '../../Sockets'
+import { Store } from '../../Store'
 
 // ======================
 // ТИПЫ РЕГИСТРАЦИИ  
@@ -48,10 +49,11 @@ export interface SocketResponse {
 }
 
 export interface PasswordData {
-  token: string
-  password: string
-  password1: string
-  phone?: string
+  token:      string
+  password:   string
+  password1:  string
+  phone?:     string
+  userType?:  string
 }
 
 // ======================
@@ -171,16 +173,19 @@ export const useReg = (): UseRegReturn => {
   }, [updateState])
 
   const updateFormData = useCallback((field: string, value: any) => {
-    updateState({
-      formData: { ...state.formData, [field]: value }
-    })
-  }, [state.formData, updateState])
+    setState(prev => ({
+      ...prev,
+      formData: { ...prev.formData, [field]: value }
+    }))
+  }, [])
 
   const updateRegistrationData = useCallback((field: string, value: any) => {
-    updateState({
-      registrationData: { ...state.registrationData, [field]: value }
-    })
-  }, [state.registrationData, updateState])
+    setState(prev => ({
+      ...prev,
+      registrationData: { ...prev.registrationData, [field]: value }
+    }))
+  }, [])
+
 
   // ======================
   // ВАЛИДАЦИЯ
@@ -294,7 +299,8 @@ export const useReg = (): UseRegReturn => {
         const passwordData: PasswordData = {
           token: state.registrationData.token || '',
           password: state.formData.password || '',
-          password1: state.formData.password1 || ''
+          password1: state.formData.password1 || '',
+          userType: state.formData.userType || 1
         }
 
         const errors = validateRegistrationForm('password', passwordData)
@@ -359,6 +365,8 @@ export const useReg = (): UseRegReturn => {
         // Успешная регистрация - можно показать успех или перенаправить
         console.log("Registration completed successfully")
         updateState({ error: '', registrationStep: 0 }) // Сброс формы
+        Store.dispatch({ type: "auth", data: true })
+        Store.dispatch({ type: "login", data: response.data })
       } else {
         updateState({ error: response.message || 'Ошибка сохранения пароля' })
       }
