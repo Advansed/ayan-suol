@@ -14,10 +14,76 @@ import {
   NavigationLinks 
 } from './SharedComponents'
 import { formatPhoneDisplay } from './utils'
-import { RoleSelector } from './components/RoleSelector'
 
 interface RegistrationFormProps {
   auth: UseAuthReturn
+}
+
+// ======================
+// ШАГ 0: ВЫБОР РОЛИ
+// ======================
+
+const RoleSelector: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
+  const handleNext = useCallback(() => {
+    if (auth.formData.userType) {
+      auth.updateRegistrationData('user_type', auth.formData.userType)
+      auth.nextRegistrationStep()
+    }
+  }, [auth])
+
+  const navigationLinks = [{
+    text: 'Есть аккаунт? Авторизироваться',
+    onClick: auth.showLoginForm
+  }]
+
+  return (
+    <div className="login-container">
+      <div className="a-center">
+        <h2>Кто вы?</h2>
+      </div>
+
+      <div className="fs-11 a-center mb-2">
+        Выберите ваш тип аккаунта
+      </div>
+
+      <div className="mt-1">
+        <div className="role-selection-buttons">
+          <button
+            type="button"
+            className={`role-button ${auth.formData.userType === '1' ? 'selected' : ''}`}
+            onClick={() => auth.updateFormData('userType', '1')}
+          >
+            <div className="role-icon">📦</div>
+            <div>Заказчик</div>
+          </button>
+          <button
+            type="button"
+            className={`role-button ${auth.formData.userType === '2' ? 'selected' : ''}`}
+            onClick={() => auth.updateFormData('userType', '2')}
+          >
+            <div className="role-icon">🚛</div>
+            <div>Водитель</div>
+          </button>
+          <button
+            type="button"
+            className={`role-button ${auth.formData.userType === '0' ? 'selected' : ''}`}
+            onClick={() => auth.updateFormData('userType', '0')}
+          >
+            <div className="role-icon">🤝</div>
+            <div>Партнер</div>
+          </button>
+        </div>
+      </div>
+
+      <FormButtons
+        onNext={handleNext}
+        nextText="Продолжить"
+        disabled={!auth.formData.userType}
+      />
+
+      <NavigationLinks links={navigationLinks} />
+    </div>
+  )
 }
 
 // ======================
@@ -26,7 +92,7 @@ interface RegistrationFormProps {
 
 const StepPersonalInfo: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
   const handleNext = useCallback(() => {
-    console.log( auth.formData)
+    console.log(auth.formData)
     auth.submitRegistrationStep()
   }, [auth])
 
@@ -54,19 +120,21 @@ const StepPersonalInfo: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
   }]
 
   return (
-    <div className="step-personal-info">
+    <div className="login-container">
       <div className="a-center">
         <h2>Регистрация</h2>
       </div>
 
       {/* Телефон */}
-      <MaskedInput
-        placeholder="+7 (XXX) XXX-XXXX"
-        value={auth.formData.phone || ''}
-        onChange={(value) => auth.updateFormData('phone', value)}
-        onBlur={handlePhoneBlur}
-        error={auth.formErrors.phone}
-      />
+      <div className="mt-1">
+        <MaskedInput
+          placeholder="+7 (XXX) XXX-XXXX"
+          value={auth.formData.phone || ''}
+          onChange={(value) => auth.updateFormData('phone', value)}
+          onBlur={handlePhoneBlur}
+          error={auth.formErrors.phone}
+        />
+      </div>
 
       {/* Имя */}
       <div className="mt-1">
@@ -114,11 +182,10 @@ const StepVerification: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
 
   const handlePinChange = (value: string, index: number) => {
     const pin = (auth.recoveryData.pincode || '').split('')
-    pin[index] = value.slice(-1) // Только последний символ
+    pin[index] = value.slice(-1)
     const newPin = pin.join('')
     auth.updateRecoveryData('pincode', newPin)
     
-    // Автофокус на следующее поле
     if (value && index < 3) {
       const nextInput = document.querySelector(`input[data-pin-index="${index + 1}"]`) as HTMLInputElement
       nextInput?.focus()
@@ -126,6 +193,7 @@ const StepVerification: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
   }
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+    const pin = (auth.recoveryData.pincode || '').split('')
     if (e.key === 'Backspace' && !pin[index] && index > 0) {
       const prevInput = document.querySelector(`input[data-pin-index="${index - 1}"]`) as HTMLInputElement
       prevInput?.focus()
@@ -140,76 +208,39 @@ const StepVerification: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
   }]
 
   return (
-    <div className="step-verification">
+    <div className="login-container">
       <div className="a-center">
         <h2>Регистрация</h2>
       </div>
 
       <div className="fs-11 a-center mb-2">
-        Мы вам отправили СМС на ваш номер<br/>
-        Для верификации номера введите СМС
-      </div>
-
-      <div className="pin-inputs" style={{display: 'flex', gap: '10px', justifyContent: 'center'}}>
-        {[0,1,2,3].map(i => (
-          <input
-            key={i}
-            data-pin-index={i}
-            className="pin-input"
-            style={{width: '50px', height: '50px', textAlign: 'center', fontSize: '20px'}}
-            maxLength={1}
-            value={pin[i] || ''}
-            onChange={(e) => handlePinChange(e.target.value, i)}
-            onKeyDown={(e) => handleKeyDown(e, i)}
-          />
-        ))}
+        Введите код из SMS или дождитесь звонка
       </div>
 
       <div className="a-center fs-14 mt-2 mb-2">
         <b>{formatPhoneDisplay(auth.registrationData.call_phone || '')}</b>
+      </div>
+
+      {/* PIN код */}
+      <div className="mt-1">
+        <div className="pin-input-container">
+          {[0, 1, 2, 3].map((index) => (
+            <input
+              key={index}
+              type="text"
+              maxLength={1}
+              value={pin[index] || ''}
+              onChange={(e) => handlePinChange(e.target.value, index)}
+              onKeyDown={(e) => handleKeyDown(e, index)}
+              data-pin-index={index}
+              className="pin-input"
+            />
+          ))}
+        </div>
       </div>
 
       <FormButtons
         onNext={handleCall}
-        nextText="Отправить"
-        loading={auth.isLoading}
-      />
-
-      <NavigationLinks links={navigationLinks} />
-    </div>
-  )
-}
-
-// ======================
-// ШАГ 3: ПОДТВЕРЖДЕНИЕ ЗВОНКА
-// ======================
-
-const StepConfirmCall: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
-  const handleCheck = useCallback(() => {
-    auth.submitRegistrationStep()
-  }, [auth])
-
-  const navigationLinks = [{
-    text: 'Есть аккаунт? Авторизироваться',
-    onClick: auth.showLoginForm
-  }]
-
-  return (
-    <div className="step-confirm">
-      <div className="a-center">
-        <h2>Регистрация</h2>
-      </div>
-
-      <div className="fs-11 a-center mb-2">
-        Надо проверить результаты верификации
-      </div>
-
-      <div className="a-center fs-14 mt-2 mb-2">
-        <b>{formatPhoneDisplay(auth.registrationData.call_phone || '')}</b>
-      </div>
-
-      <FormButtons
-        onNext={handleCheck}
         nextText="Проверить"
         loading={auth.isLoading}
       />
@@ -220,7 +251,7 @@ const StepConfirmCall: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
 }
 
 // ======================
-// ШАГ 4: УСТАНОВКА ПАРОЛЯ
+// ШАГ 3: УСТАНОВКА ПАРОЛЯ
 // ======================
 
 const StepSetPassword: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
@@ -238,7 +269,6 @@ const StepSetPassword: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
     if (auth.formData.password1) {
       auth.validateField('password1', auth.formData.password1)
       
-      // Проверяем совпадение паролей
       if (auth.formData.password && auth.formData.password1) {
         if (auth.formData.password !== auth.formData.password1) {
           auth.updateFormData('password1Error', 'Пароли не совпадают')
@@ -249,16 +279,16 @@ const StepSetPassword: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
     }
   }, [auth])
 
+  const passwordsMatch = auth.formData.password && auth.formData.password1 && 
+                        auth.formData.password === auth.formData.password1
+
   const navigationLinks = [{
     text: 'Есть аккаунт? Авторизироваться',
     onClick: auth.showLoginForm
   }]
 
-  const passwordsMatch = auth.formData.password && auth.formData.password1 && 
-                        auth.formData.password === auth.formData.password1
-
   return (
-    <div className="step-password">
+    <div className="login-container">
       <div className="a-center">
         <h2>Регистрация</h2>
       </div>
@@ -312,14 +342,13 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ auth }) => {
     <RoleSelector auth={auth} />,        // Шаг 0: Выбор роли
     <StepPersonalInfo auth={auth} />,    // Шаг 1: Личные данные  
     <StepVerification auth={auth} />,    // Шаг 2: Верификация
-    // <StepConfirm auth={auth} />,         // Шаг 3: Подтверждение
-    <StepSetPassword auth={auth} />      // Шаг 4: Пароль
+    <StepSetPassword auth={auth} />      // Шаг 3: Пароль
   ]
 
   return (
-    <IonCard className="b-05">
-      <ProgressBar current={auth.registrationStep} total={4} />
-      {steps[auth.registrationStep]}
-    </IonCard>
+    <div className="container">
+        {/* <ProgressBar current={auth.registrationStep} total={3} /> */}
+        {steps[auth.registrationStep]}
+    </div>
   )
 }

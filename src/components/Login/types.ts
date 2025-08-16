@@ -44,13 +44,14 @@ export interface LoginCredentials {
 }
 
 export interface RegistrationData {
-  phone: string
-  name: string
-  email?: string
-  token?: string
-  status?: string
-  check_id?: string
-  call_phone?: string
+  phone:        string
+  name:         string
+  email?:       string
+  token?:       string
+  status?:      string
+  check_id?:    string
+  call_phone?:  string
+  user_type?:   string
 }
 
 export interface RecoveryData {
