@@ -9,19 +9,20 @@ import { Works } from '../components/Works';
 
 const Tab1: React.FC = () => {
   const [ message, setMessage ] = useState("");
-  const [ swap, setSwap ] = useState( Store.getState().swap )
+  const [ swap, setSwap ] = useState( Store.getState().login.user_type )
   
-  
+ 
   useEffect(()=>{
+    
       Store.subscribe({ num: 501, type: "error", func: () => {
         console.log(Store.getState().error);
         setMessage(Store.getState().error);
       }});
 
-      Store.subscribe({ num: 502, type: "swap", func: () => {
-        setSwap( Store.getState().swap );
+      Store.subscribe({ num: 502, type: "login", func: () => {
+        setSwap( Store.getState().login.user_type );
         console.log("swap 502")
-        console.log(Store.getState().swap)
+        console.log(Store.getState().login.user_type )
       }});
       
       return ()=>{
@@ -75,36 +76,21 @@ const Tab1: React.FC = () => {
     }
   };
 
+  console.log("swap")
+  console.log(swap)
   return (
     <IonPage>
       <IonContent className='bg-2'>
-        {/* Компонент рефрешера */}
-        {/* <IonRefresher 
-          className='bg-2'
-          slot="fixed" 
-          onIonRefresh={handleRefresh}
-          pullFactor={0.5}
-          pullMin={100}
-          pullMax={200}
-        >
-          <IonRefresherContent
-            className='bg-2'
-            pullingIcon={ arrowUpCircleOutline }
-            pullingText={swap ? "Потяните для обновления работ..." : "Потяните для обновления заказов..."}
-            refreshingSpinner="circular"
-            refreshingText="Обновление..."
-          />
-        </IonRefresher> */}
-
-        {/* Основной контент */}
         {
-          swap
+          swap === 2
             ? <Works />
-            : <Cargos />
+          : swap === 1
+            ? <Cargos />
+            : <></>
+
         }
       </IonContent>
 
-      {/* Модальное окно для ошибок */}
       <IonModal
         isOpen={message !== ""}
         onDidDismiss={() => setMessage("")}

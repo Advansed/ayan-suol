@@ -11,7 +11,6 @@ export let listeners: Array<any> = []
 
 export const i_state = {
     auth:                               false,
-    swap:                               false,
     login:                              "",
     route:                              "",         
     back:                               0,

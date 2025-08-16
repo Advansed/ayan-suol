@@ -285,9 +285,6 @@ export const useAuth = (): UseAuthReturn => {
         Store.dispatch({ type: "login", data: response.data })
         Store.dispatch({ type: "auth", data: true })
         
-        if (response.data.driver) {
-          Store.dispatch({ type: "swap", data: true })
-        }
       } else {
         updateState({ error: response.message || 'Ошибка авторизации' })
       }
