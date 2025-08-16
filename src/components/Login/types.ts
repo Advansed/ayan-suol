@@ -110,3 +110,31 @@ export interface UseAuthReturn extends AuthState {
   updateRegistrationData: (field: string, value: any) => void
   updateRecoveryData: (field: string, value: any) => void
 }
+
+// src/components/Login/types.ts - ДОПОЛНЕНИЯ
+
+export interface RegistrationData {
+  phone: string
+  name: string
+  email?: string
+  userType: '0' | '1' | '2'  // ← ДОБАВИТЬ
+  token?: string
+  status?: string
+  check_id?: string
+  call_phone?: string
+}
+
+export interface AuthState {
+  isAuthenticated:  boolean
+  user:             User | null
+  isLoading:        boolean
+  error:            string
+  currentForm:      'login' | 'register' | 'recovery'
+  formData:         Record<string, any>
+  formErrors:       Record<string, string>
+  registrationStep: number  // теперь 0-4 вместо 0-3
+  registrationData: RegistrationData
+  recoveryStep:     number
+  recoveryData:     RecoveryData
+  socketStatus:     'connected' | 'disconnected' | 'connecting'
+}

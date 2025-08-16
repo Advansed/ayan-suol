@@ -14,11 +14,12 @@ const INITIAL_STATE: AuthState = {
   formData:             {},
   formErrors:           {},
   registrationStep:     0,
-  registrationData:     {
-    token:              '',
-    phone:              '',
-    name:               '',
-    email:              ''
+  registrationData: {
+    token:      '',
+    phone:      '',
+    name:       '',
+    email:      '',
+    userType:   '1'  // ← ДОБАВИТЬ значение по умолчанию
   },
   recoveryStep:         0,
   recoveryData:         {
@@ -148,7 +149,7 @@ export const useAuth = (): UseAuthReturn => {
     }
   }, [updateState])
 
-  const register                = useCallback(async (userData: RegistrationData) => {
+  const register = useCallback(async (userData: RegistrationData) => {
     updateState({ isLoading: true, error: '' })
 
     try {
@@ -165,7 +166,8 @@ export const useAuth = (): UseAuthReturn => {
       const success = socketService.emit('check_registration', {
         code: phone,
         name: userData.name.trim(),
-        email: userData.email?.trim() || ''
+        email: userData.email?.trim() || '',
+        userType: userData.userType  // ← ДОБАВИТЬ отправку типа пользователя
       })
 
       if (!success) {
@@ -239,28 +241,29 @@ export const useAuth = (): UseAuthReturn => {
   // РЕГИСТРАЦИЯ ШАГИ
   // ======================
 
-  const nextRegistrationStep    = useCallback(() => {
+  const nextRegistrationStep = useCallback(() => {
     updateState({ 
-      registrationStep: Math.min(state.registrationStep + 1, 3) 
+      registrationStep: Math.min(state.registrationStep + 1, 4)  // ← было 3, стало 4
     })
   }, [state.registrationStep, updateState])
 
-  const prevRegistrationStep    = useCallback(() => {
-    updateState({ 
-      registrationStep: Math.max(state.registrationStep - 1, 0) 
-    })
-  }, [state.registrationStep, updateState])
-
-  const submitRegistrationStep  = useCallback(async () => {
-    console.log( state.formData )
+  const submitRegistrationStep = useCallback(async () => {
+    console.log(state.formData)
     switch (state.registrationStep) {
       case 0:
-        await register(state.formData as RegistrationData)
+        // Шаг выбора роли - просто переходим дальше
         break
       case 1:
-        await checkSMS( state.recoveryData )
-        break      
+        // Отправка данных регистрации с userType
+        await register({
+          ...state.formData,
+          userType: state.registrationData.userType
+        } as RegistrationData)
+        break
       case 2:
+        await checkSMS(state.recoveryData)
+        break      
+      case 3:
         const passwordData: PasswordData = {
           token: state.recoveryData.token || '',
           password: state.formData.password || '',
@@ -277,6 +280,13 @@ export const useAuth = (): UseAuthReturn => {
         break
     }
   }, [state.registrationStep, state.registrationData, state.formData, register, updateState])
+
+  const prevRegistrationStep    = useCallback(() => {
+    updateState({ 
+      registrationStep: Math.max(state.registrationStep - 1, 0) 
+    })
+  }, [state.registrationStep, updateState])
+
 
   // ======================
   // ВОССТАНОВЛЕНИЕ ШАГИ
@@ -340,47 +350,38 @@ export const useAuth = (): UseAuthReturn => {
     const socket = socketService.getSocket()
     if (!socket) return
 
-    // Обработчик авторизации
     const handleAuth = (response: SocketResponse) => {
       if (!isMountedRef.current) return
 
-      console.log(response)
-      updateState({ isLoading: false })
-      
       if (response.success) {
-        updateState({ 
-          isAuthenticated: true, 
-          user: response.data 
-        })
         Store.dispatch({ type: "login", data: response.data })
         Store.dispatch({ type: "auth", data: true })
         
-        if (response.data.driver) {
-          console.log("useAuth 1", true)
+        // Убираем старую логику с driver, используем userType
+        if (response.data.userType === 'driver') {
           Store.dispatch({ type: "swap", data: true })
+        } else {
+          Store.dispatch({ type: "swap", data: false })
         }
+        
       } else {
         updateState({ error: response.message || 'Ошибка авторизации' })
       }
     }
 
-    // Обработчик регистрации
     const handleRegistration = (response: SocketResponse) => {
       if (!isMountedRef.current) return
 
-      updateState({ isLoading: false })
-      
       if (response.success) {
-            
-        updateRecoveryData('token',     response.data.token)
-
+        updateRegistrationData('token', response.data.token)
+        updateRegistrationData('status', response.data.status)
+        updateRegistrationData('check_id', response.data.check_id)
+        updateRegistrationData('call_phone', response.data.call_phone)
         nextRegistrationStep()
-
       } else {
         updateState({ error: response.message || 'Ошибка регистрации' })
       }
     }
-
     // Обработчик восстановления
     const handleRestore = (response: SocketResponse) => {
 

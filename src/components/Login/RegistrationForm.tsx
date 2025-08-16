@@ -14,6 +14,7 @@ import {
   NavigationLinks 
 } from './SharedComponents'
 import { formatPhoneDisplay } from './utils'
+import { RoleSelector } from './components/RoleSelector'
 
 interface RegistrationFormProps {
   auth: UseAuthReturn
@@ -308,21 +309,17 @@ const StepSetPassword: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
 
 export const RegistrationForm: React.FC<RegistrationFormProps> = ({ auth }) => {
   const steps = [
-    <StepPersonalInfo key="personal" auth={auth} />,
-    <StepVerification key="verification" auth={auth} />,
-    // <StepConfirmCall key="confirm" auth={auth} />,
-    <StepSetPassword key="password" auth={auth} />
+    <RoleSelector auth={auth} />,        // Шаг 0: Выбор роли
+    <StepPersonalInfo auth={auth} />,    // Шаг 1: Личные данные  
+    <StepVerification auth={auth} />,    // Шаг 2: Верификация
+    // <StepConfirm auth={auth} />,         // Шаг 3: Подтверждение
+    <StepSetPassword auth={auth} />      // Шаг 4: Пароль
   ]
 
   return (
-    <div className="container">
-      <IonCard className="login-container">
-        {/* Прогресс-бар */}
-        <ProgressBar current={auth.registrationStep} total={4} />
-        
-        {/* Текущий шаг */}
-        {steps[auth.registrationStep]}
-      </IonCard>
-    </div>
+    <IonCard className="b-05">
+      <ProgressBar current={auth.registrationStep} total={4} />
+      {steps[auth.registrationStep]}
+    </IonCard>
   )
 }

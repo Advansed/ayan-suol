@@ -27,7 +27,7 @@ export const useDriverActions = ({ info, mode, setPage }: UseDriverActionsProps)
     const handleReject = useCallback(async () => {
         setIsLoading(true);
         try {
-            socketService.emit('completed', {
+            socketService.emit('rejected', {
                 token: Store.getState().login.token,
                 id: info.guid
             });
