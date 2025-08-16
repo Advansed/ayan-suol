@@ -4,7 +4,6 @@
 
 import React, { useCallback } from 'react'
 import { IonCard } from '@ionic/react'
-import { UseAuthReturn } from './types'
 import { 
   MaskedInput, 
   TextInput, 
@@ -14,6 +13,7 @@ import {
   NavigationLinks 
 } from './SharedComponents'
 import { formatPhoneDisplay } from './utils'
+import { UseAuthReturn } from './useAuth'
 
 interface RegistrationFormProps {
   auth: UseAuthReturn

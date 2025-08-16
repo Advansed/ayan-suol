@@ -5,10 +5,10 @@
 import React from 'react'
 import { useAuth } from './useAuth'
 import { LoginForm } from './LoginForm'
-import { RegistrationForm } from './RegistrationForm'
-import { RecoveryForm } from './RecoveryForm'
+// Подготовка к новой структуре:
 import { ErrorAlert, LoadingSpinner } from './SharedComponents'
 import './Login.css'
+import { RegistrationForm } from './registration'
 
 const Login: React.FC = () => {
   const auth = useAuth()
@@ -32,12 +32,13 @@ const Login: React.FC = () => {
       )}
       
       {auth.currentForm === 'register' && (
-        <RegistrationForm auth={auth} />
+        <RegistrationForm />
       )}
       
+      {/*
       {auth.currentForm === 'recovery' && (
         <RecoveryForm auth={auth} />
-      )}
+      )} */}
     </>
   )
 }

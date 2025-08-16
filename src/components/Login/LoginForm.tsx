@@ -4,8 +4,8 @@
 
 import React, { useCallback } from 'react'
 import { IonCard } from '@ionic/react'
-import { UseAuthReturn } from './types'
 import { MaskedInput, PasswordInput, FormButtons, NavigationLinks } from './SharedComponents'
+import { UseAuthReturn } from './useAuth'
 
 interface LoginFormProps {
   auth: UseAuthReturn

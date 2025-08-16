@@ -1,33 +1,157 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { AuthState, LoginCredentials, RegistrationData, RecoveryData, PasswordData, UseAuthReturn, SocketResponse } from './types'
-import { validateField, validateForm, Phone, secureStorage, STORAGE_KEYS } from './utils'
 import socketService from '../Sockets'
 import { Store } from '../Store'
 
+// ======================
+// ТИПЫ
+// ======================
+
+export interface User {
+  id: string
+  name: string
+  phone: string
+  email?: string
+  driver?: boolean
+  token: string
+  ratings?: {
+    orders: number
+    rate: number
+    invoices: number
+    payd: number
+  }
+  notifications?: {
+    email: boolean
+    sms: boolean
+    orders: boolean
+    market: boolean
+  }
+}
+
+export interface AuthState {
+  isAuthenticated: boolean
+  user: User | null
+  isLoading: boolean
+  error: string
+  currentForm: 'login' | 'register' | 'recovery'
+  formData: Record<string, any>
+  formErrors: Record<string, string>
+  socketStatus: 'connected' | 'disconnected' | 'connecting'
+}
+
+export interface LoginCredentials {
+  phone: string
+  password: string
+}
+
+export interface SocketResponse {
+  success: boolean
+  data?: any
+  message?: string
+}
+
+export interface UseAuthReturn extends AuthState {
+  // Основные действия
+  login: (credentials: LoginCredentials) => Promise<void>
+  
+  // Навигация форм
+  showLoginForm: () => void
+  showRegisterForm: () => void
+  showRecoveryForm: () => void
+  
+  // Утилиты
+  clearErrors: () => void
+  validateField: (field: string, value: any) => string | null
+  updateFormData: (field: string, value: any) => void
+}
+
+// ======================
+// УТИЛИТЫ
+// ======================
+
+export const validateField = (field: string, value: any): string | null => {
+  switch (field) {
+    case 'phone':
+      if (!value || value.trim() === '') return 'Заполните телефон'
+      const phoneRegex = /^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$/
+      return phoneRegex.test(value) ? null : 'Некорректный формат номера телефона'
+      
+    case 'password':
+      if (!value || value.trim() === '') return 'Заполните пароль'
+      return value.length < 4 ? 'Пароль должен содержать минимум 4 символа' : null
+      
+    default:
+      return null
+  }
+}
+
+export const validateForm = (formType: string, data: any): Record<string, string> => {
+  const errors: Record<string, string> = {}
+  
+  if (formType === 'login') {
+    const phoneError = validateField('phone', data.phone)
+    const passwordError = validateField('password', data.password)
+    if (phoneError) errors.phone = phoneError
+    if (passwordError) errors.password = passwordError
+  }
+  
+  return errors
+}
+
+export const Phone = (phone: string): string => {
+  if (!phone) return ''
+  let str = '+'
+  for (let i = 0; i < phone.length; i++) {
+    const ch = phone.charCodeAt(i)
+    if (ch >= 48 && ch <= 57) str = str + phone.charAt(i)
+  }
+  return str
+}
+
+export const secureStorage = {
+  set: (key: string, value: string): void => {
+    try {
+      localStorage.setItem(key, value)
+    } catch (error) {
+      console.error('Error saving to localStorage:', error)
+    }
+  },
+  
+  get: (key: string): string | null => {
+    try {
+      return localStorage.getItem(key)
+    } catch (error) {
+      console.error('Error reading from localStorage:', error)
+      return null
+    }
+  },
+  
+  remove: (key: string): void => {
+    try {
+      localStorage.removeItem(key)
+    } catch (error) {
+      console.error('Error removing from localStorage:', error)
+    }
+  }
+}
+
+export const STORAGE_KEYS = {
+  PHONE: 'serv-tm1.phone',
+  TOKEN: 'serv-tm1.token'
+}
+
+// ======================
+// ХУК АВТОРИЗАЦИИ
+// ======================
+
 const INITIAL_STATE: AuthState = {
-  isAuthenticated:      false,
-  user:                 null,
-  isLoading:            false,
-  error:                '',
-  currentForm:          'login',
-  formData:             {},
-  formErrors:           {},
-  registrationStep:     0,
-  registrationData: {
-    token:      '',
-    phone:      '',
-    name:       '',
-    email:      '',
-    userType:   '1'  // ← ДОБАВИТЬ значение по умолчанию
-  },
-  recoveryStep:         0,
-  recoveryData:         {
-    token:              '',
-    phone:              '', 
-    pincode:            ''
-  },
-  socketStatus:         'disconnected'
+  isAuthenticated: false,
+  user: null,
+  isLoading: false,
+  error: '',
+  currentForm: 'login',
+  formData: {},
+  formErrors: {},
+  socketStatus: 'disconnected'
 }
 
 export const useAuth = (): UseAuthReturn => {
@@ -54,19 +178,6 @@ export const useAuth = (): UseAuthReturn => {
     })
   }, [state.formData, updateState])
 
-  const updateRegistrationData = useCallback((field: string, value: any) => {
-    updateState({
-      registrationData: { ...state.registrationData, [field]: value }
-    })
-    console.log( state.registrationData )
-  }, [state.registrationData, updateState])
-
-  const updateRecoveryData = useCallback((field: string, value: any) => {
-    updateState({
-      recoveryData: { ...state.recoveryData, [field]: value }
-    })
-  }, [state.recoveryData, updateState])
-
   // ======================
   // НАВИГАЦИЯ ФОРМ
   // ======================
@@ -85,18 +196,16 @@ export const useAuth = (): UseAuthReturn => {
       currentForm: 'register', 
       error: '', 
       formErrors: {},
-      formData: {},
-      registrationStep: 0
+      formData: {}
     })
   }, [updateState])
 
   const showRecoveryForm = useCallback(() => {
     updateState({ 
       currentForm: 'recovery', 
-      error: '', 
+      error: '',
       formErrors: {},
-      formData: {},
-      recoveryStep: 0
+      formData: {}
     })
   }, [updateState])
 
@@ -116,7 +225,7 @@ export const useAuth = (): UseAuthReturn => {
   // ОСНОВНЫЕ ДЕЙСТВИЯ
   // ======================
 
-  const login                   = useCallback(async (credentials: LoginCredentials) => {
+  const login = useCallback(async (credentials: LoginCredentials) => {
     updateState({ isLoading: true, error: '' })
 
     try {
@@ -149,189 +258,6 @@ export const useAuth = (): UseAuthReturn => {
     }
   }, [updateState])
 
-  const register = useCallback(async (userData: RegistrationData) => {
-    updateState({ isLoading: true, error: '' })
-
-    try {
-      const phone = Phone(userData.phone)
-      if (phone.length !== 12) {
-        updateState({ error: 'Заполните телефон', isLoading: false })
-        return
-      }
-      if (userData.name.length === 0) {
-        updateState({ error: 'Заполните ФИО', isLoading: false })
-        return
-      }
-
-      const success = socketService.emit('check_registration', {
-        code: phone,
-        name: userData.name.trim(),
-        email: userData.email?.trim() || '',
-        userType: userData.userType  // ← ДОБАВИТЬ отправку типа пользователя
-      })
-
-      if (!success) {
-        throw new Error('Нет подключения к серверу')
-      }
-
-    } catch (error) {
-      console.error('Registration error:', error)
-      updateState({ 
-        error: error instanceof Error ? error.message : 'Ошибка регистрации', 
-        isLoading: false 
-      })
-    }
-  }, [updateState])
-
-  const recoverPassword         = useCallback(async (data: RecoveryData) => {
-    updateState({ isLoading: true, error: '' })
-
-    try {
-      const phone = Phone(data.phone)
-      if (phone.length !== 12) {
-        updateState({ error: 'Введите корректный номер телефона', isLoading: false })
-        return
-      }
-      console.log( data )
-      const success = socketService.emit('check_restore', {
-        phone: phone
-      })
-
-      if (!success) {
-        throw new Error('Нет подключения к серверу')
-      }
-
-    } catch (error) {
-      console.error('Recovery error:', error)
-      updateState({ 
-        error: error instanceof Error ? error.message : 'Ошибка восстановления', 
-        isLoading: false 
-      })
-    }
-  }, [updateState])
-
-  const checkSMS                = useCallback(async (data: RecoveryData) => {
-
-    updateState({ isLoading: true, error: '' })
-
-    try {
-      console.log( state.formData )
-      console.log( data )
-
-      console.log("check_sms")
-      const success = socketService.emit('check_sms', {
-        token:    data.token,
-        pincode:  data.pincode
-      })
-
-      if (!success) {
-        throw new Error('Нет подключения к серверу')
-      }
-
-    } catch (error) {
-      console.error('Recovery error:', error)
-      updateState({ 
-        error: error instanceof Error ? error.message : 'Ошибка восстановления', 
-        isLoading: false 
-      })
-    }
-  }, [updateState])
-
-  // ======================
-  // РЕГИСТРАЦИЯ ШАГИ
-  // ======================
-
-  const nextRegistrationStep = useCallback(() => {
-    updateState({ 
-      registrationStep: Math.min(state.registrationStep + 1, 4)  // ← было 3, стало 4
-    })
-  }, [state.registrationStep, updateState])
-
-  const submitRegistrationStep = useCallback(async () => {
-    console.log(state.formData)
-    switch (state.registrationStep) {
-      case 0:
-        // Шаг выбора роли - просто переходим дальше
-        break
-      case 1:
-        // Отправка данных регистрации с userType
-        await register({
-          ...state.formData,
-          userType: state.registrationData.userType
-        } as RegistrationData)
-        break
-      case 2:
-        await checkSMS(state.recoveryData)
-        break      
-      case 3:
-        const passwordData: PasswordData = {
-          token: state.recoveryData.token || '',
-          password: state.formData.password || '',
-          password1: state.formData.password1 || ''
-        }
-
-        const errors = validateForm('password', passwordData)
-        if (Object.keys(errors).length > 0) {
-          updateState({ formErrors: errors })
-          return
-        }
-
-        socketService.emit('save_password', passwordData)
-        break
-    }
-  }, [state.registrationStep, state.registrationData, state.formData, register, updateState])
-
-  const prevRegistrationStep    = useCallback(() => {
-    updateState({ 
-      registrationStep: Math.max(state.registrationStep - 1, 0) 
-    })
-  }, [state.registrationStep, updateState])
-
-
-  // ======================
-  // ВОССТАНОВЛЕНИЕ ШАГИ
-  // ======================
-
-  const nextRecoveryStep = useCallback(() => {
-    updateState({ 
-      recoveryStep: Math.min(state.recoveryStep + 1, 3) 
-    })
-  }, [state.recoveryStep, updateState])
-
-  const prevRecoveryStep = useCallback(() => {
-    updateState({ 
-      recoveryStep: Math.max(state.recoveryStep - 1, 0) 
-    })
-  }, [state.recoveryStep, updateState])
-
-  const submitRecoveryStep = useCallback(async () => {
-    switch (state.recoveryStep) {
-      case 0:
-        await recoverPassword(state.recoveryData)
-        break
-      case 1:
-        await checkSMS(state.recoveryData)
-        // updateState({ recoveryStep: 2 })
-        break
-      case 2:
-        const passwordData: PasswordData = {
-          token:      state.recoveryData.token || '',
-          password:   state.formData.password || '',
-          password1:  state.formData.password1 || '',
-          phone:      state.recoveryData.phone
-        }
-
-        const errors = validateForm('password', passwordData)
-        if (Object.keys(errors).length > 0) {
-          updateState({ formErrors: errors })
-          return
-        }
-
-        socketService.emit('save_password', passwordData)
-        break
-    }
-  }, [state.recoveryStep, state.recoveryData, state.formData, recoverPassword, updateState])
-
   // ======================
   // SOCKET ОБРАБОТЧИКИ
   // ======================
@@ -353,122 +279,31 @@ export const useAuth = (): UseAuthReturn => {
     const handleAuth = (response: SocketResponse) => {
       if (!isMountedRef.current) return
 
-      if (response.success) {
-        Store.dispatch({ type: "login", data: response.data })
-        Store.dispatch({ type: "auth", data: true })
-        
-        // Убираем старую логику с driver, используем userType
-        if (response.data.userType === 'driver') {
-          Store.dispatch({ type: "swap", data: true })
-        } else {
-          Store.dispatch({ type: "swap", data: false })
-        }
-        
-      } else {
-        updateState({ error: response.message || 'Ошибка авторизации' })
-      }
-    }
-
-    const handleRegistration = (response: SocketResponse) => {
-      if (!isMountedRef.current) return
-
-      if (response.success) {
-        updateRegistrationData('token', response.data.token)
-        updateRegistrationData('status', response.data.status)
-        updateRegistrationData('check_id', response.data.check_id)
-        updateRegistrationData('call_phone', response.data.call_phone)
-        nextRegistrationStep()
-      } else {
-        updateState({ error: response.message || 'Ошибка регистрации' })
-      }
-    }
-    // Обработчик восстановления
-    const handleRestore = (response: SocketResponse) => {
-
-      console.log("on... check_restore")
-      console.log(response.data)
-      if (!isMountedRef.current) return
-
       updateState({ isLoading: false })
-      
-      if (response.success) {
-        
-        updateRecoveryData('token',     response.data.token)
-
-        nextRecoveryStep()
-
-      } else {
-
-        updateState({ error: response.message || 'Пользователь с таким номером не найден' })
-
-      }
-    }
-
-    // Обработчик проверки звонка
-    const handleTestCall = (response: SocketResponse) => {
-      
-      if (!isMountedRef.current) return
-
-      updateState({ isLoading: false })
-
-      console.log( response )
-
-      if (response.success) {
-        console.log( "success" )
-        nextRecoveryStep()
-        nextRegistrationStep()
-      } else console.log( "unsuccess" )
-    }
-
-    // Обработчик проверки звонка для восстановления
-    const handleTestRestoreCall = (response: SocketResponse) => {
-      if (!isMountedRef.current) return
-
-      if (response.data.check_status === 400) {
-        updateState({ error: response.data.check_status_text || 'Звонок не подтвержден' })
-      }
-      if (response.data.check_status === 401) {
-        nextRecoveryStep()
-      }
-    }
-
-    // Обработчик сохранения пароля
-    const handleSavePassword = (response: SocketResponse) => {
-      if (!isMountedRef.current) return
 
       if (response.success) {
         Store.dispatch({ type: "login", data: response.data })
         Store.dispatch({ type: "auth", data: true })
         
         if (response.data.driver) {
-          console.log("useAuth 2", true)
           Store.dispatch({ type: "swap", data: true })
         }
       } else {
-        updateState({ error: response.message || 'Ошибка сохранения пароля' })
+        updateState({ error: response.message || 'Ошибка авторизации' })
       }
     }
 
-    // Подписываемся на события
+    // Подписываемся только на авторизацию
     socket.on('authorization', handleAuth)
-    socket.on('check_registration', handleRegistration)
-    socket.on('check_restore', handleRestore)
-    socket.on('check_sms', handleTestCall)
-    socket.on('save_password', handleSavePassword)
 
     return () => {
       isMountedRef.current = false
       
       if (socket) {
         socket.off('authorization', handleAuth)
-        socket.off('check_registration', handleRegistration)
-        socket.off('check_restore', handleRestore)
-        socket.off('check_sms', handleTestCall)
-        socket.off('test_restore_call', handleTestRestoreCall)
-        socket.off('save_password', handleSavePassword)
       }
     }
-  }, [updateState, updateRegistrationData, updateRecoveryData, nextRegistrationStep, nextRecoveryStep])
+  }, [updateState])
 
   // ======================
   // ВОЗВРАТ ИНТЕРФЕЙСА
@@ -480,31 +315,15 @@ export const useAuth = (): UseAuthReturn => {
     
     // Основные действия
     login,
-    register,
-    recoverPassword,
     
     // Навигация форм
     showLoginForm,
     showRegisterForm,
     showRecoveryForm,
     
-    // Валидация
-    validateField: validateFieldCallback,
-    
-    // Шаги регистрации
-    nextRegistrationStep,
-    prevRegistrationStep,
-    submitRegistrationStep,
-    
-    // Шаги восстановления
-    nextRecoveryStep,
-    prevRecoveryStep,
-    submitRecoveryStep,
-    
     // Утилиты
     clearErrors,
-    updateFormData,
-    updateRegistrationData,
-    updateRecoveryData
+    validateField: validateFieldCallback,
+    updateFormData
   }
 }
