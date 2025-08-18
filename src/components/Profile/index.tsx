@@ -9,8 +9,7 @@ import { Company } from './pages/Company'
 import { PersonalInfo } from './pages/personalInfo'
 import { PROFILE_PAGES, ROLE_TYPES, MENU_ITEMS, UI_TEXT } from './constants'
 import { useProfile } from './hooks/useProfile'
-import { Store } from '../Store'
-import socketService from '../Sockets'
+import { Passport } from './components/Passport/Passport'
 
 export const Profile: React.FC = () => {
   const { user, isLoading, userType } = useProfile()
@@ -27,6 +26,7 @@ export const Profile: React.FC = () => {
   const menuItems = useMemo(() => {
     const common = [
       { title: MENU_ITEMS.PERSONAL_DATA, onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
+      { title: MENU_ITEMS.PASSPORT, onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT) },
       { title: MENU_ITEMS.SECURITY, onClick: () => setCurrentPage(PROFILE_PAGES.SECURITY) },
       { title: MENU_ITEMS.NOTIFICATIONS, onClick: () => setCurrentPage(PROFILE_PAGES.NOTIFICATIONS) }
     ]
@@ -54,6 +54,10 @@ export const Profile: React.FC = () => {
   // Страницы
   if (currentPage === PROFILE_PAGES.PERSONAL) {
     return <PersonalInfo user={user} onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
+  }
+
+  if (currentPage === PROFILE_PAGES.PASSPORT) {
+    return <Passport onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
 
   if (currentPage === PROFILE_PAGES.SECURITY) {

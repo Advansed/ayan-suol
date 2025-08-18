@@ -1,10 +1,11 @@
 export const PROFILE_PAGES = {
-  MAIN: 0,
-  PERSONAL: 1,
-  TRANSPORT: 2,
-  SECURITY: 3,
-  NOTIFICATIONS: 4,
-  COMPANY: 5
+  MAIN:             0,
+  PERSONAL:         1,
+  PASSPORT:         2,
+  TRANSPORT:        3,
+  SECURITY:         4,
+  NOTIFICATIONS:    5,
+  COMPANY:          6
 } as const
 
 export const ROLE_TYPES = {
@@ -15,6 +16,7 @@ export const ROLE_TYPES = {
 export const MENU_ITEMS = {
   BUY_REQUESTS: 'Купить заявки',
   PERSONAL_DATA: 'Личные данные',
+  PASSPORT: 'Паспортные данные',
   SECURITY: 'Безопасность',
   NOTIFICATIONS: 'Уведомления',
   TRANSPORT: 'Транспорт',

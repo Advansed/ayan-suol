@@ -1,0 +1,146 @@
+.passport-info {
+    position: relative;
+    overflow-y: scroll;
+}
+
+.back-icon {
+  margin-left: 1em;
+  margin-top: 1em;
+  width: 1.5em;
+  height: 1.5em;
+  cursor: pointer;
+  color: var(--main-color);
+  transition: opacity 0.2s;
+}
+
+.back-icon:hover {
+  opacity: 0.7;
+}
+
+.passport-content {
+  margin-top: 1em;
+  margin-left: 2em;
+  margin-right: 2em;
+  font-size: 0.9em;
+}
+
+.title {
+  font-size: 1.2em;
+  color: var(--main-color);
+  padding-bottom: 1em;
+  border-bottom: 1px solid silver;
+}
+
+.field {
+  margin-top: 1em;
+}
+
+.field:first-of-type {
+  margin-top: 1em;
+}
+
+.label {
+  margin-bottom: 0.5em;
+  color: #333;
+  font-weight: 500;
+}
+
+.passport-input-wrapper {
+  border: 1px solid var(--main-color);
+  padding-left: 1em;
+  padding-right: 1em;
+  border-radius: 5px;
+  background-color: white;
+  color: black;
+  transition: all 0.3s ease;
+}
+
+.passport-input-wrapper:focus-within {
+  box-shadow: 0 0 0 2px var(--dop-color);
+  border-color: var(--main-color);
+}
+
+.custom-text-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1em;
+  font-family: inherit;
+  color: inherit;
+  padding: 0.5em 0;
+  resize: none;
+}
+
+.custom-text-input:focus {
+  outline: none;
+}
+
+.custom-textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1em;
+  font-family: inherit;
+  color: inherit;
+  padding: 0.5em 0;
+  resize: vertical;
+  min-height: 2.5em;
+}
+
+.error-msg {
+  color: rgb(252, 173, 3);
+  margin-top: 1em;
+  font-size: 0.85em;
+}
+
+.buttons {
+  display: flex;
+  margin-top: 1em;
+  gap: 1em;
+}
+
+.buttons ion-button {
+  flex: 1;
+  --border-radius: 5px;
+  font-size: 0.9em;
+  min-height: 2.5em;
+}
+
+.buttons ion-button:first-child {
+  --background: var(--main-color);
+  --background-hover: var(--main-color);
+  --background-activated: var(--main-color);
+  --color: white;
+}
+
+.buttons ion-button:first-child:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.buttons ion-button[fill="outline"] {
+  --border-color: silver;
+  --color: var(--main-color);
+  --border-width: 1px;
+}
+
+.buttons ion-button[fill="outline"]:hover:not(:disabled) {
+  --background: var(--dop-color);
+}
+
+.buttons ion-button:disabled {
+  opacity: 0.5;
+}
+
+@media (max-width: 480px) {
+  .passport-content {
+    margin-left: 2em;
+    margin-right: 2em;
+  }
+  
+  .buttons {
+    flex-direction: column;
+    gap: 0.5em;
+  }
+}
