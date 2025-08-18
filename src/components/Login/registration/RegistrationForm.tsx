@@ -113,6 +113,12 @@ const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
     }
   }, [reg])
 
+  const handlePartnerBlur = useCallback(() => {
+    if (reg.formData.partner) {
+      reg.validateField('partner', reg.formData.partner)
+    }
+  }, [reg])
+
   return (
     <div className="login-container">
       <div className="a-center">
@@ -163,6 +169,7 @@ const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
         disabled={!reg.formData.phone?.trim() || !reg.formData.name?.trim()}
         loading={reg.isLoading}
       />
+      
     </div>
   )
 }

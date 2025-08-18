@@ -119,6 +119,7 @@ export interface RegistrationData {
   name: string
   email?: string
   userType: '0' | '1' | '2'  // ← ДОБАВИТЬ
+  partner?: string
   token?: string
   status?: string
   check_id?: string
