@@ -4,7 +4,7 @@ import { STAT_LABELS } from '../constants'
 
 interface Props {
   ratings: UserRatings
-  isDriver: boolean
+  userType: number
 }
 
 const StatBlock: React.FC<{value: number, label: string}> = ({ value, label }) => (
@@ -14,13 +14,13 @@ const StatBlock: React.FC<{value: number, label: string}> = ({ value, label }) =
   </div>
 )
 
-export const ProfileStats: React.FC<Props> = React.memo(({ ratings, isDriver }) => (
+export const ProfileStats: React.FC<Props> = React.memo(({ ratings, userType }) => (
   <div className="flex mt-1 fl-space ml-1 mr-1">
-    <StatBlock value={ratings.orders} label={STAT_LABELS.ORDERS} />
-    <StatBlock value={ratings.rate} label={STAT_LABELS.RATING} />
+    <StatBlock value = { ratings.orders } label = { STAT_LABELS.ORDERS } />
+    <StatBlock value = { ratings.rate } label = { STAT_LABELS.RATING } />
     <StatBlock 
-      value={isDriver ? ratings.invoices : ratings.payd } 
-      label={isDriver ? STAT_LABELS.INVOICES : STAT_LABELS.PAID} 
+      value={ userType == 2 ? ratings.invoices : ratings.payd } 
+      label={ userType === 2 ? STAT_LABELS.INVOICES : STAT_LABELS.PAID } 
     />
   </div>
 ))

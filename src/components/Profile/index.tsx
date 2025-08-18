@@ -13,7 +13,7 @@ import { Store } from '../Store'
 import socketService from '../Sockets'
 
 export const Profile: React.FC = () => {
-  const { user, isLoading, isDriver } = useProfile()
+  const { user, isLoading, userType } = useProfile()
   const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export const Profile: React.FC = () => {
       { title: MENU_ITEMS.NOTIFICATIONS, onClick: () => setCurrentPage(PROFILE_PAGES.NOTIFICATIONS) }
     ]
 
-    if (isDriver) {
+    if (userType === 2) {
       return [
         { title: MENU_ITEMS.BUY_REQUESTS, onClick: () => {} },
         ...common.slice(0, 1),
@@ -45,7 +45,7 @@ export const Profile: React.FC = () => {
         ...common.slice(1)
       ]
     }
-  }, [isDriver])
+  }, [userType])
 
   if (isLoading || !user) {
     return <IonLoading isOpen={true} message={UI_TEXT.LOADING} />
@@ -55,15 +55,19 @@ export const Profile: React.FC = () => {
   if (currentPage === PROFILE_PAGES.PERSONAL) {
     return <PersonalInfo user={user} onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
+
   if (currentPage === PROFILE_PAGES.SECURITY) {
     return <Security onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
+
   if (currentPage === PROFILE_PAGES.NOTIFICATIONS) {
     return <Notifications onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
+
   if (currentPage === PROFILE_PAGES.TRANSPORT) {
     return <Transport onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
+
   if (currentPage === PROFILE_PAGES.COMPANY) {
     return <Company onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
@@ -75,21 +79,12 @@ export const Profile: React.FC = () => {
         <div>{UI_TEXT.MY_PROFILE}</div>
       </div>
 
-      <ProfileHeader user={user} isDriver={isDriver} />
-      <ProfileStats ratings={user.ratings} isDriver={isDriver} />
+      <ProfileHeader user={user} userType={ userType} />
+
+      <ProfileStats ratings={user.ratings} userType={userType} />
+      
       <ProfileMenu items={menuItems} />
 
-      <div className="p-bottom w-100">
-        <IonSegment 
-          value={isDriver ? ROLE_TYPES.DRIVER : ROLE_TYPES.CUSTOMER}
-          onIonChange={e => {
-            socketService.emit("set_driver", { token: Store.getState().login.token })
-          }}
-        >
-          <IonSegmentButton value={ROLE_TYPES.DRIVER}>{UI_TEXT.DRIVER}</IonSegmentButton>
-          <IonSegmentButton value={ROLE_TYPES.CUSTOMER}>{UI_TEXT.CUSTOMER}</IonSegmentButton>
-        </IonSegment>
-      </div>
     </div>
   )
 }

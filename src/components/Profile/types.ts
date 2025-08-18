@@ -1,18 +1,18 @@
 export interface User {
-  guid: string          // было id
-  name: string
-  email: string
-  phone?: string
-  image?: string        // упростить, в данных просто string
-  token: string
-  driver: boolean       // было isDriver
+  guid:           string          // было id
+  name:           string
+  email:          string
+  phone?:         string
+  image?:         string        // упростить, в данных просто string
+  token:          string
+  user_type:      number       // было isDriver
   ratings: {
-    orders:   number
-    invoices: number
-    rate:     number
-    payd:     number        // убрать invoices
+    orders:       number
+    invoices:     number
+    rate:         number
+    payd:         number        // убрать invoices
   }
-  description?: string  // добавить
+  description?:   string  // добавить
   notifications?: {     // добавить
     email: boolean
     sms: boolean

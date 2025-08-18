@@ -57,11 +57,10 @@ export const useProfile = () => {
         socket.off('set_driver')
       }
     }
+    
   }, []) // Убираем user из зависимостей
 
-  const isDriver = user?.driver || false
-  console.log('user.driver', user?.driver)
-  console.log('isDriver', isDriver)
+  const userType = user?.user_type || 1
 
-  return { user, isLoading, isDriver }
+  return { user, isLoading, userType }
 }

@@ -6,17 +6,17 @@ import { UI_TEXT } from '../constants'
 
 interface Props {
   user: User
-  isDriver: boolean
+  userType: number
 }
 
-export const ProfileHeader: React.FC<Props> = React.memo(({ user, isDriver }) => (
+export const ProfileHeader: React.FC<Props> = React.memo(({ user, userType }) => (
   <div className="borders ml-1 mr-1 mt-1">
     <div className="flex fl-space fs-08">
       <div className="flex">
         <IonIcon icon={personOutline} className="w-15 h-15"/>
         <div className="ml-1">{user.name}</div>
       </div>
-      <span>{user.driver ? UI_TEXT.DRIVER : UI_TEXT.CUSTOMER}</span>
+      <span>{userType === 2 ? UI_TEXT.DRIVER : userType === 1 ? UI_TEXT.CUSTOMER : "Партнер" }</span>
     </div>
   </div>
 ))
