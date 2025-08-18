@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { IonIcon, IonButton } from '@ionic/react'
-import { arrowBackOutline, chevronBackOutline, chevronForwardOutline } from 'ionicons/icons'
+import { arrowBackOutline, chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons'
 import { usePassport } from './usePassport'
 import { Files } from '../../../Files'
-import './Passport.css'
+import styles from './Passport.module.css'
 
 interface Props {
   onBack: () => void
@@ -81,27 +81,64 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
     return Object.keys(errors).length === 0
   }
 
-  // Переход к следующему шагу
-  const handleNext = () => {
-    if (validateCurrentStep() && currentStep < 4) {
-      setCurrentStep(currentStep + 1)
-      scrollToActiveField()
-    }
-  }
-
-  // Переход к предыдущему шагу
-  const handlePrev = () => {
+  // Обработка кнопки "Назад"
+  const handleBackNavigation = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
       scrollToActiveField()
+    } else {
+      onBack() // Выход в профиль
     }
   }
 
-  // Прямой переход к шагу
-  const goToStep = (step: number) => {
-    setCurrentStep(step)
-    scrollToActiveField()
+  // Обработка кнопки "Далее"
+  const handleForwardNavigation = () => {
+    if (currentStep < 4) {
+      if (validateCurrentStep()) {
+        setCurrentStep(currentStep + 1)
+        scrollToActiveField()
+      }
+    } else {
+      // Последний шаг - сохранение
+      if (validateCurrentStep()) {
+        save(form)
+      }
+    }
   }
+
+  // Получение заголовка шага
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 1: return 'Основные данные паспорта'
+      case 2: return 'Персональные данные'
+      case 3: return 'Адресная информация'
+      case 4: return 'Фотографии документов'
+      default: return 'Паспортные данные'
+    }
+  }
+
+  // Рендер заголовочной панели
+  const renderStepHeader = () => (
+    <div className={styles.stepHeader}>
+      <button className={`${styles.navButton} ${styles.navButtonLeft}`} onClick={handleBackNavigation}>
+        <IonIcon icon={chevronBackOutline} />
+      </button>
+      
+      <h3 className={styles.stepTitle}>{getStepTitle()}</h3>
+      
+      <button 
+        className={`${styles.navButton} ${styles.navButtonRight}`} 
+        onClick={handleForwardNavigation}
+        disabled={currentStep === 4 && isSaving}
+      >
+        {currentStep === 4 ? (
+          <IonIcon icon={saveOutline} />
+        ) : (
+          <IonIcon icon={chevronForwardOutline} />
+        )}
+      </button>
+    </div>
+  )
 
   // Автоскролл к активному полю
   const scrollToActiveField = () => {
@@ -154,146 +191,125 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
     }
   }
 
-  // Индикатор прогресса
-  const renderProgressIndicator = () => (
-    <div className="progress-indicator">
-      {[1, 2, 3, 4].map(step => (
-        <div
-          key={step}
-          className={`progress-step ${currentStep === step ? 'active' : ''} ${currentStep > step ? 'completed' : ''}`}
-          onClick={() => goToStep(step)}
-        >
-          {step}
-        </div>
-      ))}
-    </div>
-  )
-
   // Страница 1: Основные данные
   const renderBasicInfo = () => (
-    <div className="step-content">
-      <div><b>Основные данные паспорта</b></div>
-      
-      <div className="field-row">
-        <div className="">
-          <div className="label">Серия</div>
-          <div className="passport-input-wrapper">
+    <div className={styles.stepContent}>
+      <div className={styles.fieldRow}>
+        <div>
+          <div className={styles.label}>Серия</div>
+          <div className={styles.passportInputWrapper}>
             <input
               type="text"
-              className="custom-text-input"
+              className={styles.customTextInput}
               placeholder="ХХХХ"
               maxLength={4}
               value={form.series}
               onChange={e => setForm({...form, series: e.target.value})}
             />
           </div>
-          {validationErrors.series && <div className="error-msg">{validationErrors.series}</div>}
+          {validationErrors.series && <div className={styles.errorMsg}>{validationErrors.series}</div>}
         </div>
 
-        <div className="">
-          <div className="label">Номер</div>
-          <div className="passport-input-wrapper">
+        <div>
+          <div className={styles.label}>Номер</div>
+          <div className={styles.passportInputWrapper}>
             <input
               type="text"
-              className="custom-text-input"
+              className={styles.customTextInput}
               placeholder="ХХХХХХ"
               maxLength={6}
               value={form.number}
               onChange={e => setForm({...form, number: e.target.value})}
             />
           </div>
-          {validationErrors.number && <div className="error-msg">{validationErrors.number}</div>}
+          {validationErrors.number && <div className={styles.errorMsg}>{validationErrors.number}</div>}
         </div>
       </div>
 
-      <div className="">
-        <div className="label">Дата выдачи</div>
-        <div className="passport-input-wrapper">
+      <div>
+        <div className={styles.label}>Дата выдачи</div>
+        <div className={styles.passportInputWrapper}>
           <input
             type="date"
-            className="custom-text-input"
+            className={styles.customTextInput}
             value={form.issueDate}
             onChange={e => setForm({...form, issueDate: e.target.value})}
           />
         </div>
-        {validationErrors.issueDate && <div className="error-msg">{validationErrors.issueDate}</div>}
+        {validationErrors.issueDate && <div className={styles.errorMsg}>{validationErrors.issueDate}</div>}
       </div>
 
-      <div className="">
-        <div className="label">Кем выдан</div>
-        <div className="passport-input-wrapper">
+      <div>
+        <div className={styles.label}>Кем выдан</div>
+        <div className={styles.passportInputWrapper}>
           <input
             type="text"
-            className="custom-text-input"
+            className={styles.customTextInput}
             placeholder="Наименование органа"
             value={form.issuedBy}
             onChange={e => setForm({...form, issuedBy: e.target.value})}
           />
         </div>
-        {validationErrors.issuedBy && <div className="error-msg">{validationErrors.issuedBy}</div>}
+        {validationErrors.issuedBy && <div className={styles.errorMsg}>{validationErrors.issuedBy}</div>}
       </div>
     </div>
   )
 
   // Страница 2: Персональные данные
   const renderPersonalData = () => (
-    <div className="step-content">
-      <h3>Персональные данные</h3>
-      
-      <div className="field">
-        <div className="label">Дата рождения</div>
-        <div className="passport-input-wrapper">
+    <div className={styles.stepContent}>
+      <div className={styles.field}>
+        <div className={styles.label}>Дата рождения</div>
+        <div className={styles.passportInputWrapper}>
           <input
             type="date"
-            className="custom-text-input"
+            className={styles.customTextInput}
             value={form.birthDate}
             onChange={e => setForm({...form, birthDate: e.target.value})}
           />
         </div>
-        {validationErrors.birthDate && <div className="error-msg">{validationErrors.birthDate}</div>}
+        {validationErrors.birthDate && <div className={styles.errorMsg}>{validationErrors.birthDate}</div>}
       </div>
 
-      <div className="field">
-        <div className="label">Место рождения</div>
-        <div className="passport-input-wrapper">
+      <div className={styles.field}>
+        <div className={styles.label}>Место рождения</div>
+        <div className={styles.passportInputWrapper}>
           <input
             type="text"
-            className="custom-text-input"
+            className={styles.customTextInput}
             placeholder="Место рождения"
             value={form.birthPlace}
             onChange={e => setForm({...form, birthPlace: e.target.value})}
           />
         </div>
-        {validationErrors.birthPlace && <div className="error-msg">{validationErrors.birthPlace}</div>}
+        {validationErrors.birthPlace && <div className={styles.errorMsg}>{validationErrors.birthPlace}</div>}
       </div>
     </div>
   )
 
   // Страница 3: Адресная информация
   const renderAddressInfo = () => (
-    <div className="step-content">
-      <h3>Адресная информация</h3>
-      
-      <div className="field">
-        <div className="label">Адрес регистрации</div>
-        <div className="passport-input-wrapper">
+    <div className={styles.stepContent}>
+      <div className={styles.field}>
+        <div className={styles.label}>Адрес регистрации</div>
+        <div className={styles.passportInputWrapper}>
           <input
             type="text"
-            className="custom-text-input"
+            className={styles.customTextInput}
             placeholder="Адрес регистрации по паспорту"
             value={form.regAddress}
             onChange={e => setForm({...form, regAddress: e.target.value})}
           />
         </div>
-        {validationErrors.regAddress && <div className="error-msg">{validationErrors.regAddress}</div>}
+        {validationErrors.regAddress && <div className={styles.errorMsg}>{validationErrors.regAddress}</div>}
       </div>
 
-      <div className="field">
-        <div className="label">Фактический адрес</div>
-        <div className="passport-input-wrapper">
+      <div className={styles.field}>
+        <div className={styles.label}>Фактический адрес</div>
+        <div className={styles.passportInputWrapper}>
           <input
             type="text"
-            className="custom-text-input"
+            className={styles.customTextInput}
             placeholder="Фактический адрес проживания"
             value={form.actualAddress}
             onChange={e => setForm({...form, actualAddress: e.target.value})}
@@ -305,17 +321,15 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
 
   // Страница 4: Документы
   const renderDocuments = () => (
-    <div className="step-content">
-      <h3>Фотографии документов</h3>
-      
-      <div className="file-section">
-        <div className="file-item">
-          <div className="label">Фото основной страницы паспорта</div>
+    <div className={styles.stepContent}>
+      <div className={styles.fileSection}>
+        <div className={styles.fileItem}>
+          <div className={styles.label}>Фото основной страницы паспорта</div>
           {uploadedFiles.passportMain ? (
-            <div className="file-preview">
+            <div className={styles.filePreview}>
               <img src={uploadedFiles.passportMain} alt="Паспорт" />
               <button 
-                className="remove-file-btn"
+                className={styles.removeFileBtn}
                 onClick={() => removeFile('passportMain')}
               >
                 ×
@@ -323,22 +337,22 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
             </div>
           ) : (
             <button 
-              className="upload-btn"
+              className={styles.uploadBtn}
               onClick={() => handleFileUpload('passportMain')}
             >
               Загрузить фото
             </button>
           )}
-          {validationErrors.passportMain && <div className="error-msg">{validationErrors.passportMain}</div>}
+          {validationErrors.passportMain && <div className={styles.errorMsg}>{validationErrors.passportMain}</div>}
         </div>
 
-        <div className="file-item">
-          <div className="label">Фото страницы с регистрацией</div>
+        <div className={styles.fileItem}>
+          <div className={styles.label}>Фото страницы с регистрацией</div>
           {uploadedFiles.passportReg ? (
-            <div className="file-preview">
+            <div className={styles.filePreview}>
               <img src={uploadedFiles.passportReg} alt="Регистрация" />
               <button 
-                className="remove-file-btn"
+                className={styles.removeFileBtn}
                 onClick={() => removeFile('passportReg')}
               >
                 ×
@@ -346,7 +360,7 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
             </div>
           ) : (
             <button 
-              className="upload-btn"
+              className={styles.uploadBtn}
               onClick={() => handleFileUpload('passportReg')}
             >
               Загрузить фото
@@ -357,58 +371,20 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
     </div>
   )
 
-  // Навигационные кнопки
-  const renderNavigation = () => (
-    <div className="navigation-buttons">
-      <IonButton
-        fill="outline"
-        disabled={currentStep === 1}
-        onClick={handlePrev}
-      >
-        <IonIcon icon={chevronBackOutline} slot="start" />
-        Назад
-      </IonButton>
-
-      {currentStep < 4 ? (
-        <IonButton
-          onClick={handleNext}
-        >
-          Далее
-          <IonIcon icon={chevronForwardOutline} slot="end" />
-        </IonButton>
-      ) : (
-        <IonButton
-          disabled={isSaving}
-          onClick={handleSave}
-        >
-          {isSaving ? 'Сохранение...' : 'Сохранить'}
-        </IonButton>
-      )}
-    </div>
-  )
-
-  return (
-    <div className="passport-wizard">
-      <IonIcon 
-        icon={arrowBackOutline} 
-        className="back-icon" 
-        onClick={onBack}
-      />
-      
-      <div className="wizard-content" ref={scrollRef}>
-        {renderProgressIndicator()}
+ return (
+  <div className={styles.passportWizard}>
+    <div className={styles.wizardContent} ref={scrollRef}>
+      <div className={styles.stepContainer}>
+        {renderStepHeader()} {/* ✅ ДОБАВИТЬ */}
         
-        <div className="step-container">
-          {currentStep === 1 && renderBasicInfo()}
-          {currentStep === 2 && renderPersonalData()}
-          {currentStep === 3 && renderAddressInfo()}
-          {currentStep === 4 && renderDocuments()}
-        </div>
+        {currentStep === 1 && renderBasicInfo()}
+        {currentStep === 2 && renderPersonalData()}
+        {currentStep === 3 && renderAddressInfo()}
+        {currentStep === 4 && renderDocuments()}
 
-        {error && <div className="error-msg">{error}</div>}
+        {error && <div className={styles.errorMsg}>{error}</div>}
       </div>
-
-      {renderNavigation()}
     </div>
-  )
+  </div>
+)
 }

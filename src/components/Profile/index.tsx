@@ -27,24 +27,9 @@ export const Profile: React.FC = () => {
     const common = [
       { title: MENU_ITEMS.PERSONAL_DATA, onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
       { title: MENU_ITEMS.PASSPORT, onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT) },
-      { title: MENU_ITEMS.SECURITY, onClick: () => setCurrentPage(PROFILE_PAGES.SECURITY) },
-      { title: MENU_ITEMS.NOTIFICATIONS, onClick: () => setCurrentPage(PROFILE_PAGES.NOTIFICATIONS) }
     ]
 
-    if (userType === 2) {
-      return [
-        { title: MENU_ITEMS.BUY_REQUESTS, onClick: () => {} },
-        ...common.slice(0, 1),
-        { title: MENU_ITEMS.TRANSPORT, onClick: () => setCurrentPage(PROFILE_PAGES.TRANSPORT) },
-        ...common.slice(1)
-      ]
-    } else {
-      return [
-        common[0],
-        { title: MENU_ITEMS.COMPANY, onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY) },
-        ...common.slice(1)
-      ]
-    }
+    return common
   }, [userType])
 
   if (isLoading || !user) {
