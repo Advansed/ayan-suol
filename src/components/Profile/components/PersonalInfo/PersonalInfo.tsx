@@ -1,8 +1,8 @@
 import React, { useRef } from 'react'
-import { IonButton, IonIcon } from '@ionic/react'
-import { arrowBackOutline, saveOutline, cameraOutline, documentOutline } from 'ionicons/icons'
 import { usePersonalData } from './usePersonalData'
 import './PersonalInfo.css'
+import { IonIcon } from '@ionic/react'
+import { chevronBackOutline } from 'ionicons/icons'
 
 interface PersonalInfoProps {
   user: any
@@ -11,245 +11,191 @@ interface PersonalInfoProps {
 
 export const PersonalInfo: React.FC<PersonalInfoProps> = ({ user, onBack }) => {
   const {
-    personalInfo,
-    passportData,
-    documents,
-    completionPercentage,
-    updatePersonalInfo,
-    updatePassportData,
-    uploadDocument,
-    deleteDocument,
-    saveAllData,
+    formData,
+    currentPage,
+    updateField,
+    uploadPhoto,
+    nextPage,
+    prevPage,
+    saveData,
     isSaving,
     errors
   } = usePersonalData(user)
-
+  
   const photoInputRef = useRef<HTMLInputElement>(null)
-  const passportInputRef = useRef<HTMLInputElement>(null)
-  const licenseInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileUpload = (type: string, file: File) => {
-    if (file) {
-      uploadDocument(type, file)
+  // Страница 1: Основная информация
+  const renderPage1 = () => (
+    <div className="step-content">
+      <div className="field">
+        <div className="label">Фамилия Имя Отчество</div>
+        <div className="input-wrapper">
+          <input
+            type="text"
+            className="simple-input"
+            value={formData.name}
+            onChange={(e) => updateField('name', e.target.value)}
+            placeholder="Николай Алпасов"
+          />
+        </div>
+        {errors.name && <div className="error-msg">{errors.name}</div>}
+      </div>
+
+      <div className="field">
+        <div className="label">Телефон</div>
+        <div className="input-wrapper">
+          <input
+            type="tel"
+            className="simple-input"
+            value={formData.phone}
+            onChange={(e) => updateField('phone', e.target.value)}
+            placeholder="+79142227300"
+          />
+        </div>
+        {errors.phone && <div className="error-msg">{errors.phone}</div>}
+      </div>
+
+      <div className="field">
+        <div className="label">Email</div>
+        <div className="input-wrapper">
+          <input
+            type="email"
+            className="simple-input"
+            value={formData.email}
+            onChange={(e) => updateField('email', e.target.value)}
+            placeholder="example@mail.ru"
+          />
+        </div>
+        {errors.email && <div className="error-msg">{errors.email}</div>}
+      </div>
+
+      <div className="navigation-buttons-bottom">
+        <button className="next-btn" onClick={nextPage}>
+          Далее →
+        </button>
+      </div>
+    </div>
+  )
+
+  // Страница 2: Фото профиля
+  const renderPage2 = () => (
+    <div className="step-content">
+      <div className="photo-section-simple">
+        <div className="photo-frame-simple">
+          {formData.image ? (
+            <img src={formData.image} alt="Фото профиля" className="profile-photo" />
+          ) : (
+            <div className="photo-placeholder">
+              <span>ФОТО</span>
+            </div>
+          )}
+        </div>
+        
+        <button 
+          className="photo-upload-btn-simple"
+          onClick={() => photoInputRef.current?.click()}
+        >
+          {formData.image ? 'Изменить фото' : 'Загрузить фото'}
+        </button>
+        
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
+        />
+      </div>
+
+      <div className="navigation-buttons-bottom">
+        <button className="back-btn" onClick={prevPage}>
+          ← Назад
+        </button>
+        <button className="next-btn" onClick={nextPage}>
+          Далее →
+        </button>
+      </div>
+    </div>
+  )
+
+  // Страница 3: Смена пароля
+  const renderPage3 = () => (
+    <div className="step-content">
+      <div className="field">
+        <div className="label">Новый пароль</div>
+        <div className="input-wrapper">
+          <input
+            type="password"
+            className="simple-input"
+            value={formData.newPassword}
+            onChange={(e) => updateField('newPassword', e.target.value)}
+            placeholder="Введите новый пароль"
+          />
+        </div>
+      </div>
+
+      <div className="field">
+        <div className="label">Подтверждение пароля</div>
+        <div className="input-wrapper">
+          <input
+            type="password"
+            className="simple-input"
+            value={formData.confirmPassword}
+            onChange={(e) => updateField('confirmPassword', e.target.value)}
+            placeholder="Повторите новый пароль"
+          />
+        </div>
+        {errors.password && <div className="error-msg">{errors.password}</div>}
+      </div>
+
+      <div className="navigation-buttons-bottom">
+        <button className="back-btn" onClick={prevPage}>
+          ← Назад
+        </button>
+        <button 
+          className="save-btn" 
+          onClick={saveData}
+          disabled={isSaving}
+        >
+          {isSaving ? 'Сохранение...' : 'Сохранить'}
+        </button>
+      </div>
+    </div>
+  )
+
+  const pages = [renderPage1, renderPage2, renderPage3]
+
+  const getPageTitle = () => {
+    switch(currentPage) {
+      case 0: return 'Основная информация'
+      case 1: return 'Фото профиля' 
+      case 2: return 'Смена пароля'
+      default: return 'Личные данные'
     }
   }
 
   return (
     <div className="personal-info">
-      {/* Шапка с навигацией */}
-      <div className="header">
-        <IonIcon 
-          icon={arrowBackOutline} 
-          className="back-icon" 
-          onClick={onBack}
-        />
-        <div className="title">Личные данные</div>
-        <div className="progress-circle">
-          <div className="progress-value">{completionPercentage}%</div>
-        </div>
-      </div>
-
-      <div className="content">
-        {/* Основная информация */}
-        <div className="section">
-          <div className="section-header">
-            <h3>Основная информация</h3>
-          </div>
-          
-          <div className="photo-section">
-            <div className="photo-container">
-              {personalInfo.image ? (
-                <img src={personalInfo.image} alt="Фото профиля" className="profile-photo" />
-              ) : (
-                <div className="photo-placeholder">
-                  <IonIcon icon={cameraOutline} />
-                </div>
-              )}
-              <button 
-                className="photo-btn"
-                onClick={() => photoInputRef.current?.click()}
-              >
-                Изменить фото
-              </button>
+      <div className="passport-content-gray">
+        <div className="passport-card">
+          {/* Голубой заголовок внутри карточки */}
+          <div className="passport-header-blue">
+            <button className='header-left' onClick={onBack}>
+              <IonIcon icon={chevronBackOutline} />
+            </button>
+            <div className="header-title">
+              {getPageTitle()}
             </div>
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={(e) => e.target.files?.[0] && handleFileUpload('photo', e.target.files[0])}
-            />
-          </div>
-
-          <div className="field">
-            <label>ФИО</label>
-            <input
-              type="text"
-              value={personalInfo.name || ''}
-              onChange={(e) => updatePersonalInfo('name', e.target.value)}
-              placeholder="Введите ФИО"
-            />
-            {errors.name && <div className="error">{errors.name}</div>}
-          </div>
-
-          <div className="field">
-            <label>Телефон</label>
-            <input
-              type="tel"
-              value={personalInfo.phone || ''}
-              onChange={(e) => updatePersonalInfo('phone', e.target.value)}
-              placeholder="+7 (999) 999-99-99"
-            />
-            {errors.phone && <div className="error">{errors.phone}</div>}
-          </div>
-
-          <div className="field">
-            <label>Email</label>
-            <input
-              type="email"
-              value={personalInfo.email || ''}
-              onChange={(e) => updatePersonalInfo('email', e.target.value)}
-              placeholder="example@mail.ru"
-            />
-            {errors.email && <div className="error">{errors.email}</div>}
-          </div>
-        </div>
-
-        {/* Паспортные данные */}
-        <div className="section">
-          <div className="section-header">
-            <h3>Паспортные данные</h3>
-          </div>
-
-          <div className="field-row">
-            <div className="field">
-              <label>Серия</label>
-              <input
-                type="text"
-                value={passportData.series || ''}
-                onChange={(e) => updatePassportData('series', e.target.value)}
-                placeholder="1234"
-                maxLength={4}
-              />
-            </div>
-            <div className="field">
-              <label>Номер</label>
-              <input
-                type="text"
-                value={passportData.number || ''}
-                onChange={(e) => updatePassportData('number', e.target.value)}
-                placeholder="567890"
-                maxLength={6}
-              />
-            </div>
-          </div>
-
-          <div className="field">
-            <label>Дата выдачи</label>
-            <input
-              type="date"
-              value={passportData.issueDate || ''}
-              onChange={(e) => updatePassportData('issueDate', e.target.value)}
-            />
-          </div>
-
-          <div className="field">
-            <label>Кем выдан</label>
-            <textarea
-              value={passportData.issuedBy || ''}
-              onChange={(e) => updatePassportData('issuedBy', e.target.value)}
-              placeholder="Наименование органа"
-              rows={2}
-            />
-          </div>
-        </div>
-
-        {/* Документы */}
-        <div className="section">
-          <div className="section-header">
-            <h3>Документы</h3>
-          </div>
-
-          <div className="documents-grid">
-            {/* Паспорт */}
-            <div className="document-item">
-              <div className="document-header">
-                <IonIcon icon={documentOutline} />
-                <span>Паспорт</span>
+            <div className="header-right">
+              <div className="page-circle">
+                {currentPage + 1}
               </div>
-              {documents.passport ? (
-                <div className="document-preview">
-                  <img src={documents.passport} alt="Паспорт" />
-                  <button 
-                    className="delete-btn"
-                    onClick={() => deleteDocument('passport')}
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  className="upload-btn"
-                  onClick={() => passportInputRef.current?.click()}
-                >
-                  Загрузить фото
-                </button>
-              )}
-              <input
-                ref={passportInputRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={(e) => e.target.files?.[0] && handleFileUpload('passport', e.target.files[0])}
-              />
-            </div>
-
-            {/* Водительские права */}
-            <div className="document-item">
-              <div className="document-header">
-                <IonIcon icon={documentOutline} />
-                <span>Водительские права</span>
-              </div>
-              {documents.license ? (
-                <div className="document-preview">
-                  <img src={documents.license} alt="Права" />
-                  <button 
-                    className="delete-btn"
-                    onClick={() => deleteDocument('license')}
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  className="upload-btn"
-                  onClick={() => licenseInputRef.current?.click()}
-                >
-                  Загрузить фото
-                </button>
-              )}
-              <input
-                ref={licenseInputRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={(e) => e.target.files?.[0] && handleFileUpload('license', e.target.files[0])}
-              />
             </div>
           </div>
-        </div>
 
-        {/* Кнопка сохранения */}
-        <div className="save-section">
-          <IonButton 
-            expand="block" 
-            onClick={saveAllData}
-            disabled={isSaving}
-            className="save-button"
-          >
-            <IonIcon icon={saveOutline} slot="start" />
-            {isSaving ? 'Сохранение...' : 'Сохранить изменения'}
-          </IonButton>
+          <div className="card-content">
+            {pages[currentPage]()}
+          </div>
         </div>
       </div>
     </div>

@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { IonLoading, IonSegment, IonSegmentButton } from '@ionic/react'
+import { IonLoading } from '@ionic/react'
 import { ProfileHeader } from './components/ProfileHeader'
 import { ProfileStats } from './components/ProfileStats'
 import { ProfileMenu } from './components/ProfileMenu'
 import { Security, Notifications } from './pages/other-pages'
 import { Transport } from './pages/Transport'
 import { Company } from './pages/Company'
-import { PersonalInfo } from './pages/personalInfo'
 import { PROFILE_PAGES, ROLE_TYPES, MENU_ITEMS, UI_TEXT } from './constants'
 import { useProfile } from './hooks/useProfile'
 import { Passport } from './components/Passport/Passport'
+import { PersonalInfo } from './components/PersonalInfo/PersonalInfo'
 
 export const Profile: React.FC = () => {
   const { user, isLoading, userType } = useProfile()

@@ -1,292 +1,333 @@
+/* Основной контейнер */
 .personal-info {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-}
-
-/* Шапка */
-.header {
+  height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
+  flex-direction: column;
+  background-color: #f8f9fa;
+  font-family: 'Arial', sans-serif;
+}
+
+/* Серый контент */
+.passport-content-gray {
+  flex: 1;
+  padding: 16px;
+  background-color: #f8f9fa;
+  overflow-y: auto;
+}
+
+/* Белая карточка */
+.passport-card {
   background: white;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.back-icon {
-  width: 24px;
-  height: 24px;
-  color: #086CA2;
-  cursor: pointer;
-}
-
-.title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #333;
-}
-
-.progress-circle {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: conic-gradient(#086CA2 var(--progress, 0%), #e0e0e0 0%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.progress-circle::before {
-  content: '';
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: white;
-  position: absolute;
-}
-
-.progress-value {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #086CA2;
-  z-index: 1;
-}
-
-/* Контент */
-.content {
-  padding: 1rem;
-  max-width: 600px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-width: 400px;
   margin: 0 auto;
 }
 
-/* Секции */
-.section {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.section-header h3 {
-  margin: 0 0 1rem 0;
-  color: #333;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-/* Фото профиля */
-.photo-section {
+/* Голубой заголовок внутри карточки */
+.passport-header-blue {
+  background: linear-gradient(135deg, #4a9eff 0%, #0074d9 100%);
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  padding: 16px 20px;
+  color: white;
 }
 
-.photo-container {
-  position: relative;
-  margin-bottom: 0.5rem;
-}
-
-.profile-photo {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #086CA2;
-}
-
-.photo-placeholder {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: #f0f0f0;
+.header-left {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px dashed #ccc;
-}
-
-.photo-placeholder ion-icon {
-  font-size: 24px;
-  color: #999;
-}
-
-.photo-btn {
-  background: #086CA2;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  font-size: 20px;
+  font-weight: bold;
   cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s;
 }
 
-/* Поля ввода */
+.header-left:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.header-title {
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  flex: 1;
+}
+
+.header-right {
+  width: 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.page-circle {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Контент карточки */
+.card-content {
+  padding: 24px;
+  background: #f8f9fa;
+}
+
+/* Контент шага */
+.step-content {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  max-width: none;
+  margin: 0;
+}
+
+/* Поля формы */
 .field {
-  margin-bottom: 1rem;
+  margin-bottom: 20px;
 }
 
-.field-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.field label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  color: #555;
+.label {
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 14px;
   font-weight: 500;
 }
 
-.field input,
-.field textarea {
+.input-wrapper {
+  border-radius: 8px;
+  background-color: white;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.simple-input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.3s;
-  box-sizing: border-box;
-}
-
-.field input:focus,
-.field textarea:focus {
+  padding: 14px 16px;
+  border: none;
   outline: none;
-  border-color: #086CA2;
-  box-shadow: 0 0 0 2px rgba(8, 108, 162, 0.1);
+  font-size: 16px;
+  background: white;
+  box-sizing: border-box;
+  color: #333;
 }
 
-.field textarea {
-  resize: vertical;
-  min-height: 60px;
+.simple-input::placeholder {
+  color: #999;
+  font-style: normal;
 }
 
-/* Ошибки */
-.error {
-  color: #d32f2f;
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
+.simple-input:focus {
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
 }
 
-/* Документы */
-.documents-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+/* Сообщения об ошибках */
+.error-msg {
+  color: #e74c3c;
+  font-size: 12px;
+  margin-top: 4px;
 }
 
-.document-item {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 1rem;
+/* Фото секция упрощенная */
+.photo-section-simple {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+  margin-bottom: 24px;
 }
 
-.document-header {
+.photo-frame-simple {
+  width: 140px;
+  height: 170px;
+  border: 2px solid #e0e0e0;
+  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
-  color: #555;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.document-preview {
-  position: relative;
-}
-
-.document-preview img {
+.profile-photo {
   width: 100%;
-  height: 120px;
+  height: 100%;
   object-fit: cover;
   border-radius: 6px;
 }
 
-.delete-btn {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #d32f2f;
+.photo-placeholder {
+  color: #999;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.photo-upload-btn-simple {
+  background: #4a9eff;
   color: white;
   border: none;
-  font-size: 16px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(74, 158, 255, 0.3);
+}
+
+.photo-upload-btn-simple:hover {
+  background: #0074d9;
+  transform: translateY(-1px);
+}
+
+/* Кнопки навигации внизу */
+.navigation-buttons-bottom {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  margin-top: 32px;
+  gap: 12px;
 }
 
-.upload-btn {
-  width: 100%;
-  height: 120px;
-  border: 2px dashed #ccc;
-  background: #f9f9f9;
-  color: #666;
-  border-radius: 6px;
+.back-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.3s;
+  transition: all 0.2s;
+  flex: 1;
+  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
 }
 
-.upload-btn:hover {
-  border-color: #086CA2;
-  color: #086CA2;
-  background: #f0f8ff;
+.back-btn:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
 }
 
-/* Кнопка сохранения */
-.save-section {
-  margin-top: 2rem;
+.next-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
 }
 
-.save-button {
-  --background: #086CA2;
-  --border-radius: 8px;
-  font-weight: 600;
-  height: 48px;
+.next-btn:hover {
+  background: #218838;
+  transform: translateY(-1px);
 }
 
-/* Адаптация для мобильных */
+.save-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+.save-btn:hover:not(:disabled) {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Для первой страницы - только кнопка "Далее" */
+.navigation-buttons-bottom:has(.next-btn:only-child) {
+  justify-content: flex-end;
+}
+
+.navigation-buttons-bottom:has(.next-btn:only-child) .next-btn {
+  flex: none;
+  min-width: 120px;
+}
+
+/* Мобильная адаптация */
 @media (max-width: 768px) {
-  .content {
-    padding: 0.5rem;
+  .passport-content-gray {
+    padding: 12px;
   }
   
-  .section {
-    padding: 1rem;
+  .passport-card {
+    margin: 0;
+    border-radius: 8px;
   }
   
-  .field-row {
-    grid-template-columns: 1fr;
+  .passport-header-blue {
+    padding: 14px 16px;
   }
   
-  .documents-grid {
-    grid-template-columns: 1fr;
+  .card-content {
+    padding: 20px;
   }
   
-  .header {
-    padding: 0.75rem;
+  .header-title {
+    font-size: 15px;
   }
   
-  .progress-circle {
-    width: 40px;
-    height: 40px;
+  .header-left {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
   }
   
-  .progress-circle::before {
+  .page-circle {
     width: 28px;
     height: 28px;
+    font-size: 14px;
   }
   
-  .progress-value {
-    font-size: 0.7rem;
+  .photo-frame-simple {
+    width: 120px;
+    height: 150px;
+  }
+  
+  .navigation-buttons-bottom {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  
+  .navigation-buttons-bottom:has(.next-btn:only-child) {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  
+  .navigation-buttons-bottom:has(.next-btn:only-child) .next-btn {
+    flex: none;
+    min-width: 120px;
   }
 }

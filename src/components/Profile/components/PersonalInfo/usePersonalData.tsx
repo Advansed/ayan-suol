@@ -1,56 +1,37 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 
-interface PersonalInfo {
-  name?: string
-  phone?: string
-  email?: string
-  image?: string
-}
-
-interface PassportData {
-  series?: string
-  number?: string
-  issueDate?: string
-  issuedBy?: string
-}
-
-interface Documents {
-  passport?: string
-  license?: string
+interface PersonalData {
+  name: string
+  phone: string
+  email: string
+  image: string
+  newPassword: string
+  confirmPassword: string
 }
 
 interface ValidationErrors {
   name?: string
   phone?: string
   email?: string
-  passport?: string
+  password?: string
 }
 
 export const usePersonalData = (user: any) => {
-  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
+  const [currentPage, setCurrentPage] = useState(0)
+  
+  const [formData, setFormData] = useState<PersonalData>({
     name: user?.name || '',
     phone: user?.phone || '',
     email: user?.email || '',
-    image: user?.image || ''
-  })
-
-  const [passportData, setPassportData] = useState<PassportData>({
-    series: user?.passport?.series || '',
-    number: user?.passport?.number || '',
-    issueDate: user?.passport?.issueDate || '',
-    issuedBy: user?.passport?.issuedBy || ''
-  })
-
-  const [documents, setDocuments] = useState<Documents>({
-    passport: user?.documents?.passport || '',
-    license: user?.documents?.license || ''
+    image: user?.image || '',
+    newPassword: '',
+    confirmPassword: ''
   })
 
   const [errors, setErrors] = useState<ValidationErrors>({})
   const [isSaving, setIsSaving] = useState(false)
-  const [completionPercentage, setCompletionPercentage] = useState(0)
 
-  // Валидация полей
+  // Валидация
   const validateField = useCallback((field: string, value: string): string | null => {
     switch (field) {
       case 'name':
@@ -62,163 +43,100 @@ export const usePersonalData = (user: any) => {
       case 'email':
         return !value ? 'Введите email' :
                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? 'Неверный формат email' : null
-      case 'passport':
-        return passportData.series && passportData.number && 
-               (passportData.series.length !== 4 || passportData.number.length !== 6) ? 
-               'Неверный формат паспорта' : null
+      case 'password':
+        if (formData.newPassword && formData.confirmPassword) {
+          return formData.newPassword !== formData.confirmPassword ? 'Пароли не совпадают' : null
+        }
+        return null
       default:
         return null
     }
-  }, [passportData])
+  }, [formData.newPassword, formData.confirmPassword])
 
-  // Расчет процента заполненности
-  const calculateCompletion = useCallback(() => {
-    const fields = [
-      personalInfo.name,
-      personalInfo.phone, 
-      personalInfo.email,
-      personalInfo.image,
-      passportData.series,
-      passportData.number,
-      passportData.issueDate,
-      passportData.issuedBy,
-      documents.passport,
-      documents.license
-    ]
-    
-    const filledFields = fields.filter(field => field && field.toString().trim()).length
-    return Math.round((filledFields / fields.length) * 100)
-  }, [personalInfo, passportData, documents])
+  // Валидация текущей страницы
+  const validateCurrentPage = useCallback((): boolean => {
+    let isValid = true
+    const newErrors: ValidationErrors = {}
 
-  // Обновление процента при изменении данных
-  useEffect(() => {
-    setCompletionPercentage(calculateCompletion())
-    
-    // Обновляем CSS переменную для анимации круга
-    const progressElement = document.querySelector('.progress-circle') as HTMLElement
-    if (progressElement) {
-      progressElement.style.setProperty('--progress', `${calculateCompletion()}%`)
-    }
-  }, [calculateCompletion])
-
-  // Обновление основной информации
-  const updatePersonalInfo = useCallback((field: keyof PersonalInfo, value: string) => {
-    setPersonalInfo(prev => ({ ...prev, [field]: value }))
-    
-    // Валидация с задержкой
-    setTimeout(() => {
-      const error = validateField(field, value)
-      setErrors(prev => ({ ...prev, [field]: error || undefined }))
-    }, 500)
-  }, [validateField])
-
-  // Обновление паспортных данных  
-  const updatePassportData = useCallback((field: keyof PassportData, value: string) => {
-    setPassportData(prev => ({ ...prev, [field]: value }))
-    
-    // Форматирование серии и номера
-    if (field === 'series') {
-      value = value.replace(/\D/g, '').slice(0, 4)
-    } else if (field === 'number') {
-      value = value.replace(/\D/g, '').slice(0, 6)
-    }
-    
-    setPassportData(prev => ({ ...prev, [field]: value }))
-  }, [])
-
-  // Сжатие изображения
-  const compressImage = useCallback((file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')!
-      const img = new Image()
-      
-      img.onload = () => {
-        const maxWidth = 800
-        const maxHeight = 600
-        let { width, height } = img
-        
-        if (width > height) {
-          if (width > maxWidth) {
-            height = (height * maxWidth) / width
-            width = maxWidth
+    switch (currentPage) {
+      case 0: // Страница 1: основная информация
+        ['name', 'phone', 'email'].forEach(field => {
+          const error = validateField(field, formData[field as keyof PersonalData])
+          if (error) {
+            newErrors[field as keyof ValidationErrors] = error
+            isValid = false
           }
-        } else {
-          if (height > maxHeight) {
-            width = (width * maxHeight) / height
-            height = maxHeight
+        })
+        break
+      
+      case 1: // Страница 2: фото (без валидации)
+        break
+        
+      case 2: // Страница 3: пароли
+        if (formData.newPassword || formData.confirmPassword) {
+          const error = validateField('password', '')
+          if (error) {
+            newErrors.password = error
+            isValid = false
           }
         }
-        
-        canvas.width = width
-        canvas.height = height
-        
-        ctx.drawImage(img, 0, 0, width, height)
-        resolve(canvas.toDataURL('image/jpeg', 0.8))
-      }
-      
-      img.src = URL.createObjectURL(file)
-    })
+        break
+    }
+
+    setErrors(newErrors)
+    return isValid
+  }, [currentPage, formData, validateField])
+
+  // Обновление данных
+  const updateField = useCallback((field: keyof PersonalData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    
+    // Очистка ошибки при изменении поля
+    const error = validateField(field, value)
+    setErrors(prev => ({ ...prev, [field]: error || undefined }))
+  }, [validateField])
+
+  // Загрузка фото
+  const uploadPhoto = useCallback((file: File) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const result = e.target?.result as string
+      setFormData(prev => ({ ...prev, image: result }))
+    }
+    reader.readAsDataURL(file)
   }, [])
 
-  // Загрузка документа
-  const uploadDocument = useCallback(async (type: string, file: File) => {
-    try {
-      const compressedImage = await compressImage(file)
-      
-      if (type === 'photo') {
-        setPersonalInfo(prev => ({ ...prev, image: compressedImage }))
-      } else {
-        setDocuments(prev => ({ ...prev, [type]: compressedImage }))
-      }
-    } catch (error) {
-      console.error('Ошибка загрузки файла:', error)
+  // Навигация между страницами
+  const nextPage = useCallback(() => {
+    if (validateCurrentPage() && currentPage < 2) {
+      setCurrentPage(prev => prev + 1)
     }
-  }, [compressImage])
+  }, [currentPage, validateCurrentPage])
 
-  // Удаление документа
-  const deleteDocument = useCallback((type: string) => {
-    if (type === 'photo') {
-      setPersonalInfo(prev => ({ ...prev, image: '' }))
-    } else {
-      setDocuments(prev => ({ ...prev, [type]: '' }))
+  const prevPage = useCallback(() => {
+    if (currentPage > 0) {
+      setCurrentPage(prev => prev - 1)
     }
-  }, [])
+  }, [currentPage])
 
   // Сохранение всех данных
-  const saveAllData = useCallback(async () => {
-    // Валидация всех полей
-    const newErrors: ValidationErrors = {}
-    
-    Object.keys(personalInfo).forEach(key => {
-      const error = validateField(key, (personalInfo as any)[key] || '')
-      if (error) newErrors[key as keyof ValidationErrors] = error
-    })
-    
-    const passportError = validateField('passport', '')
-    if (passportError) newErrors.passport = passportError
-    
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      return
-    }
-    
+  const saveData = useCallback(async () => {
+    if (!validateCurrentPage()) return
+
     setIsSaving(true)
-    setErrors({})
-    
+
     try {
+      // Отправка данных на сервер
       const token = localStorage.getItem('serv-tm1.token')
       
-      const response = await fetch('/api/profile/save', {
+      const response = await fetch('/api/profile/personal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           token,
-          personalInfo,
-          passportData,
-          documents
+          ...formData
         })
       })
       
@@ -228,7 +146,6 @@ export const usePersonalData = (user: any) => {
         throw new Error(result.message || 'Ошибка сохранения')
       }
       
-      // Показать успешное сообщение
       console.log('Данные успешно сохранены')
       
     } catch (error) {
@@ -237,18 +154,16 @@ export const usePersonalData = (user: any) => {
     } finally {
       setIsSaving(false)
     }
-  }, [personalInfo, passportData, documents, validateField])
+  }, [formData, validateCurrentPage])
 
   return {
-    personalInfo,
-    passportData,
-    documents,
-    completionPercentage,
-    updatePersonalInfo,
-    updatePassportData,
-    uploadDocument,
-    deleteDocument,
-    saveAllData,
+    formData,
+    currentPage,
+    updateField,
+    uploadPhoto,
+    nextPage,
+    prevPage,
+    saveData,
     isSaving,
     errors
   }
