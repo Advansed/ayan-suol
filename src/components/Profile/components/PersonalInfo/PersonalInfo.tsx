@@ -52,15 +52,6 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
     }
   }, [personalData])
 
-  // Показать уведомление об успехе
-  useEffect(() => {
-    if (success) {
-      setTimeout(() => {
-        onBack()
-      }, 1500)
-    }
-  }, [success, onBack])
-
   // Валидация текущего шага
   const validateCurrentStep = (): boolean => {
     const errors: Record<string, string> = {}

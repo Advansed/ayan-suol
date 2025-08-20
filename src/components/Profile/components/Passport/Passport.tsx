@@ -34,6 +34,7 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
   })
 
   useEffect(() => {
+    console.log("load")
     load()
   }, [load])
 
@@ -73,7 +74,7 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
         if (!form.regAddress.trim()) errors.regAddress = 'Укажите адрес регистрации'
         break
       case 4:
-        if (!uploadedFiles.passportMain) errors.passportMain = 'Загрузите фото паспорта'
+        // if (!uploadedFiles.passportMain) errors.passportMain = 'Загрузите фото паспорта'
         break
     }
 

@@ -25,8 +25,9 @@ export const Profile: React.FC = () => {
 
   const menuItems = useMemo(() => {
     const common = [
-      { title: MENU_ITEMS.PERSONAL_DATA, onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
-      { title: MENU_ITEMS.PASSPORT, onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT) },
+      { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
+      { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT) },
+      { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY) },
     ]
 
     return common

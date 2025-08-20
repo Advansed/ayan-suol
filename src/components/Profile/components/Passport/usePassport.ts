@@ -29,6 +29,7 @@ export const usePassport = () => {
     setIsLoading(true)
     setError(null)
 
+    
     const socket = socketService.getSocket()
     if (!socket) {
       setError('Нет подключения')
@@ -45,9 +46,10 @@ export const usePassport = () => {
 
     socket.emit('get_passport', { token })
     
-    socket.once('get_passport', (response) => {
+    socket.once('get_passport_data', (response) => {
+      console.log("get_passport")
       setIsLoading(false)
-      
+      console.log( response )
       if (response.success) {
         setPassportData(response.data || {})
       } else {
