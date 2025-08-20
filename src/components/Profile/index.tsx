@@ -10,9 +10,12 @@ import { Passport }                             from './components/Passport/Pass
 import { PersonalInfo }                         from './components/PersonalInfo/PersonalInfo'
 import { Company }                              from './components/Company/Company'
 import { Transport } from './components/Transport/Transport'
+import { useAgreements } from './hooks/useAgreements'
+import { Agreements } from './components/Agreements/Agreements'
 
 export const Profile: React.FC = () => {
   const { user, isLoading, userType } = useProfile()
+  const { agreements, toggleAgreement, saveAgreements } = useAgreements()
   const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
 
   useEffect(() => {
@@ -75,6 +78,9 @@ export const Profile: React.FC = () => {
       <ProfileStats ratings={user.ratings} userType={userType} />
       
       <ProfileMenu items={menuItems} />
+
+ {/* Блок согласий */}
+      <Agreements />
 
     </div>
   )
