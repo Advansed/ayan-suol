@@ -55,12 +55,6 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
         }
     }, [transportData])
 
-    // Добавить в начало компонента после хуков
-    useEffect(() => {
-        console.log("Current form state:", form)
-        console.log("Current transportData:", transportData)
-    }, [form, transportData])
-
     // Если данные все еще не приходят, заменить load() на принудительную загрузку
     useEffect(() => {
         console.log("Component mounted, loading transport data")

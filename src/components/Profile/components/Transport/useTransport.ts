@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import socketService from '../../../Sockets'
 import { Store, useStoreField } from '../../../Store'
 
@@ -18,17 +18,19 @@ export const useTransport = () => {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Маппинг данных из Store в формат TransportData
-  const transportData: TransportData | null = transportStore ? {
-    name: transportStore.name,
-    license_plate: transportStore.number,
-    vin: transportStore.vin,
-    manufacture_year: transportStore.year,
-    image: transportStore.image,
-    transport_type: transportStore.type,
-    experience: transportStore.exp,
-    load_capacity: transportStore.capacity
-  } : null
+  // Мемоизация данных для предотвращения спама
+  const transportData: TransportData | null = useMemo(() => {
+    return transportStore ? {
+      name:               transportStore.name,
+      license_plate:      transportStore.license_plate,
+      vin:                transportStore.vin,
+      manufacture_year:   transportStore.manufacture_year,
+      image:              transportStore.image,
+      transport_type:     transportStore.transport_type,
+      experience:         transportStore.experience,
+      load_capacity:      transportStore.load_capacity
+    } : null
+  }, [transportStore])
 
   const load = useCallback(() => {
     // Данные загружаются автоматически из Store через useStoreField
