@@ -4,12 +4,12 @@ import { ProfileHeader }                        from './components/ProfileHeader
 import { ProfileStats }                         from './components/ProfileStats'
 import { ProfileMenu }                          from './components/ProfileMenu'
 import { Security, Notifications }              from './pages/other-pages'
-import { Transport }                            from './pages/Transport'
 import { PROFILE_PAGES, MENU_ITEMS, UI_TEXT }   from './constants'
 import { useProfile }                           from './hooks/useProfile'
 import { Passport }                             from './components/Passport/Passport'
 import { PersonalInfo }                         from './components/PersonalInfo/PersonalInfo'
-import { Company } from './components/Company/Company'
+import { Company }                              from './components/Company/Company'
+import { Transport } from './components/Transport/Transport'
 
 export const Profile: React.FC = () => {
   const { user, isLoading, userType } = useProfile()
@@ -28,6 +28,7 @@ export const Profile: React.FC = () => {
       { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
       { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT) },
       { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY) },
+      { title: MENU_ITEMS.TRANSPORT,      onClick: () => setCurrentPage(PROFILE_PAGES.TRANSPORT) },
     ]
 
     return common
