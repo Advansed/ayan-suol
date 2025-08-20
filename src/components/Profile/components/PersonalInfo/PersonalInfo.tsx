@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { IonIcon } from '@ionic/react'
 import { chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons'
+import { usePersonalData } from './usePersonalData'
 import styles from './PersonalInfo.module.css'
 
 interface Props {
@@ -9,34 +10,56 @@ interface Props {
 }
 
 export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
+  const { 
+    personalData, 
+    isLoading, 
+    isSaving, 
+    error, 
+    success,
+    loadData,
+    savePersonalInfo,
+    saveAvatar,
+    changePassword,
+    resetStates
+  } = usePersonalData()
+  
   const [currentStep, setCurrentStep] = useState(1)
-  const [isSaving, setIsSaving] = useState(false)
   
   const [form, setForm] = useState({
     name: '',
-    phone: '',
     email: '',
     avatar: '',
-    currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   })
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
-  const [uploadedAvatar, setUploadedAvatar] = useState<string | null>(null)
+  const [uploadedAvatar, setUploadedAvatar] = useState<string | undefined>( undefined )
 
   useEffect(() => {
-    if (user) {
+    loadData()
+  }, [loadData])
+
+  useEffect(() => {
+    if (personalData) {
       setForm(prev => ({
         ...prev,
-        name: user.name || '',
-        phone: user.phone || '',
-        email: user.email || '',
-        avatar: user.avatar || ''
+        name: personalData.name || '',
+        email: personalData.email || '',
+        avatar: personalData.image || ''
       }))
-      setUploadedAvatar(user.avatar || null)
+      setUploadedAvatar(personalData.image || undefined )
     }
-  }, [user])
+  }, [personalData])
+
+  // Показать уведомление об успехе
+  useEffect(() => {
+    if (success) {
+      setTimeout(() => {
+        onBack()
+      }, 1500)
+    }
+  }, [success, onBack])
 
   // Валидация текущего шага
   const validateCurrentStep = (): boolean => {
@@ -45,12 +68,10 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
     switch (currentStep) {
       case 1:
         if (!form.name.trim()) errors.name = 'Введите ФИО'
-        if (!form.phone.trim()) errors.phone = 'Введите телефон'
         if (!form.email.trim()) errors.email = 'Введите email'
         else if (!/\S+@\S+\.\S+/.test(form.email)) errors.email = 'Неверный формат email'
         break
       case 3:
-        if (!form.currentPassword) errors.currentPassword = 'Введите текущий пароль'
         if (!form.newPassword) errors.newPassword = 'Введите новый пароль'
         else if (form.newPassword.length < 6) errors.newPassword = 'Минимум 6 символов'
         if (form.newPassword !== form.confirmPassword) errors.confirmPassword = 'Пароли не совпадают'
@@ -73,9 +94,7 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
   // Навигация вперед
   const handleForwardNavigation = () => {
     if (currentStep < 3) {
-        setCurrentStep(currentStep + 1)
-    } else {
-        handleSave()
+      setCurrentStep(currentStep + 1)
     }
   }
 
@@ -92,11 +111,11 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
   // Загрузка фото
   const handleAvatarUpload = async () => {
     try {
-      // TODO: Подключить импорт Files компонента
-      // const { takePicture } = await import('../../../Files')
-      // const image = await takePicture()
-      // setUploadedAvatar(image.dataUrl)
-      // setForm(prev => ({ ...prev, avatar: image.dataUrl || '' }))
+      const { takePicture } = await import('../../../Files')
+      const image = await takePicture()
+      const avatarData = image.dataUrl
+      setUploadedAvatar(avatarData)
+      setForm(prev => ({ ...prev, avatar: avatarData || '' }))
     } catch (error) {
       console.error('Ошибка загрузки фото:', error)
     }
@@ -104,23 +123,9 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
 
   // Удаление фото
   const removeAvatar = () => {
-    setUploadedAvatar(null)
+    setUploadedAvatar( undefined )
     setForm(prev => ({ ...prev, avatar: '' }))
-  }
-
-  // Сохранение
-  const handleSave = async () => {
-    setIsSaving(true)
-    try {
-      // TODO: Реализовать сохранение данных
-      console.log('Сохранение:', form)
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Имитация
-      onBack()
-    } catch (error) {
-      console.error('Ошибка сохранения:', error)
-    } finally {
-      setIsSaving(false)
-    }
+    saveAvatar('') // Сохранить удаление аватара
   }
 
   // Рендер заголовка
@@ -135,9 +140,9 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
       <button 
         className={`${styles.navButton} ${styles.navButtonRight}`} 
         onClick={handleForwardNavigation}
-        disabled={currentStep === 3 && isSaving}
+        disabled={currentStep === 4 && isSaving}
       >
-        {currentStep === 3 ? (
+        {currentStep === 4 ? (
           <IonIcon icon={saveOutline} />
         ) : (
           <IonIcon icon={chevronForwardOutline} />
@@ -164,20 +169,6 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
       </div>
 
       <div className={styles.field}>
-        <div className={styles.label}>Телефон</div>
-        <div className={styles.inputWrapper}>
-          <input
-            type="tel"
-            className={styles.customTextInput}
-            placeholder="+7 (999) 999-99-99"
-            value={form.phone}
-            onChange={e => setForm({...form, phone: e.target.value})}
-          />
-        </div>
-        {validationErrors.phone && <div className={styles.errorMsg}>{validationErrors.phone}</div>}
-      </div>
-
-      <div className={styles.field}>
         <div className={styles.label}>Email</div>
         <div className={styles.inputWrapper}>
           <input
@@ -189,6 +180,23 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
           />
         </div>
         {validationErrors.email && <div className={styles.errorMsg}>{validationErrors.email}</div>}
+      </div>
+
+      {error && <div className={styles.errorMsg}>{error}</div>}
+      {success && <div className={styles.successMsg}>Данные сохранены!</div>}
+
+      <div className={styles.saveSection}>
+        <button 
+          className={styles.saveBtn}
+          onClick={() => {
+            if (validateCurrentStep()) {
+              savePersonalInfo(form.name, form.email)
+            }
+          }}
+          disabled={isSaving}
+        >
+          {isSaving ? 'Сохранение...' : 'Сохранить данные'}
+        </button>
       </div>
     </div>
   )
@@ -218,6 +226,19 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
             </button>
           </div>
         )}
+
+        {error && <div className={styles.errorMsg}>{error}</div>}
+        {success && <div className={styles.successMsg}>Фото сохранено!</div>}
+
+        <div className={styles.saveSection}>
+          <button 
+            className={styles.saveBtn}
+            onClick={() => saveAvatar(form.avatar)}
+            disabled={isSaving}
+          >
+            {isSaving ? 'Сохранение...' : 'Сохранить фото'}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -225,20 +246,6 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
   // Страница 3: Смена пароля
   const renderPassword = () => (
     <div className={styles.stepContent}>
-      <div className={styles.field}>
-        <div className={styles.label}>Текущий пароль</div>
-        <div className={styles.inputWrapper}>
-          <input
-            type="password"
-            className={styles.customTextInput}
-            placeholder="Введите текущий пароль"
-            value={form.currentPassword}
-            onChange={e => setForm({...form, currentPassword: e.target.value})}
-          />
-        </div>
-        {validationErrors.currentPassword && <div className={styles.errorMsg}>{validationErrors.currentPassword}</div>}
-      </div>
-
       <div className={styles.field}>
         <div className={styles.label}>Новый пароль</div>
         <div className={styles.inputWrapper}>
@@ -266,6 +273,23 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
         </div>
         {validationErrors.confirmPassword && <div className={styles.errorMsg}>{validationErrors.confirmPassword}</div>}
       </div>
+
+      {error && <div className={styles.errorMsg}>{error}</div>}
+      {success && <div className={styles.successMsg}>Пароль изменен!</div>}
+
+      <div className={styles.saveSection}>
+        <button 
+          className={styles.saveBtn}
+          onClick={() => {
+            if (validateCurrentStep()) {
+              changePassword(form.newPassword)
+            }
+          }}
+          disabled={isSaving}
+        >
+          {isSaving ? 'Сохранение...' : 'Изменить пароль'}
+        </button>
+      </div>
     </div>
   )
 
@@ -275,9 +299,19 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
         <div className={styles.stepContainer}>
           {renderStepHeader()}
           
-          {currentStep === 1 && renderPersonalData()}
-          {currentStep === 2 && renderAvatar()}
-          {currentStep === 3 && renderPassword()}
+          {isLoading ? (
+            <div className={styles.stepContent}>
+              <div style={{textAlign: 'center', padding: '20px'}}>
+                Загрузка...
+              </div>
+            </div>
+          ) : (
+            <>
+              {currentStep === 1 && renderPersonalData()}
+              {currentStep === 2 && renderAvatar()}
+              {currentStep === 3 && renderPassword()}
+            </>
+          )}
         </div>
       </div>
     </div>
