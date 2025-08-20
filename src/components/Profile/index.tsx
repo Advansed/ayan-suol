@@ -79,7 +79,6 @@ export const Profile: React.FC = () => {
       
       <ProfileMenu items={menuItems} />
 
- {/* Блок согласий */}
       <Agreements />
 
     </div>
