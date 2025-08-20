@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { IonIcon, IonButton } from '@ionic/react'
 import { arrowBackOutline, chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons'
-import { useTransport } from './useTransport'
+import { TransportData, useTransport } from './useTransport'
 import { takePicture } from '../../../Files'
 import styles from './Transport.module.css'
 import { WizardHeader } from '../Company/WizardHeader'
@@ -16,15 +16,14 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
   const scrollRef = useRef<HTMLDivElement>(null)
   
   const [form, setForm] = useState({
-    code: '',
-    name: '',
-    license_plate: '',
-    vin: '',
-    manufacture_year: '',
-    image: '',
-    transport_type: '',
-    experience: '',
-    load_capacity: ''
+    name:                   '',
+    license_plate:          '',
+    vin:                    '',
+    manufacture_year:       0,
+    image:                  '',
+    transport_type:         '',
+    experience:             0,
+    load_capacity:          0
   })
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
@@ -38,17 +37,18 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
   }, [load])
 
   useEffect(() => {
+    console.log("useeffect")
+    console.log(transportData)
     if (transportData) {
       setForm({
-        code: transportData.code || '',
-        name: transportData.name || '',
-        license_plate: transportData.license_plate || '',
-        vin: transportData.vin || '',
-        manufacture_year: transportData.manufacture_year?.toString() || '',
-        image: transportData.image || '',
-        transport_type: transportData.transport_type || '',
-        experience: transportData.experience?.toString() || '',
-        load_capacity: transportData.load_capacity?.toString() || ''
+        name:               transportData.name || '',
+        license_plate:      transportData.license_plate || '',
+        vin:                transportData.vin || '',
+        manufacture_year:   transportData.manufacture_year || 0,
+        image:              transportData.image || '',
+        transport_type:     transportData.transport_type || '',
+        experience:         transportData.experience || 0,
+        load_capacity:      transportData.load_capacity || 0
       })
       setUploadedFiles({
         image: transportData.image || ''
@@ -67,7 +67,7 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
         break
       case 2:
         if (!form.vin.trim()) errors.vin = 'Введите VIN'
-        if (!form.manufacture_year.trim()) errors.manufacture_year = 'Введите год выпуска'
+        if (!form.manufacture_year) errors.manufacture_year = 'Введите год выпуска'
         break
     }
 
@@ -97,9 +97,9 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
     if (validateCurrentStep()) {
       const dataToSave = {
         ...form,
-        manufacture_year: form.manufacture_year ? parseInt(form.manufacture_year) : undefined,
-        experience: form.experience ? parseInt(form.experience) : undefined,
-        load_capacity: form.load_capacity ? parseFloat(form.load_capacity) : undefined
+        manufacture_year:   form.manufacture_year   ? form.manufacture_year : 0,
+        experience:         form.experience         ? form.experience : 0,
+        load_capacity:      form.load_capacity      ? form.load_capacity : 0
       }
       save(dataToSave)
     }
@@ -163,18 +163,6 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
   // Страница 1: Основная информация
   const renderBasicInfo = () => (
     <div className={styles.stepContent}>
-      <div className={styles.field}>
-        <div className={styles.label}>Код транспорта</div>
-        <div className={styles.transportInputWrapper}>
-          <input
-            type="text"
-            className={styles.customTextInput}
-            placeholder="Внутренний код"
-            value={form.code}
-            onChange={e => setForm({...form, code: e.target.value})}
-          />
-        </div>
-      </div>
 
       <div className={styles.field}>
         <div className={styles.label}>Название транспорта</div>
@@ -275,7 +263,7 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
             min="1900"
             max="2025"
             value={form.manufacture_year}
-            onChange={e => setForm({...form, manufacture_year: e.target.value})}
+            onChange={e => setForm({...form, manufacture_year: parseInt(e.target.value)})}
           />
         </div>
         {validationErrors.manufacture_year && <div className={styles.errorMsg}>{validationErrors.manufacture_year}</div>}
@@ -290,7 +278,7 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
             placeholder="Опыт эксплуатации"
             min="0"
             value={form.experience}
-            onChange={e => setForm({...form, experience: e.target.value})}
+            onChange={e => setForm({...form, experience: parseInt( e.target.value )})}
           />
         </div>
       </div>
@@ -305,10 +293,19 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
             step="0.1"
             min="0"
             value={form.load_capacity}
-            onChange={e => setForm({...form, load_capacity: e.target.value})}
+            onChange={e => setForm({...form, load_capacity: parseInt( e.target.value )})}
           />
         </div>
       </div>
+
+        <div className={styles.saveButtonContainer}>
+            <button 
+                className={styles.saveButton}
+                onClick={() => { save( form as any ) }}
+            >
+                {isSaving ? 'Сохранение...' : 'Сохранить'}
+            </button>
+        </div>
     </div>
   )
 

@@ -2,8 +2,7 @@ import { useState, useCallback } from 'react'
 import socketService from '../../../Sockets'
 import { Store } from '../../../Store'
 
-interface TransportData {
-  code?: string
+export interface TransportData {
   name?: string
   license_plate?: string
   vin?: string
@@ -40,8 +39,7 @@ export const useTransport = () => {
 
     socket.emit('get_transport', { token })
     
-    socket.once('get_transport_data', (response) => {
-      console.log("get_transport")
+    socket.once('get_transport', (response) => {
       setIsLoading(false)
       console.log(response)
       if (response.success) {
@@ -53,8 +51,12 @@ export const useTransport = () => {
   }, [])
 
   const save = useCallback((data: TransportData) => {
+    
     setIsSaving(true)
     setError(null)
+
+    console.log("save")
+    console.log( data )
 
     const socket = socketService.getSocket()
     if (!socket) {
@@ -74,6 +76,7 @@ export const useTransport = () => {
       ...data,
       token
     }
+
 
     socket.emit('set_transport', payload)
     
