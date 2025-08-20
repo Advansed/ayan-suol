@@ -36,25 +36,38 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
     load()
   }, [load])
 
-  useEffect(() => {
-    console.log("useeffect")
-    console.log(transportData)
-    if (transportData) {
-      setForm({
-        name:               transportData.name || '',
-        license_plate:      transportData.license_plate || '',
-        vin:                transportData.vin || '',
-        manufacture_year:   transportData.manufacture_year || 0,
-        image:              transportData.image || '',
-        transport_type:     transportData.transport_type || '',
-        experience:         transportData.experience || 0,
-        load_capacity:      transportData.load_capacity || 0
-      })
-      setUploadedFiles({
-        image: transportData.image || ''
-      })
-    }
-  }, [transportData])
+    // Заменить useEffect для transportData
+    useEffect(() => {
+        console.log("transportData updated:", transportData)
+        if (transportData) {
+            const newForm = {
+                name: transportData.name || '',
+                license_plate: transportData.license_plate || '',
+                vin: transportData.vin || '',
+                manufacture_year: transportData.manufacture_year || 0,
+                image: transportData.image || '',
+                transport_type: transportData.transport_type || '',
+                experience: transportData.experience || 0,
+                load_capacity: transportData.load_capacity || 0
+            }
+            setForm(newForm)
+            setUploadedFiles({ image: transportData.image || '' })
+        }
+    }, [transportData])
+
+    // Добавить в начало компонента после хуков
+    useEffect(() => {
+        console.log("Current form state:", form)
+        console.log("Current transportData:", transportData)
+    }, [form, transportData])
+
+    // Если данные все еще не приходят, заменить load() на принудительную загрузку
+    useEffect(() => {
+        console.log("Component mounted, loading transport data")
+        if (!transportData) {
+            load()
+        }
+    }, [])
 
   const validateCurrentStep = (): boolean => {
     const errors: Record<string, string> = {}

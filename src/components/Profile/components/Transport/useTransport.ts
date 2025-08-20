@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import socketService from '../../../Sockets'
-import { Store } from '../../../Store'
+import { Store, useStoreField } from '../../../Store'
 
 export interface TransportData {
   name?: string
@@ -14,56 +14,29 @@ export interface TransportData {
 }
 
 export const useTransport = () => {
-  const [transportData, setTransportData] = useState<TransportData | null>(null)
+  const transportStore = useStoreField('transport', 12346)?.[0]
   const [isSaving, setIsSaving] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Маппинг данных из Store в формат TransportData
+  const transportData: TransportData | null = transportStore ? {
+    name: transportStore.name,
+    license_plate: transportStore.number,
+    vin: transportStore.vin,
+    manufacture_year: transportStore.year,
+    image: transportStore.image,
+    transport_type: transportStore.type,
+    experience: transportStore.exp,
+    load_capacity: transportStore.capacity
+  } : null
+
   const load = useCallback(() => {
-    setIsLoading(true)
-    setError(null)
-
-    const socket = socketService.getSocket()
-    if (!socket) {
-      setError('Нет подключения')
-      setIsLoading(false)
-      return
-    }
-
-    const token = Store.getState().login?.token
-    if (!token) {
-      setError('Нет токена авторизации')
-      setIsLoading(false)
-      return
-    }
-
-    socket.emit('get_transport', { token })
-    
-    socket.once('get_transport', (response) => {
-      setIsLoading(false)
-      console.log(response)
-      if (response.success) {
-        setTransportData(response.data || {})
-      } else {
-        setError(response.message || 'Ошибка загрузки')
-      }
-    })
+    // Данные загружаются автоматически из Store через useStoreField
   }, [])
 
   const save = useCallback((data: TransportData) => {
-    
     setIsSaving(true)
     setError(null)
-
-    console.log("save")
-    console.log( data )
-
-    const socket = socketService.getSocket()
-    if (!socket) {
-      setError('Нет подключения')
-      setIsSaving(false)
-      return
-    }
 
     const token = Store.getState().login?.token
     if (!token) {
@@ -73,31 +46,32 @@ export const useTransport = () => {
     }
 
     const payload = {
-      ...data,
-      token
+      name: data.name,
+      number: data.license_plate,
+      vin: data.vin,
+      year: data.manufacture_year,
+      image: data.image,
+      type: data.transport_type,
+      exp: data.experience,
+      capacity: data.load_capacity,
+      token,
+      guid: transportStore?.guid
     }
 
-
-    socket.emit('set_transport', payload)
+    socketService.emit('set_transport', payload)
     
-    socket.once('set_transport', (response) => {
+    // Обработчик ответа уже настроен в Store
+    setTimeout(() => {
       setIsSaving(false)
-      
-      if (response.success) {
-        setTransportData(data)
-        setError(null)
-      } else {
-        setError(response.message || 'Ошибка сохранения')
-      }
-    })
-  }, [])
+    }, 1000)
+  }, [transportStore?.guid])
 
   return {
     transportData,
     load,
     save,
     isSaving,
-    isLoading,
+    isLoading: false,
     error
   }
 }
