@@ -3,6 +3,7 @@ import { IonIcon } from '@ionic/react'
 import { chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons'
 import { usePersonalData } from './usePersonalData'
 import styles from './PersonalInfo.module.css'
+import { WizardHeader } from '../Company/WizardHeader'
 
 interface Props {
   user: any
@@ -288,7 +289,13 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
     <div className={styles.personalWizard}>
       <div className={styles.wizardContent}>
         <div className={styles.stepContainer}>
-          {renderStepHeader()}
+          <WizardHeader
+              title={getStepTitle()}
+              onBack={handleBackNavigation}
+              onForward={handleForwardNavigation}
+              isLastStep={false} // У PersonalInfo каждый шаг сохраняется отдельно
+              isSaving={isSaving}
+          />
           
           {isLoading ? (
             <div className={styles.stepContent}>

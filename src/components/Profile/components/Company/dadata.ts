@@ -20,13 +20,9 @@ interface DadataResponse {
 }
 
 class DadataService {
-  private readonly apiKey: string
+  private readonly apiKey = '50bfb3453a528d091723900fdae5ca5a30369832'
+  private readonly secretKey = '050209ff2af5411fac79a59ff57e91f10466fa9e'
   private readonly baseUrl = 'https://suggestions.dadata.ru/suggestions/api/4_1/rs'
-
-  constructor() {
-    // TODO: Получить API ключ из переменных окружения
-    this.apiKey = process.env.REACT_APP_DADATA_API_KEY || ''
-  }
 
   // Поиск компании по ИНН
   async findByInn(inn: string): Promise<DadataCompany | null> {
@@ -40,7 +36,7 @@ class DadataService {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Token ${this.apiKey}`,
-          'X-Secret': process.env.REACT_APP_DADATA_SECRET || ''
+          'X-Secret': this.secretKey
         },
         body: JSON.stringify({
           query: inn,
@@ -61,38 +57,6 @@ class DadataService {
       return null
     } catch (error) {
       console.error('Ошибка поиска по ИНН:', error)
-      throw error
-    }
-  }
-
-  // Поиск компаний по названию
-  async findByName(name: string): Promise<DadataCompany[]> {
-    if (!name || name.length < 3) {
-      throw new Error('Название должно содержать минимум 3 символа')
-    }
-
-    try {
-      const response = await fetch(`${this.baseUrl}/suggest/party`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${this.apiKey}`
-        },
-        body: JSON.stringify({
-          query: name,
-          count: 10
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Ошибка API: ${response.status}`)
-      }
-
-      const data: DadataResponse = await response.json()
-      
-      return data.suggestions?.map(suggestion => suggestion.data) || []
-    } catch (error) {
-      console.error('Ошибка поиска по названию:', error)
       throw error
     }
   }

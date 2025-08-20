@@ -4,6 +4,7 @@ import { arrowBackOutline, chevronBackOutline, chevronForwardOutline, saveOutlin
 import { usePassport } from './usePassport'
 import { Files } from '../../../Files'
 import styles from './Passport.module.css'
+import { WizardHeader } from '../Company/WizardHeader'
 
 interface Props {
   onBack: () => void
@@ -376,7 +377,13 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
   <div className={styles.passportWizard}>
     <div className={styles.wizardContent} ref={scrollRef}>
       <div className={styles.stepContainer}>
-        {renderStepHeader()} {/* ✅ ДОБАВИТЬ */}
+        <WizardHeader
+          title={getStepTitle()}
+          onBack={handleBackNavigation}
+          onForward={handleForwardNavigation}
+          isLastStep={false} // У PersonalInfo каждый шаг сохраняется отдельно
+          isSaving={isSaving}
+        />
         
         {currentStep === 1 && renderBasicInfo()}
         {currentStep === 2 && renderPersonalData()}

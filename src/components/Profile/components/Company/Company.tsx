@@ -3,6 +3,8 @@ import { IonIcon } from '@ionic/react'
 import { chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons'
 import { useCompany } from './useCompany'
 import styles from './Company.module.css'
+import { dadataService } from './dadata'
+import { WizardHeader } from './WizardHeader'
 
 interface Props {
   onBack: () => void
@@ -43,6 +45,7 @@ export const Company: React.FC<Props> = ({ onBack }) => {
   })
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [isSearching, setIsSearching] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<{
     certificate: string | null
     charter: string | null
@@ -148,10 +151,56 @@ export const Company: React.FC<Props> = ({ onBack }) => {
     }, 100)
   }
 
-  // Поиск по ИНН через dadata (заглушка)
+  // Поиск по ИНН через dadata
   const searchByInn = async () => {
-    // TODO: Интеграция с dadata API
-    console.log('Поиск по ИНН:', form.inn)
+    if (!form.inn || form.inn.length < 10) {
+      setValidationErrors(prev => ({
+        ...prev,
+        inn: 'Введите корректный ИНН (10-12 цифр)'
+      }))
+      return
+    }
+
+    setIsSearching(true)
+    setValidationErrors(prev => {
+      const newErrors = { ...prev }
+      delete newErrors.inn
+      return newErrors
+    })
+
+    try {
+      const companyData = await dadataService.findByInn(form.inn)
+      
+      if (companyData) {
+        // Автозаполнение найденных данных
+        setForm(prev => ({
+          ...prev,
+          name: companyData.name.full || '',
+          short_name: companyData.name.short || '',
+          kpp: companyData.kpp || '',
+          ogrn: companyData.ogrn || '',
+          address: companyData.address.value || ''
+        }))
+
+        // Успешное сообщение
+        setTimeout(() => {
+          alert('Данные найдены и заполнены автоматически!')
+        }, 100)
+      } else {
+        setValidationErrors(prev => ({
+          ...prev,
+          inn: 'Компания с указанным ИНН не найдена'
+        }))
+      }
+    } catch (error) {
+      console.error('Ошибка поиска:', error)
+      setValidationErrors(prev => ({
+        ...prev,
+        inn: 'Ошибка поиска. Проверьте ИНН и попробуйте снова'
+      }))
+    } finally {
+      setIsSearching(false)
+    }
   }
 
   // Обработка файлов
@@ -252,11 +301,11 @@ export const Company: React.FC<Props> = ({ onBack }) => {
             maxLength={12}
           />
           <button 
-            className={styles.searchBtn}
+            className={`${styles.searchBtn} ${isSearching ? styles.searching : ''}`}
             onClick={searchByInn}
-            disabled={!form.inn || form.inn.length < 10}
+            disabled={!form.inn || form.inn.length < 10 || isSearching}
           >
-            Найти
+            {isSearching ? 'Поиск...' : 'Заполнить'}
           </button>
         </div>
         {validationErrors.inn && <div className={styles.errorMsg}>{validationErrors.inn}</div>}
@@ -518,9 +567,15 @@ export const Company: React.FC<Props> = ({ onBack }) => {
 
   return (
     <div className={styles.wizardContainer}>
-      {renderStepHeader()}
       
       <div className={styles.wizardContent} ref={scrollRef}>
+        <WizardHeader
+          title={getStepTitle()}
+          onBack={handleBackNavigation}
+          onForward={handleForwardNavigation}
+          isLastStep={false} // У PersonalInfo каждый шаг сохраняется отдельно
+          isSaving={isSaving}
+        />
         {success && (
           <div className={styles.successMessage}>
             ✓ Данные успешно сохранены
