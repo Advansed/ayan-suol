@@ -1,27 +1,25 @@
 import { useState, useCallback, useEffect } from 'react'
+import socketService from '../../../Sockets'
+import { Store } from '../../../Store'
 
 interface Agreements {
-  personalData: boolean
-  userAgreement: boolean
-  marketing: boolean
+    personalData:   boolean
+    userAgreement:  boolean
+    marketing:      boolean
 }
 
 interface UseAgreementsReturn {
-  agreements: Agreements
-  toggleAgreement: (key: keyof Agreements) => void
-  saveAgreements: () => Promise<void>
-  isLoading: boolean
-  error: string | null
+    agreements: Agreements
+    toggleAgreement: (key: keyof Agreements) => void
+    isLoading: boolean
+    error: string | null
 }
 
 export const useAgreements = (userToken?: string): UseAgreementsReturn => {
-  const [agreements, setAgreements] = useState<Agreements>({
-    personalData: false,
-    userAgreement: false,
-    marketing: false
-  })
+  const [agreements, setAgreements] = useState(Store.getState().login.notifications)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const socket = socketService.getSocket()
 
   // Загрузка данных с сервера
   useEffect(() => {
@@ -32,33 +30,18 @@ export const useAgreements = (userToken?: string): UseAgreementsReturn => {
   }, [userToken])
 
   const toggleAgreement = useCallback((key: keyof Agreements) => {
-    setAgreements(prev => ({ ...prev, [key]: !prev[key] }))
+      agreements[key] = !agreements[key]
+      socket?.emit("set_agreement", { token: Store.getState().login.token, [key]: agreements[key] })
+      console.log(Store.getState().login)
+      setAgreements((prev) => {return{ ...prev, [key]: agreements[key] }})
+
   }, [])
 
-  const saveAgreements = useCallback(async () => {
-    if (!userToken) return
-    
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      // TODO: Отправка на сервер
-      // socket.emit('save_agreements', { token: userToken, agreements })
-      
-      // Имитация задержки
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-    } catch (err) {
-      setError('Ошибка сохранения согласий')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [agreements, userToken])
+ 
 
   return {
     agreements,
     toggleAgreement,
-    saveAgreements,
     isLoading,
     error
   }
