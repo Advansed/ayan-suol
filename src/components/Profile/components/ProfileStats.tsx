@@ -9,7 +9,7 @@ interface Props {
 
 const StatBlock: React.FC<{value: number, label: string, index: number}> = ({ value, label, index }) => (
   <div className={`cr-status-${index + 1} profile-stat-enhanced`}>
-    <div className="a-center fs-15"><b>{value}</b></div>
+    <div className="a-center fs-13"><b>{value}</b></div>
     <div className="fs-09 a-center mt-05">{label}</div>
   </div>
 )

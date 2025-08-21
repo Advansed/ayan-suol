@@ -5,6 +5,10 @@
   min-width: 0;
   flex: 1;
   transition: transform 0.2s;
+  height: 5em; /* Фиксированная высота */
+  display: flex;
+  flex-direction: column;
+  justify-content: baseline;
 }
 
 .profile-stat-enhanced:hover {
