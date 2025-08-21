@@ -4,16 +4,21 @@ import { chevronForwardOutline } from 'ionicons/icons'
 import { ProfileMenuItem } from '../types'
 
 interface Props {
-  items: ProfileMenuItem[]
+    items:        ProfileMenuItem[]
+    completion:   any
 }
 
 const MenuItem: React.FC<{item: ProfileMenuItem}> = React.memo(({ item }) => (
   <div 
     className="flex mt-1 ml-1 mr-1 fl-space pb-1 pt-1 t-underline"
     onClick={item.onClick}
-  >
-    <div className="ml-1">{item.title}</div>
-    <IonIcon icon={chevronForwardOutline} />
+  > 
+      <div>
+          <div className="ml-1">{item.title}</div>
+          <div className="ml-1">{item.completion}</div>
+      </div>
+      
+      <IonIcon icon={chevronForwardOutline} />
   </div>
 ))
 

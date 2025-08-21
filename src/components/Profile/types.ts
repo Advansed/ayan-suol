@@ -46,7 +46,8 @@ export interface Transport {
 }
 
 export interface ProfileMenuItem {
-  title: string
-  onClick: () => void
-  icon?: string
+  title:        string
+  onClick:      () => void
+  icon?:        string
+  completion?:   string
 }

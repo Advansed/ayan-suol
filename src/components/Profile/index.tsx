@@ -9,13 +9,11 @@ import { useProfile }                           from './hooks/useProfile'
 import { Passport }                             from './components/Passport/Passport'
 import { PersonalInfo }                         from './components/PersonalInfo/PersonalInfo'
 import { Company }                              from './components/Company/Company'
-import { Transport } from './components/Transport/Transport'
-import { useAgreements } from './hooks/useAgreements'
-import { Agreements } from './components/Agreements/Agreements'
+import { Transport }                            from './components/Transport/Transport'
+import { Agreements }                           from './components/Agreements/Agreements'
 
 export const Profile: React.FC = () => {
-  const { user, isLoading, userType } = useProfile()
-  const { agreements, toggleAgreement, saveAgreements } = useAgreements()
+  const { user, isLoading, userType, completion } = useProfile()
   const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
 
   useEffect(() => {
@@ -29,9 +27,9 @@ export const Profile: React.FC = () => {
   const menuItems = useMemo(() => {
     const common = [
       { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
-      { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT) },
-      { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY) },
-      { title: MENU_ITEMS.TRANSPORT,      onClick: () => setCurrentPage(PROFILE_PAGES.TRANSPORT) },
+      { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),  completion: completion.passport + ' %' },
+      { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),  completion: completion.company + ' %' },
+      { title: MENU_ITEMS.TRANSPORT,      onClick: () => setCurrentPage(PROFILE_PAGES.TRANSPORT),  completion: completion.transport + ' %' },
     ]
 
     return common
@@ -77,7 +75,7 @@ export const Profile: React.FC = () => {
 
       <ProfileStats ratings={user.ratings} userType={userType} />
       
-      <ProfileMenu items={menuItems} />
+      <ProfileMenu items={menuItems} completion = { completion}/>
 
       <Agreements />
 
