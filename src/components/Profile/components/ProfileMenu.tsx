@@ -13,7 +13,7 @@ const MenuItem: React.FC<{item: ProfileMenuItem}> = React.memo(({ item }) => (
     className="flex mt-1 ml-1 mr-1 fl-space pb-1 pt-1 t-underline"
     onClick={item.onClick}
   > 
-      <div>
+      <div className='flex fl-space w-100'>
           <div className="ml-1">{item.title}</div>
           <div className="ml-1">{item.completion}</div>
       </div>
