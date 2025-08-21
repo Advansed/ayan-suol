@@ -35,6 +35,7 @@ const getProgressColor = (completion: number) => {
 const MenuItem: React.FC<{item: ProfileMenuItem, index: number}> = React.memo(({ item, index }) => {
   const completion = parseInt(item.completion?.replace('%', '') || '0')
   
+  console.log( item )
   return (
     <div 
       className="menu-card"
@@ -71,11 +72,13 @@ const MenuItem: React.FC<{item: ProfileMenuItem, index: number}> = React.memo(({
 })
 
 export const ProfileMenu: React.FC<Props> = React.memo(({ items }) => (
+  
   <div className="profile-menu">
     {items.map((item, idx) => (
       <MenuItem key={idx} item={item} index={idx} />
     ))}
   </div>
+
 ))
 
 // CSS стили для добавления в файл стилей

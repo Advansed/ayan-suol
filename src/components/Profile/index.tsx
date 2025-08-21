@@ -24,12 +24,14 @@ export const Profile: React.FC = () => {
     })
   }, [])
 
+  console.log(completion)
+
   const menuItems = useMemo(() => {
     const common = [
       { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
-      { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),  completion: completion.passport + ' %' },
-      { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),  completion: completion.company + ' %' },
-      { title: MENU_ITEMS.TRANSPORT,      onClick: () => setCurrentPage(PROFILE_PAGES.TRANSPORT),  completion: completion.transport + ' %' },
+      { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),    completion: completion.passport + ' %' },
+      { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),     completion: completion.company + ' %' },
+      { title: MENU_ITEMS.TRANSPORT,      onClick: () => setCurrentPage(PROFILE_PAGES.TRANSPORT),   completion: completion.transport + ' %' },
     ]
 
     return common
@@ -73,9 +75,9 @@ export const Profile: React.FC = () => {
 
       <ProfileHeader user={user} userType={ userType} />
 
-      <ProfileStats ratings={user.ratings} userType={userType} />
+      <ProfileStats ratings = { user.ratings } userType = { userType } />
       
-      <ProfileMenu items={menuItems} completion = { completion}/>
+      <ProfileMenu items = { menuItems } completion = { completion }/>
 
       <Agreements />
 
