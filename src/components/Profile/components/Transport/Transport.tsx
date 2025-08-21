@@ -319,7 +319,6 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
   return (
     <div className={styles.transportWizard}>
       <div className={styles.wizardContent} ref={scrollRef}>
-        <div className={styles.stepContainer}>
           <WizardHeader
             title={getStepTitle()}
             onBack={handleBackNavigation}
@@ -327,12 +326,13 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
             isLastStep={false}
             isSaving={isSaving}
           />
-          
-          {currentStep === 1 && renderBasicInfo()}
-          {currentStep === 2 && renderAdditionalData()}
+          <div className={styles.stepContainer}>
+            
+            {currentStep === 1 && renderBasicInfo()}
+            {currentStep === 2 && renderAdditionalData()}
 
-          {error && <div className={styles.errorMsg}>{error}</div>}
-        </div>
+            {error && <div className={styles.errorMsg}>{error}</div>}
+          </div>
       </div>
     </div>
   )
