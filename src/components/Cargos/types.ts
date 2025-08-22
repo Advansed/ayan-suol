@@ -46,6 +46,7 @@ export interface CargoInvoice {
 
 // Основная информация о грузе
 export interface CargoInfo {
+
     guid: string;
     name: string;
     description: string;
@@ -73,6 +74,7 @@ export interface CargoInfo {
     // Метаданные
     createdAt?: string;
     updatedAt?: string;
+    
 }
 
 // Ошибки валидации

@@ -5,7 +5,8 @@
 import React from 'react';
 import { CargoInfo } from './types';
 import { useCargos, useCargoForm } from './hooks';
-import { CargoForm, CargosList, CargoView } from './components';
+import { CargosList, CargoView } from './components';
+import { CargoForm } from './components/CargoForm';
 
 export const Cargos: React.FC = () => {
     const cargosHook = useCargos();
@@ -40,11 +41,10 @@ export const Cargos: React.FC = () => {
     };
 
     // Обработчики для создания
-    const handleCreateSave = async () => {
-        const isValid = await formHook.actions.submitForm();
-        if (isValid) {
-            await createCargo(formHook.formState.data);
-        }
+    const handleCreateSave = async ( data: CargoInfo ) => {
+            
+        await createCargo( data );
+
     };
 
     const handleCreateCancel = () => {
@@ -115,35 +115,29 @@ export const Cargos: React.FC = () => {
             case 'create':
                 return (
                     <CargoForm
-                        formHook={formHook}
-                        onSave={handleCreateSave}
-                        onCancel={handleCreateCancel}
-                        title="Создать новый груз"
-                        isLoading={isLoading}
+                        onBack={()=>{}}
+                        onSave={ handleCreateSave }
                     />
                 );
 
             case 'edit':
                 return (
                     <CargoForm
-                        formHook={formHook}
+                        cargo={ currentPage.cargo }
                         onSave={handleEditSave}
-                        onCancel={handleEditCancel}
-                        onDelete={handleEditDelete}
-                        title="Редактировать груз"
-                        isLoading={isLoading}
+                        onBack={()=>{}}
                     />
                 );
 
             case 'view':
                 return (
                     <CargoView
-                        cargo={currentPage.cargo}
-                        onBack={goBack}
-                        onEdit={handleViewEdit}
-                        onDelete={handleViewDelete}
-                        onPublish={handleViewPublish}
-                        isLoading={isLoading}
+                        cargo       = { currentPage.cargo }
+                        onBack      = { goBack }
+                        onEdit      = { handleViewEdit }
+                        onDelete    = { handleViewDelete }
+                        onPublish   = { handleViewPublish }
+                        isLoading   = { isLoading }
                     />
                 );
 

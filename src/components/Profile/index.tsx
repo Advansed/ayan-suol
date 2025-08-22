@@ -24,8 +24,6 @@ export const Profile: React.FC = () => {
     })
   }, [])
 
-  console.log(completion)
-
   const menuItems = useMemo(() => {
     const common = [
       { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
@@ -35,7 +33,7 @@ export const Profile: React.FC = () => {
     ]
 
     return common
-  }, [userType])
+  }, [userType, completion])
 
   if (isLoading || !user) {
     return <IonLoading isOpen={true} message={UI_TEXT.LOADING} />

@@ -35,7 +35,6 @@ const getProgressColor = (completion: number) => {
 const MenuItem: React.FC<{item: ProfileMenuItem, index: number}> = React.memo(({ item, index }) => {
   const completion = parseInt(item.completion?.replace('%', '') || '0')
   
-  console.log( item )
   return (
     <div 
       className="menu-card"
