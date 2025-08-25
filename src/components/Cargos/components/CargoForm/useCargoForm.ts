@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { CargoInfo, ValidationErrors, FormState } from '../../types';
 import { validateField, validateForm } from '../../utils';
 import { EMPTY_CARGO } from '../../constants';
@@ -48,12 +48,12 @@ interface UseCargoFormWizardReturn {
 // Поля по шагам
 const STEP_FIELDS = {
   1: ['name', 'description'],
-  2: ['client'],
-  3: ['address.city', 'address.address'],
-  4: ['destiny.city', 'destiny.address'],
-  5: ['address.date', 'destiny.date'],
-  6: ['weight', 'volume', 'price'],
-  7: ['phone', 'face']
+  2: ['address.address'],
+  3: ['destiny.address'],
+  4: ['pickup_date', 'delivery_date'],
+  5: ['weight', 'price'],
+  6: ['phone', 'face'],
+  7: []
 };
 
 export const useCargoFormWizard = (): UseCargoFormWizardReturn => {
@@ -72,6 +72,9 @@ export const useCargoFormWizard = (): UseCargoFormWizardReturn => {
   const [mode, setMode] = useState<'create' | 'edit'>('create');
 
 
+  useEffect(()=>{
+    console.log( formState.data.address )
+  },[formState.data.address ])
   
   const getValueByPath = useCallback((obj: any, path: string): any => {
     return path.split('.').reduce((current, key) => current?.[key], obj);
@@ -114,8 +117,8 @@ export const useCargoFormWizard = (): UseCargoFormWizardReturn => {
     
     // Кросс-валидация для шага 4 (города не должны совпадать)
     if (step === 4) {
-      const cityFrom = formState.data.address?.city;
-      const cityTo = formState.data.destiny?.city;
+      const cityFrom = formState.data.address?.city.city;
+      const cityTo = formState.data.destiny?.city.city;
       if (cityFrom && cityTo && cityFrom.toLowerCase() === cityTo.toLowerCase()) {
         errors['destiny.city'] = 'Города погрузки и разгрузки не должны совпадать';
       }
@@ -123,8 +126,8 @@ export const useCargoFormWizard = (): UseCargoFormWizardReturn => {
     
     // Кросс-валидация для шага 5 (даты)
     if (step === 5) {
-      const dateFrom = formState.data.address?.date;
-      const dateTo = formState.data.destiny?.date;
+      const dateFrom = formState.data.pickup_date;
+      const dateTo = formState.data.delivery_date;
       if (dateFrom && dateTo) {
         const pickupDate = new Date(dateFrom);
         const deliveryDate = new Date(dateTo);

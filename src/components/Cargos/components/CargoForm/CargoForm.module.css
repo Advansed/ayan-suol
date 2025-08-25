@@ -90,30 +90,30 @@
    ====================== */
 
 .stepContent {
-  padding: 2em 1.5em;
-  min-height: 300px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  padding:            2em 1.5em;
+  min-height:         300px;
+  display:            flex;
+  flex-direction:     column;
+  justify-content:    baseline;
 }
 
 /* Центрирование контента для одиночных полей */
 .stepContent:has(.field:only-child) {
-  justify-content: center;
-  align-items: center;
+  justify-content:    center;
+  align-items:        center;
 }
 
 .stepContent:has(.field:only-child) .field {
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-  margin-bottom: 0;
+  width:              100%;
+  max-width:          400px;
+  text-align:         center;
+  margin-bottom:      0;
 }
 
 .stepContent:has(.field:only-child) .label {
-  text-align: center;
-  font-size: 1.1em;
-  margin-bottom: 1em;
+  text-align:         center;
+  font-size:          1.1em;
+  margin-bottom:      1em;
 }
 
 /* ======================
@@ -160,15 +160,16 @@
 
 .inputWrapper {
   position: relative;
+  border: 1px solid gray;
+  border-radius: 0.5em;
+  padding-left: 1em;
+  background:  aquamarine;
 }
 
 .customInput,
 .customTextarea {
   width: 100%;
-  background: #f8f9fa;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 0.75em;
+  /* padding: 0.75em; */
   font-size: 1em;
   transition: all 0.3s ease;
 }

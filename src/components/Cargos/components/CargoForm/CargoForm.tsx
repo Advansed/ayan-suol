@@ -1,9 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { IonInput, IonTextarea, IonIcon } from '@ionic/react';
 import { chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons';
 import { CargoInfo } from '../../types';
 import { useCargoFormWizard } from './useCargoForm';
 import styles from './CargoForm.module.css';
+import { AddressSuggestions } from 'react-dadata';
+import '../../../../../node_modules/react-dadata/dist/react-dadata.css'
 
 interface CargoFormProps {
   cargo?: CargoInfo;
@@ -24,8 +26,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
     setNestedValue,
     getFieldError,
     initializeForm,
-    saveToServer,
-    mode
+    saveToServer
   } = useCargoFormWizard();
 
   const { data, isSubmitting } = formState;
@@ -76,7 +77,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
       console.log("save")
     if (validateCurrentStep()) {
       console.log("save")
-      const success = onSave ? await onSave( data ) : await saveToServer( data );
+      const success = await saveToServer( data );
       if (success) {
         onBack(); // Возврат к списку после успешного сохранения
       }
@@ -137,6 +138,42 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
     return null;
   };
 
+  function Address ( props:{ fias: string } ) {
+
+      return <>
+        <AddressSuggestions 
+            filterLocations={[{ fias_id: props.fias }]}
+            filterRestrictValue
+            token="50bfb3453a528d091723900fdae5ca5a30369832" 
+            value={{ value: data.address?.address || ''} as any } 
+            onChange={(suggestion) => {
+                setNestedValue('address', 'address',  suggestion?.value || '' )
+                setNestedValue('address', 'fias',     suggestion?.data.fias_id || '' )
+                setNestedValue('address', 'lat',      suggestion?.data.geo_lat || 0 )
+                setNestedValue('address', 'long',     suggestion?.data.geo_lon || 0 )
+            }} 
+        />
+      </>
+  }
+
+  function Destiny ( props:{ fias: string } ) {
+
+      return <>
+        <AddressSuggestions 
+            filterLocations={[{ fias_id: props.fias }]}
+            filterRestrictValue
+            token="50bfb3453a528d091723900fdae5ca5a30369832" 
+            value={{ value: data.destiny?.address || ''} as any } 
+            onChange={(suggestion) => {
+                setNestedValue('destiny', 'address',  suggestion?.value || '' )
+                setNestedValue('destiny', 'fias',     suggestion?.data.fias_id || '' )
+                setNestedValue('destiny', 'lat',      suggestion?.data.geo_lat || 0 )
+                setNestedValue('destiny', 'long',     suggestion?.data.geo_lon || 0 )
+            }} 
+        />
+      </>
+  }
+
   // ======================
   // ШАГИ ФОРМЫ
   // ======================
@@ -173,79 +210,76 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
     </div>
   );
 
-  // Шаг 3: Место погрузки
+  // Шаг 2: Место погрузки
   const renderStep2 = () => (
     <div className={styles.stepContent}>
       <div className={styles.field}>
         <div className={styles.label}>Город погрузки</div>
-        <div className={styles.inputWrapper}>
-          <IonInput 
-            className={styles.customInput}
-            value={data.address?.city || ''}
-            placeholder="Город погрузки..."
-            onIonInput={(e) => setNestedValue('address', 'city', e.detail.value as string)}
-          />
-        </div>
-        {renderFieldError('address.city')}
+
+        <AddressSuggestions 
+            filterLocations={[]}
+            filterFromBound='city'
+            filterToBound='city'
+            filterRestrictValue
+            token="50bfb3453a528d091723900fdae5ca5a30369832" 
+            value={ { value: data.address?.city.city } as any } 
+            onChange={ (suggestion) => setNestedValue('address', 'city', { city: suggestion?.value, fias: suggestion?.data.city_fias_id } ) } 
+        />
+
+        {renderFieldError('address.city.city')}
       </div>
 
       <div className={styles.field}>
         <div className={styles.label}>Адрес погрузки</div>
-        <div className={styles.inputWrapper}>
-          <IonInput 
-            className={styles.customInput}
-            value={data.address?.address || ''}
-            placeholder="Точный адрес погрузки..."
-            onIonInput={(e) => setNestedValue('address', 'address', e.detail.value as string)}
-          />
-        </div>
+
+        <Address fias = { data.address?.city.fias } />
+
         {renderFieldError('address.address')}
       </div>
     </div>
   );
 
-  // Шаг 4: Место разгрузки
+  // Шаг 3: Место разгрузки
   const renderStep3 = () => (
     <div className={styles.stepContent}>
       <div className={styles.field}>
         <div className={styles.label}>Город разгрузки</div>
-        <div className={styles.inputWrapper}>
-          <IonInput 
-            className={styles.customInput}
-            value={data.destiny?.city || ''}
-            placeholder="Город разгрузки..."
-            onIonInput={(e) => setNestedValue('destiny', 'city', e.detail.value as string)}
-          />
-        </div>
-        {renderFieldError('destiny.city')}
+        
+        <AddressSuggestions 
+            filterLocations={[]}
+            filterFromBound='city'
+            filterToBound='city'
+            filterRestrictValue
+            token="50bfb3453a528d091723900fdae5ca5a30369832" 
+            value={ { value: data.destiny?.city.city } as any } 
+            onChange={ (suggestion) => setNestedValue('destiny', 'city', { city: suggestion?.value, fias: suggestion?.data.city_fias_id } ) } 
+        />
+
+        {renderFieldError('destiny.city.city')}
       </div>
 
       <div className={styles.field}>
         <div className={styles.label}>Адрес разгрузки</div>
-        <div className={styles.inputWrapper}>
-          <IonInput 
-            className={styles.customInput}
-            value={data.destiny?.address || ''}
-            placeholder="Точный адрес разгрузки..."
-            onIonInput={(e) => setNestedValue('destiny', 'address', e.detail.value as string)}
-          />
-        </div>
+
+        <Destiny fias = { data.destiny?.city.fias } />
+
         {renderFieldError('destiny.address')}
       </div>
     </div>
   );
 
-  // Шаг 5: Сроки перевозки
+  // Шаг 4: Сроки перевозки
   const renderStep4 = () => (
     <div className={styles.stepContent}>
+      
       <div className={styles.field}>
         <div className={styles.label}>Дата погрузки</div>
         <div className={styles.inputWrapper}>
           <IonInput 
             className={styles.customInput}
             type="date"
-            value={data.address?.date || ''}
-            onIonInput={(e) => setNestedValue('address', 'date', e.detail.value as string)}
+            value = { data.pickup_date || ''}
+            onIonInput={(e) => setFieldValue( 'pickup_date', e.detail.value as string )}
           />
         </div>
         {renderFieldError('address.date')}
@@ -257,16 +291,17 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
           <IonInput 
             className={styles.customInput}
             type="date"
-            value={data.destiny?.date || ''}
-            onIonInput={(e) => setNestedValue('destiny', 'date', e.detail.value as string)}
+            value={data.delivery_date || ''}
+            onIonInput={(e) => setFieldValue( 'delivery_date', e.detail.value as string )}
           />
         </div>
         {renderFieldError('destiny.date')}
       </div>
+
     </div>
   );
 
-  // Шаг 6: Характеристики груза
+  // Шаг 5: Характеристики груза
   const renderStep5 = () => (
     <div className={styles.stepContent}>
       <div className={styles.fieldRow}>
@@ -320,7 +355,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
     </div>
   );
 
-  // Шаг 7: Контакты и итоговая информация
+  // Шаг 6: Контакты и итоговая информация
   const renderStep6 = () => (
     <div className={styles.stepContent}>
       <div className={styles.field}>
@@ -350,6 +385,13 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
         {renderFieldError('face')}
       </div>
 
+    </div>
+  );
+
+  // Шаг 7: Контакты и итоговая информация
+  const renderStep7 = () => (
+    <div className={styles.stepContent}>
+
       {/* Итоговая информация */}
       <div className={styles.summarySection}>
         <div className={styles.sectionTitle}>Проверьте данные перед сохранением</div>
@@ -364,7 +406,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
           </div>
           <div className={styles.summaryRow}>
             <span>Маршрут:</span>
-            <span>{data.address?.city || 'Не указан'} → {data.destiny?.city || 'Не указан'}</span>
+            <span>{data.address?.city.city || 'Не указан'} → {data.destiny?.city.city || 'Не указан'}</span>
           </div>
           <div className={styles.summaryRow}>
             <span>Характеристики:</span>
@@ -382,7 +424,6 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
       </div>
     </div>
   );
-
   // ======================
   // РЕНДЕР
   // ======================
@@ -391,6 +432,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
     <div className={styles.cargoFormWizard}>
       <div className={styles.wizardContent} ref={scrollRef}>
         <div className={styles.stepContainer}>
+
           {renderStepHeader()}
           
           {currentStep === 1 && renderStep1()}
@@ -399,6 +441,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
           {currentStep === 4 && renderStep4()}
           {currentStep === 5 && renderStep5()}
           {currentStep === 6 && renderStep6()}
+          {currentStep === 7 && renderStep7()}
 
         </div>
       </div>

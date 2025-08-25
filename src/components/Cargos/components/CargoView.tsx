@@ -4,32 +4,31 @@
 
 import React, { useEffect, useState } from 'react';
 import { 
-    IonIcon, 
-    IonButton,
-    IonLabel,
-    IonAlert,
-    IonLoading
+        IonIcon, 
+        IonButton,
+        IonLabel,
+        IonAlert,
+        IonLoading
 } from '@ionic/react';
 import { 
-    arrowBackOutline,
-    createOutline,
-    trashBinOutline,
-    cloudUploadOutline,
-    checkmarkCircleOutline
+        arrowBackOutline,
+        createOutline,
+        trashBinOutline,
+        cloudUploadOutline
 } from 'ionicons/icons';
-import { CargoInfo, CargoInvoice } from '../types';
-import { CargoCard } from './CargoCard';
-import { statusUtils, formatters } from '../utils';
-import { DriverCard } from '../../DriverCards';
-import { Store } from '../../Store';
+import { CargoInfo, CargoInvoice }      from '../types';
+import { CargoCard }                    from './CargoCard';
+import { statusUtils, formatters }      from '../utils';
+import { DriverCard }                   from '../../DriverCards';
+import { Store }                        from '../../Store';
 
 interface CargoViewProps {
-    cargo: CargoInfo;
-    onBack: () => void;
-    onEdit: () => void;
-    onDelete: () => Promise<void>;
-    onPublish: () => Promise<void>;
-    isLoading?: boolean;
+    cargo:          CargoInfo;
+    onBack:         () => void;
+    onEdit:         () => void;
+    onDelete:       () => Promise<void>;
+    onPublish:      () => Promise<void>;
+    isLoading?:     boolean;
 }
 
 export const CargoView: React.FC<CargoViewProps> = ({
@@ -143,7 +142,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
                     </IonButton>
                 )}
                 
-                {canDelete && (
+                {/* {canDelete && (
                     <IonButton
                         className="w-50 cr-button-2"
                         mode="ios"
@@ -154,7 +153,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
                         <IonIcon icon={trashBinOutline} slot="start" />
                         <IonLabel className="fs-08">Удалить</IonLabel>
                     </IonButton>
-                )}
+                )} */}
             </div>
         );
     };

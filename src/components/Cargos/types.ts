@@ -21,11 +21,18 @@ export enum CargoPriority {
     URGENT = "Срочный"
 }
 
+export interface CargoCity {
+    city:       string,
+    fias:       string
+}
+
 // Адрес (отправления или назначения)
 export interface CargoAddress {
-    city: string;
-    date: string;
-    address: string;
+    city:       CargoCity;
+    address:    string;
+    fias:       string;
+    lat:        number;
+    long:       number;
 }
 
 // Предложение от водителя
@@ -47,33 +54,37 @@ export interface CargoInvoice {
 // Основная информация о грузе
 export interface CargoInfo {
 
-    guid: string;
-    name: string;
-    description: string;
-    client: string;
+    guid:               string;
+    name:               string;
+    description:        string;
+    client:             string;
     
     // Адреса
-    address: CargoAddress;
-    destiny: CargoAddress;
-    
+    address:            CargoAddress;
+    destiny:            CargoAddress;
+
+    //Даты
+    pickup_date:        string;
+    delivery_date:      string;
+
     // Характеристики груза
-    weight: number;
-    weight1?: number; // Для совместимости
-    volume: number;
-    price: number;
+    weight:             number;
+    weight1?:           number; // Для совместимости
+    volume:             number;
+    price:              number;
     
     // Контакты
-    phone: string;
-    face: string;
+    phone:              string;
+    face:               string;
     
     // Статус и предложения
-    status: CargoStatus;
-    invoices?: CargoInvoice[];
-    priority?: CargoPriority;
+    status:             CargoStatus;
+    invoices?:          CargoInvoice[];
+    priority?:          CargoPriority;
     
     // Метаданные
-    createdAt?: string;
-    updatedAt?: string;
+    createdAt?:         string;
+    updatedAt?:         string;
     
 }
 

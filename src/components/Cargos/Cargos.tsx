@@ -100,59 +100,59 @@ export const Cargos: React.FC = () => {
             case 'list':
                 return (
                     <CargosList
-                        cargos={cargos}
-                        isLoading={isLoading}
-                        searchQuery={searchQuery}
-                        onSearchChange={setSearchQuery}
-                        filters={filters}
-                        onFiltersChange={setFilters}
-                        onCreateNew={handleCreateNew}
-                        onCargoClick={handleCargoClick}
-                        onRefresh={refreshCargos}
+                        cargos          = { cargos }
+                        isLoading       = { isLoading }
+                        searchQuery     = { searchQuery }
+                        onSearchChange  = { setSearchQuery }
+                        filters         = { filters }
+                        onFiltersChange = { setFilters }
+                        onCreateNew     = { handleCreateNew }
+                        onCargoClick    = { handleCargoClick }
+                        onRefresh       = { refreshCargos }
                     />
                 );
 
             case 'create':
                 return (
                     <CargoForm
-                        onBack={()=>{}}
-                        onSave={ handleCreateSave }
+                        onBack          = { handleCreateCancel }
+                        onSave          = { handleCreateSave }
                     />
                 );
 
             case 'edit':
                 return (
                     <CargoForm
-                        cargo={ currentPage.cargo }
-                        onSave={handleEditSave}
-                        onBack={()=>{}}
+                        cargo           = { currentPage.cargo }
+                        onSave          = { handleEditSave}
+                        onBack          = { handleCreateCancel }
                     />
                 );
 
             case 'view':
                 return (
                     <CargoView
-                        cargo       = { currentPage.cargo }
-                        onBack      = { goBack }
-                        onEdit      = { handleViewEdit }
-                        onDelete    = { handleViewDelete }
-                        onPublish   = { handleViewPublish }
-                        isLoading   = { isLoading }
+                        cargo           = { currentPage.cargo }
+                        onBack          = { goBack }
+                        onEdit          = { handleViewEdit }
+                        onDelete        = { handleViewDelete }
+                        onPublish       = { handleViewPublish }
+                        isLoading       = { isLoading }
                     />
                 );
 
             default:
                 return (
                     <CargosList
-                        cargos={cargos}
-                        isLoading={isLoading}
-                        searchQuery={searchQuery}
-                        onSearchChange={setSearchQuery}
-                        filters={filters}
-                        onFiltersChange={setFilters}
-                        onCreateNew={handleCreateNew}
-                        onCargoClick={handleCargoClick}
-                        onRefresh={refreshCargos}
+                        cargos          = { cargos }
+                        isLoading       = { isLoading }
+                        searchQuery     = { searchQuery }
+                        onSearchChange  = { setSearchQuery }
+                        filters         = { filters }
+                        onFiltersChange = { setFilters }
+                        onCreateNew     = { handleCreateNew }
+                        onCargoClick    = { handleCargoClick }
+                        onRefresh       = { refreshCargos }
                     />
                 );
         }
