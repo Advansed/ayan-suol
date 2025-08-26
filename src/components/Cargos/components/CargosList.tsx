@@ -15,10 +15,7 @@ import {
     IonSpinner
 } from '@ionic/react';
 import { 
-    addCircleOutline, 
-    searchOutline,
-    filterOutline,
-    refreshOutline
+    filterOutline
 } from 'ionicons/icons';
 import { CargoInfo, CargoFilters, CargoStatus } from '../types';
 import { CargoCard } from './CargoCard';
