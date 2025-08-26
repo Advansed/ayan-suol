@@ -83,6 +83,7 @@ export function ChatList() {
             ))}
             {filteredChats.length === 0 && (
               <div className={styles.emptyState}>
+                <div className="cr-empty-icon">📦</div>
                 <div>Нет активных чатов</div>
               </div>
             )}
