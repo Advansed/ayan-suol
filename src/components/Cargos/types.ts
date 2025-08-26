@@ -73,6 +73,7 @@ export interface CargoInfo {
     volume:             number;
     price:              number;
     cost:               number;
+    advance:            number;
     
     // Контакты
     phone:              string;

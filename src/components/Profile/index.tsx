@@ -25,12 +25,23 @@ export const Profile: React.FC = () => {
   }, [])
 
   const menuItems = useMemo(() => {
-    const common = [
-      { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
-      { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),    completion: completion.passport + ' %' },
-      { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),     completion: completion.company + ' %' },
-      { title: MENU_ITEMS.TRANSPORT,      onClick: () => setCurrentPage(PROFILE_PAGES.TRANSPORT),   completion: completion.transport + ' %' },
-    ]
+    let common: any = []
+  
+    switch(userType) {
+      case 0: common = []; break;
+      case 1: common = [
+        { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
+        { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),    completion: completion.passport + ' %' },
+        { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),     completion: completion.company + ' %' },
+      ]; break;
+      case 2: common = [
+        { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
+        { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),    completion: completion.passport + ' %' },
+        { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),     completion: completion.company + ' %' },
+        { title: MENU_ITEMS.TRANSPORT,      onClick: () => setCurrentPage(PROFILE_PAGES.TRANSPORT),   completion: completion.transport + ' %' },        
+      ]; break;
+      default: common = []
+    }
 
     return common
   }, [userType, completion])

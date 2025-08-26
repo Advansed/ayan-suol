@@ -56,7 +56,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({
                         <div className="fs-08 cl-prim">
                             <div className="ml-1 fs-09 cl-gray">Откуда:</div>
                             <div className="ml-1 fs-09">
-                                <b>{cargo.address?.city || 'Не указано'}</b>
+                                <b>{cargo.address?.city.city || 'Не указано'}</b>
                             </div>
                         </div>
                     </div>
@@ -64,7 +64,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({
                         <div className="fs-08 cl-prim">
                             <div className="ml-1 fs-09 cl-gray">Дата загрузки:</div>
                             <div className="ml-1 fs-09">
-                                <b>{formatters.date(cargo.address?.date || '')}</b>
+                                <b>{formatters.date(cargo.pickup_date || '')}</b>
                             </div>
                         </div>
                     </div>
@@ -77,7 +77,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({
                         <div className="fs-08 cl-prim">
                             <div className="ml-1 fs-09 cl-gray">Куда:</div>
                             <div className="ml-1 fs-09">
-                                <b>{cargo.destiny?.city || 'Не указано'}</b>
+                                <b>{cargo.destiny?.city.city || 'Не указано'}</b>
                             </div>
                         </div>
                     </div>
@@ -85,7 +85,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({
                         <div className="fs-08 cl-prim">
                             <div className="ml-1 fs-09 cl-gray">Дата выгрузки:</div>
                             <div className="ml-1 fs-09">
-                                <b>{formatters.date(cargo.destiny?.date || '')}</b>
+                                <b>{formatters.date(cargo.delivery_date || '')}</b>
                             </div>
                         </div>
                     </div>
@@ -138,11 +138,11 @@ export const CargoCard: React.FC<CargoCardProps> = ({
             <div className="flex mt-05 cl-black">
                 <IonIcon icon={locationOutline} color="danger" className="mr-05"/>
                 <div className="fs-08 cl-prim flex-1">
-                    <b>{cargo.address?.city || 'Не указано'}</b>
+                    <b>{cargo.address?.city.city || 'Не указано'}</b>
                 </div>
                 <div className="fs-08 cl-gray mx-1">→</div>
                 <div className="fs-08 cl-prim flex-1">
-                    <b>{cargo.destiny?.city || 'Не указано'}</b>
+                    <b>{cargo.destiny?.city.city || 'Не указано'}</b>
                 </div>
                 <IonIcon icon={locationOutline} color="success" className="ml-05"/>
             </div>
@@ -151,11 +151,11 @@ export const CargoCard: React.FC<CargoCardProps> = ({
             <div className="flex mt-05 cl-gray">
                 <IonIcon icon={calendarOutline} className="mr-05"/>
                 <div className="fs-08 flex-1">
-                    {formatters.date(cargo.address?.date || '')}
+                    {formatters.date(cargo.pickup_date || '')}
                 </div>
                 <div className="fs-08 mx-1">-</div>
                 <div className="fs-08 flex-1">
-                    {formatters.date(cargo.destiny?.date || '')}
+                    {formatters.date(cargo.delivery_date || '')}
                 </div>
             </div>
 

@@ -12,6 +12,7 @@ interface Step5Props {
 export const Step5: React.FC<Step5Props> = ({ data, setFieldValue, getFieldError }) => {
   const [byWeight, setByWeight] = useState<boolean>(true);
   const [hasInsurance, setHasInsurance] = useState<boolean>((data.cost || 0) > 0);
+  const [hasAdvance, setHasAdvance] = useState<boolean>((data.advance || 0) > 0);
 
   const handleToggle = (checked: boolean) => {
     setByWeight(checked);
@@ -31,9 +32,17 @@ export const Step5: React.FC<Step5Props> = ({ data, setFieldValue, getFieldError
     }
   };
 
+  const handleAdvanceToggle = (checked: boolean) => {
+    setHasAdvance(checked);
+    // Если выключили предоплату - сбрасываем сумму
+    if (!checked) {
+      setFieldValue('advance', 0);
+    }
+  };
+
   return (
     <div className={styles.stepContent}>
-      {/* Галочка и поле в одной строке */}
+      {/* Вес/Объем */}
       <div className={styles.field}>
         <div style={{display: 'flex', alignItems: 'center', gap: '1em'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '0.5em'}}>
@@ -61,36 +70,7 @@ export const Step5: React.FC<Step5Props> = ({ data, setFieldValue, getFieldError
         {getFieldError(byWeight ? 'weight' : 'volume')}
       </div>
 
-      {/* Страхование */}
-      <div className={styles.field}>
-        <div style={{display: 'flex', alignItems: 'center', gap: '0.5em'}}>
-          <IonCheckbox 
-            checked={hasInsurance}
-            onIonChange={(e) => handleInsuranceToggle(e.detail.checked)}
-          />
-          <div className={styles.label} style={{margin: 0}}>
-            Страхование
-          </div>
-        </div>
-        
-        {/* Поле стоимости груза - показывается только если включено страхование */}
-        {hasInsurance && (
-          <div style={{marginTop: '0.5em', paddingLeft: '2em'}}>
-            <div className={styles.inputWrapper}>
-              <IonInput 
-                className={styles.customInput}
-                type="number"
-                min="0"
-                value={data.cost || ''}
-                placeholder="Стоимость груза (руб)"
-                onIonInput={(e) => setFieldValue('cost', parseFloat(e.detail.value as string) || 0)}
-              />
-            </div>
-            {getFieldError('cost')}
-          </div>
-        )}
-      </div>
-
+      {/* Цена */}
       <div className={styles.field}>
         <div style={{display: 'flex', alignItems: 'center', gap: '1em'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '0.5em'}}>
@@ -109,6 +89,70 @@ export const Step5: React.FC<Step5Props> = ({ data, setFieldValue, getFieldError
           </div>
         </div>
         {getFieldError('price')}
+      </div>
+
+      {/* Страхование */}
+      <div className={styles.field}>
+        <div style={{display: 'flex', alignItems: 'center', gap: '1em'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.5em'}}>
+            <IonCheckbox 
+              checked={hasInsurance}
+              onIonChange={(e) => handleInsuranceToggle(e.detail.checked)}
+            />
+            <div className={styles.label} style={{margin: 0}}>
+              Страхование
+            </div>
+          </div>
+          
+          {
+            hasInsurance && (
+            <div className={styles.inputWrapper} style={{flex: 1}}>
+                <IonInput 
+                className={styles.customInput}
+                type="number"
+                min="0"
+                value={hasInsurance ? (data.cost || '') : ''}
+                placeholder="Стоимость груза (руб)"
+                disabled={!hasInsurance}
+                onIonInput={(e) => setFieldValue('cost', parseFloat(e.detail.value as string) || 0)}
+                />
+            </div>
+            )
+          }
+        </div>
+        {getFieldError('cost')}
+      </div>
+
+      {/* Предоплата */}
+      <div className={styles.field}>
+        <div style={{display: 'flex', alignItems: 'center', gap: '1em'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.5em'}}>
+            <IonCheckbox 
+              checked={hasAdvance}
+              onIonChange={(e) => handleAdvanceToggle(e.detail.checked)}
+            />
+            <div className={styles.label} style={{margin: 0}}>
+              Предоплата
+            </div>
+          </div>
+          
+          {
+            hasAdvance && (
+                <div className={styles.inputWrapper} style={{flex: 1}}>
+                    <IonInput 
+                    className={styles.customInput}
+                    type="number"
+                    min="0"
+                    value={hasAdvance ? (data.advance || '') : ''}
+                    placeholder="Сумма предоплаты (руб)"
+                    disabled={!hasAdvance}
+                    onIonInput={(e) => setFieldValue('advance', parseFloat(e.detail.value as string) || 0)}
+                    />
+                </div>
+            )
+          }
+        </div>
+        {getFieldError('advance')}
       </div>
 
     </div>

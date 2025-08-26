@@ -51,7 +51,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
   };
 
   const handleForwardNavigation = () => {
-    if (currentStep < 6) {
+    if (currentStep < 7) {
       if (validateCurrentStep()) {
         setCurrentStep(currentStep + 1);
         scrollToTop();
@@ -94,11 +94,11 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
       case 1: return 'Название и описание';
       case 2: return 'Информация о клиенте';
       case 3: return 'Место погрузки';
-      case 4: return 'Место разгрузки';
-      case 5: return 'Сроки перевозки';
-      case 6: return 'Характеристики груза';
-      case 7: return 'Контактная информация';
-      default: return 'Создание заказа';
+      case 4: return 'Сроки перевозки';
+      case 5: return 'Характеристики груза';
+      case 6: return 'Контактная Информация';
+      case 7: return 'Создание заказа';
+      default: return '';
     }
   };
 
@@ -118,7 +118,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
         onClick={handleForwardNavigation}
         disabled={isSubmitting}
       >
-        {currentStep === 6 ? (
+        {currentStep === 7 ? (
           <IonIcon icon={saveOutline} />
         ) : (
           <IonIcon icon={chevronForwardOutline} />
@@ -312,7 +312,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
         getFieldError={getFieldError}
       />
     );
-    
+
   };
 
   // Шаг 6: Контакты и итоговая информация
