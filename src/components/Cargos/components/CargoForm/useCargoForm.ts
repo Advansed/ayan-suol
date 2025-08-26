@@ -217,11 +217,13 @@ export const useCargoFormWizard = (): UseCargoFormWizardReturn => {
   }, [setFieldValue]);
 
   const getFieldError = useCallback((fieldPath: string): string | undefined => {
-    // Показываем ошибку только если поле touched
+    
     if (touchedFields[fieldPath]) {
       return formState.errors[fieldPath];
     }
+
     return undefined;
+    
   }, [formState.errors, touchedFields]);
 
   
