@@ -1,8 +1,10 @@
 import { IonContent, IonPage } from '@ionic/react';
 import './Tab2.css';
 import { useParams } from 'react-router';
-import { Chats } from '../components/Chats';
-import { ChatList } from '../components/ChatList';
+import Chats from '../components/Chats';
+import { ChatList } from '../components/Chats/ChatList';
+
+
 
 const Tab2: React.FC = () => {
 

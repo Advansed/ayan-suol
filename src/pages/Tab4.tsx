@@ -3,19 +3,20 @@ import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/rea
 import { CargoArchive } from '../components/Cargos';
 import { WorkArchive } from '../components/Works/components';
 import { useStoreField } from '../components/Store';
+import { useProfile } from '../components/Profile/hooks/useProfile';
 
 const Tab4: React.FC = () => {
-  const swap = useStoreField('swap', 503);
+  const { userType } = useProfile()
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>{swap ? 'Архив работ' : 'Архив заказов'}</IonTitle>
+          <div className='a-center fs-09'><b>{userType == 2 ? 'Архив работ' : 'Архив заказов'}</b></div>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        {swap ? <WorkArchive /> : <CargoArchive />}
+        {userType == 2 ? <WorkArchive /> : <CargoArchive />}
       </IonContent>
     </IonPage>
   );

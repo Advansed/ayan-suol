@@ -38,7 +38,7 @@ const CargoArchive = () => {
       </IonRefresher>
 
       <div className="cr-header">
-        <h2 className="cr-title">Архив заказов</h2>
+        <div className="fs-09"><b>Архив заказов</b></div>
         <button 
           onClick={refresh} 
           disabled={refreshing}
