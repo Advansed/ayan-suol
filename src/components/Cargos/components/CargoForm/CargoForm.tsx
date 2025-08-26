@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { IonInput, IonTextarea, IonIcon } from '@ionic/react';
+import { IonInput, IonTextarea, IonIcon, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
 import { chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons';
 import { CargoInfo } from '../../types';
 import { useCargoFormWizard } from './useCargoForm';
 import styles from './CargoForm.module.css';
 import { AddressSuggestions } from 'react-dadata';
 import '../../../../../node_modules/react-dadata/dist/react-dadata.css'
+import { Step5 } from './Step5';
 
 interface CargoFormProps {
   cargo?: CargoInfo;
@@ -302,58 +303,17 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
   );
 
   // Шаг 5: Характеристики груза
-  const renderStep5 = () => (
-    <div className={styles.stepContent}>
-      <div className={styles.fieldRow}>
-        <div className={styles.field}>
-          <div className={styles.label}>Вес (тонн)</div>
-          <div className={styles.inputWrapper}>
-            <IonInput 
-              className={styles.customInput}
-              type="number"
-              min="0"
-              step="0.1"
-              value={data.weight}
-              placeholder="0.0"
-              onIonInput={(e) => setFieldValue('weight', parseFloat(e.detail.value as string) || 0)}
-            />
-          </div>
-          {renderFieldError('weight')}
-        </div>
+  const renderStep5 = () => {
 
-        <div className={styles.field}>
-          <div className={styles.label}>Объем (м³)</div>
-          <div className={styles.inputWrapper}>
-            <IonInput 
-              className={styles.customInput}
-              type="number"
-              min="0"
-              step="0.1"
-              value={data.volume}
-              placeholder="0.0"
-              onIonInput={(e) => setFieldValue('volume', parseFloat(e.detail.value as string) || 0)}
-            />
-          </div>
-          {renderFieldError('volume')}
-        </div>
-      </div>
-
-      <div className={styles.field}>
-        <div className={styles.label}>Цена (руб)</div>
-        <div className={styles.inputWrapper}>
-          <IonInput 
-            className={styles.customInput}
-            type="number"
-            min="0"
-            value={data.price}
-            placeholder="0"
-            onIonInput={(e) => setFieldValue('price', parseFloat(e.detail.value as string) || 0)}
-          />
-        </div>
-        {renderFieldError('price')}
-      </div>
-    </div>
-  );
+    return (
+      <Step5
+        data={data}
+        setFieldValue={setFieldValue}
+        getFieldError={getFieldError}
+      />
+    );
+    
+  };
 
   // Шаг 6: Контакты и итоговая информация
   const renderStep6 = () => (
