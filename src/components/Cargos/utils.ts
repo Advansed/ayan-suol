@@ -145,15 +145,15 @@ export const validateCrossFields = (data: CargoInfo): ValidationErrors => {
 
     // Проверка одинаковых городов
     if (data.address?.city && data.destiny?.city && 
-        data.address.city.toLowerCase() === data.destiny.city.toLowerCase()) {
+        data.address.city.city.toLowerCase() === data.destiny.city.city.toLowerCase()) {
         errors['address.city'] = VALIDATION_MESSAGES.sameCities;
         errors['destiny.city'] = VALIDATION_MESSAGES.sameCities;
     }
 
     // Проверка дат
-    if (data.address?.date && data.destiny?.date) {
-        const pickupDate = new Date(data.address.date);
-        const deliveryDate = new Date(data.destiny.date);
+    if (data.pickup_date && data.delivery_date) {
+        const pickupDate = new Date(data.pickup_date);
+        const deliveryDate = new Date(data.delivery_date);
         
         if (pickupDate >= deliveryDate) {
             errors['destiny.date'] = VALIDATION_MESSAGES.dateOrder;
@@ -350,33 +350,26 @@ export const statusUtils = {
     // Получение следующего статуса
     getNextStatus: (currentStatus: CargoStatus): CargoStatus | null => {
         switch (currentStatus) {
-            case CargoStatus.NEW:
-                return CargoStatus.WAITING;
-            case CargoStatus.WAITING:
-                return CargoStatus.HAS_ORDERS;
-            case CargoStatus.HAS_ORDERS:
-                return CargoStatus.IN_WORK;
-            case CargoStatus.NEGOTIATION:
-                return CargoStatus.IN_WORK;
-            case CargoStatus.IN_WORK:
-                return CargoStatus.DELIVERED;
-            case CargoStatus.DELIVERED:
-                return CargoStatus.COMPLETED;
-            default:
-                return null;
+            case CargoStatus.NEW:               return CargoStatus.WAITING;
+            case CargoStatus.WAITING:           return CargoStatus.HAS_ORDERS;
+            case CargoStatus.HAS_ORDERS:        return CargoStatus.IN_WORK;
+            case CargoStatus.NEGOTIATION:       return CargoStatus.IN_WORK;
+            case CargoStatus.IN_WORK:           return CargoStatus.DELIVERED;
+            case CargoStatus.DELIVERED:         return CargoStatus.COMPLETED;
+            default:                            return null;
         }
     },
 
     // Получение прогресса в процентах
     getProgress: (status: CargoStatus): number => {
         const progressMap = {
-            [CargoStatus.NEW]: 0,
-            [CargoStatus.WAITING]: 20,
-            [CargoStatus.HAS_ORDERS]: 40,
-            [CargoStatus.NEGOTIATION]: 50,
-            [CargoStatus.IN_WORK]: 70,
-            [CargoStatus.DELIVERED]: 90,
-            [CargoStatus.COMPLETED]: 100
+            [ CargoStatus.NEW ]:            0,
+            [ CargoStatus.WAITING ]:        20,
+            [ CargoStatus.HAS_ORDERS ]:     40,
+            [ CargoStatus.NEGOTIATION ]:    50,
+            [ CargoStatus.IN_WORK ]:        70,
+            [ CargoStatus.DELIVERED ]:      90,
+            [ CargoStatus.COMPLETED ]:      100
         };
         return progressMap[status] || 0;
     }
@@ -389,32 +382,41 @@ export const statusUtils = {
 export const dataUtils = {
     // Создание пустого груза
     createEmptyCargo: (): CargoInfo => ({
-        guid: "",
-        name: "",
-        description: "",
-        client: "",
-        address: { city: "", date: "", address: "" },
-        destiny: { city: "", date: "", address: "" },
-        weight: 0,
-        weight1: 0,
-        volume: 0,
-        price: 0,
-        phone: "",
-        face: "",
-        status: CargoStatus.NEW
+
+        guid:               "",
+        name:               "",
+        description:        "",
+        client:             "",
+        address:            { city: { city: "", fias: ""}, address: "", fias: "", long: 0, lat: 0 },
+        destiny:            { city: { city: "", fias: ""}, address: "", fias: "", long: 0, lat: 0 },
+        weight:             0,
+        weight1:            0,
+        volume:             0,
+        price:              0,
+        cost:               0,
+        advance:            0,
+        pickup_date:        "",
+        delivery_date:      "",
+        phone:              "",
+        face:               "",
+        status:             CargoStatus.NEW
+
     }),
 
     // Генерация GUID
     generateGuid: (): string => {
+
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
             const r = Math.random() * 16 | 0;
             const v = c === 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
+
     },
 
     // Парсинг числа из строки
     parseNumber: (value: string | number): number => {
+
         if (typeof value === 'number') return value;
         const parsed = parseFloat(value.replace(/[^\d.]/g, ''));
         return isNaN(parsed) ? 0 : parsed;
@@ -422,23 +424,27 @@ export const dataUtils = {
 
     // Очистка телефона до цифр
     cleanPhone: (phone: string): string => {
+
         return phone.replace(/\D/g, '');
+
     },
 
     // Проверка заполненности груза
     isCargoComplete: (cargo: CargoInfo): boolean => {
+
         return Boolean(
             cargo.name &&
             cargo.address?.city &&
             cargo.destiny?.city &&
-            cargo.address?.date &&
-            cargo.destiny?.date &&
+            cargo.pickup_date &&
+            cargo.delivery_date &&
             cargo.weight > 0 &&
             cargo.volume > 0 &&
             cargo.price > 0 &&
             cargo.phone &&
             cargo.face
         );
+
     }
 };
 

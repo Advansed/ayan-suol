@@ -7,6 +7,7 @@ import styles from './CargoForm.module.css';
 import { AddressSuggestions } from 'react-dadata';
 import '../../../../../node_modules/react-dadata/dist/react-dadata.css'
 import { Step5 } from './Step5';
+import { useProfile } from '../../../Profile/hooks/useProfile';
 
 interface CargoFormProps {
   cargo?: CargoInfo;
@@ -15,7 +16,12 @@ interface CargoFormProps {
 }
 
 export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) => {
+  const { completion } = useProfile();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+   const isCompanyIncomplete = completion.company < 100;
+   
+   console.log( isCompanyIncomplete )
   
   const {
     formState,
@@ -51,6 +57,9 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
   };
 
   const handleForwardNavigation = () => {
+    if (isCompanyIncomplete) {
+      setCurrentStep( 0 )
+    } else
     if (currentStep < 7) {
       if (validateCurrentStep()) {
         setCurrentStep(currentStep + 1);
@@ -100,6 +109,32 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
       case 7: return 'Создание заказа';
       default: return '';
     }
+  };
+
+  // Добавить рендер предупреждения о компании
+  const renderCompanyWarning = () => {
+    if (!isCompanyIncomplete) return null;
+    
+    return (
+      <div className={styles.companyWarning}>
+        <div className={styles.warningIcon}>⚠️</div>
+        <div className={styles.warningText}>
+          <div className={styles.warningTitle}>Заполните данные компании</div>
+          <div className={styles.warningSubtitle}>
+            Для создания груза необходимо полностью заполнить информацию о компании в профиле
+          </div>
+        </div>
+        <button 
+          className={styles.profileButton}
+          onClick={() => {
+            // Переход в профиль/компанию - добавить логику навигации
+            onBack(); // временно просто возврат
+          }}
+        >
+          Перейти в профиль
+        </button>
+      </div>
+    );
   };
 
   const renderStepHeader = () => (
@@ -395,6 +430,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
 
           {renderStepHeader()}
           
+          {currentStep === 0 && renderCompanyWarning()}
           {currentStep === 1 && renderStep1()}
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
