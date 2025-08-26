@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { IonInput, IonTextarea, IonIcon, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
+import React, { useEffect, useRef } from 'react';
+import { IonInput, IonTextarea, IonIcon } from '@ionic/react';
 import { chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons';
 import { CargoInfo } from '../../types';
 import { useCargoFormWizard } from './useCargoForm';
@@ -8,6 +8,7 @@ import { AddressSuggestions } from 'react-dadata';
 import '../../../../../node_modules/react-dadata/dist/react-dadata.css'
 import { Step5 } from './Step5';
 import { useProfile } from '../../../Profile/hooks/useProfile';
+import { useHistory } from 'react-router';
 
 interface CargoFormProps {
   cargo?: CargoInfo;
@@ -21,19 +22,20 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
 
    const isCompanyIncomplete = completion.company < 100;
    
-   console.log( isCompanyIncomplete )
+   const hist = useHistory()
+
+   console.log( 'isCompanyIncomplete', isCompanyIncomplete )
   
   const {
-    formState,
-    currentStep,
-    setCurrentStep,
-    validateCurrentStep,
-    canGoToStep,
-    setFieldValue,
-    setNestedValue,
-    getFieldError,
-    initializeForm,
-    saveToServer
+      formState,
+      currentStep,
+      setCurrentStep,
+      validateCurrentStep,
+      setFieldValue,
+      setNestedValue,
+      getFieldError,
+      initializeForm,
+      saveToServer
   } = useCargoFormWizard();
 
   const { data, isSubmitting } = formState;
@@ -58,6 +60,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
 
   const handleForwardNavigation = () => {
     if (isCompanyIncomplete) {
+      console.log('currentStep', 0)
       setCurrentStep( 0 )
     } else
     if (currentStep < 7) {
@@ -128,7 +131,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
           className={styles.profileButton}
           onClick={() => {
             // Переход в профиль/компанию - добавить логику навигации
-            onBack(); // временно просто возврат
+            hist.push("/tab3")
           }}
         >
           Перейти в профиль
@@ -428,16 +431,17 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
       <div className={styles.wizardContent} ref={scrollRef}>
         <div className={styles.stepContainer}>
 
-          {renderStepHeader()}
+          { renderStepHeader() }
           
-          {currentStep === 0 && renderCompanyWarning()}
-          {currentStep === 1 && renderStep1()}
-          {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
-          {currentStep === 4 && renderStep4()}
-          {currentStep === 5 && renderStep5()}
-          {currentStep === 6 && renderStep6()}
-          {currentStep === 7 && renderStep7()}
+          { renderCompanyWarning() }
+
+          {!isCompanyIncomplete && currentStep === 1 && renderStep1()}
+          {!isCompanyIncomplete && currentStep === 2 && renderStep2()}
+          {!isCompanyIncomplete && currentStep === 3 && renderStep3()}
+          {!isCompanyIncomplete && currentStep === 4 && renderStep4()}
+          {!isCompanyIncomplete && currentStep === 5 && renderStep5()}
+          {!isCompanyIncomplete && currentStep === 6 && renderStep6()}
+          {!isCompanyIncomplete && currentStep === 7 && renderStep7()}
 
         </div>
       </div>
