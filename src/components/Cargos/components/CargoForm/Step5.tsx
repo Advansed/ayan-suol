@@ -11,6 +11,7 @@ interface Step5Props {
 
 export const Step5: React.FC<Step5Props> = ({ data, setFieldValue, getFieldError }) => {
   const [byWeight, setByWeight] = useState<boolean>(true);
+  const [hasInsurance, setHasInsurance] = useState<boolean>((data.cost || 0) > 0);
 
   const handleToggle = (checked: boolean) => {
     setByWeight(checked);
@@ -19,6 +20,14 @@ export const Step5: React.FC<Step5Props> = ({ data, setFieldValue, getFieldError
       setFieldValue('volume', 0);
     } else {
       setFieldValue('weight', 0);
+    }
+  };
+
+  const handleInsuranceToggle = (checked: boolean) => {
+    setHasInsurance(checked);
+    // Если выключили страховку - сбрасываем стоимость груза
+    if (!checked) {
+      setFieldValue('cost', 0);
     }
   };
 
@@ -50,6 +59,36 @@ export const Step5: React.FC<Step5Props> = ({ data, setFieldValue, getFieldError
           </div>
         </div>
         {getFieldError(byWeight ? 'weight' : 'volume')}
+      </div>
+
+      {/* Страхование */}
+      <div className={styles.field}>
+        <div style={{display: 'flex', alignItems: 'center', gap: '0.5em'}}>
+          <IonCheckbox 
+            checked={hasInsurance}
+            onIonChange={(e) => handleInsuranceToggle(e.detail.checked)}
+          />
+          <div className={styles.label} style={{margin: 0}}>
+            Страхование
+          </div>
+        </div>
+        
+        {/* Поле стоимости груза - показывается только если включено страхование */}
+        {hasInsurance && (
+          <div style={{marginTop: '0.5em', paddingLeft: '2em'}}>
+            <div className={styles.inputWrapper}>
+              <IonInput 
+                className={styles.customInput}
+                type="number"
+                min="0"
+                value={data.cost || ''}
+                placeholder="Стоимость груза (руб)"
+                onIonInput={(e) => setFieldValue('cost', parseFloat(e.detail.value as string) || 0)}
+              />
+            </div>
+            {getFieldError('cost')}
+          </div>
+        )}
       </div>
 
       <div className={styles.field}>

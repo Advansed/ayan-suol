@@ -72,6 +72,7 @@ export interface CargoInfo {
     weight1?:           number; // Для совместимости
     volume:             number;
     price:              number;
+    cost:               number;
     
     // Контакты
     phone:              string;

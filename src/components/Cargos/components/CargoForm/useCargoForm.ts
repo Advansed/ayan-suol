@@ -47,13 +47,13 @@ interface UseCargoFormWizardReturn {
 
 // Поля по шагам
 const STEP_FIELDS = {
-  1: ['name', 'description'],
-  2: ['address.address'],
-  3: ['destiny.address'],
-  4: ['pickup_date', 'delivery_date'],
-  5: ['weight', 'price'],
-  6: ['phone', 'face'],
-  7: []
+  1: [ 'name', 'description' ],
+  2: [ 'address.address' ],
+  3: [ 'destiny.address' ],
+  4: [ 'pickup_date', 'delivery_date' ],
+  5: [ 'weight', 'price', 'cost' ],
+  6: [ 'phone', 'face'],
+  7: [ ]
 };
 
 export const useCargoFormWizard = (): UseCargoFormWizardReturn => {
@@ -223,7 +223,7 @@ export const useCargoFormWizard = (): UseCargoFormWizardReturn => {
     }
 
     return undefined;
-    
+
   }, [formState.errors, touchedFields]);
 
   
