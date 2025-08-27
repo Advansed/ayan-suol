@@ -18,7 +18,7 @@ export const i_state = {
     cargos:                             [],
     works:                              [],
     transport:                          new Object(),
-    orgs:                               new Object(),     
+    company:                            new Object(),     
     profile:                            [],
     publish:                            [],
     invoices:                           [],
@@ -267,10 +267,10 @@ export const setupSocketHandlers = () => {
         }
     });
 
-    socket.on('get_orgs', (res) => {
+    socket.on('get_company', (res) => {
         if( res.success){
-            console.log( "Orgs received", res );
-            Store.dispatch({ type: "orgs", data: res.data });    
+            console.log( "Company received", res );
+            Store.dispatch({ type: "company", data: res.data });    
         }
     });
 

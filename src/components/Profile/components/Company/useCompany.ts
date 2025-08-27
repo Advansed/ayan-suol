@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { socketService } from '../../../Sockets'
-import { Store } from '../../../Store'
+import { Store, useSelector } from '../../../Store'
 
 interface CompanyData {
     guid?: string
@@ -42,14 +42,21 @@ interface UseCompanyReturn {
 export const useCompany = (): UseCompanyReturn => {
     const socket = socketService.getSocket()
     
-    const [companyData, setCompanyData] = useState<CompanyData | null>(null)
+    const companyData = useSelector((state) => state.company, 51)
     const [isLoading, setIsLoading] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
 
+    useEffect(()=>{
+
+        console.log("use")
+
+    },[])
+
     // Загрузка данных
     const loadData = useCallback(() => {
+        
         if (!socket) return
 
         setIsLoading(true)
@@ -58,17 +65,18 @@ export const useCompany = (): UseCompanyReturn => {
         socket.emit('get_company', { token: Store.getState().login.token })
 
         socket.on('get_company', (response) => {
-        setIsLoading(false)
-        if (response.success) {
-            setCompanyData(response.data)
-        } else {
-            setError(response.message || 'Ошибка загрузки данных')
-        }
+            setIsLoading(false)
+            if (response.success) {
+                Store.dispatch({ type: 'company', data: response.data })
+            } else {
+                setError(response.message || 'Ошибка загрузки данных')
+            }
         })
 
         return () => {
-        socket.off('get_company')
+            socket.off('get_company')
         }
+
   }, [socket])
 
   // Сохранение данных
@@ -80,14 +88,14 @@ export const useCompany = (): UseCompanyReturn => {
         setSuccess(false)
 
         socket.emit('set_company', { 
-        token: Store.getState().login.token, 
-        ...data 
+            token: Store.getState().login.token, 
+            ...data 
         })
 
         socket.on('set_company', (response) => {
         setIsSaving(false)
         if (response.success) {
-            setCompanyData(prev => ({ ...prev, ...data }))
+            Store.dispatch({ type: 'company', data: data })
             setSuccess(true)
             setTimeout(() => setSuccess(false), 3000)
         } else {
