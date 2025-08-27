@@ -118,6 +118,20 @@ export const WorksList: React.FC<WorksListProps> = ({
                                         </IonButton>
                                     )}
                                 </div>
+                                <div>
+                                        <IonButton
+                                            className="w-50 cr-button-2"
+                                            mode="ios"
+                                            color="primary"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onOfferClick(work);
+                                            }}
+                                        >
+                                            <IonLabel className="fs-08">Карта</IonLabel>
+                                        </IonButton>
+
+                                </div>
                             </div>
                         ))}
                     </>
