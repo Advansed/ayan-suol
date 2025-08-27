@@ -1,8 +1,8 @@
 import { IonContent, IonPage } from '@ionic/react';
 import './Tab2.css';
 import { useParams } from 'react-router';
-import Chats from '../components/Chats';
 import { ChatList } from '../components/Chats/ChatList';
+import Chats from '../components/Chats/Chats';
 
 
 
