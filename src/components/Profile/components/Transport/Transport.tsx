@@ -11,7 +11,7 @@ interface Props {
 }
 
 export const Transport: React.FC<Props> = ({ onBack }) => {
-  const { transportData, save, load, isSaving, error } = useTransport()
+  const { transportData, save, load, isSaving } = useTransport()
   const [currentStep, setCurrentStep] = useState(1)
   const scrollRef = useRef<HTMLDivElement>(null)
   
@@ -27,14 +27,9 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
   })
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
-  const [uploadedFiles, setUploadedFiles] = useState<{image: string}>({
-    image: ''
-  })
+  const [uploadedFiles, setUploadedFiles] = useState<{image: string}>({ image: '' })
 
-  useEffect(() => {
-    console.log("load")
-    load()
-  }, [load])
+  useEffect(() => { load() }, [load])
 
     // Заменить useEffect для transportData
     useEffect(() => {
@@ -331,7 +326,6 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
             {currentStep === 1 && renderBasicInfo()}
             {currentStep === 2 && renderAdditionalData()}
 
-            {error && <div className={styles.errorMsg}>{error}</div>}
           </div>
       </div>
     </div>

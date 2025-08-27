@@ -49,6 +49,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { isPlatform } from '@ionic/react';
 import { Login } from './components/Login';
 import Tab4 from './pages/Tab4';
+import { ToastContext, ToastProvider } from './components/Toast/ToastManager';
 
 setupIonicReact({
   mode: 'ios', // или 'md' для Material Design
@@ -396,9 +397,11 @@ const App: React.FC = () => {
   }
 
   return (
-    <IonApp>
-      {auth ? <App1 /> : <Login />}
-    </IonApp>
+    <ToastProvider>
+      <IonApp>
+        {auth ? <App1 /> : <Login />}
+      </IonApp>
+    </ToastProvider>
   );
 };
 

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { socketService } from '../../../Sockets'
 import { Store, useSelector } from '../../../Store'
+import { useToast } from '../../../Toast';
 
 interface CompanyData {
     guid?: string
@@ -32,11 +33,8 @@ interface UseCompanyReturn {
     companyData: CompanyData | null
     isLoading: boolean
     isSaving: boolean
-    error: string | null
-    success: boolean
     loadData: () => void
     saveData: (data: CompanyData) => void
-    resetStates: () => void
 }
 
 export const useCompany = (): UseCompanyReturn => {
@@ -45,8 +43,7 @@ export const useCompany = (): UseCompanyReturn => {
     const companyData = useSelector((state) => state.company, 51)
     const [isLoading, setIsLoading] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    const [success, setSuccess] = useState(false)
+    const toast = useToast()
 
     useEffect(()=>{
 
@@ -60,16 +57,19 @@ export const useCompany = (): UseCompanyReturn => {
         if (!socket) return
 
         setIsLoading(true)
-        setError(null)
 
         socket.emit('get_company', { token: Store.getState().login.token })
 
         socket.on('get_company', (response) => {
             setIsLoading(false)
             if (response.success) {
+                
                 Store.dispatch({ type: 'company', data: response.data })
+
             } else {
-                setError(response.message || 'Ошибка загрузки данных')
+
+                toast.error(response.message || 'Ошибка загрузки данных')
+                
             }
         })
 
@@ -84,8 +84,6 @@ export const useCompany = (): UseCompanyReturn => {
         if (!socket) return
 
         setIsSaving(true)
-        setError(null)
-        setSuccess(false)
 
         socket.emit('set_company', { 
             token: Store.getState().login.token, 
@@ -96,32 +94,29 @@ export const useCompany = (): UseCompanyReturn => {
         setIsSaving(false)
         if (response.success) {
             Store.dispatch({ type: 'company', data: data })
-            setSuccess(true)
-            setTimeout(() => setSuccess(false), 3000)
+
+            toast.success("Данные по организации сохранены")
+
         } else {
-            setError(response.message || 'Ошибка сохранения')
+
+            toast.error(response.message || 'Ошибка сохранения')
+
         }
         })
 
         return () => {
-        socket.off('set_company')
+
+            socket.off('set_company')
+
         }
   }, [socket])
 
-  // Сброс состояний
-  const resetStates = useCallback(() => {
-        setError(null)
-        setSuccess(false)
-  }, [])
 
   return {
         companyData,
         isLoading,
         isSaving,
-        error,
-        success,
         loadData,
-        saveData,
-        resetStates
+        saveData
   }
 }

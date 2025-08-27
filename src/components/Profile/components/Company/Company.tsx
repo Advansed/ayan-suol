@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { IonIcon } from '@ionic/react'
-import { chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons'
 import { useCompany } from './useCompany'
 import styles from './Company.module.css'
 import { dadataService } from './dadata'
@@ -15,11 +13,8 @@ export const Company: React.FC<Props> = ({ onBack }) => {
     companyData, 
     isLoading, 
     isSaving, 
-    error, 
-    success,
     loadData,
-    saveData,
-    resetStates
+    saveData
   } = useCompany()
   
   const [currentStep, setCurrentStep] = useState(1)
@@ -232,29 +227,6 @@ export const Company: React.FC<Props> = ({ onBack }) => {
       [type]: null
     }))
   }
-
-  // Рендер заголовочной панели
-  const renderStepHeader = () => (
-    <div className={styles.stepHeader}>
-      <button className={`${styles.navButton} ${styles.navButtonLeft}`} onClick={handleBackNavigation}>
-        <IonIcon icon={chevronBackOutline} />
-      </button>
-      
-      <h3 className={styles.stepTitle}>{getStepTitle()}</h3>
-      
-      <button 
-        className={`${styles.navButton} ${styles.navButtonRight}`} 
-        onClick={handleForwardNavigation}
-        disabled={currentStep === 4 && isSaving}
-      >
-        {currentStep === 4 ? (
-          <IonIcon icon={saveOutline} />
-        ) : (
-          <IonIcon icon={chevronForwardOutline} />
-        )}
-      </button>
-    </div>
-  )
 
   // Шаг 1: Тип компании и ИНН
   const renderCompanyType = () => (
@@ -583,16 +555,6 @@ export const Company: React.FC<Props> = ({ onBack }) => {
           onSave={ handleSave }
           isLastStep={ currentStep === 4 } // У PersonalInfo каждый шаг сохраняется отдельно
         />
-        {success && (
-          <div className={styles.successMessage}>
-            ✓ Данные успешно сохранены
-          </div>
-        )}
-
-        {error && (
-          <div className={styles.errorMessage}>{error}</div>
-        )}
-
         {currentStep === 1 && renderCompanyType()}
         {currentStep === 2 && renderBasicData()}
         {currentStep === 3 && renderContactsAndBank()}

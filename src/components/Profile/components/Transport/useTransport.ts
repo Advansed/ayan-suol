@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import socketService from '../../../Sockets'
 import { Store, useStoreField } from '../../../Store'
+import { useToast } from '../../../Toast'
 
 export interface TransportData {
   name?: string
@@ -16,7 +17,8 @@ export interface TransportData {
 export const useTransport = () => {
   const transportStore = useStoreField('transport', 12346)?.[0]
   const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+
+  const toast = useToast()
 
   // Мемоизация данных для предотвращения спама
   const transportData: TransportData | null = useMemo(() => {
@@ -38,11 +40,10 @@ export const useTransport = () => {
 
   const save = useCallback((data: TransportData) => {
     setIsSaving(true)
-    setError(null)
 
     const token = Store.getState().login?.token
     if (!token) {
-      setError('Нет токена авторизации')
+      toast.error('Нет токена авторизации')
       setIsSaving(false)
       return
     }
@@ -62,6 +63,7 @@ export const useTransport = () => {
 
     socketService.emit('set_transport', payload)
     
+    toast.success('Данные по транспорту сохранены')
     // Обработчик ответа уже настроен в Store
     setTimeout(() => {
       setIsSaving(false)
@@ -73,7 +75,6 @@ export const useTransport = () => {
     load,
     save,
     isSaving,
-    isLoading: false,
-    error
+    isLoading: false
   }
 }
