@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { IonIcon, IonButton } from '@ionic/react'
-import { arrowBackOutline, chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons'
-import { TransportData, useTransport } from './useTransport'
+import { useTransport } from './useTransport'
 import { takePicture } from '../../../Files'
 import styles from './Transport.module.css'
 import { WizardHeader } from '../Company/WizardHeader'
@@ -29,21 +27,21 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [uploadedFiles, setUploadedFiles] = useState<{image: string}>({ image: '' })
 
-  useEffect(() => { load() }, [load])
+    useEffect(() => { load() }, [load])
 
     // Заменить useEffect для transportData
     useEffect(() => {
         console.log("transportData updated:", transportData)
         if (transportData) {
             const newForm = {
-                name: transportData.name || '',
-                license_plate: transportData.license_plate || '',
-                vin: transportData.vin || '',
+                name:             transportData.name || '',
+                license_plate:    transportData.license_plate || '',
+                vin:              transportData.vin || '',
                 manufacture_year: transportData.manufacture_year || 0,
-                image: transportData.image || '',
-                transport_type: transportData.transport_type || '',
-                experience: transportData.experience || 0,
-                load_capacity: transportData.load_capacity || 0
+                image:            transportData.image || '',
+                transport_type:   transportData.transport_type || '',
+                experience:       transportData.experience || 0,
+                load_capacity:    transportData.load_capacity || 0
             }
             setForm(newForm)
             setUploadedFiles({ image: transportData.image || '' })
@@ -63,7 +61,6 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
     
     switch (currentStep) {
       case 1:
-        if (!form.name.trim()) errors.name = 'Введите название транспорта'
         if (!form.transport_type.trim()) errors.transport_type = 'Выберите тип транспорта'
         if (!form.license_plate.trim()) errors.license_plate = 'Введите гос.номер'
         break
@@ -167,46 +164,28 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
     <div className={styles.stepContent}>
 
       <div className={styles.field}>
-        <div className={styles.label}>Название транспорта</div>
+        <div className={styles.label}>Тип транспорта</div>
         <div className={styles.transportInputWrapper}>
           <input
-            type="text"
-            className={styles.customTextInput}
-            placeholder="Название или описание"
-            value={form.name}
-            onChange={e => setForm({...form, name: e.target.value})}
+            type        = "text"
+            className   = {styles.customTextInput}
+            placeholder = "Название или описание"
+            value       = {form.transport_type}
+            onChange    = {e => setForm({...form, transport_type: e.target.value})}
           />
         </div>
         {validationErrors.name && <div className={styles.errorMsg}>{validationErrors.name}</div>}
       </div>
 
       <div className={styles.field}>
-        <div className={styles.label}>Тип транспорта</div>
-        <div className={styles.transportInputWrapper}>
-          <select
-            className={styles.customTextInput}
-            value={form.transport_type}
-            onChange={e => setForm({...form, transport_type: e.target.value})}
-          >
-            <option value="">Выберите тип</option>
-            <option value="car">Легковой автомобиль</option>
-            <option value="truck">Грузовой автомобиль</option>
-            <option value="motorcycle">Мотоцикл</option>
-            <option value="bus">Автобус</option>
-          </select>
-        </div>
-        {validationErrors.transport_type && <div className={styles.errorMsg}>{validationErrors.transport_type}</div>}
-      </div>
-
-      <div className={styles.field}>
         <div className={styles.label}>Государственный номер</div>
         <div className={styles.transportInputWrapper}>
           <input
-            type="text"
-            className={styles.customTextInput}
-            placeholder="А123БВ777"
-            value={form.license_plate}
-            onChange={e => setForm({...form, license_plate: e.target.value.toUpperCase()})}
+            type        = "text"
+            className   = {styles.customTextInput}
+            placeholder = "А123БВ777"
+            value       = {form.license_plate}
+            onChange    = {e => setForm({...form, license_plate: e.target.value.toUpperCase()})}
           />
         </div>
         {validationErrors.license_plate && <div className={styles.errorMsg}>{validationErrors.license_plate}</div>}

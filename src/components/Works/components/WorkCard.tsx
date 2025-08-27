@@ -97,7 +97,7 @@ export const WorkCard: React.FC<WorkCardProps> = ({
                         <div className="fs-08 cl-prim">
                             <div className="ml-1 fs-09 cl-gray">Откуда:</div>
                             <div className="ml-1 fs-09">
-                                <b>{work.address?.city || 'Не указано'}</b>
+                                <b>{work.address?.city.city || 'Не указано'}</b>
                             </div>
                         </div>
                     </div>
@@ -105,7 +105,7 @@ export const WorkCard: React.FC<WorkCardProps> = ({
                         <div className="fs-08 cl-prim">
                             <div className="ml-1 fs-09 cl-gray">Дата загрузки:</div>
                             <div className="ml-1 fs-09">
-                                <b>{workFormatters.date(work.address?.date || '')}</b>
+                                <b>{workFormatters.date(work.pickup_date || '')}</b>
                             </div>
                         </div>
                     </div>
@@ -118,7 +118,7 @@ export const WorkCard: React.FC<WorkCardProps> = ({
                         <div className="fs-08 cl-prim">
                             <div className="ml-1 fs-09 cl-gray">Куда:</div>
                             <div className="ml-1 fs-09">
-                                <b>{work.destiny?.city || 'Не указано'}</b>
+                                <b>{work.destiny?.city.city || 'Не указано'}</b>
                             </div>
                         </div>
                     </div>
@@ -126,7 +126,7 @@ export const WorkCard: React.FC<WorkCardProps> = ({
                         <div className="fs-08 cl-prim">
                             <div className="ml-1 fs-09 cl-gray">Дата выгрузки:</div>
                             <div className="ml-1 fs-09">
-                                <b>{workFormatters.date(work.destiny?.date || '')}</b>
+                                <b>{workFormatters.date(work.delivery_date || '')}</b>
                             </div>
                         </div>
                     </div>
@@ -196,11 +196,11 @@ export const WorkCard: React.FC<WorkCardProps> = ({
             <div className="flex mt-05 cl-black">
                 <IonIcon icon={locationOutline} color="danger" className="mr-05"/>
                 <div className="fs-08 cl-prim flex-1">
-                    <b>{work.address?.city || 'Не указано'}</b>
+                    <b>{work.address?.city.city || 'Не указано'}</b>
                 </div>
                 <div className="fs-08 cl-gray mx-1">→</div>
                 <div className="fs-08 cl-prim flex-1">
-                    <b>{work.destiny?.city || 'Не указано'}</b>
+                    <b>{work.destiny?.city.city || 'Не указано'}</b>
                 </div>
                 <IonIcon icon={locationOutline} color="success" className="ml-05"/>
             </div>
@@ -209,11 +209,11 @@ export const WorkCard: React.FC<WorkCardProps> = ({
             <div className="flex mt-05 cl-gray">
                 <IonIcon icon={calendarOutline} className="mr-05"/>
                 <div className="fs-08 flex-1">
-                    {workFormatters.date(work.address?.date || '')}
+                    {workFormatters.date(work.pickup_date || '')}
                 </div>
                 <div className="fs-08 mx-1">-</div>
                 <div className="fs-08 flex-1">
-                    {workFormatters.date(work.destiny?.date || '')}
+                    {workFormatters.date(work.delivery_date || '')}
                 </div>
             </div>
 

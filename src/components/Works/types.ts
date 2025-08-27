@@ -60,6 +60,9 @@ export interface WorkInfo {
     weight: number;
     volume: number;
     price: number;
+
+    pickup_date: string;
+    delivery_date: string;
     
     // Контакты
     phone: string;

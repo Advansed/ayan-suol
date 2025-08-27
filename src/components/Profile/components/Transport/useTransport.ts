@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import socketService from '../../../Sockets'
-import { Store, useStoreField } from '../../../Store'
+import { Store, useSelector, useStoreField } from '../../../Store'
 import { useToast } from '../../../Toast'
 
 export interface TransportData {
@@ -15,7 +15,7 @@ export interface TransportData {
 }
 
 export const useTransport = () => {
-  const transportStore = useStoreField('transport', 12346)?.[0]
+  const transportStore = useSelector((state) => state.transport[0], 71)
   const [isSaving, setIsSaving] = useState(false)
 
   const toast = useToast()
@@ -49,16 +49,18 @@ export const useTransport = () => {
     }
 
     const payload = {
-      name: data.name,
-      number: data.license_plate,
-      vin: data.vin,
-      year: data.manufacture_year,
-      image: data.image,
-      type: data.transport_type,
-      exp: data.experience,
-      capacity: data.load_capacity,
-      token,
-      guid: transportStore?.guid
+
+      name:               data.name,
+      license_plate:      data.license_plate,
+      vin:                data.vin,
+      manufacture_year:   data.manufacture_year,
+      image:              data.image,
+      transport_type:     data.transport_type,
+      experience:         data.experience,
+      load_capacity:      data.load_capacity,
+      token:              token,
+      guid:               transportStore?.guid
+
     }
 
     socketService.emit('set_transport', payload)

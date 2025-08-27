@@ -89,14 +89,14 @@ export const WorkView: React.FC<WorkViewProps> = ({ work, onBack }) => {
                         <div className="pb-1">
                             <div className="fs-08">Адрес погрузки</div>
                             <div className="fs-09 pt-05 a-right borders-wp pr-1 pb-05">
-                                {workInfo.address.city + ', ' + workInfo.address.address || '-'}
+                                {workInfo.address.city.city + ', ' + workInfo.address.address || '-'}
                             </div>
                         </div>
 
                         <div className="pb-1">
                             <div className="fs-08">Адрес разгрузки</div>
                             <div className="fs-09 pt-05 a-right borders-wp pr-1 pb-05">
-                                {workInfo.destiny.city + ', ' + workInfo.destiny.address || '-'}
+                                {workInfo.destiny.city.city + ', ' + workInfo.destiny.address || '-'}
                             </div>
                         </div>
 

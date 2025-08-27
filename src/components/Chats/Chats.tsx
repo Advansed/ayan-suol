@@ -1,10 +1,10 @@
-import React, { useState, useRef, useCallback, useMemo } from "react";
+import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { useIonViewDidEnter, useIonViewDidLeave } from "@ionic/react";
-import { IonIcon, IonInput, IonRefresher, IonRefresherContent, useIonRouter } from "@ionic/react";
-import styles from './Chats.module.css'
-import { arrowBackOutline } from "ionicons/icons";
+import { IonIcon, IonRefresher, IonRefresherContent, useIonRouter } from "@ionic/react";
+import { arrowBackOutline, sendSharp } from "ionicons/icons";
 import { Store } from "../Store";
 import socketService from "../Sockets";
+import "./Chats.css";
 
 interface ChatsProps {
     name: string;
@@ -22,10 +22,10 @@ const MessageComponent = React.memo(({ message, isSent, userInitials }: {
                 <div></div>
                 <div className="chat-sent">
                     <div className="flex fl-space">
-                        <div className="circle w-2 h-2">{"Я"}</div>
-                        <div className="mr-1">{message.time}</div>
+                        <div className="chat-avatar chat-avatar-sent">Я</div>
+                        <div className="chat-time">{message.time}</div>
                     </div>
-                    <div className="mt-05">
+                    <div className="chat-message-text">
                         {message.message}
                     </div>
                 </div>
@@ -37,13 +37,14 @@ const MessageComponent = React.memo(({ message, isSent, userInitials }: {
         <div className="flex fl-space mt-05">
             <div className="chat-receipt">
                 <div className="flex fl-space">
-                    <div className="circle w-2 h-2">{userInitials}</div>
-                    <div className="mr-1">{message.time}</div>
+                    <div className="chat-avatar chat-avatar-receipt">{userInitials}</div>
+                    <div className="chat-time">{message.time}</div>
                 </div>
-                <div className="mt-05">
+                <div className="chat-message-text">
                     {message.message}
                 </div>
             </div>
+            <div></div>
         </div>
     );
 });
@@ -57,7 +58,7 @@ const MessagesList = React.memo(({ info, userInitials }: {
         <>
             {info.map((messageGroup: any, index: number) => (
                 <div key={`group-${index}`} className="ml-1 mt-1">
-                    <div className="fs-08">
+                    <div className="chat-date-separator">
                         {messageGroup.date}
                     </div>
                     {(messageGroup.message || []).map((msg: any, msgIndex: number) => (
@@ -77,9 +78,9 @@ const MessagesList = React.memo(({ info, userInitials }: {
 // Компонент пустого состояния
 const EmptyState = React.memo(() => {
     return (
-        <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>💬</div>
-            <div className={styles.emptyText}>Начните общение</div>
+        <div className="chat-empty-state">
+            <div className="chat-empty-icon">💬</div>
+            <div className="chat-empty-text">Начните общение</div>
         </div>
     );
 });
@@ -91,72 +92,64 @@ const ChatHeader = React.memo(({ onBack, userName, userInitials }: {
     userInitials: string;
 }) => {
     return (
-        <div className="chat-header bg-2">
-            <div onClick={onBack}>
-                <IonIcon icon={arrowBackOutline} className="h-2 w-2 ml-1" />
-            </div>
-            <div className="cr-card">
-                <div className="flex fl-space">
-                    <div className="ml-05">
-                        <div className="fs-09 cl-black">
-                            <b>Информация о водителе</b>
-                        </div>
-                        <div className="fs-07 cl-gray">Контактное лицо</div>
-                        <div className="cr-status-3">{userName}</div>
-                    </div>
-                    <div className="circle w-3 h-3 mr-05">
-                        {userInitials}
-                    </div>
+        <div className="chat-header">
+            <div className="chat-header-content">
+                <div className="chat-header-back" onClick={onBack}>
+                    <IonIcon icon={arrowBackOutline} />
+                </div>
+                <div className="chat-header-user">
+                    <div className="chat-header-avatar">{userInitials}</div>
+                    <div className="chat-header-name">{userName}</div>
                 </div>
             </div>
         </div>
     );
 });
 
-// Мемоизированный футер чата
-const ChatFooter = React.memo(({ 
-    value, 
-    onValueChange, 
-    onSend, 
-    onKeyUp
-}: {
+// Мемоизированный футер с полем ввода
+const ChatFooter = React.memo(({ value, onChange, onSend, onKeyPress }: {
     value: string;
-    onValueChange: (val: string) => void;
+    onChange: (value: string) => void;
     onSend: () => void;
-    onKeyUp: (e: any) => void;
+    onKeyPress: (e: React.KeyboardEvent) => void;
 }) => {
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Автоматическое изменение высоты textarea
+    const adjustHeight = useCallback(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+    }, []);
+
+    useEffect(() => {
+        adjustHeight();
+    }, [value, adjustHeight]);
+
     return (
-        <div className="chat-footer bg-2 pl-05 pr-05">
-            <div className="l-input mr-1">
-                <IonInput
-                    type="text"
-                    mode="ios"
-                    value={value}
-                    placeholder="Введите сообщение..."
-                    onIonInput={(e) => onValueChange(e.detail.value as string)}
-                    onKeyUp={onKeyUp}
-                />
+        <div className="chat-footer">
+            <div className="chat-input-container">
+                <div className="chat-input-wrapper">
+                    <textarea
+                        ref={textareaRef}
+                        className="chat-input"
+                        placeholder="Введите сообщение..."
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        onKeyPress={onKeyPress}
+                        rows={1}
+                    />
+                </div>
+                <button 
+                    className={`chat-send-button ${!value.trim() ? 'chat-send-disabled' : ''}`}
+                    onClick={onSend}
+                    disabled={!value.trim()}
+                >
+                    <IonIcon icon={sendSharp} />
+                </button>
             </div>
-            <button 
-                onClick={onSend}
-                disabled={!value.trim()}
-                className="send-button"
-                style={{
-                    background: !value.trim() ? '#ccc' : 'linear-gradient(135deg, #4CAF50, #45a049)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '3em',
-                    height: '3em',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: !value.trim() ? 'not-allowed' : 'pointer',
-                    fontSize: '1.2em'
-                }}
-            >
-                →
-            </button>
         </div>
     );
 });
@@ -168,12 +161,13 @@ export function Chats(props: ChatsProps) {
     
     const hist = useIonRouter();
     const socketRef = useRef<any>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Мемоизируем разбор имени
     const { arr, userName, userInitials } = useMemo(() => {
         const arr = props.name.split(":");
         const userName = arr[2] || '';
-        
+
         const jarr = userName.split(" ");
         let initials = "";
         jarr.forEach(elem => {
@@ -190,19 +184,24 @@ export function Chats(props: ChatsProps) {
         cargo: arr[1]
     }), [arr]);
 
+    // Прокрутка к последнему сообщению
+    const scrollToBottom = useCallback(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, []);
+
     // Функция загрузки чата
-    function loadChat() {
+    const loadChat = useCallback(() => {
         const socket = socketService.getSocket();
         if (socket) {
             socket.emit("get_chat", socketParams);
         }
-    }
+    }, [socketParams]);
 
     // Функция refresh
-    function refresh(event: CustomEvent) {
+    const refresh = useCallback((event: CustomEvent) => {
         loadChat();
         event.detail.complete();
-    }
+    }, [loadChat]);
 
     // Настройка сокет соединения
     const setupSocketConnection = useCallback(() => {
@@ -211,10 +210,10 @@ export function Chats(props: ChatsProps) {
 
         socketRef.current = socket;
         
-        // Подписываемся на события чата
         const handleChatData = (res: any) => {
             if (res.success) {
                 setInfo(res.data);
+                setTimeout(scrollToBottom, 100);
             } else {
                 setInfo([]);
             }
@@ -226,10 +225,8 @@ export function Chats(props: ChatsProps) {
 
         socket.on("get_chat", handleChatData);
         socket.on("send_message", handleNewMessage);
-
-        // Загружаем данные чата
         loadChat();
-    }, [socketParams]);
+    }, [loadChat, scrollToBottom]);
 
     // Очистка ресурсов
     const cleanup = useCallback(() => {
@@ -241,38 +238,40 @@ export function Chats(props: ChatsProps) {
         setValue("");
     }, []);
 
-    // Мемоизированная функция отправки сообщения
+    // Отправка сообщения
     const sendMessage = useCallback(() => {
         if (!value.trim() || !socketRef.current) return;
         
         socketRef.current.emit("send_message", {
-            token: Store.getState().login.token,
-            cargo: arr[1],
-            recipient: arr[0],
-            message: value
+            token:          Store.getState().login.token,
+            cargo:          arr[1],
+            recipient:      arr[0],
+            message:        value
         });
         
         setValue("");
-    }, [value, arr]);
+        setTimeout(scrollToBottom, 100);
+    }, [value, arr, scrollToBottom]);
 
-    // Мемоизированный обработчик нажатия Enter
-    const handleKeyUp = useCallback((e: any) => {
-        if (e.key === "Enter") {
+    // Обработчик нажатия клавиш
+    const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
             sendMessage();
         }
     }, [sendMessage]);
 
-    // Мемоизированный обработчик изменения значения
+    // Обработчик изменения значения
     const handleValueChange = useCallback((newValue: string) => {
         setValue(newValue);
     }, []);
 
-    // Мемоизированный обработчик возврата
+    // Обработчик возврата
     const handleBack = useCallback(() => {
         hist.push("/tab2");
     }, [hist]);
 
-    // Lifecycle хуки Ionic
+    // Lifecycle хуки
     useIonViewDidEnter(() => {
         setIsVisible(true);
         setupSocketConnection();
@@ -283,35 +282,37 @@ export function Chats(props: ChatsProps) {
         cleanup();
     });
 
-    // Не отрисовываем компонент, если он не активен
     if (!isVisible) {
         return null;
     }
 
     return (
-        <div>
+        <div className="chat-container">
             <ChatHeader 
                 onBack={handleBack}
                 userName={userName}
                 userInitials={userInitials}
             />
             
-            <div className="chat-body1 bg-2">
+            <div className="chat-body">
                 <IonRefresher slot="fixed" onIonRefresh={refresh}>
                     <IonRefresherContent />
                 </IonRefresher>
+                
                 {info.length === 0 ? (
                     <EmptyState />
                 ) : (
                     <MessagesList info={info} userInitials={userInitials} />
                 )}
+                
+                <div ref={messagesEndRef} />
             </div>
-            
-            <ChatFooter
+
+            <ChatFooter 
                 value={value}
-                onValueChange={handleValueChange}
+                onChange={handleValueChange}
                 onSend={sendMessage}
-                onKeyUp={handleKeyUp}
+                onKeyPress={handleKeyPress}
             />
         </div>
     );

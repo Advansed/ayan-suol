@@ -77,39 +77,22 @@ export const useCompany = (): UseCompanyReturn => {
             socket.off('get_company')
         }
 
-  }, [socket])
+    }, [socket])
 
-  // Сохранение данных
-  const saveData = useCallback((data: CompanyData) => {
-        if (!socket) return
+    // Сохранение данных
+    const saveData = useCallback((data: CompanyData) => {
+            if (!socket) return
 
-        setIsSaving(true)
+            setIsSaving(true)
 
-        socket.emit('set_company', { 
-            token: Store.getState().login.token, 
-            ...data 
-        })
+            socket.emit('set_company', { 
+                token: Store.getState().login.token, 
+                ...data 
+            })
 
-        socket.on('set_company', (response) => {
-        setIsSaving(false)
-        if (response.success) {
-            Store.dispatch({ type: 'company', data: data })
-
-            toast.success("Данные по организации сохранены")
-
-        } else {
-
-            toast.error(response.message || 'Ошибка сохранения')
-
-        }
-        })
-
-        return () => {
-
-            socket.off('set_company')
-
-        }
-  }, [socket])
+            toast.info("Данные компании сохраняются...")
+            
+    }, [socket])
 
 
   return {
