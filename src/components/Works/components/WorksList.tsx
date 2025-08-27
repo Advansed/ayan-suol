@@ -8,12 +8,13 @@ import Lottie from 'lottie-react';
 import animationData from './data.json';
 
 interface WorksListProps {
-    works: WorkInfo[];
-    title?: string;
-    isLoading?: boolean;
-    onWorkClick: (work: WorkInfo) => void;
-    onOfferClick: (work: WorkInfo) => void;
-    onRefresh?: () => Promise<void>;
+    works:          WorkInfo[];
+    title?:         string;
+    isLoading?:     boolean;
+    onWorkClick:    (work: WorkInfo) => void;
+    onOfferClick:   (work: WorkInfo) => void;
+    onMapClick:     (work: WorkInfo) => void;  // Добавлено
+    onRefresh?:     () => Promise<void>;
 }
 
 export const WorksList: React.FC<WorksListProps> = ({
@@ -22,6 +23,7 @@ export const WorksList: React.FC<WorksListProps> = ({
     isLoading = false,
     onWorkClick,
     onOfferClick,
+    onMapClick,
     onRefresh
 }) => {
     const history = useHistory();
@@ -125,7 +127,7 @@ export const WorksList: React.FC<WorksListProps> = ({
                                             color="primary"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                onOfferClick(work);
+                                                onMapClick(work);
                                             }}
                                         >
                                             <IonLabel className="fs-08">Карта</IonLabel>

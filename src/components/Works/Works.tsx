@@ -6,6 +6,7 @@ import React from 'react';
 import { WorkPageType, WorkInfo } from './types';
 import { useWorks } from './hooks';
 import { WorksList, WorkView, WorkOffer } from './components';
+import { WorkMap } from './components/WorkMap';
 
 export const Works: React.FC = () => {
     const {
@@ -35,6 +36,11 @@ export const Works: React.FC = () => {
         navigateTo({ type: 'offer', work });
     };
 
+    // Добавить обработчик после handleOfferClick
+    const handleMapClick = (work: WorkInfo) => {
+        navigateTo({ type: 'map', work });
+    };
+
     // Рендер страниц
     const renderPage = () => {
         switch (currentPage.type) {
@@ -46,6 +52,7 @@ export const Works: React.FC = () => {
                         onWorkClick={handleWorkClick}
                         onOfferClick={handleOfferClick}
                         onRefresh={ refreshWorks }
+                        onMapClick={ handleMapClick }
                     />
                 );
 
@@ -65,16 +72,14 @@ export const Works: React.FC = () => {
                     />
                 );
 
-            case 'archive':
+            // В renderPage() добавить новый случай:
+            case 'map':
                 return (
-                    <WorksList
-                        works={archiveWorks}
-                        isLoading={isLoading}
-                        onWorkClick={handleWorkClick}
-                        onOfferClick={handleOfferClick}
+                    <WorkMap
+                        work={currentPage.work}
+                        onBack={goBack}
                     />
                 );
-
             default:
                 return (
                     <WorksList
@@ -82,6 +87,7 @@ export const Works: React.FC = () => {
                         isLoading={isLoading}
                         onWorkClick={handleWorkClick}
                         onOfferClick={handleOfferClick}
+                        onMapClick={handleMapClick}
                     />
                 );
         }

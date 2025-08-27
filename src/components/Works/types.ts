@@ -108,7 +108,8 @@ export type WorkPageType =
     | { type: 'list' }
     | { type: 'view'; work: WorkInfo }
     | { type: 'offer'; work: WorkInfo }
-    | { type: 'archive' };
+    | { type: 'archive' }
+    | { type: 'map'; work: WorkInfo };
 
 // Состояние формы предложения
 export interface OfferFormState {
@@ -231,3 +232,4 @@ export interface UseWorksReturn {
     // Архив (добавить)
     loadArchiveWorks: () => Promise<void>;
 }
+
