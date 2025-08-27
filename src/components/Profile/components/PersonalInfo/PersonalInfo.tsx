@@ -113,6 +113,12 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
     }
   }
 
+  const handleSave = () => {
+    if (validateCurrentStep()) {
+      savePersonalInfo(form.name, form.email)
+    }
+  }
+
   // Удаление фото
   const removeAvatar = () => {
     setUploadedAvatar( undefined )
@@ -293,8 +299,8 @@ export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
               title={getStepTitle()}
               onBack={handleBackNavigation}
               onForward={handleForwardNavigation}
-              isLastStep={false} // У PersonalInfo каждый шаг сохраняется отдельно
-              isSaving={isSaving}
+              onSave={ handleSave }
+              isLastStep={currentStep === 3} // У PersonalInfo каждый шаг сохраняется отдельно
           />
           
           {isLoading ? (

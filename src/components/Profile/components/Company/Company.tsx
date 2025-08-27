@@ -64,22 +64,22 @@ export const Company: React.FC<Props> = ({ onBack }) => {
     if (companyData) {
       setForm(prev => ({
         ...prev,
-        guid: companyData.guid || '',
-        company_type: companyData.company_type || 0,
-        inn: companyData.inn || '',
-        kpp: companyData.kpp || '',
-        ogrn: companyData.ogrn || '',
-        name: companyData.name || '',
-        short_name: companyData.short_name || '',
-        address: companyData.address || '',
-        postal_address: companyData.postal_address || '',
-        phone: companyData.phone || '',
-        email: companyData.email || '',
-        description: companyData.description || '',
-        bank_name: companyData.bank_name || '',
-        bank_bik: companyData.bank_bik || '',
-        bank_account: companyData.bank_account || '',
-        bank_corr_account: companyData.bank_corr_account || ''
+        guid:               companyData.guid || '',
+        company_type:       companyData.company_type || 0,
+        inn:                companyData.inn || '',
+        kpp:                companyData.kpp || '',
+        ogrn:               companyData.ogrn || '',
+        name:               companyData.name || '',
+        short_name:         companyData.short_name || '',
+        address:            companyData.address || '',
+        postal_address:     companyData.postal_address || '',
+        phone:              companyData.phone || '',
+        email:              companyData.email || '',
+        description:        companyData.description || '',
+        bank_name:          companyData.bank_name || '',
+        bank_bik:           companyData.bank_bik || '',
+        bank_account:       companyData.bank_account || '',
+        bank_corr_account:  companyData.bank_corr_account || ''
       }))
     }
   }, [companyData])
@@ -129,6 +129,13 @@ export const Company: React.FC<Props> = ({ onBack }) => {
         saveData(form)
       }
     }
+  }
+
+  const handleSave = () => {
+      if (validateCurrentStep()) {
+        saveData(form)
+      }
+      onBack()
   }
 
   // Получение заголовка шага
@@ -573,8 +580,8 @@ export const Company: React.FC<Props> = ({ onBack }) => {
           title={getStepTitle()}
           onBack={handleBackNavigation}
           onForward={handleForwardNavigation}
-          isLastStep={false} // У PersonalInfo каждый шаг сохраняется отдельно
-          isSaving={isSaving}
+          onSave={ handleSave }
+          isLastStep={ currentStep === 4 } // У PersonalInfo каждый шаг сохраняется отдельно
         />
         {success && (
           <div className={styles.successMessage}>

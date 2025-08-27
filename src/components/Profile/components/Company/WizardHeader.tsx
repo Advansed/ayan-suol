@@ -7,18 +7,16 @@ interface WizardHeaderProps {
   title: string
   onBack: () => void
   onForward: () => void
+  onSave: () => void
   isLastStep?: boolean
-  isSaving?: boolean
-  disabled?: boolean
 }
 
 export const WizardHeader: React.FC<WizardHeaderProps> = ({
   title,
   onBack,
   onForward,
+  onSave,
   isLastStep = false,
-  isSaving = false,
-  disabled = false
 }) => {
   return (
     <div className={styles.stepHeader}>
@@ -28,11 +26,25 @@ export const WizardHeader: React.FC<WizardHeaderProps> = ({
       
       <h3 className={styles.stepTitle}>{ title }</h3>
       
-      <button 
-        className={`${styles.navButton} ${styles.navButtonRight}`} 
-        onClick={onForward}
-      >
-          <IonIcon icon={chevronForwardOutline} />
-      </button>
+      { isLastStep && (
+
+        <button 
+          className={`${styles.navButton} ${styles.navButtonRight}`} 
+          onClick={onSave}
+        >
+            <IonIcon icon={ saveOutline } />
+        </button>
+        
+      )}
+       { !isLastStep && (
+
+        <button 
+          className={`${styles.navButton} ${styles.navButtonRight}`} 
+          onClick={onForward}
+        >
+            <IonIcon icon={chevronForwardOutline} />
+        </button>
+        
+      )}
     </div>  )
 }

@@ -323,8 +323,8 @@ export const Transport: React.FC<Props> = ({ onBack }) => {
             title={getStepTitle()}
             onBack={handleBackNavigation}
             onForward={handleForwardNavigation}
-            isLastStep={false}
-            isSaving={isSaving}
+            onSave={ handleSave }
+            isLastStep={currentStep === 2}
           />
           <div className={styles.stepContainer}>
             
