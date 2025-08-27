@@ -21,7 +21,7 @@ export const ToastContext = createContext<ToastContextType | null>(null);
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = (type: ToastType, message: string, duration = 4000) => {
+  const addToast = (type: ToastType, message: string, duration = 1500) => {
     const id = Date.now().toString();
     const newToast: Toast = { id, type, message, duration };
     setToasts(prev => [...prev.slice(-4), newToast]);

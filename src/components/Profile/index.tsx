@@ -11,10 +11,21 @@ import { PersonalInfo }                         from './components/PersonalInfo/
 import { Company }                              from './components/Company/Company'
 import { Transport }                            from './components/Transport/Transport'
 import { Agreements }                           from './components/Agreements/Agreements'
+import { useStoreField }                        from '../Store'
+import { 
+  calculatePassportCompletion, 
+  calculateTransportCompletion, 
+  calculateCompanyCompletion 
+} from '../utils'
 
 export const Profile: React.FC = () => {
   const { user, isLoading, userType } = useProfile()
   const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
+  
+  // Получаем данные из Store
+  const passportData  = useStoreField('passport',   61)
+  const transportData = useStoreField('transport',  62)?.[0]
+  const companyData   = useStoreField('company',    63)
 
   useEffect(() => {
     const loadings = document.querySelectorAll('ion-loading')
@@ -27,24 +38,30 @@ export const Profile: React.FC = () => {
   const menuItems = useMemo(() => {
     let common: any = []
   
+    // Вычисляем проценты заполненности
+    const passportCompletion = calculatePassportCompletion(passportData)
+    const transportCompletion = calculateTransportCompletion(transportData)  
+    const companyCompletion = calculateCompanyCompletion(companyData)
+
+  
     switch(userType) {
       case 0: common = []; break;
       case 1: common = [
         { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
-        { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),    completion: 0 + ' %' },
-        { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),     completion: 0 + ' %' },
+        { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),    completion: passportCompletion + ' %' },
+        { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),     completion: companyCompletion + ' %' },
       ]; break;
       case 2: common = [
         { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
-        { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),    completion: 0 + ' %' },
-        { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),     completion: 0 + ' %' },
-        { title: MENU_ITEMS.TRANSPORT,      onClick: () => setCurrentPage(PROFILE_PAGES.TRANSPORT),   completion: 0 + ' %' },        
+        { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),    completion: passportCompletion + ' %' },
+        { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),     completion: companyCompletion + ' %' },
+        { title: MENU_ITEMS.TRANSPORT,      onClick: () => setCurrentPage(PROFILE_PAGES.TRANSPORT),   completion: transportCompletion + ' %' },        
       ]; break;
       default: common = []
     }
 
     return common
-  }, [userType])
+  }, [userType, passportData, transportData, companyData])
 
   if (isLoading || !user) {
     return <IonLoading isOpen={true} message={UI_TEXT.LOADING} />
