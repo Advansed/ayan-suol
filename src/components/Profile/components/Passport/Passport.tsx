@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { IonIcon, IonButton } from '@ionic/react'
-import { arrowBackOutline, chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons'
+import { IonIcon } from '@ionic/react'
+import { chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons'
 import { usePassport } from './usePassport'
-import { Files } from '../../../Files'
 import styles from './Passport.module.css'
 import { WizardHeader } from '../Company/WizardHeader'
+import { useToast } from '../../../Toast'
 
 interface Props {
   onBack: () => void
 }
 
 export const Passport: React.FC<Props> = ({ onBack }) => {
-  const { passportData, save, load, isSaving, error } = usePassport()
+  const { passportData, save, load, isSaving } = usePassport()
   const [currentStep, setCurrentStep] = useState(1)
   const scrollRef = useRef<HTMLDivElement>(null)
-  
+  const toast = useToast()
   const [form, setForm] = useState({
     series: '',
     number: '',
@@ -35,7 +35,6 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
   })
 
   useEffect(() => {
-    console.log("load")
     load()
   }, [load])
 
@@ -119,29 +118,6 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
     }
   }
 
-  // Рендер заголовочной панели
-  const renderStepHeader = () => (
-    <div className={styles.stepHeader}>
-      <button className={`${styles.navButton} ${styles.navButtonLeft}`} onClick={handleBackNavigation}>
-        <IonIcon icon={chevronBackOutline} />
-      </button>
-      
-      <h3 className={styles.stepTitle}>{getStepTitle()}</h3>
-      
-      <button 
-        className={`${styles.navButton} ${styles.navButtonRight}`} 
-        onClick={handleForwardNavigation}
-        disabled={currentStep === 4 && isSaving}
-      >
-        {currentStep === 4 ? (
-          <IonIcon icon={saveOutline} />
-        ) : (
-          <IonIcon icon={chevronForwardOutline} />
-        )}
-      </button>
-    </div>
-  )
-
   // Автоскролл к активному полю
   const scrollToActiveField = () => {
     setTimeout(() => {
@@ -190,6 +166,7 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
   const handleSave = () => {
     if (validateCurrentStep()) {
       save(form)
+      onBack()
     }
   }
 
@@ -381,8 +358,8 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
           title={getStepTitle()}
           onBack={handleBackNavigation}
           onForward={handleForwardNavigation}
-          isLastStep={false} // У PersonalInfo каждый шаг сохраняется отдельно
-          isSaving={isSaving}
+          onSave={ handleSave }
+          isLastStep={currentStep === 4} // У PersonalInfo каждый шаг сохраняется отдельно
         />
         
         {currentStep === 1 && renderBasicInfo()}
@@ -390,7 +367,6 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
         {currentStep === 3 && renderAddressInfo()}
         {currentStep === 4 && renderDocuments()}
 
-        {error && <div className={styles.errorMsg}>{error}</div>}
       </div>
     </div>
   </div>

@@ -19,6 +19,7 @@ export const i_state = {
     works:                              [],
     transport:                          new Object(),
     company:                            new Object(),     
+    passport:                           new Object(),     
     profile:                            [],
     publish:                            [],
     invoices:                           [],
@@ -271,6 +272,13 @@ export const setupSocketHandlers = () => {
         if( res.success){
             console.log( "Company received", res );
             Store.dispatch({ type: "company", data: res.data });    
+        }
+    });
+
+    socket.on('get_passport', (res) => {
+        if( res.success){
+            console.log( "Passport received", res );
+            Store.dispatch({ type: "passport", data: res.data });    
         }
     });
 
