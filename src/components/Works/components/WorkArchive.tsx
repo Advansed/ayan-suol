@@ -1,33 +1,73 @@
-import React, { useEffect } from 'react';
-import { WorksList } from './WorksList';
-import { useWorks } from '../hooks';
+import React from 'react';
+import { IonRefresher, IonRefresherContent, IonSpinner } from '@ionic/react';
+import { WorkCard } from './WorkCard';
+import useWorkArchive from '../hooks/useWorkArchive';
+import styles from './WorkArchive.module.css';
 
-export const WorkArchive: React.FC = () => {
-    const { archiveWorks, isArchiveLoading, loadArchiveWorks } = useWorks();
+export const WorkArchive = () => {
+  const { works, loading, refreshing, refresh } = useWorkArchive();
 
-    useEffect(() => {
-        loadArchiveWorks();
-        console.log( archiveWorks )
-    }, []);
+  const handleRefresh = async (event: any) => {
+    await refresh();
+    event.detail.complete();
+  };
 
-    console.log( archiveWorks )
+  const handleWorkClick = (work) => {
+    // TODO: Добавить навигацию к просмотру работы
+    console.log('Clicked work:', work);
+  };
 
-    const handleWorkClick = (work) => {
-        console.log('Archive work clicked:', work);
-        // Можно добавить navigateTo({ type: 'view', work, isArchive: true })
-    };
-
-    const handleOfferClick = (work) => {
-        console.log('Cannot offer on archived work');
-    };
-
+  if (loading) {
     return (
-        <WorksList
-            works           = { archiveWorks }
-            title           = 'Выполненные работы'
-            isLoading       = { isArchiveLoading }
-            onWorkClick     = { handleWorkClick }
-            onOfferClick    = { handleOfferClick }
-        />
+      <div className={styles.loading}>
+        <IonSpinner />
+        <div>Загрузка архива...</div>
+      </div>
     );
+  }
+
+  return (
+    <div className={styles.container}>
+      <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+        <IonRefresherContent
+          pullingIcon="chevron-down-outline"
+          pullingText="Потяните для обновления"
+          refreshingSpinner="circles"
+          refreshingText="Обновление..."
+        />
+      </IonRefresher>
+
+      <div className={styles.header}>
+        <div className="fs-09"><b>Архив работ</b></div>
+        <button 
+          onClick={refresh} 
+          disabled={refreshing}
+          className={`${styles.refreshBtn} ${refreshing ? styles.refreshing : ''}`}
+        >
+          {refreshing ? '⟳' : '↻'} Обновить
+        </button>
+      </div>
+
+      <div className={styles.stats}>
+        Выполненных работ: {works.length}
+      </div>
+
+      <div className={styles.list}>
+        {works.length === 0 ? (
+          <div className={styles.empty}>
+            <div className={styles.emptyIcon}>🚛</div>
+            <div className={styles.emptyText}>Нет выполненных работ</div>
+          </div>
+        ) : (
+          works.map(work => (
+            <WorkCard
+              key={work.guid}
+              work={work}
+              onClick={() => handleWorkClick(work)}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
 };
