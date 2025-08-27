@@ -13,7 +13,7 @@ import { Transport }                            from './components/Transport/Tra
 import { Agreements }                           from './components/Agreements/Agreements'
 
 export const Profile: React.FC = () => {
-  const { user, isLoading, userType, completion } = useProfile()
+  const { user, isLoading, userType } = useProfile()
   const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
 
   useEffect(() => {
@@ -31,20 +31,20 @@ export const Profile: React.FC = () => {
       case 0: common = []; break;
       case 1: common = [
         { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
-        { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),    completion: completion.passport + ' %' },
-        { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),     completion: completion.company + ' %' },
+        { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),    completion: 0 + ' %' },
+        { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),     completion: 0 + ' %' },
       ]; break;
       case 2: common = [
         { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
-        { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),    completion: completion.passport + ' %' },
-        { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),     completion: completion.company + ' %' },
-        { title: MENU_ITEMS.TRANSPORT,      onClick: () => setCurrentPage(PROFILE_PAGES.TRANSPORT),   completion: completion.transport + ' %' },        
+        { title: MENU_ITEMS.PASSPORT,       onClick: () => setCurrentPage(PROFILE_PAGES.PASSPORT),    completion: 0 + ' %' },
+        { title: MENU_ITEMS.COMPANY,        onClick: () => setCurrentPage(PROFILE_PAGES.COMPANY),     completion: 0 + ' %' },
+        { title: MENU_ITEMS.TRANSPORT,      onClick: () => setCurrentPage(PROFILE_PAGES.TRANSPORT),   completion: 0 + ' %' },        
       ]; break;
       default: common = []
     }
 
     return common
-  }, [userType, completion])
+  }, [userType])
 
   if (isLoading || !user) {
     return <IonLoading isOpen={true} message={UI_TEXT.LOADING} />
@@ -86,7 +86,7 @@ export const Profile: React.FC = () => {
 
       <ProfileStats ratings = { user.ratings } userType = { userType } />
       
-      <ProfileMenu items = { menuItems } completion = { completion }/>
+      <ProfileMenu items = { menuItems } />
 
       <Agreements />
 

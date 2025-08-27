@@ -4,30 +4,11 @@ import { Store } from '../../Store'
 import { User } from '../types'
 import socketService from '../../Sockets'
 
-interface CompletionData {
-  passport: number
-  company: number
-  transport: number
-}
 
 export const useProfile = () => {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [completion, setCompletion] = useState<CompletionData>({
-    passport: 0,
-    company: 0,
-    transport: 0
-  })
   const subscriptionRef = useRef<number>()
-
-  // Функция получения процентов через сокет
-  const fetchCompletion = () => {
-    const socket = socketService.getSocket()
-    if (socket) {
-      console.log('emit... get_percent')
-      socket.emit('get_percent', { token: Store.getState().login.token })
-    }
-  }
 
   useEffect(() => {
     // Получаем начальные данные
@@ -37,7 +18,6 @@ export const useProfile = () => {
       setUser( loginData )
       setIsLoading( false )
       // Получаем проценты после загрузки пользователя
-      fetchCompletion()
     }
 
     // Подписка на изменения
@@ -52,20 +32,12 @@ export const useProfile = () => {
         setUser(data)
         setIsLoading(false)
         // Обновляем проценты при изменении пользователя
-        if (data) fetchCompletion()
       }
     })
 
     // Socket обработчики
     const socket = socketService.getSocket()
     if (socket) {
-      // Обработчик ответа get_percent
-      socket.on('get_percent', (res) => {
-        console.log("on... get_percent", res)
-        if (res.success && res.data) {
-          setCompletion(res.data)
-        }
-      })
 
       // Существующий обработчик set_driver
       socket.on('set_driver', (res) => {
@@ -98,8 +70,6 @@ export const useProfile = () => {
   return { 
     user, 
     isLoading, 
-    userType, 
-    completion,
-    refetchCompletion: fetchCompletion 
+    userType
   }
 }

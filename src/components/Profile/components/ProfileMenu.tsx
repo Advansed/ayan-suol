@@ -12,7 +12,6 @@ import './ProfileMenu.css'
 
 interface Props {
     items:        ProfileMenuItem[]
-    completion:   any
 }
 
 const getMenuIcon = (index: number) => {
