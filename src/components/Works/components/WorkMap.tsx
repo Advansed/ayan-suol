@@ -1,8 +1,7 @@
 import React from 'react';
-import { IonButton, IonIcon } from '@ionic/react';
+import { IonIcon } from '@ionic/react';
 import { arrowBackOutline } from 'ionicons/icons';
 import { WorkInfo } from '../types';
-import { WorkCard } from './WorkCard';
 import Maps from '../../Maps/Maps';
 
 interface WorkMapProps {
@@ -12,17 +11,17 @@ interface WorkMapProps {
 
 export const WorkMap: React.FC<WorkMapProps> = ({ work, onBack }) => {
     return (
-        <div className="a-container">
-            {/* Заголовок с кнопкой назад */}
-            <div className="cr-header">
-                <IonButton
-                    fill="clear"
-                    color="primary"
+        <>
+            {/* Header */}
+            <div className="flex ml-05 mt-05">
+                <IonIcon 
+                    icon={arrowBackOutline} 
+                    className="w-15 h-15"
                     onClick={onBack}
-                >
-                    <IonIcon icon={arrowBackOutline} />
-                </IonButton>
-                <div className="cr-header-title">Карта маршрута</div>
+                />
+                <div className="a-center w-90 fs-09">
+                    <b>Карта маршрута</b>
+                </div>
             </div>
 
             <Maps
@@ -30,7 +29,6 @@ export const WorkMap: React.FC<WorkMapProps> = ({ work, onBack }) => {
                 endCoords={{lat: work.destiny.lat, long: work.destiny.long}} 
                 workInfo={work}
             />
-
-        </div>
+        </>
     );
 };

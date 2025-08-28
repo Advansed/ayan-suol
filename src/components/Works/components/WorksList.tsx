@@ -103,7 +103,7 @@ export const WorksList: React.FC<WorksListProps> = ({
                                         color="primary"
                                         onClick={(e) => handleChat(work, e)}
                                     >
-                                        <IonLabel className="fs-08">Чат с заказчиком</IonLabel>
+                                        <IonLabel className="fs-08">Чат</IonLabel>
                                     </IonButton>
                                     
                                     {work.status === WorkStatus.NEW && (
@@ -119,12 +119,10 @@ export const WorksList: React.FC<WorksListProps> = ({
                                             <IonLabel className="fs-08">Предложить</IonLabel>
                                         </IonButton>
                                     )}
-                                </div>
-                                <div>
                                         <IonButton
                                             className="w-50 cr-button-2"
                                             mode="ios"
-                                            color="primary"
+                                            color="tertiary"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 onMapClick(work);
@@ -133,6 +131,8 @@ export const WorksList: React.FC<WorksListProps> = ({
                                             <IonLabel className="fs-08">Карта</IonLabel>
                                         </IonButton>
 
+                                </div>
+                                <div>
                                 </div>
                             </div>
                         ))}

@@ -41,7 +41,7 @@ export const initializeMap = async (container: HTMLElement): Promise<YandexMapIn
         const map = new window.ymaps.Map(container, {
           center: [55.76, 37.64],
           zoom: 10,
-          controls: ['zoomControl', 'fullscreenControl']
+          controls: ['zoomControl'] // Убрали 'fullscreenControl'
         });
         
         resolve(map);
