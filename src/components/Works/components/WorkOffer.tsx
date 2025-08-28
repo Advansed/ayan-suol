@@ -127,36 +127,46 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack }) => {
 
     return (
         <div className="work-offer-info">
-            <IonIcon 
-                icon={arrowBackOutline} 
-                className="back-icon" 
-                onClick={onBack}
-            />
+            <div className='flex'>
+                <IonIcon 
+                    icon={arrowBackOutline} 
+                    className='w-15 h-15'
+                    color='primary'
+                    onClick={onBack}
+                />
+                <div className="ml-2 cl-prim"><b>Создание предложения</b></div>
+
+            </div>
             
             <div className="content">
-                <div className="title"><b>Создание предложения</b></div>
                 
                 {/* Информация о работе */}
                 <div className="work-info-section">
                     <div className="work-info-item">
-                        <span className="work-info-label">Маршрут:</span>
-                        <span className="work-info-value">
-                            {work.address?.city} → {work.destiny?.city}
+                        <span className="work-info-label">Точка отправки:</span>
+                        <span className="work-info-value fs-08">
+                            {work.address?.city.city} → {work.address?.address}
+                        </span>
+                    </div>
+                    <div className="work-info-item">
+                        <span className="work-info-label">Точка прибытия:</span>
+                        <span className="work-info-value fs-08">
+                            {work.address?.city.city} → {work.destiny?.address}
                         </span>
                     </div>
                     <div className="work-info-item">
                         <span className="work-info-label">Груз:</span>
-                        <span className="work-info-value">{work.name}</span>
+                        <span className="work-info-value fs-08">{work.name}</span>
                     </div>
                     <div className="work-info-item">
                         <span className="work-info-label">Вес/Объем:</span>
-                        <span className="work-info-value">
+                        <span className="work-info-value fs-08">
                             {workFormatters.weight(work.weight)} / {workFormatters.volume(work.volume)}
                         </span>
                     </div>
                     <div className="work-info-item">
                         <span className="work-info-label">Цена заказчика:</span>
-                        <span className="work-info-value">
+                        <span className="work-info-value fs-08">
                             {workFormatters.currency(work.price)}
                         </span>
                     </div>
@@ -164,7 +174,7 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack }) => {
 
                 {/* Форма предложения */}
                 <div className="field">
-                    <div className="label">Выберите транспорт</div>
+                    <div className="label fs-09">Выберите транспорт</div>
                     <div className="transport-select">
                         <Select
                             value={selectedTransport}

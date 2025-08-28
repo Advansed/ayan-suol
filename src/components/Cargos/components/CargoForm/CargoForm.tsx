@@ -9,6 +9,8 @@ import '../../../../../node_modules/react-dadata/dist/react-dadata.css'
 import { Step5 } from './Step5';
 import { useProfile } from '../../../Profile/hooks/useProfile';
 import { useHistory } from 'react-router';
+import { useStoreField } from '../../../Store';
+import { calculateCompanyCompletion } from '../../../utils';
 
 interface CargoFormProps {
   cargo?: CargoInfo;
@@ -17,15 +19,16 @@ interface CargoFormProps {
 }
 
 export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) => {
-  const { completion } = useProfile();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-   const isCompanyIncomplete = completion.company < 100;
-   
-   const hist = useHistory()
+  const companyData   = useStoreField('company',    21)
 
-   console.log( 'isCompanyIncomplete', isCompanyIncomplete )
-  
+  const companyCompletion = calculateCompanyCompletion(companyData)
+
+  const isCompanyIncomplete = companyCompletion < 70;
+   
+  const hist = useHistory()
+
   const {
       formState,
       currentStep,
@@ -39,6 +42,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
   } = useCargoFormWizard();
 
   const { data, isSubmitting } = formState;
+
 
   // Инициализация формы при монтировании
   useEffect(() => {
