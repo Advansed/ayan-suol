@@ -31,9 +31,9 @@ const Maps: React.FC<MapProps> = ({ startCoords, endCoords, cargoInfo, workInfo,
   return (
     <div className={styles.mapContainer}>
       <div 
-        ref={mapRef} 
-        className={styles.map}
-        style={{ height }}
+        ref         = { mapRef } 
+        className   = { styles.map }
+        style       = { { height } }
       />
     </div>
   );
