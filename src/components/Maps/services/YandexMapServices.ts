@@ -6,13 +6,36 @@ declare global {
   }
 }
 
-export const initializeMap = async (container: HTMLElement): Promise<YandexMapInstance> => {
+// Проверка и загрузка API
+const loadYandexMapsAPI = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    if (!window.ymaps) {
-      reject(new Error('Yandex Maps API не загружен'));
+    if (window.ymaps) {
+      resolve();
       return;
     }
 
+    const script = document.createElement('script');
+    const apiKey = "1a39cc54-1ef2-4686-a300-8c0e84631beb";
+    
+    if (!apiKey) {
+      reject(new Error('API ключ не найден в переменных окружения'));
+      return;
+    }
+
+    script.src = `https://api-maps.yandex.ru/2.1/?apikey=${apiKey}&lang=ru_RU`;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Не удалось загрузить Yandex Maps API'));
+    
+    document.head.appendChild(script);
+  });
+};
+
+export const initializeMap = async (container: HTMLElement): Promise<YandexMapInstance> => {
+  // Сначала загружаем API если его нет
+  await loadYandexMapsAPI();
+  
+  return new Promise((resolve, reject) => {
     window.ymaps.ready(() => {
       try {
         const map = new window.ymaps.Map(container, {

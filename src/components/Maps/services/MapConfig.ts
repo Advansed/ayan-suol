@@ -1,7 +1,8 @@
 // Конфигурация для Yandex Maps
 export const MAPS_CONFIG = {
   // API ключ из переменных окружения
-  apiKey: "1a39cc54-1ef2-4686-a300-8c0e84631beb",
+  apiKey: "f2f0a250-d1db-4754-a195-c4a7c1ba6602",
+    //"1a39cc54-1ef2-4686-a300-8c0e84631beb",
   
   // URL для подключения API
   apiUrl: 'https://api-maps.yandex.ru/2.1/',
