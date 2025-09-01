@@ -15,6 +15,8 @@ import {
 } from '../SharedComponents'
 import EULA from './eula'
 import styles from './Registration.module.css'
+import CargoAgree from '../../Profile/components/Agreements/CargoAgree'
+import { EscrowAgreement } from '../../Profile/components/Agreements/Escrow'
 
 interface RegistrationFormProps {
   onLoginForm?: () => void
@@ -31,14 +33,13 @@ const formatPhoneDisplay = (phone: string): string => {
 // ШАГ 0: ВЫБОР РОЛИ
 // ======================
 
-const RoleSelector: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
+const RoleSelector: React.FC<{ reg: UseRegReturn, setShowAgreement: (check:boolean)=> void }> = ({ reg, setShowAgreement }) => {
   const handleNext = useCallback(() => {
     if (reg.formData.userType) {
       reg.updateRegistrationData('userType', reg.formData.userType)
       reg.nextStep()
     }
   }, [reg])
-   const [showAgreement, setShowAgreement] = useState(false)
 
   return (
     <div className="login-container">
@@ -82,13 +83,11 @@ const RoleSelector: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
           />
           <span>
             Я принимаю условия{' '}
-            <button
-              type="button"
-              className="text-blue-600 underline hover:text-blue-800"
+            <div className='ml-05 t-underline'
               onClick={() => setShowAgreement(true)}
             >
               Пользовательского соглашения
-            </button>
+            </div>
           </span>
         </label>
         {reg.formErrors.agreementAccepted && (
@@ -103,17 +102,6 @@ const RoleSelector: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
         loading={reg.isLoading}
       />
 
-
-      {showAgreement && (
-        <div className={ styles.showAgreementOverlay }  onClick={() => setShowAgreement(false)}>
-          <div className={ styles.showAgreementContent } onClick={e => e.stopPropagation()}>
-            <button className={ styles.showAgreementCloseBtn } onClick={() => setShowAgreement(false)}>
-              ×
-            </button>
-            <EULA />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -370,9 +358,10 @@ const StepSetPassword: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
 
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ onLoginForm, onRecoveryForm }) => {
   const reg = useReg()
+  const [showAgreement, setShowAgreement ] = useState(false)
   
   const steps = [
-    <RoleSelector reg={reg} />,        // Шаг 0: Выбор роли
+    <RoleSelector reg={reg} setShowAgreement = { (check: boolean) => setShowAgreement(check) } />,        // Шаг 0: Выбор роли
     <StepPersonalInfo reg={reg} />,    // Шаг 1: Личные данные  
     <StepVerification reg={reg} />,    // Шаг 2: Верификация
     <StepSetPassword reg={reg} />      // Шаг 3: Пароль
@@ -411,6 +400,19 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onLoginForm, onReco
           <NavigationLinks links={navigationLinks} />
         )}
       </IonCard>
+        {showAgreement && (
+        <div className={ styles.showAgreementOverlay }  onClick={() => setShowAgreement(false)}>
+          <div className={ styles.showAgreementContent } onClick={e => e.stopPropagation()}>
+            <button className={ styles.showAgreementCloseBtn } onClick={() => setShowAgreement(false)}>
+              ×
+            </button>
+            <EULA />
+            <CargoAgree/>
+            <EscrowAgreement/>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

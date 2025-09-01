@@ -40,6 +40,7 @@ export interface UseRegReturn extends RegistrationState {
   updateFormData: (field: string, value: any) => void
   clearErrors: () => void
   validateField: (field: string, value: any) => string | null
+
 }
 
 export interface SocketResponse {
