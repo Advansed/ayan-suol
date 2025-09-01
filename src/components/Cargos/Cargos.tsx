@@ -8,6 +8,7 @@ import { useCargos, useCargoForm } from './hooks';
 import { CargosList } from './components';
 import { CargoForm } from './components/CargoForm';
 import { CargoView } from './components/CargoView';
+import { CargoInvoiceSections } from './components/CargoInvoices';
 
 export const Cargos: React.FC = () => {
     const cargosHook = useCargos();
@@ -43,9 +44,7 @@ export const Cargos: React.FC = () => {
 
     // Обработчики для создания
     const handleCreateSave = async ( data: CargoInfo ) => {
-            
         await createCargo( data );
-
     };
 
     const handleCreateCancel = () => {
@@ -95,6 +94,13 @@ export const Cargos: React.FC = () => {
         }
     };
 
+    // Обработчик для просмотра заявок
+    const handleViewInvoices = () => {
+        if (currentPage.type === 'view') {
+            navigateTo({ type: 'invoices', cargo: currentPage.cargo });
+        }
+    };
+
     // Рендер страниц
     const renderPage = () => {
         switch (currentPage.type) {
@@ -138,8 +144,31 @@ export const Cargos: React.FC = () => {
                         onEdit          = { handleViewEdit }
                         onDelete        = { handleViewDelete }
                         onPublish       = { handleViewPublish }
+                        onViewInvoices  = { handleViewInvoices }
                         isLoading       = { isLoading }
                     />
+                );
+
+            case 'invoices':
+                return (
+                    <div>
+                        {/* Header с кнопкой назад */}
+                        <div className="flex ml-05 mt-05">
+                            <div 
+                                className="w-15 h-15"
+                                onClick={()=> navigateTo({ type: 'view', cargo: currentPage.cargo }) }
+                                style={{ cursor: 'pointer' }}
+                            >
+                                ← 
+                            </div>
+                            <div className="a-center w-90 fs-09">
+                                <b>Заявки на груз</b>
+                            </div>
+                        </div>
+                        
+                        {/* Секции заявок */}
+                        <CargoInvoiceSections cargo={currentPage.cargo} />
+                    </div>
                 );
 
             default:

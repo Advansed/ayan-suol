@@ -108,6 +108,7 @@ export interface FormState {
 export type PageType = 
     | { type: 'list' }
     | { type: 'create' }
+    | { type: 'invoices'; cargo: CargoInfo }
     | { type: 'edit'; cargo: CargoInfo }
     | { type: 'view'; cargo: CargoInfo };
 

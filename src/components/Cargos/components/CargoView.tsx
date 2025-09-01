@@ -14,13 +14,13 @@ import {
         arrowBackOutline,
         createOutline,
         trashBinOutline,
-        cloudUploadOutline
+        cloudUploadOutline,
+        documentsOutline
 } from 'ionicons/icons';
-import { CargoInfo, CargoInvoice }      from '../types';
-import { CargoCard }                    from './CargoCard';
-import { statusUtils, formatters }      from '../utils';
-import { DriverCard }                   from '../../DriverCards';
-import { Store }                        from '../../Store';
+import { CargoInfo } from '../types';
+import { CargoCard } from './CargoCard';
+import { statusUtils, formatters } from '../utils';
+import { Store } from '../../Store';
 
 interface CargoViewProps {
     cargo:          CargoInfo;
@@ -28,6 +28,7 @@ interface CargoViewProps {
     onEdit:         () => void;
     onDelete:       () => Promise<void>;
     onPublish:      () => Promise<void>;
+    onViewInvoices: () => void;
     isLoading?:     boolean;
 }
 
@@ -37,11 +38,12 @@ export const CargoView: React.FC<CargoViewProps> = ({
     onEdit,
     onDelete,
     onPublish,
+    onViewInvoices,
     isLoading = false
 }) => {
-    const [ showDeleteAlert,     setShowDeleteAlert]    = useState(false);
-    const [ showPublishAlert,    setShowPublishAlert]   = useState(false);
-    const [ currentCargo,        setCurrentCargo]       = useState(cargo);
+    const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+    const [showPublishAlert, setShowPublishAlert] = useState(false);
+    const [currentCargo, setCurrentCargo] = useState(cargo);
 
     // Подписка на обновления cargo
     useEffect(() => {
@@ -49,10 +51,10 @@ export const CargoView: React.FC<CargoViewProps> = ({
             const cargos = Store.getState().cargos
             const updated = cargos.find((c: CargoInfo) => c.guid === currentCargo.guid);
             if (updated) setCurrentCargo(updated);
-        } })
+        }})
 
         return () => {
-            Store.unSubscribe( 201 )
+            Store.unSubscribe(201)
         };
     }, []);
 
@@ -64,48 +66,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
     const handlePublish = async () => {
         setShowPublishAlert(false);
         await onPublish();
-    };
-
-    const mapInvoiceToDriver = (invoice: any): any => ({
-        guid: invoice.id,
-        cargo: invoice.cargo,
-        recipient: invoice.driverId,
-        client: invoice.driverName,
-        weight: invoice.weight,
-        status: invoice.status,
-        transport: invoice.transport,
-        capacity: `${invoice.weight} т`,
-        rating: invoice.rating || 4.5,
-        ratingCount: 12,
-        rate: invoice.rating || 4.5,
-        price: invoice.price,
-        accepted: invoice.status === 'Принято'
-    });
-
-    const renderInvoiceSection = (title: string, invoices: CargoInvoice[], type: 'offered' | 'assigned' | 'delivered' | 'completed') => {
-        if (!invoices || invoices.length === 0) {
-            return null;
-        }
-
-        return (
-            <>
-            <div className="ml-1 mt-1">
-                <div className="fs-09 mb-1">
-                    <b>{title}</b>
-                    <span className="ml-1 fs-08 cl-gray">({invoices.length})</span>
-                </div>
-            </div>
-                
-                {invoices.map((invoice, index) => (
-                    <DriverCard
-                        key={index}
-                        info={ mapInvoiceToDriver( invoice ) }
-                        mode= { type }
-                    />
-                ))}
-
-            </>
-        );
     };
 
     const renderActionButtons = () => {
@@ -128,18 +88,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
                     </IonButton>
                 )}
                 
-                {/* {canPublish && (
-                    <IonButton
-                        className="w-50 cr-button-2"
-                        mode="ios"
-                        color="primary"
-                        onClick={() => setShowPublishAlert(true)}
-                    >
-                        <IonIcon icon={cloudUploadOutline} slot="start" />
-                        <IonLabel className="fs-08">Опубликовать</IonLabel>
-                    </IonButton>
-                )} */}
-                
                 {canDelete && (
                     <IonButton
                         className="w-50 cr-button-2"
@@ -156,18 +104,13 @@ export const CargoView: React.FC<CargoViewProps> = ({
         );
     };
 
+    // Подсчет общего количества инвойсов
+    const totalInvoices = currentCargo.invoices?.length || 0;
+
     // Проверяем есть ли дополнительные услуги
     const hasAdvance = currentCargo.advance && currentCargo.advance > 0;
     const hasInsurance = currentCargo.cost && currentCargo.cost > 0;
     const hasAdditionalServices = hasAdvance || hasInsurance;
-
-    // Группировка предложений по статусу
-    const groupedInvoices = {
-        offered:    currentCargo.invoices?.filter(inv => inv.status === "Заказано") || [],
-        accepted:   currentCargo.invoices?.filter(inv => inv.status === "Принято") || [],
-        delivered:  currentCargo.invoices?.filter(inv => inv.status === "Доставлено") || [],
-        completed:  currentCargo.invoices?.filter(inv => inv.status === "Завершен") || []
-    };
 
     return (
         <>
@@ -188,7 +131,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
 
             {/* Карточка груза */}
             <div className="cr-card mt-1">
-                <CargoCard cargo={ currentCargo } mode="view" />
+                <CargoCard cargo={currentCargo} mode="view" />
                 {renderActionButtons()}
             </div>
 
@@ -221,34 +164,23 @@ export const CargoView: React.FC<CargoViewProps> = ({
                 </div>
             )}
 
-            {/* Предложения от водителей */}
-            {renderInvoiceSection(
-                "Предложения от водителей",
-                groupedInvoices.offered,
-                "offered"
+            {/* Кнопка перехода к заявкам */}
+            {totalInvoices > 0 && (
+                <div className="cr-card mt-1">
+                    <IonButton
+                        className="w-100 cr-button-2"
+                        mode="ios"
+                        fill="clear"
+                        color="primary"
+                        onClick={onViewInvoices}
+                    >
+                        <IonIcon icon={documentsOutline} slot="start" />
+                        <IonLabel className="fs-08">
+                            Просмотреть заявки ({totalInvoices})
+                        </IonLabel>
+                    </IonButton>
+                </div>
             )}
-
-            {/* Назначенные водители */}
-            {renderInvoiceSection(
-                "Назначенные водители",
-                groupedInvoices.accepted,
-                "assigned"
-            )}
-
-            {/* Доставленные */}
-            {renderInvoiceSection(
-                "Доставленные",
-                groupedInvoices.delivered,
-                "delivered"
-            )}
-
-            {/* Завершенные */}
-            {renderInvoiceSection(
-                "Завершенные",
-                groupedInvoices.completed,
-                "completed"
-            )}
-
 
             {/* Alert для подтверждения удаления */}
             <IonAlert
@@ -288,7 +220,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
                     },
                     {
                         text: 'Опубликовать',
-                        role: 'confirm',
                         handler: handlePublish
                     }
                 ]}
