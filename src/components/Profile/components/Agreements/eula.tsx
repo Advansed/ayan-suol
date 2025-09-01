@@ -1,7 +1,12 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { useAgreements } from './useAgreements';
+import { Store } from '../../../Store';
+import { IonButton } from '@ionic/react';
 
 const UserAgreementPage = () => {
+  const { agreements, toggleAgreement } = useAgreements( Store.getState().login.token )
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -179,12 +184,21 @@ const UserAgreementPage = () => {
         {/* Accept Button */}
         <div className="mt-6 space-y-3">
           <label className="flex items-center">
-            <input type="checkbox" className="mr-3" />
+            <input type="checkbox" className="mr-3" checked = { agreements.userAgreement }/>
             <span className="text-sm text-gray-700">Я прочитал(а) и согласен(на) с условиями пользовательского соглашения</span>
           </label>
-          <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400">
-            Принимаю условия соглашения
-          </button>
+          <IonButton 
+              color={ agreements.userAgreement ? "danger" : "primary" }
+              className=""
+              onClick={ () => toggleAgreement('userAgreement') }
+          >
+              {
+                agreements.userAgreement 
+                  ? "Отмена принятий условий соглашения"
+                  : "Принимаю условия соглашения"
+              }
+              
+          </IonButton>
         </div>
       </div>
     </div>

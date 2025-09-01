@@ -65,14 +65,6 @@ const RoleSelector: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
             <div className="role-icon">🚛</div>
             <div>Водитель</div>
           </button>
-          <button
-            type="button"
-            className={`role-button ${reg.formData.userType === '0' ? 'selected' : ''}`}
-            onClick={() => reg.updateFormData('userType', '0')}
-          >
-            <div className="role-icon">🤝</div>
-            <div>Партнер</div>
-          </button>
         </div>
       </div>
 
