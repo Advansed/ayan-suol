@@ -108,9 +108,10 @@ export interface FormState {
 export type PageType = 
     | { type: 'list' }
     | { type: 'create' }
-    | { type: 'invoices'; cargo: CargoInfo }
-    | { type: 'edit'; cargo: CargoInfo }
-    | { type: 'view'; cargo: CargoInfo };
+    | { type: 'payment';    cargo: CargoInfo }
+    | { type: 'invoices';   cargo: CargoInfo }
+    | { type: 'edit';       cargo: CargoInfo }
+    | { type: 'view';       cargo: CargoInfo };
 
 // Фильтры для списка грузов
 export interface CargoFilters {

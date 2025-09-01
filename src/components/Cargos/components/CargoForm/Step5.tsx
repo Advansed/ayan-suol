@@ -92,7 +92,7 @@ export const Step5: React.FC<Step5Props> = ({ data, setFieldValue, getFieldError
       </div>
 
       {/* Страхование */}
-      <div className={styles.field}>
+      {/* <div className={styles.field}>
         <div style={{display: 'flex', alignItems: 'center', gap: '1em'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '0.5em'}}>
             <IonCheckbox 
@@ -121,10 +121,10 @@ export const Step5: React.FC<Step5Props> = ({ data, setFieldValue, getFieldError
           }
         </div>
         {getFieldError('cost')}
-      </div>
+      </div> */}
 
       {/* Предоплата */}
-      <div className={styles.field}>
+      {/* <div className={styles.field}>
         <div style={{display: 'flex', alignItems: 'center', gap: '1em'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '0.5em'}}>
             <IonCheckbox 
@@ -153,7 +153,7 @@ export const Step5: React.FC<Step5Props> = ({ data, setFieldValue, getFieldError
           }
         </div>
         {getFieldError('advance')}
-      </div>
+      </div> */}
 
     </div>
   );

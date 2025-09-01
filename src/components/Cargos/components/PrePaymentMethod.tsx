@@ -188,13 +188,13 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
             {/* Кнопки действий */}
             <div className="flex ml-1 mr-1 mt-1" style={{ gap: '0.5em' }}>
                 <button 
-                    className="cr-button-2 flex-1"
+                    className="cr-button-2 flex-1 pt-1 pb-1"
                     onClick={() => setShowCancelAlert(true)}
                 >
                     Отмена
                 </button>
                 <button 
-                    className="cr-button-1 flex-1"
+                    className="cr-button-1 flex-1 pt-1 pb-1"
                     style={{ 
                         background: 'var(--ion-color-primary)',
                         color: 'white'

@@ -1,7 +1,3 @@
-/**
- * Компонент детального просмотра груза
- */
-
 import React, { useEffect, useState } from 'react';
 import { 
         IonIcon, 
@@ -15,7 +11,9 @@ import {
         createOutline,
         trashBinOutline,
         cloudUploadOutline,
-        documentsOutline
+        documentsOutline,
+        cardOutline,
+        shieldCheckmarkOutline
 } from 'ionicons/icons';
 import { CargoInfo } from '../types';
 import { CargoCard } from './CargoCard';
@@ -29,6 +27,7 @@ interface CargoViewProps {
     onDelete:       () => Promise<void>;
     onPublish:      () => Promise<void>;
     onViewInvoices: () => void;
+    onPayment:      () => void;
     isLoading?:     boolean;
 }
 
@@ -39,6 +38,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
     onDelete,
     onPublish,
     onViewInvoices,
+    onPayment,
     isLoading = false
 }) => {
     const [showDeleteAlert, setShowDeleteAlert] = useState(false);
@@ -68,10 +68,21 @@ export const CargoView: React.FC<CargoViewProps> = ({
         await onPublish();
     };
 
+    // Обработчики для новых кнопок
+    const handlePayAdvance = () => {
+        // TODO: реализовать оплату предоплаты
+        console.log('Pay advance');
+        onPayment
+    };
+
+    const handlePayInsurance = () => {
+        // TODO: реализовать оформление страховки
+        console.log('Pay insurance');
+    };
+
     const renderActionButtons = () => {
         const canEdit = statusUtils.canEdit(currentCargo.status);
         const canDelete = statusUtils.canDelete(currentCargo.status);
-        const canPublish = statusUtils.canPublish(currentCargo.status);
 
         return (
             <div className="flex mt-05">
@@ -111,6 +122,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
     const hasAdvance = currentCargo.advance && currentCargo.advance > 0;
     const hasInsurance = currentCargo.cost && currentCargo.cost > 0;
     const hasAdditionalServices = hasAdvance || hasInsurance;
+    const canPublish = statusUtils.canPublish(currentCargo.status);
 
     return (
         <>
@@ -142,47 +154,81 @@ export const CargoView: React.FC<CargoViewProps> = ({
                     
                     {hasAdvance && (
                         <div className="flex fl-space mb-05">
-                            <div className="fs-08">💰 Предоплата</div>
-                            <div className="fs-08 cl-prim">
-                                {formatters.currency(currentCargo.advance)}
+                            <div className="fs-08">
+                                <div>Предоплата: <b>{formatters.currency(currentCargo.advance)}</b></div>
                             </div>
+                            <IonButton
+                                className="cr-button-2"
+                                mode="ios"
+                                fill="clear"
+                                color="primary"
+                                onClick={ onPayment }
+                            >
+                                <IonIcon icon={cardOutline} slot="start" />
+                                <IonLabel className="fs-08">Оплатить</IonLabel>
+                            </IonButton>
                         </div>
                     )}
-                    
+
                     {hasInsurance && (
-                        <div className="flex fl-space">
-                            <div className="fs-08">🛡️ Страхование груза</div>
-                            <div className="fs-08 cl-prim">
-                                на сумму {formatters.currency(currentCargo.cost)}
+                        <div className="flex fl-space mb-05">
+                            <div className="fs-08">
+                                <div>Страховка доступна</div>
                             </div>
+                            <IonButton
+                                className="cr-button-2"
+                                mode="ios"
+                                fill="clear"
+                                color="primary"
+                                onClick={handlePayInsurance}
+                            >
+                                <IonIcon icon={shieldCheckmarkOutline} slot="start" />
+                                <IonLabel className="fs-08">Оформить</IonLabel>
+                            </IonButton>
                         </div>
                     )}
-                    
-                    <div className="fs-07 cl-gray mt-05">
-                        ℹ️ При публикации потребуется оплата дополнительных услуг
-                    </div>
                 </div>
             )}
 
-            {/* Кнопка перехода к заявкам */}
-            {totalInvoices > 0 && (
-                <div className="cr-card mt-1">
+            {/* Блок инвойсов */}
+            <div className="cr-card mt-1">
+                <div className="flex fl-space">
+                    <div className="fs-09"><b>Заявки от водителей</b></div>
+                    <div className="fs-08 cl-gray">
+                        {totalInvoices > 0 ? `${totalInvoices} заявок` : 'Нет заявок'}
+                    </div>
+                </div>
+                
+                {totalInvoices > 0 && (
                     <IonButton
-                        className="w-100 cr-button-2"
+                        className="w-100 cr-button-2 mt-05"
                         mode="ios"
                         fill="clear"
                         color="primary"
                         onClick={onViewInvoices}
                     >
                         <IonIcon icon={documentsOutline} slot="start" />
-                        <IonLabel className="fs-08">
-                            Просмотреть заявки ({totalInvoices})
-                        </IonLabel>
+                        <IonLabel className="fs-08">Просмотреть заявки</IonLabel>
+                    </IonButton>
+                )}
+            </div>
+
+            {/* Кнопка публикации внизу */}
+            {canPublish && (
+                <div className="cr-card mt-1">
+                    <IonButton
+                        className="w-100 cr-button-2"
+                        mode="ios"
+                        color="success"
+                        onClick={() => setShowPublishAlert(true)}
+                    >
+                        <IonIcon icon={cloudUploadOutline} slot="start" />
+                        <IonLabel className="fs-08">Опубликовать груз</IonLabel>
                     </IonButton>
                 </div>
             )}
 
-            {/* Alert для подтверждения удаления */}
+            {/* Алерт удаления */}
             <IonAlert
                 isOpen={showDeleteAlert}
                 onDidDismiss={() => setShowDeleteAlert(false)}
@@ -196,19 +242,18 @@ export const CargoView: React.FC<CargoViewProps> = ({
                     },
                     {
                         text: 'Удалить',
-                        role: 'destructive',
                         handler: handleDelete
                     }
                 ]}
             />
 
-            {/* Alert для подтверждения публикации */}
+            {/* Алерт публикации */}
             <IonAlert
                 isOpen={showPublishAlert}
                 onDidDismiss={() => setShowPublishAlert(false)}
                 header="Публикация груза"
                 message={
-                    hasAdditionalServices
+                    hasAdditionalServices 
                         ? "Для публикации потребуется оплата дополнительных услуг. Продолжить?"
                         : "Опубликовать груз для поиска водителей?"
                 }

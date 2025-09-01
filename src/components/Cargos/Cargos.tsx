@@ -9,6 +9,7 @@ import { CargosList } from './components';
 import { CargoForm } from './components/CargoForm';
 import { CargoView } from './components/CargoView';
 import { CargoInvoiceSections } from './components/CargoInvoices';
+import { PrepaymentPage } from './components/PrePaymentMethod';
 
 export const Cargos: React.FC = () => {
     const cargosHook = useCargos();
@@ -100,6 +101,11 @@ export const Cargos: React.FC = () => {
             navigateTo({ type: 'invoices', cargo: currentPage.cargo });
         }
     };
+    const handlePayment = () => {
+        if (currentPage.type === 'view') {
+            navigateTo({ type: 'payment', cargo: currentPage.cargo });
+        }
+    };
 
     // Рендер страниц
     const renderPage = () => {
@@ -145,6 +151,7 @@ export const Cargos: React.FC = () => {
                         onDelete        = { handleViewDelete }
                         onPublish       = { handleViewPublish }
                         onViewInvoices  = { handleViewInvoices }
+                        onPayment       = { handlePayment }
                         isLoading       = { isLoading }
                     />
                 );
@@ -168,6 +175,19 @@ export const Cargos: React.FC = () => {
                         
                         {/* Секции заявок */}
                         <CargoInvoiceSections cargo={currentPage.cargo} />
+                    </div>
+                );
+
+            case 'payment':
+                return (
+                    <div>
+                        {/* Секции заявок */}
+                        <PrepaymentPage 
+                            cargo={currentPage.cargo} 
+                            onBack={ () => navigateTo({ type: 'view', cargo: currentPage.cargo }) }
+                            onPaymentComplete={()=>{}}
+                            onCancel={()=>{}}
+                        />
                     </div>
                 );
 

@@ -43,7 +43,7 @@ export const useCargos = (): UseCargosReturn => {
     // CRUD ОПЕРАЦИИ
     // ======================
 
-    const createCargo = useCallback(async (data: Partial<CargoInfo>): Promise<boolean> => {
+    const createCargo       = useCallback(async (data: Partial<CargoInfo>): Promise<boolean> => {
         setIsLoading(true);
         try {
             const newCargo: CargoInfo = {
@@ -80,7 +80,7 @@ export const useCargos = (): UseCargosReturn => {
         }
     }, []);
 
-    const updateCargo = useCallback(async (guid: string, data: Partial<CargoInfo>): Promise<boolean> => {
+    const updateCargo       = useCallback(async (guid: string, data: Partial<CargoInfo>): Promise<boolean> => {
         setIsLoading(true);
         try {
             const currentCargos = Store.getState().cargos || [];
@@ -121,7 +121,7 @@ export const useCargos = (): UseCargosReturn => {
         }
     }, []);
 
-    const deleteCargo = useCallback(async (guid: string): Promise<boolean> => {
+    const deleteCargo       = useCallback(async (guid: string): Promise<boolean> => {
         setIsLoading(true);
         try {
             const token = Store.getState().login.token;
@@ -152,7 +152,7 @@ export const useCargos = (): UseCargosReturn => {
         }
     }, []);
 
-    const publishCargo = useCallback(async (guid: string): Promise<boolean> => {
+    const publishCargo      = useCallback(async (guid: string): Promise<boolean> => {
         setIsLoading(true);
         try {
             const token = Store.getState().login.token;
@@ -187,16 +187,12 @@ export const useCargos = (): UseCargosReturn => {
         }
     }, [updateCargo]);
 
-    // ======================
-    // УТИЛИТЫ
-    // ======================
-
-    const getCargo = useCallback((guid: string): CargoInfo | undefined => {
+    const getCargo          = useCallback((guid: string): CargoInfo | undefined => {
         const currentCargos = Store.getState().cargos || [];
         return currentCargos.find((cargo: CargoInfo) => cargo.guid === guid);
     }, []);
 
-    const refreshCargos = useCallback(async (): Promise<void> => {
+    const refreshCargos     = useCallback(async (): Promise<void> => {
         setIsLoading(true);
         try {
             // В реальном приложении здесь был бы API запрос
@@ -214,7 +210,7 @@ export const useCargos = (): UseCargosReturn => {
     }, []);
 
     // Фильтрованный список грузов
-    const filteredCargos = useCallback(() => {
+    const filteredCargos    = useCallback(() => {
         let filtered = cargos.filter(cargo => cargo.status !== CargoStatus.COMPLETED);//[...(cargos || [])];
         console.log("filtered cargo")
         console.log( filtered )
