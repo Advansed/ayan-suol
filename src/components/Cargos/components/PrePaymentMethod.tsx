@@ -1,12 +1,9 @@
-/**
- * Страница оплаты предоплаты
- */
-
 import React, { useState } from 'react';
-import { IonIcon, IonAlert, IonLoading } from '@ionic/react';
+import { IonIcon, IonAlert, IonLoading, IonInput } from '@ionic/react';
 import { arrowBackOutline, cardOutline, phonePortraitOutline, walletOutline } from 'ionicons/icons';
 import { CargoInfo } from '../types';
 import { formatters } from '../utils';
+import { usePayment } from './usePayment';
 
 interface PrepaymentPageProps {
     cargo: CargoInfo;
@@ -47,24 +44,23 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
     const [isLoading, setIsLoading] = useState(false);
     const [showConfirmAlert, setShowConfirmAlert] = useState(false);
     const [showCancelAlert, setShowCancelAlert] = useState(false);
+    const [paymentAmount, setPaymentAmount] = useState<number>(cargo.advance || 0);
+    
+    const { saveAdvance, loading: paymentLoading, error: paymentError } = usePayment();
 
     // Обработчик оплаты
     const handlePayment = async () => {
         setIsLoading(true);
         try {
-            // Здесь будет интеграция с платежной системой
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Имитация запроса
-            
-            console.log('Payment processed:', {
-                cargoId: cargo.guid,
-                amount: cargo.advance,
-                method: selectedMethod
-            });
-            
-            onPaymentComplete();
+            const result = await saveAdvance(cargo.guid, paymentAmount);
+            if (result.success) {
+                onPaymentComplete();
+            } else {
+                // TODO: Показать ошибку
+                console.error('Payment failed:', result.error);
+            }
         } catch (error) {
             console.error('Payment error:', error);
-            // TODO: Показать ошибку оплаты
         } finally {
             setIsLoading(false);
         }
@@ -82,7 +78,7 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
 
     return (
         <>
-            <IonLoading isOpen={isLoading} message="Обработка платежа..." />
+            <IonLoading isOpen={isLoading || paymentLoading} message="Обработка платежа..." />
             
             {/* Header */}
             <div className="flex ml-05 mt-05">
@@ -117,18 +113,22 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
                 </div>
             </div>
 
-            {/* Сумма к оплате */}
+            {/* Сумма оплаты */}
             <div className="cr-card mt-1">
-                <div className="flex fl-space">
-                    <div>
-                        <div className="fs-09 cl-black"><b>Предоплата</b></div>
-                        <div className="fs-07 cl-gray">К доплате: {formatters.currency(cargo.price - (cargo.advance || 0))}</div>
-                    </div>
-                    <div className="text-right">
-                        <div className="fs-12 cl-prim" style={{ fontWeight: 'bold' }}>
-                            {formatters.currency(cargo.advance || 0)}
-                        </div>
-                    </div>
+                <div className="fs-09 mb-1"><b>Сумма оплаты</b></div>
+                <div className='borders-wp pl-1'>
+                    <IonInput
+                        type="number"
+                        min="0"
+                        max={cargo.price}
+                        value={paymentAmount}
+                        placeholder="Введите сумму предоплаты"
+                        onIonInput={(e) => setPaymentAmount(Number(e.detail.value) || 0)}
+                    />
+
+                </div>
+                <div className="fs-07 cl-gray mt-05">
+                    К доплате: {formatters.currency(cargo.price - paymentAmount)}
                 </div>
             </div>
 
@@ -170,21 +170,6 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
                 ))}
             </div>
 
-            {/* Информация об оплате */}
-            <div className="cr-card mt-1">
-                <div className="fs-07 cl-gray">
-                    <div className="mb-05">
-                        ℹ️ После оплаты предоплаты груз будет опубликован для поиска водителей.
-                    </div>
-                    <div className="mb-05">
-                        💳 Оплата производится через защищенное соединение.
-                    </div>
-                    <div>
-                        🔒 Средства будут заморожены до завершения перевозки.
-                    </div>
-                </div>
-            </div>
-
             {/* Кнопки действий */}
             <div className="flex ml-1 mr-1 mt-1" style={{ gap: '0.5em' }}>
                 <button 
@@ -200,9 +185,9 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
                         color: 'white'
                     }}
                     onClick={() => setShowConfirmAlert(true)}
-                    disabled={!selectedMethod}
+                    disabled={!selectedMethod || paymentAmount <= 0}
                 >
-                    Оплатить {formatters.currency(cargo.advance || 0)}
+                    Оплатить {formatters.currency(paymentAmount)}
                 </button>
             </div>
 
@@ -211,7 +196,7 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
                 isOpen={showConfirmAlert}
                 onDidDismiss={() => setShowConfirmAlert(false)}
                 header="Подтверждение оплаты"
-                message={`Оплатить предоплату в размере ${formatters.currency(cargo.advance || 0)}?`}
+                message={`Оплатить предоплату в размере ${formatters.currency(paymentAmount)}?`}
                 buttons={[
                     {
                         text: 'Отмена',

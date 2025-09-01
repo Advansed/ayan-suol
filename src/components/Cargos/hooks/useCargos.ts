@@ -329,6 +329,22 @@ export const useCargos = (): UseCargosReturn => {
         };
     }, []);
 
+    useEffect(()=>{
+        if(    
+
+               ( currentPage.type === 'view' && currentPage.cargo !== undefined )
+            || ( currentPage.type === 'edit' && currentPage.cargo !== undefined )
+            || ( currentPage.type === 'invoices' && currentPage.cargo !== undefined )
+            || ( currentPage.type === 'payment' && currentPage.cargo !== undefined )
+
+        )
+        {
+            cargos.forEach(elem => {
+                if(elem.guid === currentPage.cargo.guid) currentPage.cargo = elem
+            });
+        } 
+    },[cargos])
+
     // ======================
     // ВОЗВРАТ ИНТЕРФЕЙСА
     // ======================

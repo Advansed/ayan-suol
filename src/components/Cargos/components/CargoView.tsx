@@ -43,24 +43,26 @@ export const CargoView: React.FC<CargoViewProps> = ({
     onPayment,
     isLoading = false
 }) => {
-    const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-    const [showPublishAlert, setShowPublishAlert] = useState(false);
-    const [currentCargo, setCurrentCargo] = useState(cargo);
 
-    const [advancePayment, setAdvancePayment] = useState(false);
-    const [insurancePayment, setInsurancePayment] = useState(false);
+    const [ showDeleteAlert,     setShowDeleteAlert ]     = useState(false);  
+    const [ showPublishAlert,    setShowPublishAlert ]    = useState(false);
+    const [ currentCargo,        setCurrentCargo ]        = useState(cargo);
+    const [ advancePayment,      setAdvancePayment ]      = useState(false);
+    const [ insurancePayment,    setInsurancePayment ]    = useState(false);
     
     // Подписка на обновления cargo
     useEffect(() => {
-        Store.subscribe({num: 201, type: "cargos", func: ()=>{
-            const cargos = Store.getState().cargos
-            const updated = cargos.find((c: CargoInfo) => c.guid === currentCargo.guid);
-            if (updated) setCurrentCargo(updated);
-        }})
+        console.log("useeffect")
+        console.log(cargo)
+        // Store.subscribe({num: 201, type: "cargos", func: ()=>{
+        //     const cargos = Store.getState().cargos
+        //     const updated = cargos.find((c: CargoInfo) => c.guid === currentCargo.guid);
+        //     if (updated) setCurrentCargo(updated);
+        // }})
 
-        return () => {
-            Store.unSubscribe(201)
-        };
+        // return () => {
+        //     Store.unSubscribe(201)
+        // };
     }, []);
 
     const handleDelete = async () => {
@@ -122,8 +124,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
 
     // Подсчет общего количества инвойсов
     const totalInvoices = currentCargo.invoices?.length || 0;
-
-    // Проверяем есть ли дополнительные услуги
     const hasAdvance = currentCargo.advance && currentCargo.advance > 0;
     const hasInsurance = currentCargo.cost && currentCargo.cost > 0;
     const hasAdditionalServices = hasAdvance || hasInsurance;
@@ -201,7 +201,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
                                 </IonItem>
                             </div>
                             { insurancePayment && (
-                                
+
                                 <IonButton
                                     className="cr-button-2"
                                     mode="ios"
