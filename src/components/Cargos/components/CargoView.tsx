@@ -4,7 +4,9 @@ import {
         IonButton,
         IonLabel,
         IonAlert,
-        IonLoading
+        IonCheckbox,
+        IonLoading,
+        IonItem
 } from '@ionic/react';
 import { 
         arrowBackOutline,
@@ -45,6 +47,9 @@ export const CargoView: React.FC<CargoViewProps> = ({
     const [showPublishAlert, setShowPublishAlert] = useState(false);
     const [currentCargo, setCurrentCargo] = useState(cargo);
 
+    const [advancePayment, setAdvancePayment] = useState(false);
+    const [insurancePayment, setInsurancePayment] = useState(false);
+    
     // Подписка на обновления cargo
     useEffect(() => {
         Store.subscribe({num: 201, type: "cargos", func: ()=>{
@@ -154,37 +159,61 @@ export const CargoView: React.FC<CargoViewProps> = ({
                     
                     {hasAdvance && (
                         <div className="flex fl-space mb-05">
-                            <div className="fs-08">
-                                <div>Предоплата: <b>{formatters.currency(currentCargo.advance)}</b></div>
+                            <div className="fs-08 h-2">
+                                <IonItem
+                                    lines='none' 
+                                >
+                                    <IonCheckbox
+                                        slot='start'
+                                        checked={advancePayment}
+                                        onIonChange={(e) => setAdvancePayment(e.detail.checked)}
+                                    />
+                                    <IonLabel>Предоплата:</IonLabel>
+                                </IonItem>
                             </div>
-                            <IonButton
-                                className="cr-button-2"
-                                mode="ios"
-                                fill="clear"
-                                color="primary"
-                                onClick={ onPayment }
-                            >
-                                <IonIcon icon={cardOutline} slot="start" />
-                                <IonLabel className="fs-08">Оплатить</IonLabel>
-                            </IonButton>
+                            {advancePayment && ( 
+                                <IonButton
+                                    className="cr-button-2"
+                                    mode="ios"
+                                    fill="clear"
+                                    color="primary"
+                                    onClick={ onPayment }
+                                >
+                                    <IonIcon icon={cardOutline} slot="start" />
+                                    <IonLabel className="fs-08">Оплатить</IonLabel>
+                                </IonButton>
+                            )}
                         </div>
                     )}
 
                     {hasInsurance && (
                         <div className="flex fl-space mb-05">
                             <div className="fs-08">
-                                <div>Страховка доступна</div>
+                                <IonItem
+                                    lines='none' 
+                                >
+                                    <IonCheckbox
+                                        slot='start'
+                                        checked={ insurancePayment }
+                                        onIonChange={(e) => setInsurancePayment(e.detail.checked)}
+                                    />
+                                    <IonLabel>Страховка:</IonLabel>
+                                </IonItem>
                             </div>
-                            <IonButton
-                                className="cr-button-2"
-                                mode="ios"
-                                fill="clear"
-                                color="primary"
-                                onClick={handlePayInsurance}
-                            >
-                                <IonIcon icon={shieldCheckmarkOutline} slot="start" />
-                                <IonLabel className="fs-08">Оформить</IonLabel>
-                            </IonButton>
+                            { insurancePayment && (
+                                
+                                <IonButton
+                                    className="cr-button-2"
+                                    mode="ios"
+                                    fill="clear"
+                                    color="primary"
+                                    onClick={handlePayInsurance}
+                                >
+                                    <IonIcon icon={shieldCheckmarkOutline} slot="start" />
+                                    <IonLabel className="fs-08">Оформить</IonLabel>
+                                </IonButton>
+
+                            )}
                         </div>
                     )}
                 </div>
