@@ -14,6 +14,7 @@ import {
   NavigationLinks 
 } from '../SharedComponents'
 import EULA from './eula'
+import styles from './Registration.module.css'
 
 interface RegistrationFormProps {
   onLoginForm?: () => void
@@ -104,9 +105,9 @@ const RoleSelector: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
 
 
       {showAgreement && (
-        <div className={ "" } onClick={() => setShowAgreement(false)}>
-          <div className={ "" } onClick={e => e.stopPropagation()}>
-            <button className={ "" } onClick={() => setShowAgreement(false)}>
+        <div className={ styles.showAgreementOverlay }  onClick={() => setShowAgreement(false)}>
+          <div className={ styles.showAgreementContent } onClick={e => e.stopPropagation()}>
+            <button className={ styles.showAgreementCloseBtn } onClick={() => setShowAgreement(false)}>
               ×
             </button>
             <EULA />
