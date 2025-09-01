@@ -192,31 +192,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
                 {renderActionButtons()}
             </div>
 
-            {/* Статистика */}
-            {/* <div className="cr-card mt-1">
-                <div className="fs-09 mb-1"><b>Статистика</b></div>
-                <div className="flex">
-                    <div className="flex-1 text-center">
-                        <div className="fs-08 cl-gray">Создан</div>
-                        <div className="fs-08">
-                            {formatters.relativeDate(currentCargo.createdAt || '')}
-                        </div>
-                    </div>
-                    <div className="flex-1 text-center">
-                        <div className="fs-08 cl-gray">Цена за тонну</div>
-                        <div className="fs-08">
-                            {formatters.currency(currentCargo.price / currentCargo.weight)}
-                        </div>
-                    </div>
-                    <div className="flex-1 text-center">
-                        <div className="fs-08 cl-gray">Предложений</div>
-                        <div className="fs-08">
-                            {currentCargo.invoices?.length || 0}
-                        </div>
-                    </div>
-                </div>
-            </div> */}
-
             {/* Блок дополнительных услуг */}
             {hasAdditionalServices && (
                 <div className="cr-card mt-1">
@@ -274,13 +249,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
                 "completed"
             )}
 
-            {/* Рекомендации */}
-            {/* <div className="cr-card mt-1">
-                <div className="fs-09 mb-1"><b>Рекомендации</b></div>
-                <div className="fs-08 cl-gray">
-                    {statusUtils.getDescription(currentCargo.status)}
-                </div>
-            </div> */}
 
             {/* Alert для подтверждения удаления */}
             <IonAlert
