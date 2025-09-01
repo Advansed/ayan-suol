@@ -2,7 +2,7 @@
  * Форма регистрации + все шаги в одном файле
  */
 
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import { IonCard } from '@ionic/react'
 import { useReg, UseRegReturn } from './useReg'
 import { 
@@ -13,6 +13,8 @@ import {
   FormButtons, 
   NavigationLinks 
 } from '../SharedComponents'
+import styles from '../../Profile/components/Agreements/Agreements.module.css'
+import EULA from './eula'
 
 interface RegistrationFormProps {
   onLoginForm?: () => void
@@ -36,6 +38,7 @@ const RoleSelector: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
       reg.nextStep()
     }
   }, [reg])
+   const [showAgreement, setShowAgreement] = useState(false)
 
   return (
     <div className="login-container">
@@ -68,12 +71,49 @@ const RoleSelector: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
         </div>
       </div>
 
+{/* Чекбокс согласия с пользовательским соглашением */}
+      <div className="mt-3">
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={reg.formData.agreementAccepted || false}
+            onChange={(e) => reg.updateFormData('agreementAccepted', e.target.checked)}
+            className="mt-1 flex-shrink-0"
+          />
+          <span>
+            Я принимаю условия{' '}
+            <button
+              type="button"
+              className="text-blue-600 underline hover:text-blue-800"
+              onClick={() => setShowAgreement(true)}
+            >
+              Пользовательского соглашения
+            </button>
+          </span>
+        </label>
+        {reg.formErrors.agreementAccepted && (
+          <div className="text-red-500 text-xs mt-1">{reg.formErrors.agreementAccepted}</div>
+        )}
+      </div>
+
       <FormButtons
         onNext={handleNext}
         nextText="Далее"
         disabled={!reg.formData.userType}
         loading={reg.isLoading}
       />
+
+
+      {showAgreement && (
+        <div className={styles.modalOverlay} onClick={() => setShowAgreement(false)}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <button className={styles.closeBtn} onClick={() => setShowAgreement(false)}>
+              ×
+            </button>
+            <EULA />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
