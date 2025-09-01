@@ -275,12 +275,12 @@ export const CargoView: React.FC<CargoViewProps> = ({
             )}
 
             {/* Рекомендации */}
-            <div className="cr-card mt-1">
+            {/* <div className="cr-card mt-1">
                 <div className="fs-09 mb-1"><b>Рекомендации</b></div>
                 <div className="fs-08 cl-gray">
                     {statusUtils.getDescription(currentCargo.status)}
                 </div>
-            </div>
+            </div> */}
 
             {/* Alert для подтверждения удаления */}
             <IonAlert
