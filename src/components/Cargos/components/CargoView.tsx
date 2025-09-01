@@ -45,7 +45,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
 
     // Подписка на обновления cargo
     useEffect(() => {
-
         Store.subscribe({num: 201, type: "cargos", func: ()=>{
             const cargos = Store.getState().cargos
             const updated = cargos.find((c: CargoInfo) => c.guid === currentCargo.guid);
@@ -53,9 +52,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
         } })
 
         return () => {
-
             Store.unSubscribe( 201 )
-            
         };
     }, []);
 
@@ -94,13 +91,14 @@ export const CargoView: React.FC<CargoViewProps> = ({
             <>
             <div className="ml-1 mt-1">
                 <div className="fs-09 mb-1">
-                    <b>{title + ''}</b>
+                    <b>{title}</b>
                     <span className="ml-1 fs-08 cl-gray">({invoices.length})</span>
                 </div>
             </div>
                 
-                {invoices.map((invoice) => (
+                {invoices.map((invoice, index) => (
                     <DriverCard
+                        key={index}
                         info={ mapInvoiceToDriver( invoice ) }
                         mode= { type }
                     />
@@ -130,7 +128,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
                     </IonButton>
                 )}
                 
-                {canPublish && (
+                {/* {canPublish && (
                     <IonButton
                         className="w-50 cr-button-2"
                         mode="ios"
@@ -140,9 +138,9 @@ export const CargoView: React.FC<CargoViewProps> = ({
                         <IonIcon icon={cloudUploadOutline} slot="start" />
                         <IonLabel className="fs-08">Опубликовать</IonLabel>
                     </IonButton>
-                )}
+                )} */}
                 
-                {/* {canDelete && (
+                {canDelete && (
                     <IonButton
                         className="w-50 cr-button-2"
                         mode="ios"
@@ -153,22 +151,22 @@ export const CargoView: React.FC<CargoViewProps> = ({
                         <IonIcon icon={trashBinOutline} slot="start" />
                         <IonLabel className="fs-08">Удалить</IonLabel>
                     </IonButton>
-                )} */}
+                )}
             </div>
         );
     };
 
+    // Проверяем есть ли дополнительные услуги
+    const hasAdvance = currentCargo.advance && currentCargo.advance > 0;
+    const hasInsurance = currentCargo.cost && currentCargo.cost > 0;
+    const hasAdditionalServices = hasAdvance || hasInsurance;
+
     // Группировка предложений по статусу
     const groupedInvoices = {
-
         offered:    currentCargo.invoices?.filter(inv => inv.status === "Заказано") || [],
-        
         accepted:   currentCargo.invoices?.filter(inv => inv.status === "Принято") || [],
-        
         delivered:  currentCargo.invoices?.filter(inv => inv.status === "Доставлено") || [],
-        
         completed:  currentCargo.invoices?.filter(inv => inv.status === "Завершен") || []
-        
     };
 
     return (
@@ -195,7 +193,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
             </div>
 
             {/* Статистика */}
-            <div className="cr-card mt-1">
+            {/* <div className="cr-card mt-1">
                 <div className="fs-09 mb-1"><b>Статистика</b></div>
                 <div className="flex">
                     <div className="flex-1 text-center">
@@ -217,7 +215,36 @@ export const CargoView: React.FC<CargoViewProps> = ({
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> */}
+
+            {/* Блок дополнительных услуг */}
+            {hasAdditionalServices && (
+                <div className="cr-card mt-1">
+                    <div className="fs-09 mb-1"><b>Дополнительные услуги</b></div>
+                    
+                    {hasAdvance && (
+                        <div className="flex fl-space mb-05">
+                            <div className="fs-08">💰 Предоплата</div>
+                            <div className="fs-08 cl-prim">
+                                {formatters.currency(currentCargo.advance)}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {hasInsurance && (
+                        <div className="flex fl-space">
+                            <div className="fs-08">🛡️ Страхование груза</div>
+                            <div className="fs-08 cl-prim">
+                                на сумму {formatters.currency(currentCargo.cost)}
+                            </div>
+                        </div>
+                    )}
+                    
+                    <div className="fs-07 cl-gray mt-05">
+                        ℹ️ При публикации потребуется оплата дополнительных услуг
+                    </div>
+                </div>
+            )}
 
             {/* Предложения от водителей */}
             {renderInvoiceSection(
@@ -280,7 +307,11 @@ export const CargoView: React.FC<CargoViewProps> = ({
                 isOpen={showPublishAlert}
                 onDidDismiss={() => setShowPublishAlert(false)}
                 header="Публикация груза"
-                message="Опубликовать груз для поиска водителей?"
+                message={
+                    hasAdditionalServices
+                        ? "Для публикации потребуется оплата дополнительных услуг. Продолжить?"
+                        : "Опубликовать груз для поиска водителей?"
+                }
                 buttons={[
                     {
                         text: 'Отмена',
