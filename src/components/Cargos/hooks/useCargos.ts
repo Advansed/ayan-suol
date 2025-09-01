@@ -11,10 +11,10 @@ import socketService from '../../Sockets';
 
 export const useCargos = (): UseCargosReturn => {
     // Состояние
-    const cargos = useSelector((state) => state.cargos, 11);
-    const [isLoading, setIsLoading] = useState(false);
+    const cargos =      useSelector((state) => state.cargos, 11);
+    const [isLoading,   setIsLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState<PageType>({ type: 'list' });
-    const [filters, setFilters] = useState<CargoFilters>({});
+    const [filters,     setFilters] = useState<CargoFilters>({});
     const [searchQuery, setSearchQuery] = useState('');
 
     // История навигации для кнопки "Назад"

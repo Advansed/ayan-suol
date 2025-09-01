@@ -160,10 +160,15 @@ export const CargoView: React.FC<CargoViewProps> = ({
 
     // Группировка предложений по статусу
     const groupedInvoices = {
-        offered: currentCargo.invoices?.filter(inv => inv.status === "Заказано") || [],
-        accepted: currentCargo.invoices?.filter(inv => inv.status === "Принято") || [],
-        delivered: currentCargo.invoices?.filter(inv => inv.status === "Доставлено") || [],
-        completed: currentCargo.invoices?.filter(inv => inv.status === "Завершен") || []
+
+        offered:    currentCargo.invoices?.filter(inv => inv.status === "Заказано") || [],
+        
+        accepted:   currentCargo.invoices?.filter(inv => inv.status === "Принято") || [],
+        
+        delivered:  currentCargo.invoices?.filter(inv => inv.status === "Доставлено") || [],
+        
+        completed:  currentCargo.invoices?.filter(inv => inv.status === "Завершен") || []
+        
     };
 
     return (

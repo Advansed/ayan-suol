@@ -37,8 +37,7 @@ export {
 export { 
     CargoCard, 
     CargoForm, 
-    CargosList, 
-    CargoView 
+    CargosList
 } from './components';
 
 // Утилиты для внешнего использования

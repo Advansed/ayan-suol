@@ -5,8 +5,9 @@
 import React from 'react';
 import { CargoInfo } from './types';
 import { useCargos, useCargoForm } from './hooks';
-import { CargosList, CargoView } from './components';
+import { CargosList } from './components';
 import { CargoForm } from './components/CargoForm';
+import { CargoView } from './components/CargoView';
 
 export const Cargos: React.FC = () => {
     const cargosHook = useCargos();
