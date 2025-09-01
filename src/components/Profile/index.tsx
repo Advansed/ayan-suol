@@ -18,6 +18,7 @@ import {
   calculateCompanyCompletion 
 } from '../utils'
 
+
 export const Profile: React.FC = () => {
   const { user, isLoading, userType } = useProfile()
   const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
