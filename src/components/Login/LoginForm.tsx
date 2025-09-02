@@ -1,6 +1,6 @@
 // src/components/Login/LoginForm.tsx
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { IonCard } from '@ionic/react'
 import { MaskedInput, PasswordInput, FormButtons, NavigationLinks } from './SharedComponents'
 
@@ -62,6 +62,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   
   const [formErrors, setFormErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(()=>{
+    const login = localStorage.getItem("gvrs.login")
+    if(login){
+      setFormData({phone: login, password: localStorage.getItem("gvrs.password") as string })
+    }
+  },[])
 
   // ============================================
   // ОБРАБОТЧИКИ

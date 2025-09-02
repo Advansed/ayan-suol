@@ -54,6 +54,15 @@ export interface AppState extends TState {
   isLoading:          boolean
 }
 
+export interface UpdateUserData {
+  name?:              string;
+  email?:             string;
+  description?:       string;
+  password?:          string;
+  image?:             string;
+  user_type?:         string;
+}
+
 // ============================================
 // УТИЛИТЫ
 // ============================================
@@ -109,7 +118,7 @@ export function useLogin() {
   const notifications     = useStore((state: AppState) => state.notifications,      1012, appStore)
 
   const toast = useToast()
-  const { isConnected, emit, on } = useSocket()
+  const { isConnected, emit, once } = useSocket()
 
   const login = useCallback(async (phoneNumber: string, password: string): Promise<boolean> => {
     
@@ -124,6 +133,9 @@ export function useLogin() {
         const handleAuthResponse = (response: any) => {
           if (response.success && response.data) {
             const authData: AuthResponse = response.data
+
+            localStorage.setItem("gvrs.login", phoneNumber )
+            localStorage.setItem("gvrs.password", password )
             
             appStore.batchUpdate({
               auth:               true,
@@ -151,7 +163,7 @@ export function useLogin() {
           }
         }
 
-        on('authorization', handleAuthResponse)
+        once('authorization', handleAuthResponse)
         emit('authorization', { login: Phone(phoneNumber), password })
       })
 
@@ -162,7 +174,7 @@ export function useLogin() {
       toast.error('Ошибка подключения к серверу')
       return false
     }
-  }, [toast, isConnected, emit, on])
+  }, [toast, isConnected, emit, once])
 
   const logout = useCallback(() => {
     appStore.batchUpdate({
@@ -181,9 +193,42 @@ export function useLogin() {
     toast.info("Выход из системы")
   }, [toast])
 
+  const updateUser = useCallback(async (userData: UpdateUserData): Promise<boolean> => {
+      appStore.dispatch({ type: 'isLoading', data: true })
+
+      try {
+        const success = emit('set_user', userData)
+
+        if (!success) {
+          toast.error('Ошибка подключения')
+          appStore.dispatch({ type: 'isLoading', data: false })
+          return false
+        }
+
+        return true
+      } catch (error) {
+        toast.error('Ошибка обновления')
+        appStore.dispatch({ type: 'isLoading', data: false })
+        return false
+      }
+  }, [emit])
+
 
   return {
     auth,
+    user:{
+        id,
+        name,
+        phone,
+        email,
+        image,
+        token,
+        user_type,
+        description,
+        account,
+        notifications,
+        isLoading
+    }, 
     id,
     name,
     phone,
@@ -197,7 +242,8 @@ export function useLogin() {
     notifications,
     socketConnected: isConnected,
     login,
-    logout
+    logout,
+    updateUser
   }
 }
 

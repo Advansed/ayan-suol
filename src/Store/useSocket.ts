@@ -17,6 +17,8 @@ export interface SocketState extends TState {
   isConnecting: boolean
 }
 
+
+
 // ============================================
 // STORE
 // ============================================
@@ -129,13 +131,13 @@ export function useSocket() {
     }
   }, [])
 
-  const off = useCallback((event: string, callback?: void) => {
+  const off = useCallback((event: string, callback?: any) => {
     const socket = socketService.getSocket()
     if(callback) socket?.off(event, callback)
     else socket?.off(event)
   }, [])
 
-  const once = useCallback((event: string, callback?: void) => {
+  const once = useCallback((event: string, callback?: any) => {
     const socket = socketService.getSocket()
     if(callback)
       socket?.once(event, callback)

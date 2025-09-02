@@ -10,7 +10,7 @@ interface Props {
   onBack: () => void
 }
 
-export const PersonalInfo: React.FC<Props> = ({ user, onBack }) => {
+export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
   const { 
     personalData, 
     isLoading, 
