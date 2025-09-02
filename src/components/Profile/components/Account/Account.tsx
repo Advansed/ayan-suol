@@ -18,77 +18,91 @@ export const Account: React.FC<AccountProps> = ({ onBack }) => {
     setAmount('');
   };
 
-  if (loading && !balance) return <div className={styles.loading}>Загрузка...</div>;
+  if (loading && !balance) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loadingSpinner}>
+          <div className={styles.spinner}></div>
+          <p>Загрузка данных...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <button onClick={onBack} className={styles.backButton}>← Назад</button>
-        <h1>Личный кабинет</h1>
-      </div>
-      
-      {error && <div className={styles.error}>{error}</div>}
-
-      {/* Баланс */}
-      <div className={styles.balanceCard}>
-        <h2>Баланс</h2>
-        <div className={styles.balance}>
-          {balance.toLocaleString('ru-RU')} ₽
-        </div>
-      </div>
-
-      {/* Пополнение */}
-      <form className={styles.topUpForm} onSubmit={handleTopUp}>
-        <h3>Пополнить счет</h3>
-        <div className={styles.formGroup}>
-          <input
-            type="number"
-            placeholder="Сумма"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className={styles.input}
-            min="1"
-            required
-          />
-          <select 
-            value={method} 
-            onChange={(e) => setMethod(e.target.value)}
-            className={styles.select}
-          >
-            <option value="card">Банковская карта</option>
-            <option value="sbp">СБП</option>
-            <option value="wallet">Электронный кошелек</option>
-          </select>
-        </div>
-        <button 
-          type="submit" 
-          className={styles.button}
-          disabled={loading}
-        >
-          {loading ? 'Обработка...' : 'Пополнить'}
+      {/* Хедер */}
+      <header className={styles.header}>
+        <button onClick={onBack} className={styles.backBtn}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.42-1.41L7.83 13H20v-2z"/>
+          </svg>
         </button>
-      </form>
+        <h1 className={styles.title}>Финансовый счет</h1>
+      </header>
 
-      {/* История транзакций */}
-      <div className={styles.transactionList}>
-        <h3>История операций</h3>
-        {transactions.length === 0 ? (
-          <p>Операций пока нет</p>
-        ) : (
-          transactions.map(transaction => (
-            <div key={transaction.id} className={styles.transaction}>
-              <div className={styles.transactionInfo}>
-                <span className={styles.description}>{transaction.description}</span>
-                <span className={styles.date}>{new Date(transaction.date).toLocaleDateString('ru-RU')}</span>
-              </div>
-              <span className={`${styles.amount} ${
-                transaction.type === 'topup' ? styles.positive : styles.negative
-              }`}>
-                {transaction.type === 'topup' ? '+' : '-'}{transaction.amount} ₽
-              </span>
+      <div className={styles.content}>
+        {/* Баланс */}
+        <section className={styles.balanceSection}>
+          <div className={styles.balanceCard}>
+            <div className={styles.balanceHeader}>
+              <h2>Текущий баланс</h2>
+              <span className={styles.balanceStatus}>Активен</span>
             </div>
-          ))
-        )}
+            <div className={styles.balanceAmount}>
+              {balance.toLocaleString('ru-RU', { 
+                style: 'currency', 
+                currency: 'RUB',
+                maximumFractionDigits: 0 
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Пополнение */}
+        <section className={styles.topUpSection}>
+          <h2 className={styles.sectionTitle}>Пополнение счета</h2>
+          <form className={styles.topUpForm} onSubmit={handleTopUp}>
+            <div className={styles.formRow}>
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Сумма пополнения</label>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className={styles.input}
+                  placeholder="0"
+                  min="1"
+                  step="1"
+                  required
+                />
+                <span className={styles.currency}>₽</span>
+              </div>
+              
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Способ оплаты</label>
+                <select 
+                  value={method} 
+                  onChange={(e) => setMethod(e.target.value)}
+                  className={styles.select}
+                >
+                  <option value="card">Банковская карта</option>
+                  <option value="sbp">Система быстрых платежей</option>
+                  <option value="wallet">Электронный кошелек</option>
+                </select>
+              </div>
+            </div>
+            
+            <button 
+              type="submit" 
+              className={`${styles.submitBtn} ${loading ? styles.loading : ''}`}
+              disabled={loading || !amount || parseFloat(amount) <= 0}
+            >
+              {loading ? 'Обработка платежа...' : 'Пополнить счет'}
+            </button>
+          </form>
+        </section>
+
       </div>
     </div>
   );

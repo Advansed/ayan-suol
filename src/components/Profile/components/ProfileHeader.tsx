@@ -12,6 +12,7 @@ interface Props {
 }
 
 export const ProfileHeader: React.FC<Props> = React.memo(({ user, userType, onClick }) => (
+
   <div className="profile-header-minimal" onClick={onClick}>
     <div className="flex fl-space">
       <div className="flex">
