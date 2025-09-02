@@ -1,27 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { usePersonalData } from './usePersonalData'
 import styles from './PersonalInfo.module.css'
 import { WizardHeader } from '../Company/WizardHeader'
+import { useLogin } from '../../../../Store/useLogin'
 
 interface Props {
   onBack: () => void
 }
 
 export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
-  const { 
-    personalData, 
-    isLoading, 
-    isSaving, 
-    error, 
-    success,
-    loadData,
-    savePersonalInfo,
-    saveAvatar,
-    changePassword,
-    resetStates
-  } = usePersonalData()
+  const { user, updateUser, isLoading } = useLogin()
   
   const [currentStep, setCurrentStep] = useState(1)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   
   const [form, setForm] = useState({
     name: '',
@@ -32,23 +24,20 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
   })
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
-  const [uploadedAvatar, setUploadedAvatar] = useState<string | undefined>( undefined )
+  const [uploadedAvatar, setUploadedAvatar] = useState<string | undefined>(undefined)
 
+  // Загружаем данные пользователя в форму
   useEffect(() => {
-    loadData()
-  }, [loadData])
-
-  useEffect(() => {
-    if (personalData) {
+    if (user) {
       setForm(prev => ({
         ...prev,
-        name: personalData.name || '',
-        email: personalData.email || '',
-        avatar: personalData.image || ''
+        name: user.name || '',
+        email: user.email || '',
+        avatar: user.image || ''
       }))
-      setUploadedAvatar(personalData.image || undefined )
+      setUploadedAvatar(user.image || undefined)
     }
-  }, [personalData])
+  }, [user])
 
   // Валидация текущего шага
   const validateCurrentStep = (): boolean => {
@@ -59,6 +48,9 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
         if (!form.name.trim()) errors.name = 'Введите ФИО'
         if (!form.email.trim()) errors.email = 'Введите email'
         else if (!/\S+@\S+\.\S+/.test(form.email)) errors.email = 'Неверный формат email'
+        break
+      case 2:
+        // Валидация для аватара (может быть пустой)
         break
       case 3:
         if (!form.newPassword) errors.newPassword = 'Введите новый пароль'
@@ -110,19 +102,96 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
     }
   }
 
+  // Сохранение личных данных
+  const savePersonalInfo = async () => {
+    if (!validateCurrentStep()) return
+
+    setIsSaving(true)
+    setError(null)
+    setSuccess(false)
+
+    try {
+      const success = await updateUser({
+        name: form.name,
+        email: form.email
+      })
+
+      if (success) {
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 3000)
+      } else {
+        setError('Ошибка сохранения данных')
+      }
+    } catch (err) {
+      setError('Ошибка сохранения данных')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Сохранение аватара
+  const saveAvatar = async () => {
+    setIsSaving(true)
+    setError(null)
+    setSuccess(false)
+
+    try {
+      const success = await updateUser({
+        image: form.avatar
+      })
+
+      if (success) {
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 3000)
+      } else {
+        setError('Ошибка сохранения фото')
+      }
+    } catch (err) {
+      setError('Ошибка сохранения фото')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Смена пароля
+  const changePassword = async () => {
+    if (!validateCurrentStep()) return
+
+    setIsSaving(true)
+    setError(null)
+    setSuccess(false)
+
+    try {
+      const success = await updateUser({
+        password: form.newPassword
+      })
+
+      if (success) {
+        setSuccess(true)
+        setForm(prev => ({ ...prev, newPassword: '', confirmPassword: '' }))
+        setTimeout(() => setSuccess(false), 3000)
+      } else {
+        setError('Ошибка смены пароля')
+      }
+    } catch (err) {
+      setError('Ошибка смены пароля')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const handleSave = () => {
-    if (validateCurrentStep()) {
-      savePersonalInfo(form.name, form.email)
+    if (currentStep === 1) {
+      savePersonalInfo()
     }
   }
 
   // Удаление фото
   const removeAvatar = () => {
-    setUploadedAvatar( undefined )
+    setUploadedAvatar(undefined)
     setForm(prev => ({ ...prev, avatar: '' }))
-    saveAvatar('') // Сохранить удаление аватара
+    saveAvatar()
   }
-
 
   // Страница 1: Личные данные
   const renderPersonalData = () => (
@@ -161,11 +230,7 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
       <div className={styles.saveSection}>
         <button 
           className={styles.saveBtn}
-          onClick={() => {
-            if (validateCurrentStep()) {
-              savePersonalInfo(form.name, form.email)
-            }
-          }}
+          onClick={savePersonalInfo}
           disabled={isSaving}
         >
           {isSaving ? 'Сохранение...' : 'Сохранить данные'}
@@ -206,7 +271,7 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
         <div className={styles.saveSection}>
           <button 
             className={styles.saveBtn}
-            onClick={() => saveAvatar(form.avatar)}
+            onClick={saveAvatar}
             disabled={isSaving}
           >
             {isSaving ? 'Сохранение...' : 'Сохранить фото'}
@@ -253,11 +318,7 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
       <div className={styles.saveSection}>
         <button 
           className={styles.saveBtn}
-          onClick={() => {
-            if (validateCurrentStep()) {
-              changePassword(form.newPassword)
-            }
-          }}
+          onClick={changePassword}
           disabled={isSaving}
         >
           {isSaving ? 'Сохранение...' : 'Изменить пароль'}
@@ -271,11 +332,11 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
       <div className={styles.wizardContent}>
         <div className={styles.stepContainer}>
           <WizardHeader
-              title={getStepTitle()}
-              onBack={handleBackNavigation}
-              onForward={handleForwardNavigation}
-              onSave={ handleSave }
-              isLastStep={currentStep === 3} // У PersonalInfo каждый шаг сохраняется отдельно
+            title={getStepTitle()}
+            onBack={handleBackNavigation}
+            onForward={handleForwardNavigation}
+            onSave={handleSave}
+            isLastStep={currentStep === 3}
           />
           
           {isLoading ? (

@@ -36,6 +36,7 @@ export interface AuthResponse {
   user_type:          number;
   description:        string;
   account:            number;
+  ratings:            UserRatings;
   notifications:      UserNotifications;
 }
 
@@ -50,6 +51,7 @@ export interface AppState extends TState {
   user_type:          number | null
   description:        string | null
   account:            number | null
+  ratings:            UserRatings |  null
   notifications:      UserNotifications | null
   isLoading:          boolean
 }
@@ -93,6 +95,7 @@ export const appStore = new UniversalStore<AppState>({
     user_type:      null,
     description:    null,
     account:        null,
+    ratings:        null,
     notifications:  null,
     isLoading:      false
   },
@@ -115,7 +118,8 @@ export function useLogin() {
   const description       = useStore((state: AppState) => state.description,        1009, appStore)
   const account           = useStore((state: AppState) => state.account,            1010, appStore)
   const isLoading         = useStore((state: AppState) => state.isLoading,          1011, appStore)
-  const notifications     = useStore((state: AppState) => state.notifications,      1012, appStore)
+  const ratings           = useStore((state: AppState) => state.ratings,            1012, appStore)
+  const notifications     = useStore((state: AppState) => state.notifications,      1013, appStore)
 
   const toast = useToast()
   const { isConnected, emit, once } = useSocket()
@@ -148,6 +152,7 @@ export function useLogin() {
               user_type:          authData.user_type,
               description:        authData.description,
               account:            authData.account,
+              ratings:           authData.ratings,
               notifications:      authData.notifications,
               isLoading:          false
             })
@@ -244,6 +249,7 @@ export function useLogin() {
     description,
     account,
     isLoading,
+    ratings,
     notifications,
     socketConnected: isConnected,
     login,

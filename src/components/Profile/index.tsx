@@ -18,10 +18,12 @@ import {
   calculateCompanyCompletion 
 } from '../utils'
 import { Account } from './components/Account/Account'
+import { useLogin } from '../../Store/useLogin'
+import { UserRatings } from './types'
 
 
 export const Profile: React.FC = () => {
-  const { user, isLoading, userType } = useProfile()
+  const { name, user_type, ratings, isLoading } = useLogin()
   const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
   
   // Получаем данные из Store
@@ -46,7 +48,7 @@ export const Profile: React.FC = () => {
     const companyCompletion   = calculateCompanyCompletion(companyData)
 
   
-    switch(userType) {
+    switch(user_type) {
       case 0: common = []; break;
       case 1: common = [
         { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
@@ -63,9 +65,9 @@ export const Profile: React.FC = () => {
     }
 
     return common
-  }, [userType, passportData, transportData, companyData])
+  }, [user_type, passportData, transportData, companyData])
 
-  if (isLoading || !user) {
+  if (isLoading ) {
     return <IonLoading isOpen={true} message={UI_TEXT.LOADING} />
   }
 
@@ -108,9 +110,9 @@ export const Profile: React.FC = () => {
         <div>{UI_TEXT.MY_PROFILE}</div>
       </div>
 
-      <ProfileHeader user={user} userType={ userType}  onClick={ handleClick }/>
+      <ProfileHeader name ={ name as string } userType={ user_type as number }  onClick={ handleClick }/>
 
-      <ProfileStats ratings = { user.ratings } userType = { userType } />
+      <ProfileStats ratings = { ratings as UserRatings } userType = { user_type as number } />
       
       <ProfileMenu items = { menuItems } />
 
