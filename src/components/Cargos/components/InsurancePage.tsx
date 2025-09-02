@@ -11,8 +11,8 @@ import { formatters } from '../utils';
 interface InsurancePageProps {
     cargo: CargoInfo;
     onBack: () => void;
-    onInsuranceComplete: () => void;
-    onCancel: () => void;
+    onInsuranceComplete?: () => void;
+    onCancel?: () => void;
 }
 
 // Типы страхового покрытия
@@ -79,8 +79,9 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
                 insuranceType: selectedType,
                 insuranceCost: insuranceCost
             });
-            
-            onInsuranceComplete();
+
+            if(onInsuranceComplete) onInsuranceComplete();
+
         } catch (error) {
             console.error('Insurance error:', error);
             // TODO: Показать ошибку страхования
@@ -96,7 +97,7 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
 
     const handleCancel = () => {
         setShowCancelAlert(false);
-        onCancel();
+        if( onCancel ) onCancel();
     };
 
     return (
@@ -252,13 +253,13 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
             {/* Кнопки действий */}
             <div className="flex ml-1 mr-1 mt-1" style={{ gap: '0.5em' }}>
                 <button 
-                    className="cr-button-2 flex-1"
+                    className="cr-button-2 flex-1 pt-1 pb-1"
                     onClick={() => setShowCancelAlert(true)}
                 >
                     Отказаться
                 </button>
                 <button 
-                    className="cr-button-1 flex-1"
+                    className="cr-button-1 flex-1  pt-1 pb-1"
                     style={{ 
                         background: 'var(--ion-color-primary)',
                         color: 'white'

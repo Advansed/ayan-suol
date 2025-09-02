@@ -10,6 +10,7 @@ import { CargoForm } from './components/CargoForm';
 import { CargoView } from './components/CargoView';
 import { CargoInvoiceSections } from './components/CargoInvoices';
 import { PrepaymentPage } from './components/PrePaymentMethod';
+import { InsurancePage } from './components/InsurancePage';
 
 export const Cargos: React.FC = () => {
     const cargosHook = useCargos();
@@ -107,6 +108,12 @@ export const Cargos: React.FC = () => {
         }
     };
 
+    const handleInsurance = () => {
+        if (currentPage.type === 'view') {
+            navigateTo({ type: 'insurance', cargo: currentPage.cargo });
+        }
+    };
+
     // Рендер страниц
     const renderPage = () => {
         switch (currentPage.type) {
@@ -152,6 +159,7 @@ export const Cargos: React.FC = () => {
                         onPublish       = { handleViewPublish }
                         onViewInvoices  = { handleViewInvoices }
                         onPayment       = { handlePayment }
+                        onInsurance     = { handleInsurance }
                         isLoading       = { isLoading }
                     />
                 );
@@ -187,6 +195,18 @@ export const Cargos: React.FC = () => {
                             onBack={ () => navigateTo({ type: 'view', cargo: currentPage.cargo }) }
                             onPaymentComplete={()=>{}}
                             onCancel={()=>{}}
+                        />
+                    </div>
+                );
+
+            case 'insurance':
+                return (
+                    <div>
+                        {/* Секции заявок */}
+                        <InsurancePage 
+                            cargo       = { currentPage.cargo } 
+                            onBack      = { () => navigateTo({ type: 'view', cargo: currentPage.cargo }) }
+                            onCancel    = { ()=>{} }
                         />
                     </div>
                 );

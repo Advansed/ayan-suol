@@ -336,6 +336,7 @@ export const useCargos = (): UseCargosReturn => {
             || ( currentPage.type === 'edit' && currentPage.cargo !== undefined )
             || ( currentPage.type === 'invoices' && currentPage.cargo !== undefined )
             || ( currentPage.type === 'payment' && currentPage.cargo !== undefined )
+            || ( currentPage.type === 'insurance' && currentPage.cargo !== undefined )
 
         )
         {

@@ -74,6 +74,7 @@ export interface CargoInfo {
     price:              number;
     cost:               number;
     advance:            number;
+    insurance:          number;
     
     // Контакты
     phone:              string;
@@ -109,6 +110,7 @@ export type PageType =
     | { type: 'list' }
     | { type: 'create' }
     | { type: 'payment';    cargo: CargoInfo }
+    | { type: 'insurance';  cargo: CargoInfo }
     | { type: 'invoices';   cargo: CargoInfo }
     | { type: 'edit';       cargo: CargoInfo }
     | { type: 'view';       cargo: CargoInfo };

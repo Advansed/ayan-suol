@@ -10,6 +10,7 @@ interface PaymentResult {
 
 interface UsePaymentReturn {
   saveAdvance: (cargoId: string, amount: number) => Promise<PaymentResult>;
+  saveInsurance: (cargoId: string, amount: number) => Promise<PaymentResult>;
   loading: boolean;
   error: string | null;
 }
@@ -43,5 +44,31 @@ export const usePayment = (): UsePaymentReturn => {
     }
   };
 
-  return { saveAdvance, loading, error };
+  const saveInsurance = async (cargoId: string, amount: number): Promise<PaymentResult> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+        // TODO: Получить token из контекста/стора
+        const token = Store.getState().login.token
+      
+        socketService.emit('set_insurance', {
+            token,
+            cargo_id: cargoId,
+            insurance: amount
+        });
+
+
+        return { success: true };
+
+    } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Неизвестная ошибка';
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  return { saveAdvance, saveInsurance, loading, error };
 };

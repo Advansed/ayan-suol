@@ -4,9 +4,7 @@ import {
         IonButton,
         IonLabel,
         IonAlert,
-        IonCheckbox,
-        IonLoading,
-        IonItem
+        IonLoading
 } from '@ionic/react';
 import { 
         arrowBackOutline,
@@ -20,7 +18,7 @@ import {
 import { CargoInfo } from '../types';
 import { CargoCard } from './CargoCard';
 import { statusUtils, formatters } from '../utils';
-import { Store } from '../../Store';
+
 
 interface CargoViewProps {
     cargo:          CargoInfo;
@@ -30,6 +28,7 @@ interface CargoViewProps {
     onPublish:      () => Promise<void>;
     onViewInvoices: () => void;
     onPayment:      () => void;
+    onInsurance:    () => void;
     isLoading?:     boolean;
 }
 
@@ -41,14 +40,13 @@ export const CargoView: React.FC<CargoViewProps> = ({
     onPublish,
     onViewInvoices,
     onPayment,
+    onInsurance,
     isLoading = false
 }) => {
 
     const [ showDeleteAlert,     setShowDeleteAlert ]     = useState(false);  
     const [ showPublishAlert,    setShowPublishAlert ]    = useState(false);
     const [ currentCargo,        setCurrentCargo ]        = useState(cargo);
-    const [ advancePayment,      setAdvancePayment ]      = useState(false);
-    const [ insurancePayment,    setInsurancePayment ]    = useState(false);
     
     // Подписка на обновления cargo
     useEffect(() => {
@@ -75,17 +73,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
         await onPublish();
     };
 
-    // Обработчики для новых кнопок
-    const handlePayAdvance = () => {
-        // TODO: реализовать оплату предоплаты
-        console.log('Pay advance');
-        onPayment
-    };
-
-    const handlePayInsurance = () => {
-        // TODO: реализовать оформление страховки
-        console.log('Pay insurance');
-    };
 
     const renderActionButtons = () => {
         const canEdit = statusUtils.canEdit(currentCargo.status);
@@ -123,11 +110,11 @@ export const CargoView: React.FC<CargoViewProps> = ({
     };
 
     // Подсчет общего количества инвойсов
-    const totalInvoices = currentCargo.invoices?.length || 0;
-    const hasAdvance = currentCargo.advance && currentCargo.advance > 0;
-    const hasInsurance = currentCargo.cost && currentCargo.cost > 0;
-    const hasAdditionalServices = hasAdvance || hasInsurance;
-    const canPublish = statusUtils.canPublish(currentCargo.status);
+    const totalInvoices             = currentCargo.invoices?.length || 0;
+    const hasAdvance                = currentCargo.advance > 0 ;
+    const hasInsurance              = currentCargo.insurance > 0;
+    const hasAdditionalServices     = hasAdvance || hasInsurance;
+    const canPublish                = statusUtils.canPublish(currentCargo.status);
 
     return (
         <>
@@ -152,48 +139,62 @@ export const CargoView: React.FC<CargoViewProps> = ({
                 {renderActionButtons()}
             </div>
 
-            {/* Блок дополнительных услуг */}
-                <div className="cr-card mt-1">
-                    <div className="fs-09 mb-1"><b>Дополнительные услуги</b></div>
+           {/* Блок дополнительных услуг */}
+            <div className="cr-card mt-1">
+                <div className="fs-09 mb-1"><b>Дополнительные услуги</b></div>
+                
+                {
+                    hasAdvance && (
+                        <div className="flex fl-space mb-05">
+                            <div className="fs-08 h-2 ml-2">
+                                Предоплата:
+                            </div>
+                            <div className="fs-08 h-2 mr-2">
+                                <b>{ `${formatters.currency(currentCargo.advance)}` }</b>
+                            </div> 
+                        </div>
+                    )
+                }
+                {
+                    hasInsurance && (
+                        <div className="flex fl-space mb-05">
+                            <div className="fs-08 ml-2">
+                                { `Страховка: ` }
+                            </div>
+                            <div className="fs-08 mr-2">
+                                <b>{ `${formatters.currency(currentCargo.insurance)}` }</b>
+                            </div>
+                        </div>
+                    )
+                }
+
+                <div className='flex'>
                     
-                    <div className="flex fl-space mb-05">
-                        <div className="fs-08 h-2">
-                        </div>
-                    </div>
-
-                    <div className="flex fl-space mb-05">
-                        <div className="fs-08">
-                        </div>
-                    </div>
-
-                    <div className='flex'>
-                        
-                        <IonButton
-                            className="cr-button-2 w-50"
-                            mode="ios"
-                            fill="clear"
-                            color="primary"
-                            onClick={ onPayment }
-                        >
-                            <IonIcon icon={cardOutline} slot="start" />
-                            <IonLabel className="fs-08">Предоплата</IonLabel>
-                        </IonButton>
-                                
-                        <IonButton
-                            className="cr-button-2 w-50"
-                            mode="ios"
-                            fill="clear"
-                            color="primary"
-                            onClick={handlePayInsurance}
-                        >
-                            <IonIcon icon={shieldCheckmarkOutline} slot="start" />
-                            <IonLabel className="fs-08">Страховка</IonLabel>
-                        </IonButton>
-
-                    </div>
+                    <IonButton
+                        className="cr-button-2 w-50"
+                        mode="ios"
+                        fill="clear"
+                        color="primary"
+                        onClick={ onPayment }
+                    >
+                        <IonIcon icon={cardOutline} slot="start" />
+                        <IonLabel className="fs-08">{ hasAdvance ? 'Доплатить' : 'Предоплата'}</IonLabel>
+                    </IonButton>
+                            
+                    <IonButton
+                        className="cr-button-2 w-50"
+                        mode="ios"
+                        fill="clear"
+                        color="primary"
+                        onClick={ onInsurance }
+                    >
+                        <IonIcon icon={shieldCheckmarkOutline} slot="start" />
+                        <IonLabel className="fs-08">Страховка</IonLabel>
+                    </IonButton>
 
                 </div>
 
+            </div>
             {/* Блок инвойсов */}
             <div className="cr-card mt-1">
                 <div className="flex fl-space">
