@@ -194,25 +194,30 @@ export function useLogin() {
   }, [toast])
 
   const updateUser = useCallback(async (userData: UpdateUserData): Promise<boolean> => {
-      appStore.dispatch({ type: 'isLoading', data: true })
-
-      try {
-        const success = emit('set_user', userData)
-
-        if (!success) {
-          toast.error('Ошибка подключения')
-          appStore.dispatch({ type: 'isLoading', data: false })
-          return false
+    appStore.dispatch({ type: 'isLoading', data: true })
+    try {
+      once('set_user', (data) => {
+        if (data.success) {
+          Object.entries(userData).forEach(([key, value]) => {
+            appStore.dispatch({ type: key, data: value })
+          })
         }
-
-        return true
-      } catch (error) {
-        toast.error('Ошибка обновления')
+        appStore.dispatch({ type: 'isLoading', data: false })
+      })
+      
+      const success = emit('set_user', userData)
+      if (!success) {
+        toast.error('Ошибка подключения')
         appStore.dispatch({ type: 'isLoading', data: false })
         return false
       }
-  }, [emit])
-
+      return true
+    } catch (error) {
+      toast.error('Ошибка обновления')
+      appStore.dispatch({ type: 'isLoading', data: false })
+      return false
+    }
+  }, [emit, once])
 
   return {
     auth,

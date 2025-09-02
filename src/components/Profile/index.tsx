@@ -71,7 +71,7 @@ export const Profile: React.FC = () => {
 
   // Страницы
   if (currentPage === PROFILE_PAGES.PERSONAL) {
-    return <PersonalInfo user={user} onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
+    return <PersonalInfo onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
 
   if (currentPage === PROFILE_PAGES.PASSPORT) {

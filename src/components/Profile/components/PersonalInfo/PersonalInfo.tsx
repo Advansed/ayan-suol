@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { IonIcon } from '@ionic/react'
-import { chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons'
 import { usePersonalData } from './usePersonalData'
 import styles from './PersonalInfo.module.css'
 import { WizardHeader } from '../Company/WizardHeader'
 
 interface Props {
-  user: any
   onBack: () => void
 }
 
@@ -126,28 +123,6 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
     saveAvatar('') // Сохранить удаление аватара
   }
 
-  // Рендер заголовка
-  const renderStepHeader = () => (
-    <div className={styles.stepHeader}>
-      <button className={`${styles.navButton} ${styles.navButtonLeft}`} onClick={handleBackNavigation}>
-        <IonIcon icon={chevronBackOutline} />
-      </button>
-      
-      <h3 className={styles.stepTitle}>{getStepTitle()}</h3>
-      
-      <button 
-        className={`${styles.navButton} ${styles.navButtonRight}`} 
-        onClick={handleForwardNavigation}
-        disabled={currentStep === 4 && isSaving}
-      >
-        {currentStep === 4 ? (
-          <IonIcon icon={saveOutline} />
-        ) : (
-          <IonIcon icon={chevronForwardOutline} />
-        )}
-      </button>
-    </div>
-  )
 
   // Страница 1: Личные данные
   const renderPersonalData = () => (
