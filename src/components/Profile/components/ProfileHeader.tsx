@@ -8,10 +8,11 @@ import './ProfileHeader.css'
 interface Props {
   user: User
   userType: number
+  onClick?: () => void  // Добавляем обработчик клика
 }
 
-export const ProfileHeader: React.FC<Props> = React.memo(({ user, userType }) => (
-  <div className="profile-header-minimal">
+export const ProfileHeader: React.FC<Props> = React.memo(({ user, userType, onClick }) => (
+  <div className="profile-header-minimal" onClick={onClick}>
     <div className="flex fl-space">
       <div className="flex">
         <div className="avatar-minimal">

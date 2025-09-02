@@ -5,7 +5,8 @@ export const PROFILE_PAGES = {
   TRANSPORT:              3,
   SECURITY:               4,
   NOTIFICATIONS:          5,
-  COMPANY:                6
+  COMPANY:                6,
+  ACCOUNT:                7
 } as const
 
 export const ROLE_TYPES = {

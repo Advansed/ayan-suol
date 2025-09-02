@@ -17,6 +17,7 @@ import {
   calculateTransportCompletion, 
   calculateCompanyCompletion 
 } from '../utils'
+import { Account } from './components/Account/Account'
 
 
 export const Profile: React.FC = () => {
@@ -40,9 +41,9 @@ export const Profile: React.FC = () => {
     let common: any = []
   
     // Вычисляем проценты заполненности
-    const passportCompletion = calculatePassportCompletion(passportData)
+    const passportCompletion  = calculatePassportCompletion(passportData)
     const transportCompletion = calculateTransportCompletion(transportData)  
-    const companyCompletion = calculateCompanyCompletion(companyData)
+    const companyCompletion   = calculateCompanyCompletion(companyData)
 
   
     switch(userType) {
@@ -92,6 +93,13 @@ export const Profile: React.FC = () => {
   if (currentPage === PROFILE_PAGES.COMPANY) {
     return <Company onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
+  if (currentPage === PROFILE_PAGES.ACCOUNT) {
+    return <Account onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
+  }
+
+  const handleClick = () => {
+    setCurrentPage( PROFILE_PAGES.ACCOUNT )
+  }
 
   // Главная страница
   return (
@@ -100,7 +108,7 @@ export const Profile: React.FC = () => {
         <div>{UI_TEXT.MY_PROFILE}</div>
       </div>
 
-      <ProfileHeader user={user} userType={ userType} />
+      <ProfileHeader user={user} userType={ userType}  onClick={ handleClick }/>
 
       <ProfileStats ratings = { user.ratings } userType = { userType } />
       
