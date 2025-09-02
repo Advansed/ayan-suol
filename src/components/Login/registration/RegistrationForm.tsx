@@ -19,8 +19,8 @@ import CargoAgree from '../../Profile/components/Agreements/CargoAgree'
 import { EscrowAgreement } from '../../Profile/components/Agreements/Escrow'
 
 interface RegistrationFormProps {
-  onLoginForm?: () => void
-  onRecoveryForm?: () => void
+  onSwitchToLogin?: () => void
+  onSwitchToRecovery?: () => void
 }
 
 // Утилита для форматирования телефона
@@ -356,7 +356,7 @@ const StepSetPassword: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
 // ГЛАВНЫЙ КОМПОНЕНТ РЕГИСТРАЦИИ
 // ======================
 
-const RegistrationForm: React.FC<RegistrationFormProps> = ({ onLoginForm, onRecoveryForm }) => {
+const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin, onSwitchToRecovery }) => {
   const reg = useReg()
   const [showAgreement, setShowAgreement ] = useState(false)
   
@@ -368,13 +368,13 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onLoginForm, onReco
   ]
 
   const navigationLinks = [
-    ...(onLoginForm ? [{
+    ...(onSwitchToLogin ? [{
       text: 'Есть аккаунт? Авторизироваться',
-      onClick: onLoginForm
+      onClick: onSwitchToLogin
     }] : []),
-    ...(onRecoveryForm ? [{
+    ...(onSwitchToRecovery ? [{
       text: 'Забыли пароль? Восстановить',
-      onClick: onRecoveryForm
+      onClick: onSwitchToRecovery
     }] : [])
   ]
 

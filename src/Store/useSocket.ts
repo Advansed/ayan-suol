@@ -13,6 +13,7 @@ export function useSocket() {
     if (!socket) return;
 
     const handleConnect = () => {
+      console.log("connected")
       setIsConnected(true);
       setIsConnecting(false);
     };
@@ -44,6 +45,7 @@ export function useSocket() {
   const connect = useCallback(async (token: string) => {
     try {
       setIsConnecting(true);
+      console.log("connecting...")
       const success = await socketService.connect(token);
       return success;
     } catch (error) {

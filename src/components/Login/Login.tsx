@@ -1,44 +1,82 @@
-/**
- * Главный контейнер Login модуля
- */
+// src/components/Login/Login.tsx
 
-import React from 'react'
-import { useAuth } from './useAuth'
+import React, { useState } from 'react'
+import { useLogin } from '../../Store/useLogin'
 import { LoginForm } from './LoginForm'
-// Подготовка к новой структуре:
-import { ErrorAlert, LoadingSpinner } from './SharedComponents'
-import './Login.css'
+import { LoadingSpinner } from './SharedComponents'
 import { RegistrationForm } from './registration'
+import './Login.css'
+
+// ============================================
+// ТИПЫ
+// ============================================
+
+type CurrentForm = 'login' | 'register' | 'recovery'
+
+// ============================================
+// КОМПОНЕНТ
+// ============================================
 
 const Login: React.FC = () => {
-  const auth = useAuth()
+  // Хук авторизации
+  const { isLoading, login } = useLogin()
   
+  // Локальное состояние форм
+  const [currentForm, setCurrentForm] = useState<CurrentForm>('login')
+
+  // ============================================
+  // ОБРАБОТЧИКИ
+  // ============================================
+
+  const handleLogin = async (phone: string, password: string): Promise<boolean> => {
+    return await login(phone, password)
+  }
+
+  const handleSwitchToRegister = () => {
+    setCurrentForm('register')
+  }
+
+  const handleSwitchToLogin = () => {
+    setCurrentForm('login')
+  }
+
+  const handleSwitchToRecovery = () => {
+    setCurrentForm('recovery')
+  }
+
+  // ============================================
+  // РЕНДЕР
+  // ============================================
+
   return (
     <>
       {/* Глобальный спиннер загрузки */}
-      {auth.isLoading && <LoadingSpinner />}
+      {isLoading && <LoadingSpinner />}
       
-      {/* Алерт ошибки */}
-      {auth.error && (
-        <ErrorAlert 
-          error={auth.error} 
-          onClose={auth.clearErrors} 
+      {/* Условный рендеринг форм */}
+      {currentForm === 'login' && (
+        <LoginForm 
+          onLogin={handleLogin}
+          onSwitchToRegister={handleSwitchToRegister}
+          onSwitchToRecovery={handleSwitchToRecovery}
         />
       )}
       
-      {/* Условный рендеринг форм */}
-      {auth.currentForm === 'login' && (
-        <LoginForm auth={auth} />
+      {currentForm === 'register' && (
+        <RegistrationForm 
+          onSwitchToLogin={handleSwitchToLogin}
+          onSwitchToRecovery={handleSwitchToRecovery}
+        />
       )}
       
-      {auth.currentForm === 'register' && (
-        <RegistrationForm />
+      {/* Форма восстановления - пока закомментирована
+      {currentForm === 'recovery' && (
+        <RecoveryForm 
+          onSwitchToLogin={handleSwitchToLogin}
+          onSwitchToRegister={handleSwitchToRegister}
+        />
       )}
-      
-      {/*
-      {auth.currentForm === 'recovery' && (
-        <RecoveryForm auth={auth} />
-      )} */}
+      */}
     </>
   )
 }
