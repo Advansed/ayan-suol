@@ -174,9 +174,6 @@ export const useCargos = (): UseCargosReturn => {
             // Отправляем через socket
             socketService.emit(SOCKET_EVENTS.PUBLISH_CARGO, { guid, token });
 
-            // Обновляем статус в локальном Store
-            await updateCargo(guid, { status: CargoStatus.WAITING });
-
             return true;
 
         } catch (error) {

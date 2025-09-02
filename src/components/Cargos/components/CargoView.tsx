@@ -18,6 +18,7 @@ import {
 import { CargoInfo } from '../types';
 import { CargoCard } from './CargoCard';
 import { statusUtils, formatters } from '../utils';
+import { Store } from '../../Store';
 
 
 interface CargoViewProps {
@@ -52,15 +53,15 @@ export const CargoView: React.FC<CargoViewProps> = ({
     useEffect(() => {
         console.log("useeffect")
         console.log(cargo)
-        // Store.subscribe({num: 201, type: "cargos", func: ()=>{
-        //     const cargos = Store.getState().cargos
-        //     const updated = cargos.find((c: CargoInfo) => c.guid === currentCargo.guid);
-        //     if (updated) setCurrentCargo(updated);
-        // }})
+        Store.subscribe({num: 201, type: "cargos", func: ()=>{
+            const cargos = Store.getState().cargos
+            const updated = cargos.find((c: CargoInfo) => c.guid === currentCargo.guid);
+            if (updated) setCurrentCargo(updated);
+        }})
 
-        // return () => {
-        //     Store.unSubscribe(201)
-        // };
+        return () => {
+            Store.unSubscribe(201)
+        };
     }, []);
 
     const handleDelete = async () => {
@@ -136,87 +137,91 @@ export const CargoView: React.FC<CargoViewProps> = ({
             {/* Карточка груза */}
             <div className="cr-card mt-1">
                 <CargoCard cargo={currentCargo} mode="view" />
-                {renderActionButtons()}
+                { canPublish && renderActionButtons()}
             </div>
 
            {/* Блок дополнительных услуг */}
-            <div className="cr-card mt-1">
-                <div className="fs-09 mb-1"><b>Дополнительные услуги</b></div>
-                
-                {
-                    hasAdvance && (
-                        <div className="flex fl-space mb-05">
-                            <div className="fs-08 h-2 ml-2">
-                                Предоплата:
-                            </div>
-                            <div className="fs-08 h-2 mr-2">
-                                <b>{ `${formatters.currency(currentCargo.advance)}` }</b>
-                            </div> 
-                        </div>
-                    )
-                }
-                {
-                    hasInsurance && (
-                        <div className="flex fl-space mb-05">
-                            <div className="fs-08 ml-2">
-                                { `Страховка: ` }
-                            </div>
-                            <div className="fs-08 mr-2">
-                                <b>{ `${formatters.currency(currentCargo.insurance)}` }</b>
-                            </div>
-                        </div>
-                    )
-                }
-
-                <div className='flex'>
+           { canPublish && (
+                <div className="cr-card mt-1">
+                    <div className="fs-09 mb-1"><b>Дополнительные услуги</b></div>
                     
-                    <IonButton
-                        className="cr-button-2 w-50"
-                        mode="ios"
-                        fill="clear"
-                        color="primary"
-                        onClick={ onPayment }
-                    >
-                        <IonIcon icon={cardOutline} slot="start" />
-                        <IonLabel className="fs-08">{ hasAdvance ? 'Доплатить' : 'Предоплата'}</IonLabel>
-                    </IonButton>
-                            
-                    <IonButton
-                        className="cr-button-2 w-50"
-                        mode="ios"
-                        fill="clear"
-                        color="primary"
-                        onClick={ onInsurance }
-                    >
-                        <IonIcon icon={shieldCheckmarkOutline} slot="start" />
-                        <IonLabel className="fs-08">Страховка</IonLabel>
-                    </IonButton>
+                    {
+                        hasAdvance && (
+                            <div className="flex fl-space mb-05">
+                                <div className="fs-08 h-2 ml-2">
+                                    Предоплата:
+                                </div>
+                                <div className="fs-08 h-2 mr-2">
+                                    <b>{ `${formatters.currency(currentCargo.advance)}` }</b>
+                                </div> 
+                            </div>
+                        )
+                    }
+                    {
+                        hasInsurance && (
+                            <div className="flex fl-space mb-05">
+                                <div className="fs-08 ml-2">
+                                    { `Страховка: ` }
+                                </div>
+                                <div className="fs-08 mr-2">
+                                    <b>{ `${formatters.currency(currentCargo.insurance)}` }</b>
+                                </div>
+                            </div>
+                        )
+                    }
 
-                </div>
+                    <div className='flex'>
+                        
+                        <IonButton
+                            className="cr-button-2 w-50"
+                            mode="ios"
+                            fill="clear"
+                            color="primary"
+                            onClick={ onPayment }
+                        >
+                            <IonIcon icon={cardOutline} slot="start" />
+                            <IonLabel className="fs-08">{ hasAdvance ? 'Доплатить' : 'Предоплата'}</IonLabel>
+                        </IonButton>
+                                
+                        <IonButton
+                            className="cr-button-2 w-50"
+                            mode="ios"
+                            fill="clear"
+                            color="primary"
+                            onClick={ onInsurance }
+                        >
+                            <IonIcon icon={shieldCheckmarkOutline} slot="start" />
+                            <IonLabel className="fs-08">Страховка</IonLabel>
+                        </IonButton>
 
-            </div>
-            {/* Блок инвойсов */}
-            <div className="cr-card mt-1">
-                <div className="flex fl-space">
-                    <div className="fs-09"><b>Заявки от водителей</b></div>
-                    <div className="fs-08 cl-gray">
-                        {totalInvoices > 0 ? `${totalInvoices} заявок` : 'Нет заявок'}
                     </div>
+
                 </div>
-                
-                {totalInvoices > 0 && (
-                    <IonButton
-                        className="w-100 cr-button-2 mt-05"
-                        mode="ios"
-                        fill="clear"
-                        color="primary"
-                        onClick={onViewInvoices}
-                    >
-                        <IonIcon icon={documentsOutline} slot="start" />
-                        <IonLabel className="fs-08">Просмотреть заявки</IonLabel>
-                    </IonButton>
-                )}
-            </div>
+           )}
+            {/* Блок инвойсов */}
+            { !canPublish && (
+                <div className="cr-card mt-1">
+                    <div className="flex fl-space">
+                        <div className="fs-09"><b>Заявки от водителей</b></div>
+                        <div className="fs-08 cl-gray">
+                            {totalInvoices > 0 ? `${totalInvoices} заявок` : 'Нет заявок'}
+                        </div>
+                    </div>
+                    
+                    {totalInvoices > 0 && (
+                        <IonButton
+                            className="w-100 cr-button-2 mt-05"
+                            mode="ios"
+                            fill="clear"
+                            color="primary"
+                            onClick={onViewInvoices}
+                        >
+                            <IonIcon icon={documentsOutline} slot="start" />
+                            <IonLabel className="fs-08">Просмотреть заявки</IonLabel>
+                        </IonButton>
+                    )}
+                </div>
+            )}
 
             {/* Кнопка публикации внизу */}
             {canPublish && (

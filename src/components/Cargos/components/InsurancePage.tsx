@@ -7,6 +7,7 @@ import { IonIcon, IonAlert, IonLoading } from '@ionic/react';
 import { arrowBackOutline, shieldCheckmarkOutline, documentTextOutline, businessOutline } from 'ionicons/icons';
 import { CargoInfo } from '../types';
 import { formatters } from '../utils';
+import { usePayment } from './usePayment';
 
 interface InsurancePageProps {
     cargo: CargoInfo;
@@ -54,6 +55,7 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
     const [showConfirmAlert, setShowConfirmAlert] = useState(false);
     const [showCancelAlert, setShowCancelAlert] = useState(false);
     const [insuranceCost, setInsuranceCost] = useState(0);
+    const { saveInsurance } = usePayment()
 
     // Получаем выбранный тип страхования
     const selectedInsurance = INSURANCE_TYPES.find(type => type.id === selectedType);
@@ -68,23 +70,18 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
 
     // Обработчик оформления страховки
     const handleInsurance = async () => {
-        setIsLoading(true);
+         setIsLoading(true);
         try {
-            // Здесь будет интеграция со страховой компанией
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Имитация запроса
-            
-            console.log('Insurance processed:', {
-                cargoId: cargo.guid,
-                cargoValue: cargo.cost,
-                insuranceType: selectedType,
-                insuranceCost: insuranceCost
-            });
-
-            if(onInsuranceComplete) onInsuranceComplete();
-
+            const result = await saveInsurance(cargo.guid, insuranceCost);
+            if (result.success) {
+                if(onInsuranceComplete)
+                    onInsuranceComplete();
+            } else {
+                // TODO: Показать ошибку
+                console.error('Payment failed:', result.error);
+            }
         } catch (error) {
-            console.error('Insurance error:', error);
-            // TODO: Показать ошибку страхования
+            console.error('Payment error:', error);
         } finally {
             setIsLoading(false);
         }
