@@ -5,11 +5,9 @@ class SocketService {
   private socket: Socket | null = null;
   private isConnected = false;
 
-  private readonly SERVER_URL   = 'https://gruzreis.ru';
-  private readonly SOCKET_PATH  = '/node/socket.io/';
+  private readonly SERVER_URL = 'https://gruzreis.ru';
+  private readonly SOCKET_PATH = '/node/socket.io/';
 
-
-  // Подключение к серверу с токеном
   connect(token: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (this.socket?.connected) {
@@ -19,46 +17,43 @@ class SocketService {
 
       this.socket = io(this.SERVER_URL, {
         path: this.SOCKET_PATH,
-        auth: { token }, // Передаем токен для авторизации
+        auth: { token },
         transports: ['polling', 'websocket'],
         autoConnect: true,
         reconnection: true,
         timeout: 20000
       });
 
-      // Обработка подключения
-      this.socket.on('connect', () => {
-        console.log('Подключен к Socket.IO серверу');
+      // Только критичные обработчики для Promise
+      const handleConnect = () => {
         this.isConnected = true;
+        this.socket?.off('connect', handleConnect);
+        this.socket?.off('connect_error', handleError);
         resolve(true);
-      });
+      };
 
-      // Обработка отключения
-      this.socket.on('disconnect', () => {
-        console.log('Отключен от Socket.IO сервера');
-        this.isConnected = false;
-      });
-
-      // Обработка ошибок подключения
-      this.socket.on('connect_error', (error) => {
+      const handleError = (error: any) => {
         console.error('Ошибка подключения:', error);
+        this.socket?.off('connect', handleConnect);
+        this.socket?.off('connect_error', handleError);
         reject(error);
-      });
+      };
+
+      this.socket.once('connect', handleConnect);
+      this.socket.once('connect_error', handleError);
     });
   }
 
-  // Отправка произвольного события
   emit(eventName: string, data: any): boolean {
     if (!this.socket?.connected) {
       console.error('Socket не подключен');
       return false;
     }
-        
+    
     this.socket.emit(eventName, data);
     return true;
   }
 
-  // Отключение
   disconnect() {
     if (this.socket) {
       this.socket.disconnect();
@@ -67,12 +62,10 @@ class SocketService {
     }
   }
 
-  // Проверка подключения
   isSocketConnected(): boolean {
     return this.isConnected && this.socket?.connected === true;
   }
 
-  // Получение статуса
   getStatus() {
     return {
       connected: this.isConnected,
@@ -85,6 +78,5 @@ class SocketService {
   }
 }
 
-// Экспорт синглтона
 export const socketService = new SocketService();
 export default socketService;

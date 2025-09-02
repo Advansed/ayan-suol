@@ -7,35 +7,36 @@ import {
   TState
 } from './Store'
 import { useToast } from '../components/Toast'
-import socketService from '../components/Sockets'
+import { useSocket } from './useSocket'
 
 // ============================================
 // ТИПЫ
 // ============================================
 
 export interface UserRatings {
-  orders: number;
-  rate: number;
-  payd: number;
+  orders:             number;
+  rate:               number;
+  payd:               number;
 }
 
 export interface UserNotifications {
-  email: boolean;
-  sms: boolean;
-  orders: boolean;
-  market: boolean;
+  personalData:       boolean;
+  userAgreement:      boolean;
+  marketing:          boolean;
+  market:             boolean;
 }
 
 export interface AuthResponse {
-    guid: string;
-    token: string;
-    phone: string;
-    name: string;
-    email: string;
-    image: string;
-    user_type: number;
-    description: string;
-    account: number;
+  guid:               string;
+  token:              string;
+  phone:              string;
+  name:               string;
+  email:              string;
+  image:              string;
+  user_type:          number;
+  description:        string;
+  account:            number;
+  notifications:      UserNotifications;
 }
 
 export interface AppState extends TState {
@@ -49,8 +50,8 @@ export interface AppState extends TState {
   user_type:          number | null
   description:        string | null
   account:            number | null
+  notifications:      UserNotifications | null
   isLoading:          boolean
-  socketConnected:    boolean
 }
 
 // ============================================
@@ -73,20 +74,20 @@ export function Phone(phone: string): string {
 
 export const appStore = new UniversalStore<AppState>({
   initialState: { 
-    auth: false,
-    id: null,
-    name: null,
-    phone: null,
-    email: null,
-    image: null,
-    token: null,
-    user_type: null,
-    description: null,
-    account: null,
-    isLoading: false,
-    socketConnected: false
+    auth:           false,
+    id:             null,
+    name:           null,
+    phone:          null,
+    email:          null,
+    image:          null,
+    token:          null,
+    user_type:      null,
+    description:    null,
+    account:        null,
+    notifications:  null,
+    isLoading:      false
   },
-  enableLogging: true
+  enableLogging:    true
 })
 
 // ============================================
@@ -105,79 +106,65 @@ export function useLogin() {
   const description       = useStore((state: AppState) => state.description,        1009, appStore)
   const account           = useStore((state: AppState) => state.account,            1010, appStore)
   const isLoading         = useStore((state: AppState) => state.isLoading,          1011, appStore)
-  const socketConnected   = useStore((state: AppState) => state.socketConnected,    1012, appStore)
+  const notifications     = useStore((state: AppState) => state.notifications,      1012, appStore)
 
   const toast = useToast()
+  const { isConnected, emit, on } = useSocket()
 
   const login = useCallback(async (phoneNumber: string, password: string): Promise<boolean> => {
     
     appStore.dispatch({ type: 'isLoading', data: true })
 
     try {
-      const socket = socketService.getSocket();
-      if (!socket) {
-        throw new Error('Socket не подключен');
+      if (!isConnected) {
+        throw new Error('Нет подключения к серверу')
       }
 
-      return new Promise((resolve) => {
-
-        // Обработчик ответа на авторизацию
+      return new Promise((resolve, reject) => {
         const handleAuthResponse = (response: any) => {
-
-          console.log("AuthResponce", response )
           if (response.success && response.data) {
-            const userData = response.data;
+            const authData: AuthResponse = response.data
             
-            // Сохраняем данные пользователя
-            appStore.dispatch({ type: 'auth',           data: true })
-            appStore.dispatch({ type: 'id',             data: userData.guid })
-            appStore.dispatch({ type: 'name',           data: userData.name })
-            appStore.dispatch({ type: 'phone',          data: userData.phone })
-            appStore.dispatch({ type: 'email',          data: userData.email })
-            appStore.dispatch({ type: 'image',          data: userData.image })
-            appStore.dispatch({ type: 'token',          data: userData.token })
-            appStore.dispatch({ type: 'user_type',      data: userData.user_type })
-            appStore.dispatch({ type: 'description',    data: userData.description })
-            appStore.dispatch({ type: 'ratings',        data: userData.ratings })
-            appStore.dispatch({ type: 'notifications',  data: userData.notifications })
-            appStore.dispatch({ type: 'account',        data: userData.account || 0 })
-            
-            appStore.dispatch({ type: 'isLoading', data: false })
-            toast.success('Авторизация успешна')
-            resolve(true);
+            appStore.batchUpdate({
+              auth:               true,
+              id:                 authData.guid,
+              name:               authData.name,
+              phone:              authData.phone,
+              email:              authData.email,
+              image:              authData.image,
+              token:              authData.token,
+              user_type:          authData.user_type,
+              description:        authData.description,
+              account:            authData.account,
+              notifications:      authData.notifications,
+              isLoading:          false
+            })
+
+            toast.success(`Добро пожаловать, ${authData.name}!`)
+            resolve(true)
           } else {
-            // Ошибка авторизации
-            appStore.dispatch({ type: 'isLoading',    data: false })
-            appStore.dispatch({ type: 'auth',         data: false })
-
-            toast.error(response.message || 'Неверный логин или пароль')
-
-            resolve(false);
+            appStore.dispatch({ type: 'isLoading', data: false })
+            appStore.dispatch({ type: 'auth', data: false })
+            
+            toast.error(response.message || 'Неверные данные для входа')
+            resolve(false)
           }
-        };
+        }
 
-        // Подписка на ответ и отправка запроса
-        socket.once('authorization', handleAuthResponse);
-
-        socket.emit('authorization', { login: Phone(phoneNumber), password });
-
-      });
+        on('authorization', handleAuthResponse)
+        emit('authorization', { login: Phone(phoneNumber), password })
+      })
 
     } catch (error: any) {
-
-      appStore.dispatch({ type: 'isLoading',      data: false })
-      appStore.dispatch({ type: 'auth',           data: false })
+      appStore.dispatch({ type: 'isLoading', data: false })
+      appStore.dispatch({ type: 'auth', data: false })
       
       toast.error('Ошибка подключения к серверу')
-      return false;
+      return false
     }
-  }, [toast])
+  }, [toast, isConnected, emit, on])
 
   const logout = useCallback(() => {
-    // Отключаемся от сокета
-    socketService.disconnect()
-    
-    // Очищаем состояние
     appStore.batchUpdate({
       auth:               false,
       id:                 null,
@@ -188,14 +175,12 @@ export function useLogin() {
       token:              null,
       user_type:          null,
       description:        null,
-      ratings:            null,
-      notifications:      null,
-      account:            null,
-      socketConnected:    false
+      account:            null
     })
 
     toast.info("Выход из системы")
   }, [toast])
+
 
   return {
     auth,
@@ -209,7 +194,8 @@ export function useLogin() {
     description,
     account,
     isLoading,
-    socketConnected,
+    notifications,
+    socketConnected: isConnected,
     login,
     logout
   }
@@ -224,4 +210,3 @@ export const getName            = () => appStore.getState().name || ''
 export const getId              = () => appStore.getState().id || ''
 export const getAccount         = () => appStore.getState().account || 0
 export const isAuthenticated    = () => appStore.getState().auth
-export const isSocketConnected  = () => appStore.getState().socketConnected
