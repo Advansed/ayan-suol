@@ -81,7 +81,7 @@ export function useSocket() {
     }
   }, [])
 
-  const connect = useCallback(async (token: string) => {
+  const connect     = useCallback(async (token: string) => {
     try {
       socketStore.dispatch({ type: 'isConnecting', data: true })
       console.log("connecting...")
@@ -104,7 +104,7 @@ export function useSocket() {
     }
   }, [])
 
-  const disconnect = useCallback(() => {
+  const disconnect  = useCallback(() => {
     socketService.disconnect()
     socketStore.batchUpdate({
       isConnected: false,
@@ -112,11 +112,11 @@ export function useSocket() {
     })
   }, [])
 
-  const emit = useCallback((event: string, data?: any) => {
+  const emit        = useCallback((event: string, data?: any) => {
     return socketService.emit(event, data)
   }, [])
 
-  const on = useCallback((event: string, callback: Function) => {
+  const on          = useCallback((event: string, callback: Function) => {
     const socket = socketService.getSocket()
     if (socket) {
       socket.on(event, callback as any)
@@ -131,13 +131,13 @@ export function useSocket() {
     }
   }, [])
 
-  const off = useCallback((event: string, callback?: any) => {
+  const off         = useCallback((event: string, callback?: any) => {
     const socket = socketService.getSocket()
     if(callback) socket?.off(event, callback)
     else socket?.off(event)
   }, [])
 
-  const once = useCallback((event: string, callback?: any) => {
+  const once        = useCallback((event: string, callback?: any) => {
     const socket = socketService.getSocket()
     if(callback)
       socket?.once(event, callback)
