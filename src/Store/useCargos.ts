@@ -9,66 +9,92 @@ import { useLogin } from './useLogin'
 // ============================================
 // ТИПЫ
 // ============================================
+export interface CargoCity {
+    city:               string,
+    fias:               string
+}
+
+// Адрес (отправления или назначения)
+export interface CargoAddress {
+    city:               CargoCity;
+    address:            string;
+    fias:               string;
+    lat:                number;
+    long:               number;
+}
+
+// Предложение от водителя
+export interface CargoInvoice {
+    id:                 string;
+    cargo:              string;
+    driverId:           string;
+    driverName:         string;
+    driverPhone:        string;
+    transport:          string;
+    price:              number;
+    weight:             number;
+    volume:             number;
+    status:             string;
+    createdAt:          string;
+    rating:             number;
+}
 
 export interface CargoInfo {
-    guid: string
-    status: CargoStatus
-    priority?: CargoPriority
-    createdAt: string
-    updatedAt: string
-    
-    // Основная информация
-    name?: string
-    description?: string
-    weight?: number
-    volume?: number
+
+    guid:               string;
+    name:               string;
+    description:        string;
+    client:             string;
     
     // Адреса
-    fromAddress?: CargoAddress
-    toAddress?: CargoAddress
+    address:            CargoAddress;
+    destiny:            CargoAddress;
+
+    //Даты
+    pickup_date:        string;
+    delivery_date:      string;
+
+    // Характеристики груза
+    weight:             number;
+    weight1?:           number; // Для совместимости
+    volume:             number;
+    price:              number;
+    cost:               number;
+    advance:            number;
+    insurance:          number;
     
-    // Финансы
-    price?: number
-    currency?: string
-    invoices?: CargoInvoice[]
+    // Контакты
+    phone:              string;
+    face:               string;
     
-    // Даты
-    loadingDate?: string
-    deliveryDate?: string
+    // Статус и предложения
+    status:             CargoStatus;
+    invoices?:          CargoInvoice[];
+    priority?:          CargoPriority;
+    
+    // Метаданные
+    createdAt?:         string;
+    updatedAt?:         string;
+      
 }
 
 export enum CargoStatus {
-    NEW = 'new',
-    DRAFT = 'draft', 
-    PUBLISHED = 'published',
-    IN_PROGRESS = 'in_progress',
-    DELIVERED = 'delivered',
-    COMPLETED = 'completed',
-    CANCELLED = 'cancelled'
+    NEW                 = 'new',
+    DRAFT               = 'draft', 
+    PUBLISHED           = 'published',
+    IN_PROGRESS         = 'in_progress',
+    DELIVERED           = 'delivered',
+    COMPLETED           = 'completed',
+    CANCELLED           = 'cancelled'
 }
 
 export enum CargoPriority {
-    LOW = 'low',
-    NORMAL = 'normal', 
-    HIGH = 'high',
-    URGENT = 'urgent'
+    LOW                 = 'low',
+    NORMAL              = 'normal', 
+    HIGH                = 'high',
+    URGENT              = 'urgent'
 }
 
-export interface CargoAddress {
-    city?: string
-    address?: string
-    coordinates?: [number, number]
-    contactPerson?: string
-    contactPhone?: string
-}
-
-export interface CargoInvoice {
-    id: string
-    type: string
-    amount: number
-    status: string
-    date?: string
-}
 
 export interface PageType {
     type: 'list' | 'create' | 'edit' | 'view' | 'invoices' | 'prepayment' | 'insurance'
@@ -88,36 +114,36 @@ export interface CargoFilters {
 
 export interface UseCargosReturn {
     // State
-    cargos: CargoInfo[]
-    isLoading: boolean
-    currentPage: PageType
-    filters: CargoFilters
-    searchQuery: string
+    cargos:             CargoInfo[]
+    isLoading:          boolean
+    currentPage:        PageType
+    filters:            CargoFilters
+    searchQuery:        string
     
     // Navigation
-    navigateTo: (page: PageType) => void
-    goBack: () => void
+    navigateTo:         (page: PageType) => void
+    goBack:             () => void
     
     // Filters
-    setFilters: (filters: CargoFilters) => void  
-    setSearchQuery: (query: string) => void
+    setFilters:         (filters: CargoFilters) => void  
+    setSearchQuery:     (query: string) => void
     
     // CRUD
-    createCargo: (data: Partial<CargoInfo>) => Promise<boolean>
-    updateCargo: (guid: string, data: Partial<CargoInfo>) => Promise<boolean>
-    deleteCargo: (guid: string) => Promise<boolean>
-    publishCargo: (guid: string) => Promise<boolean>
-    getCargo: (guid: string) => CargoInfo | undefined
-    refreshCargos: () => Promise<void>
+    createCargo:        (data: CargoInfo) => Promise<boolean>
+    updateCargo:        (guid: string, data: CargoInfo ) => Promise<boolean>
+    deleteCargo:        (guid: string) => Promise<boolean>
+    publishCargo:       (guid: string) => Promise<boolean>
+    getCargo:           (guid: string) => CargoInfo | undefined
+    refreshCargos:      () => Promise<void>
 }
 
 export interface CargoState extends TState {
-    cargos: CargoInfo[]
-    isLoading: boolean
-    currentPage: PageType
-    filters: CargoFilters
-    searchQuery: string
-    navigationHistory: PageType[]
+    cargos:             CargoInfo[]
+    isLoading:          boolean
+    currentPage:        PageType
+    filters:            CargoFilters
+    searchQuery:        string
+    navigationHistory:  PageType[]
 }
 
 // ============================================
@@ -132,14 +158,6 @@ const SOCKET_EVENTS = {
     GET_CARGOS: 'get_cargos'
 }
 
-const EMPTY_CARGO: Partial<CargoInfo> = {
-    name: '',
-    description: '',
-    weight: 0,
-    volume: 0,
-    price: 0,
-    currency: 'RUB'
-}
 
 // ============================================
 // STORE
@@ -157,6 +175,39 @@ export const cargoStore = new UniversalStore<CargoState>({
     enableLogging: true
 })
 
+export const EMPTY_CARGO: CargoInfo = {
+  guid: '',
+  name: '',
+  description: '',
+  client: '',
+  address: {
+    city: { city: '', fias: '' },
+    address: '',
+    fias: '',
+    lat: 0,
+    long: 0
+  },
+  destiny: {
+    city: { city: '', fias: '' },
+    address: '',
+    fias: '',
+    lat: 0,
+    long: 0
+  },
+  pickup_date: '',
+  delivery_date: '',
+  weight: 0,
+  weight1: 0,
+  volume: 0,
+  price: 0,
+  cost: 0,
+  advance: 0,
+  insurance: 0,
+  phone: '',
+  face: '',
+  status: CargoStatus.NEW
+};
+
 // ============================================
 // HOOK
 // ============================================
@@ -166,12 +217,12 @@ export const useCargos = (): UseCargosReturn => {
     const toast = useToast()
 
     // State subscriptions
-    const cargos = useStore((state: CargoState) => state.cargos, 7001, cargoStore)
-    const isLoading = useStore((state: CargoState) => state.isLoading, 7002, cargoStore)
-    const currentPage = useStore((state: CargoState) => state.currentPage, 7003, cargoStore)
-    const filters = useStore((state: CargoState) => state.filters, 7004, cargoStore)
-    const searchQuery = useStore((state: CargoState) => state.searchQuery, 7005, cargoStore)
-    const navigationHistory = useStore((state: CargoState) => state.navigationHistory, 7006, cargoStore)
+    const cargos                = useStore((state: CargoState) => state.cargos, 7001, cargoStore)
+    const isLoading             = useStore((state: CargoState) => state.isLoading, 7002, cargoStore)
+    const currentPage           = useStore((state: CargoState) => state.currentPage, 7003, cargoStore)
+    const filters               = useStore((state: CargoState) => state.filters, 7004, cargoStore)
+    const searchQuery           = useStore((state: CargoState) => state.searchQuery, 7005, cargoStore)
+    const navigationHistory     = useStore((state: CargoState) => state.navigationHistory, 7006, cargoStore)
 
     // ============================================
     // NAVIGATION
@@ -205,7 +256,7 @@ export const useCargos = (): UseCargosReturn => {
     // CRUD OPERATIONS
     // ============================================
 
-    const createCargo = useCallback(async (data: Partial<CargoInfo>): Promise<boolean> => {
+    const createCargo = useCallback(async (data: CargoInfo): Promise<boolean> => {
         const socket = socketService.getSocket()
         if (!socket || !token) {
             toast.error('Нет подключения')
@@ -245,7 +296,7 @@ export const useCargos = (): UseCargosReturn => {
         }
     }, [token])
 
-    const updateCargo = useCallback(async (guid: string, data: Partial<CargoInfo>): Promise<boolean> => {
+    const updateCargo = useCallback(async (guid: string, data: CargoInfo): Promise<boolean> => {
         const socket = socketService.getSocket()
         if (!socket || !token) {
             toast.error('Нет подключения')
@@ -263,7 +314,7 @@ export const useCargos = (): UseCargosReturn => {
             cargoStore.dispatch({ type: 'cargos', data: updatedCargos })
 
             // Socket emit
-            socket.emit(SOCKET_EVENTS.UPDATE_CARGO, { token, guid, ...data })
+            socket.emit(SOCKET_EVENTS.UPDATE_CARGO, { token, ...data })
 
             cargoStore.dispatch({ type: 'isLoading', data: false })
             toast.success('Груз обновлен')

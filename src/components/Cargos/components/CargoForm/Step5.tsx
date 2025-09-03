@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { IonInput, IonCheckbox } from '@ionic/react';
-import { CargoInfo } from '../../types';
 import styles from './CargoForm.module.css';
+import { CargoInfo } from '../../../../Store/useCargos';
 
 interface Step5Props {
   data: CargoInfo;
