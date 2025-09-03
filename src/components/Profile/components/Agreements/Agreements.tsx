@@ -81,10 +81,10 @@ export const Agreements: React.FC = () => {
         </div>
       </div>
 
-      <EULA isOpen={isEulaOpen} onClose={() => setIsEulaOpen(false)} />
-      <CargoAgree isOpen={isCargoOpen} onClose={() => setIsCargoOpen(false)} />
-      <EscrowAgreement isOpen={isEscrowOpen} onClose={() => setIsEscrowOpen(false)} />
-      <Signs isOpen={isSignOpen} onClose={() => setIsSignOpen(false)} />
+      <EULA             isOpen = { isEulaOpen }   onClose = { () => setIsEulaOpen(false) } />
+      <CargoAgree       isOpen = { isCargoOpen }  onClose = { () => setIsCargoOpen(false) } />
+      <EscrowAgreement  isOpen = { isEscrowOpen } onClose = { () => setIsEscrowOpen(false) } />
+      <Signs            isOpen = { isSignOpen }   onClose = { () => setIsSignOpen(false) } />
     </div>
   )
 }

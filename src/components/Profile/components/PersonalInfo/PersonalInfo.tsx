@@ -37,7 +37,7 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
       }))
       setUploadedAvatar(user.image || undefined)
     }
-  }, [user])
+  }, [ user ])
 
   // Валидация текущего шага
   const validateCurrentStep = (): boolean => {
@@ -187,10 +187,31 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
   }
 
   // Удаление фото
-  const removeAvatar = () => {
+  const removeAvatar = async() => {
+    console.log("remove avatar")
     setUploadedAvatar(undefined)
     setForm(prev => ({ ...prev, avatar: '' }))
-    saveAvatar()
+    
+    setIsSaving(true)
+    setError(null)
+    setSuccess(false)
+
+    try {
+      const success = await updateUser({
+        image: ''
+      })
+
+      if (success) {
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 3000)
+      } else {
+        setError('Ошибка сохранения фото')
+      }
+    } catch (err) {
+      setError('Ошибка сохранения фото')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   // Страница 1: Личные данные
@@ -332,11 +353,11 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
       <div className={styles.wizardContent}>
         <div className={styles.stepContainer}>
           <WizardHeader
-            title={getStepTitle()}
-            onBack={handleBackNavigation}
-            onForward={handleForwardNavigation}
-            onSave={handleSave}
-            isLastStep={currentStep === 3}
+            title       = { getStepTitle() }
+            onBack      = { handleBackNavigation }
+            onForward   = { handleForwardNavigation }
+            onSave      = { handleSave }
+            isLastStep  = { currentStep === 3 }
           />
           
           {isLoading ? (

@@ -7,7 +7,7 @@ import styles from './CargoForm.module.css';
 import { AddressSuggestions } from 'react-dadata';
 import '../../../../../node_modules/react-dadata/dist/react-dadata.css'
 import { Step5 } from './Step5';
-import { useProfile } from '../../../Profile/hooks/useProfile';
+import { useProfile } from '../../../Profile/hooks/use_Profile';
 import { useHistory } from 'react-router';
 import { useStoreField } from '../../../Store';
 import { calculateCompanyCompletion } from '../../../utils';

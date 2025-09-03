@@ -1,6 +1,6 @@
 // src/Store/useLogin.ts
 
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { 
   UniversalStore, 
   useStore, 
@@ -124,6 +124,12 @@ export function useLogin() {
   const toast = useToast()
   const { isConnected, emit, once } = useSocket()
 
+  const user = useMemo(() => ({
+      id, name, phone, email, image, token, 
+      user_type, description, account, 
+      notifications, isLoading
+  }), [id, name, phone, email, image, token, user_type, description, account, notifications, isLoading])
+
   const login = useCallback(async (phoneNumber: string, password: string): Promise<boolean> => {
     
     appStore.dispatch({ type: 'isLoading', data: true })
@@ -206,11 +212,15 @@ export function useLogin() {
           Object.entries(userData).forEach(([key, value]) => {
             appStore.dispatch({ type: key, data: value })
           })
+          toast.success( data.message )
+        } else {
+          toast.error( data.message )
         }
         appStore.dispatch({ type: 'isLoading', data: false })
       })
       
-      const success = emit('set_user', userData)
+      console.log('emit...', userData );
+      const success = emit('set_user', { ...userData, token: token })
       if (!success) {
         toast.error('Ошибка подключения')
         appStore.dispatch({ type: 'isLoading', data: false })
@@ -246,19 +256,7 @@ export function useLogin() {
 
   return {
     auth,
-    user:{
-        id,
-        name,
-        phone,
-        email,
-        image,
-        token,
-        user_type,
-        description,
-        account,
-        notifications,
-        isLoading
-    }, 
+    user, 
     id,
     name,
     phone,
