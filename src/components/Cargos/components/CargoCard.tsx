@@ -1,8 +1,8 @@
 import React from 'react';
 import { IonIcon, IonText } from '@ionic/react';
 import { locationOutline, calendarOutline } from 'ionicons/icons';
-import { CargoInfo } from '../types';
 import { formatters, statusUtils } from '../utils';
+import { CargoInfo } from '../../../Store/useCargos';
 
 interface CargoCardProps {
     cargo: CargoInfo;
@@ -27,7 +27,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({
                 {/* Статус и ID */}
                 <div className="flex fl-space">
                     <div className="flex">
-                        <div className={statusUtils.getClassName(cargo.status)}>
+                        <div className={ cargo.status }>
                             {cargo.status}
                         </div>
                         <IonText className="ml-1 fs-07 cl-black">
@@ -112,7 +112,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({
             {/* Верхняя строка: статус, ID, цена */}
             <div className="flex fl-space">
                 <div className="flex">
-                    <div className={statusUtils.getClassName(cargo.status)}>
+                    <div className={ cargo.status }>
                         {cargo.status}
                     </div>
                     <IonText className="ml-1 fs-07 cl-black">

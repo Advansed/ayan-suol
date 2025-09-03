@@ -17,9 +17,9 @@ import {
 import { 
     filterOutline
 } from 'ionicons/icons';
-import { CargoInfo, CargoFilters, CargoStatus } from '../types';
 import { CargoCard } from './CargoCard';
 import { Package } from "lucide-react";
+import { CargoFilters, CargoInfo, CargoStatus } from '../../../Store/useCargos';
 
 interface CargosListProps {
     cargos: CargoInfo[];
@@ -68,10 +68,12 @@ export const CargosList: React.FC<CargosListProps> = ({
     const hasActiveFilters = () => {
         return searchQuery || 
                filters.status?.length || 
-               filters.cityFrom || 
                filters.cityTo || 
-               filters.priceMin || 
-               filters.priceMax;
+               filters.cityFrom || 
+               filters.dateFrom || 
+               filters.dateTo || 
+               filters.minPrice ||
+               filters.maxPrice;
     };
 
     const renderEmptyState = () => (
@@ -199,12 +201,12 @@ export const CargosList: React.FC<CargosListProps> = ({
                         <div className="w-50">
                             <div className="fs-08 mb-05">Цена от</div>
                             <IonInput
-                                value={filters.priceMin}
+                                value={filters.minPrice}
                                 type="number"
                                 placeholder="0"
                                 onIonInput={(e) => onFiltersChange({
                                     ...filters,
-                                    priceMin: parseInt(e.detail.value as string) || undefined
+                                    minPrice: parseInt(e.detail.value as string) || undefined
                                 })}
                                 className="custom-input"
                             />
@@ -212,12 +214,12 @@ export const CargosList: React.FC<CargosListProps> = ({
                         <div className="w-50 ml-1">
                             <div className="fs-08 mb-05">Цена до</div>
                             <IonInput
-                                value={filters.priceMax}
+                                value={filters.maxPrice}
                                 type="number"
                                 placeholder="1000000"
                                 onIonInput={(e) => onFiltersChange({
                                     ...filters,
-                                    priceMax: parseInt(e.detail.value as string) || undefined
+                                    maxPrice: parseInt(e.detail.value as string) || undefined
                                 })}
                                 className="custom-input"
                             />
@@ -270,14 +272,14 @@ export const CargosList: React.FC<CargosListProps> = ({
                                 Куда: {filters.cityTo}
                             </div>
                         )}
-                        {filters.priceMin && (
+                        {filters.minPrice && (
                             <div className="cr-chip mr-05 mb-05">
-                                От: {filters.priceMin}₽
+                                От: {filters.minPrice}₽
                             </div>
                         )}
-                        {filters.priceMax && (
+                        {filters.maxPrice && (
                             <div className="cr-chip mr-05 mb-05">
-                                До: {filters.priceMax}₽
+                                До: {filters.maxPrice}₽
                             </div>
                         )}
                     </div>

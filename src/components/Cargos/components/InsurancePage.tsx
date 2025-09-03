@@ -5,9 +5,9 @@
 import React, { useState, useEffect } from 'react';
 import { IonIcon, IonAlert, IonLoading } from '@ionic/react';
 import { arrowBackOutline, shieldCheckmarkOutline, documentTextOutline, businessOutline } from 'ionicons/icons';
-import { CargoInfo } from '../types';
 import { formatters } from '../utils';
 import { usePayment } from './usePayment';
+import { CargoInfo } from '../../../Store/useCargos';
 
 interface InsurancePageProps {
     cargo: CargoInfo;

@@ -15,21 +15,21 @@ import {
         cardOutline,
         shieldCheckmarkOutline
 } from 'ionicons/icons';
-import { CargoInfo } from '../types';
 import { CargoCard } from './CargoCard';
 import { statusUtils, formatters } from '../utils';
 import { Store } from '../../Store';
+import { CargoInfo, CargoStatus } from '../../../Store/useCargos';
 
 
 interface CargoViewProps {
     cargo:          CargoInfo;
     onBack:         () => void;
-    onEdit:         () => void;
-    onDelete:       () => Promise<void>;
-    onPublish:      () => Promise<void>;
-    onViewInvoices: () => void;
-    onPayment:      () => void;
-    onInsurance:    () => void;
+    onEdit:         (cargo: CargoInfo ) => void;
+    onDelete:       (guid: string) => Promise<boolean>;
+    onPublish:      (guid: string) => Promise<boolean>;
+    onInvoices:     (cargo: CargoInfo) => void;
+    onPayment:      (cargo: CargoInfo) => void;
+    onInsurance:    (cargo: CargoInfo) => void;
     isLoading?:     boolean;
 }
 
@@ -39,7 +39,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
     onEdit,
     onDelete,
     onPublish,
-    onViewInvoices,
+    onInvoices,
     onPayment,
     onInsurance,
     isLoading = false
@@ -66,12 +66,12 @@ export const CargoView: React.FC<CargoViewProps> = ({
 
     const handleDelete = async () => {
         setShowDeleteAlert(false);
-        await onDelete();
+        await onDelete( cargo.guid );
     };
 
     const handlePublish = async () => {
         setShowPublishAlert(false);
-        await onPublish();
+        await onPublish( cargo.guid );
     };
 
 
@@ -87,7 +87,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
                         mode="ios"
                         fill="clear"
                         color="primary"
-                        onClick={onEdit}
+                        onClick={() => onEdit(cargo)}
                     >
                         <IonIcon icon={createOutline} slot="start" />
                         <IonLabel className="fs-08">Изменить</IonLabel>
@@ -115,7 +115,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
     const hasAdvance                = currentCargo.advance > 0 ;
     const hasInsurance              = currentCargo.insurance > 0;
     const hasAdditionalServices     = hasAdvance || hasInsurance;
-    const canPublish                = statusUtils.canPublish(currentCargo.status);
+    const canPublish                = currentCargo.status === CargoStatus.NEW;
 
     return (
         <>
@@ -177,7 +177,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
                             mode="ios"
                             fill="clear"
                             color="primary"
-                            onClick={ onPayment }
+                            onClick={ ()=>onPayment( cargo ) }
                         >
                             <IonIcon icon={cardOutline} slot="start" />
                             <IonLabel className="fs-08">{ hasAdvance ? 'Доплатить' : 'Предоплата'}</IonLabel>
@@ -188,7 +188,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
                             mode="ios"
                             fill="clear"
                             color="primary"
-                            onClick={ onInsurance }
+                            onClick={ ()=> onInsurance( cargo ) }
                         >
                             <IonIcon icon={shieldCheckmarkOutline} slot="start" />
                             <IonLabel className="fs-08">Страховка</IonLabel>
@@ -214,7 +214,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
                             mode="ios"
                             fill="clear"
                             color="primary"
-                            onClick={onViewInvoices}
+                            onClick={ ()=> onInvoices( cargo )}
                         >
                             <IonIcon icon={documentsOutline} slot="start" />
                             <IonLabel className="fs-08">Просмотреть заявки</IonLabel>

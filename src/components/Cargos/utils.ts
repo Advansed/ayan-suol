@@ -2,7 +2,7 @@
  * Утилиты для модуля Cargos
  */
 
-import { CargoInfo, CargoStatus, ValidationErrors, ValidationResult } from './types';
+import { CargoInfo, CargoStatus } from '../../Store/useCargos';
 import { 
     FIELD_LIMITS, 
     VALIDATION_MESSAGES, 
@@ -139,57 +139,6 @@ export const validateField = (fieldPath: string, value: any, allData?: CargoInfo
     }
 };
 
-// Кросс-полевая валидация
-export const validateCrossFields = (data: CargoInfo): ValidationErrors => {
-    const errors: ValidationErrors = {};
-
-    // Проверка одинаковых городов
-    if (data.address?.city && data.destiny?.city && 
-        data.address.city.city.toLowerCase() === data.destiny.city.city.toLowerCase()) {
-        errors['address.city'] = VALIDATION_MESSAGES.sameCities;
-        errors['destiny.city'] = VALIDATION_MESSAGES.sameCities;
-    }
-
-    // Проверка дат
-    if (data.pickup_date && data.delivery_date) {
-        const pickupDate = new Date(data.pickup_date);
-        const deliveryDate = new Date(data.delivery_date);
-        
-        if (pickupDate >= deliveryDate) {
-            errors['destiny.date'] = VALIDATION_MESSAGES.dateOrder;
-        }
-    }
-
-    return errors;
-};
-
-// Полная валидация формы
-export const validateForm = (data: CargoInfo): ValidationResult => {
-    const errors: ValidationErrors = {};
-
-    // Валидация отдельных полей
-    const requiredFields = [
-        'name', 'address.city', 'destiny.city', 'address.date', 'destiny.date',
-        'weight', 'volume', 'price', 'phone', 'face'
-    ];
-
-    for (const fieldPath of requiredFields) {
-        const value = getValueByPath(data, fieldPath);
-        const error = validateField(fieldPath, value, data);
-        if (error) {
-            errors[fieldPath] = error;
-        }
-    }
-
-    // Кросс-полевая валидация
-    const crossErrors = validateCrossFields(data);
-    Object.assign(errors, crossErrors);
-
-    return {
-        isValid: Object.keys(errors).length === 0,
-        errors
-    };
-};
 
 // ======================
 // УТИЛИТЫ ФОРМАТИРОВАНИЯ
@@ -381,27 +330,6 @@ export const statusUtils = {
 
 export const dataUtils = {
     // Создание пустого груза
-    createEmptyCargo: (): CargoInfo => ({
-
-        guid:               "",
-        name:               "",
-        description:        "",
-        client:             "",
-        address:            { city: { city: "", fias: ""}, address: "", fias: "", long: 0, lat: 0 },
-        destiny:            { city: { city: "", fias: ""}, address: "", fias: "", long: 0, lat: 0 },
-        weight:             0,
-        weight1:            0,
-        volume:             0,
-        price:              0,
-        cost:               0,
-        advance:            0,
-        pickup_date:        "",
-        delivery_date:      "",
-        phone:              "",
-        face:               "",
-        status:             CargoStatus.NEW
-
-    }),
 
     // Генерация GUID
     generateGuid: (): string => {
@@ -453,12 +381,7 @@ export const dataUtils = {
 // ======================
 
 export default {
-    validate: {
-        field: validateField,
-        form: validateForm,
-        crossFields: validateCrossFields,
-        validators
-    },
+
     format: formatters,
     status: statusUtils,
     data: dataUtils

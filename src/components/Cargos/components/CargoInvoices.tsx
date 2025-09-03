@@ -3,11 +3,12 @@
  */
 
 import React from 'react';
-import { CargoInfo, CargoInvoice } from '../types';
 import { DriverCard } from '../../DriverCards';
+import { CargoInfo, CargoInvoice } from '../../../Store/useCargos';
 
 interface CargoInvoiceSectionsProps {
     cargo: CargoInfo;
+    onBack: ()=>void;
 }
 
 export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ cargo }) => {

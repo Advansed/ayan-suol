@@ -1,8 +1,8 @@
 // src/Store/useCargos.ts
 
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { UniversalStore, useStore, TState } from './Store'
-import socketService from '../components/Sockets'
+import { useSocket } from './useSocket' // Заменили socketService на useSocket
 import { useToast } from '../components/Toast'
 import { useLogin } from './useLogin'
 
@@ -20,7 +20,7 @@ export interface CargoAddress {
     address:            string;
     fias:               string;
     lat:                number;
-    long:               number;
+    lon:                number;
 }
 
 // Предложение от водителя
@@ -40,7 +40,6 @@ export interface CargoInvoice {
 }
 
 export interface CargoInfo {
-
     guid:               string;
     name:               string;
     description:        string;
@@ -75,17 +74,16 @@ export interface CargoInfo {
     // Метаданные
     createdAt?:         string;
     updatedAt?:         string;
-      
 }
 
 export enum CargoStatus {
-    NEW                 = 'new',
-    DRAFT               = 'draft', 
-    PUBLISHED           = 'published',
-    IN_PROGRESS         = 'in_progress',
-    DELIVERED           = 'delivered',
-    COMPLETED           = 'completed',
-    CANCELLED           = 'cancelled'
+    NEW = "Новый",
+    WAITING = "В ожидании",
+    HAS_ORDERS = "Есть заказы",
+    NEGOTIATION = "Торг",
+    IN_WORK = "В работе",
+    DELIVERED = "Доставлено",
+    COMPLETED = "Выполнено"
 }
 
 export enum CargoPriority {
@@ -94,7 +92,6 @@ export enum CargoPriority {
     HIGH                = 'high',
     URGENT              = 'urgent'
 }
-
 
 export interface PageType {
     type: 'list' | 'create' | 'edit' | 'view' | 'invoices' | 'prepayment' | 'insurance'
@@ -107,7 +104,8 @@ export interface CargoFilters {
     priority?: CargoPriority[]
     dateFrom?: string
     dateTo?: string
-    city?: string
+    cityFrom?: string
+    cityTo?: string
     minPrice?: number
     maxPrice?: number
 }
@@ -129,8 +127,8 @@ export interface UseCargosReturn {
     setSearchQuery:     (query: string) => void
     
     // CRUD
-    createCargo:        (data: CargoInfo) => Promise<boolean>
-    updateCargo:        (data: CargoInfo ) => Promise<boolean>
+    createCargo:        (data: Partial<CargoInfo>) => Promise<boolean>
+    updateCargo:        (guid: string, data: Partial<CargoInfo>) => Promise<boolean>
     deleteCargo:        (guid: string) => Promise<boolean>
     publishCargo:       (guid: string) => Promise<boolean>
     getCargo:           (guid: string) => CargoInfo | undefined
@@ -149,20 +147,18 @@ export interface CargoState extends TState {
 // ============================================
 // КОНСТАНТЫ
 // ============================================
-
 const SOCKET_EVENTS = {
     SAVE_CARGO: 'save_cargo',
     UPDATE_CARGO: 'update_cargo', 
     DELETE_CARGO: 'delete_cargo',
     PUBLISH_CARGO: 'publish_cargo',
-    GET_CARGOS: 'get_cargos'
+    GET_CARGOS: 'get_cargos',
+    GET_ORGS: 'get_orgs'
 }
-
 
 // ============================================
 // STORE
 // ============================================
-
 export const cargoStore = new UniversalStore<CargoState>({
     initialState: {
         cargos: [],
@@ -185,14 +181,14 @@ export const EMPTY_CARGO: CargoInfo = {
     address: '',
     fias: '',
     lat: 0,
-    long: 0
+    lon: 0
   },
   destiny: {
     city: { city: '', fias: '' },
     address: '',
     fias: '',
     lat: 0,
-    long: 0
+    lon: 0
   },
   pickup_date: '',
   delivery_date: '',
@@ -206,14 +202,14 @@ export const EMPTY_CARGO: CargoInfo = {
   phone: '',
   face: '',
   status: CargoStatus.NEW
-};
+}
 
 // ============================================
 // HOOK
 // ============================================
-
 export const useCargos = (): UseCargosReturn => {
     const { token } = useLogin()
+    const { emit, isConnected } = useSocket() // Интегрировали useSocket
     const toast = useToast()
 
     // State subscriptions
@@ -225,25 +221,25 @@ export const useCargos = (): UseCargosReturn => {
     const navigationHistory     = useStore((state: CargoState) => state.navigationHistory, 7006, cargoStore)
 
     // ============================================
-    // NAVIGATION
+    // НАВИГАЦИЯ
     // ============================================
-
     const navigateTo = useCallback((page: PageType) => {
-        const currentState = cargoStore.getState()
         cargoStore.batchUpdate({
-            navigationHistory: [...currentState.navigationHistory, currentState.currentPage],
+            navigationHistory: [...navigationHistory, currentPage],
             currentPage: page
+        })
+    }, [currentPage, navigationHistory])
+
+    const goBack = useCallback(() => {
+        cargoStore.dispatch({ 
+            type: 'currentPage', 
+            data: { type: 'list' } 
         })
     }, [])
 
-    const goBack = useCallback(() => {
-        cargoStore.dispatch({ type: 'currentPage', data: { type: 'list' } })
-    }, [])
-
     // ============================================
-    // FILTERS & SEARCH
+    // ФИЛЬТРЫ И ПОИСК
     // ============================================
-
     const setFilters = useCallback((newFilters: CargoFilters) => {
         cargoStore.dispatch({ type: 'filters', data: newFilters })
     }, [])
@@ -253,170 +249,193 @@ export const useCargos = (): UseCargosReturn => {
     }, [])
 
     // ============================================
-    // CRUD OPERATIONS
+    // CRUD ОПЕРАЦИИ
     // ============================================
-
-    const createCargo = useCallback(async (data: CargoInfo): Promise<boolean> => {
-        const socket = socketService.getSocket()
-        if (!socket || !token) {
-            toast.error('Нет подключения')
+    const createCargo = useCallback(async (data: Partial<CargoInfo>): Promise<boolean> => {
+        // Проверка подключения
+        if (!isConnected) {
+            toast.error('Нет соединения с сервером')
             return false
         }
 
         cargoStore.dispatch({ type: 'isLoading', data: true })
-
         try {
             const newCargo: CargoInfo = {
                 ...EMPTY_CARGO,
                 ...data,
-                guid: generateGuid(),
+                guid: generateGuid(), // TODO: Добавить утилиту generateGuid
                 status: CargoStatus.NEW,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
-            } as CargoInfo
+            }
 
-            // Optimistic update
-            const currentCargos = cargoStore.getState().cargos
+            console.log('Creating cargo:', newCargo)
+
+            // Отправляем через useSocket
+            emit(SOCKET_EVENTS.SAVE_CARGO, { token, ...newCargo })
+
+            // Оптимистичное обновление
             cargoStore.dispatch({ 
                 type: 'cargos', 
-                data: [...currentCargos, newCargo] 
+                data: [...cargos, newCargo] 
             })
 
-            // Socket emit
-            socket.emit(SOCKET_EVENTS.SAVE_CARGO, { token, ...newCargo })
+            // Переходим к списку
+            cargoStore.dispatch({ 
+                type: 'currentPage', 
+                data: { type: 'list' } 
+            })
 
-            cargoStore.dispatch({ type: 'isLoading', data: false })
-            toast.success('Груз создан')
             return true
-
         } catch (error) {
-            cargoStore.dispatch({ type: 'isLoading', data: false })
+            console.error('Error creating cargo:', error)
             toast.error('Ошибка создания груза')
             return false
+        } finally {
+            cargoStore.dispatch({ type: 'isLoading', data: false })
         }
-    }, [token])
+    }, [token, isConnected, emit, toast, cargos])
 
-    const updateCargo = useCallback(async ( data: CargoInfo): Promise<boolean> => {
-
-        const socket = socketService.getSocket()
-        if (!socket || !token) {
-            toast.error('Нет подключения')
+    const updateCargo = useCallback(async (guid: string, data: Partial<CargoInfo>): Promise<boolean> => {
+        if (!isConnected) {
+            toast.error('Нет соединения с сервером')
             return false
         }
 
         cargoStore.dispatch({ type: 'isLoading', data: true })
-
         try {
-            // Optimistic update
-            const currentCargos = cargoStore.getState().cargos
-            const updatedCargos = currentCargos.map(cargo => 
-                cargo.guid === data.guid ? { ...cargo, ...data, updatedAt: new Date().toISOString() } : cargo
+            console.log("formData", data)
+            console.log("cargos", cargos)
+            const existingCargo = cargos.find(c => c.guid === guid)
+            if (!existingCargo) {
+                console.error('Cargo not found:', guid)
+                toast.error('Груз не найден')
+                return false
+            }
+
+            const updatedCargo: CargoInfo = {
+                ...existingCargo,
+                ...data,
+                updatedAt: new Date().toISOString()
+            }
+
+            console.log('Updating cargo:', updatedCargo)
+
+            // Отправляем через useSocket
+            emit(SOCKET_EVENTS.SAVE_CARGO, { token, ...updatedCargo })
+
+            // Обновляем локально
+            const updatedCargos = cargos.map(c => 
+                c.guid === guid ? updatedCargo : c
             )
             cargoStore.dispatch({ type: 'cargos', data: updatedCargos })
 
-            // Socket emit
-            socket.emit(SOCKET_EVENTS.UPDATE_CARGO, { token, ...data })
-
-            cargoStore.dispatch({ type: 'isLoading', data: false })
-            toast.success('Груз обновлен')
             return true
-
         } catch (error) {
-            cargoStore.dispatch({ type: 'isLoading', data: false })
+            console.error('Error updating cargo:', error)
             toast.error('Ошибка обновления груза')
             return false
+        } finally {
+            cargoStore.dispatch({ type: 'isLoading', data: false })
         }
-    }, [token])
+    }, [token, isConnected, emit, toast, cargos])
 
     const deleteCargo = useCallback(async (guid: string): Promise<boolean> => {
-        const socket = socketService.getSocket()
-        if (!socket || !token) {
-            toast.error('Нет подключения')
+        if (!isConnected) {
+            toast.error('Нет соединения с сервером')
             return false
         }
 
         cargoStore.dispatch({ type: 'isLoading', data: true })
-
         try {
-            // Optimistic update
-            const currentCargos = cargoStore.getState().cargos
-            const filteredCargos = currentCargos.filter(cargo => cargo.guid !== guid)
-            cargoStore.dispatch({ type: 'cargos', data: filteredCargos })
+            console.log('Deleting cargo:', { guid, token })
 
-            // Socket emit
-            socket.emit(SOCKET_EVENTS.DELETE_CARGO, { token, guid })
+            // Отправляем через useSocket
+            emit(SOCKET_EVENTS.DELETE_CARGO, { guid, token })
 
-            cargoStore.dispatch({ type: 'isLoading', data: false })
-            toast.success('Груз удален')
-            return true
-
-        } catch (error) {
-            cargoStore.dispatch({ type: 'isLoading', data: false })
-            toast.error('Ошибка удаления груза')
-            return false
-        }
-    }, [token])
-
-    const publishCargo = useCallback(async (guid: string): Promise<boolean> => {
-        const socket = socketService.getSocket()
-        if (!socket || !token) {
-            toast.error('Нет подключения')
-            return false
-        }
-
-        cargoStore.dispatch({ type: 'isLoading', data: true })
-
-        try {
-            // Optimistic update
-            const currentCargos = cargoStore.getState().cargos
-            const updatedCargos = currentCargos.map(cargo => 
-                cargo.guid === guid ? { ...cargo, status: CargoStatus.PUBLISHED } : cargo
-            )
+            // Удаляем локально
+            const updatedCargos = cargos.filter(c => c.guid !== guid)
             cargoStore.dispatch({ type: 'cargos', data: updatedCargos })
 
-            // Socket emit  
-            socket.emit(SOCKET_EVENTS.PUBLISH_CARGO, { token, guid })
+            // Возвращаемся к списку
+            cargoStore.dispatch({ 
+                type: 'currentPage', 
+                data: { type: 'list' } 
+            })
 
-            cargoStore.dispatch({ type: 'isLoading', data: false })
-            toast.success('Груз опубликован')
             return true
-
         } catch (error) {
+            console.error('Error deleting cargo:', error)
+            toast.error('Ошибка удаления груза')
+            return false
+        } finally {
             cargoStore.dispatch({ type: 'isLoading', data: false })
-            toast.error('Ошибка публикации груза')
+        }
+    }, [token, isConnected, emit, toast, cargos])
+
+    const publishCargo = useCallback(async (guid: string): Promise<boolean> => {
+        if (!isConnected) {
+            toast.error('Нет соединения с сервером')
             return false
         }
-    }, [token])
 
-    // ============================================
-    // HELPERS
-    // ============================================
+        cargoStore.dispatch({ type: 'isLoading', data: true })
+        try {
+            const cargo = cargos.find(c => c.guid === guid)
+            if (!cargo) {
+                console.error('Cargo not found for publishing:', guid)
+                toast.error('Груз не найден')
+                return false
+            }
+
+            console.log('Publishing cargo:', { guid, token })
+
+            // Отправляем через useSocket
+            emit(SOCKET_EVENTS.PUBLISH_CARGO, { guid, token })
+
+            return true
+        } catch (error) {
+            console.error('Error publishing cargo:', error)
+            toast.error('Ошибка публикации груза')
+            return false
+        } finally {
+            cargoStore.dispatch({ type: 'isLoading', data: false })
+        }
+    }, [token, isConnected, emit, toast, cargos])
 
     const getCargo = useCallback((guid: string): CargoInfo | undefined => {
         return cargos.find(cargo => cargo.guid === guid)
     }, [cargos])
 
-    const refreshCargos = useCallback(async () => {
-        const socket = socketService.getSocket()
-        if (!socket || !token) {
-            toast.error('Нет подключения')
+    const refreshCargos = useCallback(async (): Promise<void> => {
+        if (!isConnected) {
+            toast.error('Нет соединения с сервером')
             return
         }
 
         cargoStore.dispatch({ type: 'isLoading', data: true })
-
-        socket.once(SOCKET_EVENTS.GET_CARGOS, (response) => {
-            cargoStore.dispatch({ type: 'isLoading', data: false })
+        try {
+            console.log('Refreshing cargos...')
             
-            if (response.success && response.data) {
-                cargoStore.dispatch({ type: 'cargos', data: response.data })
-            } else {
-                toast.error('Ошибка загрузки грузов')
-            }
-        })
+            // Отправляем через useSocket
+            emit(SOCKET_EVENTS.GET_CARGOS, { token })
+            emit(SOCKET_EVENTS.GET_ORGS, { token })
+            
+        } catch (error) {
+            console.error('Error refreshing cargos:', error)
+            toast.error('Ошибка обновления данных')
+        } finally {
+            cargoStore.dispatch({ type: 'isLoading', data: false })
+        }
+    }, [token, isConnected, emit ])
 
-        socket.emit(SOCKET_EVENTS.GET_CARGOS, { token })
-    }, [token])
+    // ============================================
+    // SOCKET ОБРАБОТЧИКИ
+    // ============================================
+    useEffect(() => {
+        console.log("useCargos effect")
+
+    }, [])
 
     return {
         // State
@@ -425,15 +444,15 @@ export const useCargos = (): UseCargosReturn => {
         currentPage,
         filters,
         searchQuery,
-
+        
         // Navigation
         navigateTo,
         goBack,
-
+        
         // Filters
         setFilters,
         setSearchQuery,
-
+        
         // CRUD
         createCargo,
         updateCargo,
@@ -445,13 +464,13 @@ export const useCargos = (): UseCargosReturn => {
 }
 
 // ============================================
-// UTILITIES
+// УТИЛИТЫ
 // ============================================
-
-function generateGuid(): string {
+// TODO: Перенести из dataUtils или создать здесь
+const generateGuid = (): string => {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0
-        const v = c === 'x' ? r : (r & 0x3 | 0x8)
+        const v = c == 'x' ? r : (r & 0x3 | 0x8)
         return v.toString(16)
     })
 }

@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { IonIcon, IonAlert, IonLoading, IonInput } from '@ionic/react';
 import { arrowBackOutline, cardOutline, phonePortraitOutline, walletOutline } from 'ionicons/icons';
-import { CargoInfo } from '../types';
 import { formatters } from '../utils';
 import { usePayment } from './usePayment';
+import { CargoInfo } from '../../../Store/useCargos';
 
 interface PrepaymentPageProps {
     cargo: CargoInfo;
     onBack: () => void;
-    onPaymentComplete: () => void;
-    onCancel: () => void;
+    onPaymentComplete?: () => void;
+    onCancel?: () => void;
 }
 
 // Способы оплаты
@@ -54,7 +54,8 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
         try {
             const result = await saveAdvance(cargo.guid, paymentAmount);
             if (result.success) {
-                onPaymentComplete();
+                if(onPaymentComplete)
+                    onPaymentComplete();
             } else {
                 // TODO: Показать ошибку
                 console.error('Payment failed:', result.error);
@@ -73,7 +74,8 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
 
     const handleCancel = () => {
         setShowCancelAlert(false);
-        onCancel();
+        if(onCancel)
+            onCancel();
     };
 
     return (

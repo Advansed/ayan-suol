@@ -125,7 +125,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
     try {
       if (cargo) {
         // Редактирование
-        await updateCargo(formData);
+        await updateCargo(formData.guid, formData);
       } else {
         // Создание
         await createCargo(formData);

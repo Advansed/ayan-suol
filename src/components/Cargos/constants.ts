@@ -2,7 +2,7 @@
  * Константы для модуля Cargos
  */
 
-import { CargoStatus, CargoPriority, CargoInfo } from './types';
+import { CargoStatus, CargoPriority, CargoInfo } from '../../Store/useCargos';
 
 // CSS классы для статусов
 export const STATUS_CLASSES: Record<CargoStatus, string> = {
@@ -55,31 +55,7 @@ export const PUBLISHABLE_STATUSES = [
     CargoStatus.NEW
 ];
 
-// Пустой груз для создания
-export const EMPTY_CARGO: CargoInfo = {
-    guid: "",
-    name: "",
-    description: "",
-    client: "",
-    address: {
-        city: "",
-        date: "",
-        address: "",
-    },
-    destiny: {
-        city: "",
-        date: "",
-        address: "",
-    },
-    weight: 0,
-    weight1: 0,
-    volume: 0,
-    price: 0,
-    phone: "",
-    face: "",
-    status: CargoStatus.NEW,
-    priority: CargoPriority.NORMAL
-};
+
 
 // Лимиты для полей
 export const FIELD_LIMITS = {
