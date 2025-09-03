@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useAccount } from './useAccount';
 import styles from './Account.module.css';
+import { useAccount } from '../../../../Store/useAccount';
 
 interface AccountProps {
   onBack: () => void;
