@@ -16,11 +16,11 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
   const [success, setSuccess] = useState(false)
   
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    avatar: '',
-    newPassword: '',
-    confirmPassword: ''
+    name:             '',
+    email:            '',
+    avatar:           '',
+    newPassword:      '',
+    confirmPassword:  ''
   })
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
