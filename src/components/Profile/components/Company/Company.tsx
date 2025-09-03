@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useCompany } from './useCompany'
 import styles from './Company.module.css'
 import { dadataService } from './dadata'
 import { WizardHeader } from './WizardHeader'
+import { useCompany } from '../../../../Store/useCompany'
 
 interface Props {
   onBack: () => void
