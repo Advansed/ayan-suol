@@ -213,7 +213,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
         return (
           <div className={styles.step}>
             <AddressSuggestions
-              token="YOUR_DADATA_TOKEN"
+              token="50bfb3453a528d091723900fdae5ca5a30369832"
               value={getValueByPath(formData, 'address.address') || ''}
               onChange={(suggestion) => {
                 setNestedValue( 'address', 'address', suggestion?.value || '');
@@ -226,7 +226,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
         return (
           <div className={styles.step}>
             <AddressSuggestions
-              token="YOUR_DADATA_TOKEN"
+              token="50bfb3453a528d091723900fdae5ca5a30369832"
               value={getValueByPath(formData, 'destiny.address') || ''}
               onChange={(suggestion) => {
                 setNestedValue( 'destiny', 'address', suggestion?.value || '');
