@@ -224,6 +224,26 @@ export function useLogin() {
     }
   }, [emit, once])
 
+  const toggleNotification = useCallback((key: keyof UserNotifications) => {
+      if (!notifications || isLoading) return
+
+      const newValue = !notifications[key]
+      
+      // Обновляем локальное состояние
+      appStore.dispatch({ 
+        type: 'notifications', 
+        data: { ...notifications, [key]: newValue } 
+      })
+
+      // Отправляем на сервер
+      if (token) {
+        emit('set_agreement', { 
+          token, 
+          [key]: newValue 
+        })
+      }
+    }, [notifications, isLoading, token, emit])
+
   return {
     auth,
     user:{
@@ -252,6 +272,7 @@ export function useLogin() {
     ratings,
     notifications,
     socketConnected: isConnected,
+    toggleNotification,
     login,
     logout,
     updateUser

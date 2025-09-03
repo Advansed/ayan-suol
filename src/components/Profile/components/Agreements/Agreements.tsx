@@ -1,14 +1,10 @@
 import React, { useState } from 'react'
-import { useAgreements } from './useAgreements'
+import { useLogin } from '../../../../Store/useLogin'
 import styles from './Agreements.module.css'
 import EULA from './eula'
 import CargoAgree from './CargoAgree'
 import { EscrowAgreement } from './Escrow'
 import Signs from './Signs'
-
-interface Props {
-  userToken?: string
-}
 
 export const UI_TEXT = {
   AGREEMENTS_TITLE: 'Согласия',
@@ -17,8 +13,8 @@ export const UI_TEXT = {
   MARKETING_AGREEMENT: 'Согласие на рекламные рассылки'
 } as const
 
-export const Agreements: React.FC<Props> = ({ userToken }) => {
-  const { agreements, toggleAgreement, isLoading, error } = useAgreements(userToken)
+export const Agreements: React.FC = () => {
+  const { notifications, toggleNotification, isLoading } = useLogin()
   const [isEulaOpen, setIsEulaOpen] = useState(false)
   const [isCargoOpen, setIsCargoOpen] = useState(false)
   const [isEscrowOpen, setIsEscrowOpen] = useState(false)
@@ -35,15 +31,12 @@ export const Agreements: React.FC<Props> = ({ userToken }) => {
       </div>
       
       <div className={styles.content}>
-        {error && (
-          <div className={styles.error}>{error}</div>
-        )}
         
         <div 
           className={`${styles.agreementItem} ${isLoading ? styles.disabled : ''}`}
-          onClick={() => !isLoading && toggleAgreement('personalData')}
+          onClick={() => !isLoading && toggleNotification('personalData')}
         >
-          <div className={`${styles.checkbox} ${agreements.personalData ? styles.checked : styles.unchecked}`}>
+          <div className={`${styles.checkbox} ${notifications?.personalData ? styles.checked : styles.unchecked}`}>
             <div className={styles.checkIcon}>✓</div>
           </div>
           <div className={styles.agreementText}>
@@ -54,7 +47,7 @@ export const Agreements: React.FC<Props> = ({ userToken }) => {
         <div 
           className={`${styles.agreementItem} ${isLoading ? styles.disabled : ''}`}          
         >
-          <div className={`${styles.checkbox} ${agreements.userAgreement ? styles.checked : styles.unchecked}`}
+          <div className={`${styles.checkbox} ${notifications?.userAgreement ? styles.checked : styles.unchecked}`}
               onClick={handleUserAgreementClick}
           >
             <div className={styles.checkIcon}>✓</div>
@@ -77,9 +70,9 @@ export const Agreements: React.FC<Props> = ({ userToken }) => {
         
         <div 
           className={`${styles.agreementItem} ${isLoading ? styles.disabled : ''}`}
-          onClick={() => !isLoading && toggleAgreement('marketing')}
+          onClick={() => !isLoading && toggleNotification('marketing')}
         >
-          <div className={`${styles.checkbox} ${agreements.marketing ? styles.checked : styles.unchecked}`}>
+          <div className={`${styles.checkbox} ${notifications?.marketing ? styles.checked : styles.unchecked}`}>
             <div className={styles.checkIcon}>✓</div>
           </div>
           <div className={styles.agreementText}>
@@ -88,46 +81,10 @@ export const Agreements: React.FC<Props> = ({ userToken }) => {
         </div>
       </div>
 
-      {isEulaOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsEulaOpen(false)}>
-          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-            <button className={styles.closeBtn} onClick={() => setIsEulaOpen(false)}>
-              ×
-            </button>
-            <EULA />
-          </div>
-        </div>
-      )}
-      {isCargoOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsCargoOpen(false)}>
-          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-            <button className={styles.closeBtn} onClick={() => setIsCargoOpen(false)}>
-              ×
-            </button>
-            <CargoAgree />
-          </div>
-        </div>
-      )}
-      {isEscrowOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsEscrowOpen(false)}>
-          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-            <button className={styles.closeBtn} onClick={() => setIsEscrowOpen(false)}>
-              ×
-            </button>
-            <EscrowAgreement />
-          </div>
-        </div>
-      )}
-      {isSignOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsSignOpen(false)}>
-          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-            <button className={styles.closeBtn} onClick={() => setIsSignOpen(false)}>
-              ×
-            </button>
-            <Signs />
-          </div>
-        </div>
-      )}
+      <EULA isOpen={isEulaOpen} onClose={() => setIsEulaOpen(false)} />
+      <CargoAgree isOpen={isCargoOpen} onClose={() => setIsCargoOpen(false)} />
+      <EscrowAgreement isOpen={isEscrowOpen} onClose={() => setIsEscrowOpen(false)} />
+      <Signs isOpen={isSignOpen} onClose={() => setIsSignOpen(false)} />
     </div>
   )
 }
