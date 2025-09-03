@@ -10,17 +10,17 @@ interface Props {
 export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
   const { user, updateUser, isLoading } = useLogin()
   
-  const [currentStep, setCurrentStep] = useState(1)
-  const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [currentStep,   setCurrentStep] = useState(1)
+  const [isSaving,      setIsSaving]    = useState(false)
+  const [error,         setError]       = useState<string | null>(null)
+  const [success,       setSuccess]     = useState(false)
   
   const [form, setForm] = useState({
-    name:             '',
-    email:            '',
-    avatar:           '',
-    newPassword:      '',
-    confirmPassword:  ''
+    name:                 '',
+    email:                '',
+    avatar:               '',
+    newPassword:          '',
+    confirmPassword:      ''
   })
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
@@ -31,9 +31,9 @@ export const PersonalInfo: React.FC<Props> = ({ onBack }) => {
     if (user) {
       setForm(prev => ({
         ...prev,
-        name: user.name || '',
-        email: user.email || '',
-        avatar: user.image || ''
+        name:     user.name || '',
+        email:    user.email || '',
+        avatar:   user.image || ''
       }))
       setUploadedAvatar(user.image || undefined)
     }
