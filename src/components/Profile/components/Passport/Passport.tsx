@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { IonIcon } from '@ionic/react'
-import { chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons'
-import { usePassport } from './usePassport'
+import { usePassport } from '../../../../Store/usePassport'
 import styles from './Passport.module.css'
 import { WizardHeader } from '../Company/WizardHeader'
 import { useToast } from '../../../Toast'
