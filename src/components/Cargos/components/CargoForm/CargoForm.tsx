@@ -104,39 +104,14 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
       // Валидируем текущий шаг
       const isValid = validateStep(currentStep, formData);
       
-      if (!isValid) {
-        // Находим первую ошибку и показываем toast
-        const stepFields = getStepFields(currentStep);
-        for (const field of stepFields) {
-          const error = getFieldError(field);
-          if (error) {
-            toast.error(error);
-            break;
-          }
-        }
-        return;
+      if (isValid) {
+        gotoStep(currentStep + 1);
+        scrollToTop();
+      } else {
+        // Показываем ошибки валидации
+        toast.info('Заполните все обязательные поля');
       }
-      
-      // Переходим на следующий шаг
-      gotoStep(currentStep + 1);
-      scrollToTop();
-    } else {
-      // Последний шаг - сохраняем
-      handleSave();
     }
-  };
-
-  const getStepFields = (step: number): string[] => {
-    const STEP_FIELDS = {
-      1: ['name', 'description'],
-      2: ['address.address'],
-      3: ['destiny.address'], 
-      4: ['pickup_date', 'delivery_date'],
-      5: ['weight', 'price', 'cost'],
-      6: ['phone', 'face'],
-      7: []
-    };
-    return STEP_FIELDS[step as keyof typeof STEP_FIELDS] || [];
   };
 
   // ======================
@@ -144,33 +119,23 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
   // ======================
   
   const handleSave = async () => {
-    setIsSubmitting(true);
+    if (isSubmitting) return;
     
+    setIsSubmitting(true);
     try {
-      if (cargo?.guid) {
-        // Редактируем существующий груз
-        const success = await updateCargo(cargo.guid, formData);
-        if (success) {
-          toast.success('Груз обновлен');
-          onBack();
-        }
+      if (cargo) {
+        // Редактирование
+        await updateCargo(formData);
       } else {
-        // Создаем новый груз
-        const success = await createCargo(formData);
-        if (success) {
-          toast.success('Груз создан');
-          onBack();
-        }
+        // Создание
+        await createCargo(formData);
       }
       
-      // Если передан onSave колбэк
-      if (onSave) {
-        await onSave(formData as CargoInfo);
-      }
-      
+      toast.success('Груз сохранен!');
+      onBack();
     } catch (error) {
-      console.error('Error saving cargo:', error);
-      toast.error('Ошибка при сохранении');
+      console.error('Ошибка сохранения:', error);
+      toast.error('Ошибка сохранения');
     } finally {
       setIsSubmitting(false);
     }
@@ -179,113 +144,279 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
   // ======================
   // РЕНДЕР ШАГОВ
   // ======================
-
+  
   const renderStepContent = () => {
-    switch (currentStep) {
-      case 0:
-        return (
-          <div className={styles.companyIncomplete}>
-            <h3>Завершите заполнение профиля компании</h3>
-            <p>Для создания заявки необходимо заполнить профиль компании минимум на 70%</p>
-            <button onClick={() => hist.push('/profile/company')}>
-              Перейти к профилю
-            </button>
+    if (currentStep === 0) {
+      // Особый шаг для завершения компании
+      return (
+        <div className={styles.companyWarning}>
+          <div className={styles.warningIcon}>⚠️</div>
+          <div className={styles.warningText}>
+            <div className={styles.warningTitle}>
+              Заполните профиль компании
+            </div>
+            <div className={styles.warningSubtitle}>
+              Для создания груза необходимо заполнить профиль компании минимум на 70%
+            </div>
           </div>
-        );
+          <button 
+            className={styles.profileButton}
+            onClick={() => hist.push('/tab3')}
+          >
+            Перейти
+          </button>
+        </div>
+      );
+    }
 
+    switch (currentStep) {
       case 1:
         return (
-          <div className={styles.step}>
-            <IonInput
-              placeholder="Название груза"
-              value={formData.name || ''}
-              onIonInput={(e) => setFieldValue('name', e.detail.value!)}
-            />
-            <IonTextarea
-              placeholder="Описание груза"
-              value={formData.description || ''}
-              onIonInput={(e) => setFieldValue('description', e.detail.value!)}
-            />
+          <div className={styles.stepContent}>
+            <div className={styles.field}>
+              <label className={styles.label}>Название груза</label>
+              <div className={styles.inputWrapper}>
+                <IonInput
+                  className={styles.customInput}
+                  placeholder="Например: Мебель, стройматериалы..."
+                  value={formData.name || ''}
+                  onIonInput={(e) => setFieldValue('name', e.detail.value!)}
+                />
+              </div>
+              {getFieldError('name') && (
+                <div className={styles.errorMsg}>{getFieldError('name')}</div>
+              )}
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Описание груза</label>
+              <div className={styles.inputWrapper}>
+                <IonTextarea
+                  className={styles.customTextarea}
+                  placeholder="Подробное описание, особенности упаковки..."
+                  value={formData.description || ''}
+                  onIonInput={(e) => setFieldValue('description', e.detail.value!)}
+                />
+              </div>
+              {getFieldError('description') && (
+                <div className={styles.errorMsg}>{getFieldError('description')}</div>
+              )}
+            </div>
           </div>
         );
 
       case 2:
         return (
-          <div className={styles.step}>
-            <AddressSuggestions
-              token="50bfb3453a528d091723900fdae5ca5a30369832"
-              value={getValueByPath(formData, 'address.address') || ''}
-              onChange={(suggestion) => {
-                setNestedValue( 'address', 'address', suggestion?.value || '');
-              }}
-            />
+          <div className={styles.stepContent}>
+            <div className={styles.sectionTitle}>Откуда забрать груз</div>
+            
+            <div className={styles.field}>
+              <label className={styles.label}>Город загрузки</label>
+              <AddressSuggestions
+                token="50bfb3453a528d091723900fdae5ca5a30369832"
+                filterToBound='city'
+                filterFromBound='city'
+                value={{ value: formData.address?.city.city} as any }
+                onChange={(suggestion) => {
+                  if (suggestion) {
+                    setFieldValue('address.city.city', suggestion.data.city );
+                    setFieldValue('address.city.fias', suggestion.data.city_fias_id );
+                  }
+                }}
+              />
+            </div>
+            {
+              formData.address?.city.fias && (
+                <div className={styles.field}>
+                  <label className={styles.label}>Адрес загрузки</label>
+                  <AddressSuggestions
+                    token="50bfb3453a528d091723900fdae5ca5a30369832"
+                    filterLocations={[{ city_fias_id: formData.address.city.fias }]}
+                    filterRestrictValue
+                    value={{ value: formData.address?.address} as any }
+                    onChange={(suggestion) => {
+                      if (suggestion) {
+                        setFieldValue('address.address', suggestion.value );
+                        setFieldValue('address.fias', suggestion.data.fias_id );
+                        setFieldValue('address.lat', suggestion.data.geo_lat );
+                        setFieldValue('address.lon', suggestion.data.geo_lon );
+                      }
+                    }}
+                  />
+                  {getFieldError('address.address') && (
+                    <div className={styles.errorMsg}>{getFieldError('address.address')}</div>
+                  )}
+                </div>
+              )
+            }
           </div>
         );
 
       case 3:
         return (
-          <div className={styles.step}>
-            <AddressSuggestions
-              token="50bfb3453a528d091723900fdae5ca5a30369832"
-              value={getValueByPath(formData, 'destiny.address') || ''}
-              onChange={(suggestion) => {
-                setNestedValue( 'destiny', 'address', suggestion?.value || '');
-              }}
-            />
+          <div className={styles.stepContent}>
+            <div className={styles.sectionTitle}>Куда доставить груз</div>
+            
+            <div className={styles.field}>
+              <label className={styles.label}>Город загрузки</label>
+              <AddressSuggestions
+                token="50bfb3453a528d091723900fdae5ca5a30369832"
+                filterToBound='city'
+                filterFromBound='city'
+                value={{ value: formData.destiny?.city.city} as any }
+                onChange={(suggestion) => {
+                  if (suggestion) {
+                    setFieldValue('destiny.city.city', suggestion.data.city );
+                    setFieldValue('destiny.city.fias', suggestion.data.city_fias_id );
+                  }
+                }}
+              />
+            </div>
+            {
+              formData.destiny?.city.fias && (
+                <div className={styles.field}>
+                  <label className={styles.label}>Адрес загрузки</label>
+                  <AddressSuggestions
+                    token="50bfb3453a528d091723900fdae5ca5a30369832"
+                    filterLocations={[{ city_fias_id: formData.destiny.city.fias }]}
+                    filterRestrictValue
+                    value={{ value: formData.destiny?.address} as any }
+                    onChange={(suggestion) => {
+                      if (suggestion) {
+                        setFieldValue('destiny.address', suggestion.value );
+                        setFieldValue('destiny.fias', suggestion.data.fias_id );
+                        setFieldValue('destiny.lat', suggestion.data.geo_lat );
+                        setFieldValue('destiny.lon', suggestion.data.geo_lon );
+                      }
+                    }}
+                  />
+                  {getFieldError('destiny.address') && (
+                    <div className={styles.errorMsg}>{getFieldError('destiny.address')}</div>
+                  )}
+                </div>
+              )
+            }
           </div>
         );
 
       case 4:
         return (
-          <div className={styles.step}>
-            <IonInput
-              type="date"
-              placeholder="Дата загрузки"
-              value={formData.pickup_date || ''}
-              onIonInput={(e) => setFieldValue('pickup_date', e.detail.value!)}
-            />
-            <IonInput
-              type="date"
-              placeholder="Дата доставки"
-              value={formData.delivery_date || ''}
-              onIonInput={(e) => setFieldValue('delivery_date', e.detail.value!)}
-            />
+          <div className={styles.stepContent}>
+            <div className={styles.sectionTitle}>Даты перевозки</div>
+            
+            <div className={styles.fieldRow}>
+              <div className={styles.field}>
+                <label className={styles.label}>Дата загрузки</label>
+                <div className={styles.inputWrapper}>
+                  <IonInput
+                    className={styles.customInput}
+                    type="date"
+                    value={formData.pickup_date || ''}
+                    onIonInput={(e) => setFieldValue('pickup_date', e.detail.value!)}
+                  />
+                </div>
+                {getFieldError('pickup_date') && (
+                  <div className={styles.errorMsg}>{getFieldError('pickup_date')}</div>
+                )}
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>Дата доставки</label>
+                <div className={styles.inputWrapper}>
+                  <IonInput
+                    className={styles.customInput}
+                    type="date"
+                    value={formData.delivery_date || ''}
+                    onIonInput={(e) => setFieldValue('delivery_date', e.detail.value!)}
+                  />
+                </div>
+                {getFieldError('delivery_date') && (
+                  <div className={styles.errorMsg}>{getFieldError('delivery_date')}</div>
+                )}
+              </div>
+            </div>
           </div>
         );
 
       case 5:
         return (
           <Step5
-            data = { formData }
-            setFieldValue={ setFieldValue }
-            getFieldError={ getFieldError }
+            data={formData}
+            setFieldValue={setFieldValue}
+            getFieldError={getFieldError}
           />
         );
 
       case 6:
         return (
-          <div className={styles.step}>
-            <IonInput
-              placeholder="Телефон"
-              value={formData.phone || ''}
-              onIonInput={(e) => setFieldValue('phone', e.detail.value!)}
-            />
-            <IonInput
-              placeholder="Контактное лицо"
-              value={formData.face || ''}
-              onIonInput={(e) => setFieldValue('face', e.detail.value!)}
-            />
+          <div className={styles.stepContent}>
+            <div className={styles.sectionTitle}>Контактная информация</div>
+            
+            <div className={styles.field}>
+              <label className={styles.label}>Телефон</label>
+              <div className={styles.inputWrapper}>
+                <IonInput
+                  className={styles.customInput}
+                  type="tel"
+                  placeholder="+7 (XXX) XXX-XX-XX"
+                  value={formData.phone || ''}
+                  onIonInput={(e) => setFieldValue('phone', e.detail.value!)}
+                />
+              </div>
+              {getFieldError('phone') && (
+                <div className={styles.errorMsg}>{getFieldError('phone')}</div>
+              )}
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Контактное лицо</label>
+              <div className={styles.inputWrapper}>
+                <IonInput
+                  className={styles.customInput}
+                  placeholder="Имя контактного лица"
+                  value={formData.face || ''}
+                  onIonInput={(e) => setFieldValue('face', e.detail.value!)}
+                />
+              </div>
+              {getFieldError('face') && (
+                <div className={styles.errorMsg}>{getFieldError('face')}</div>
+              )}
+            </div>
           </div>
         );
 
       case 7:
         return (
-          <div className={styles.step}>
-            <h3>Проверьте данные и сохраните</h3>
-            <div className={styles.summary}>
-              <p><strong>Название:</strong> {formData.name}</p>
-              <p><strong>Вес:</strong> {formData.weight} "т"</p>
-              <p><strong>Цена:</strong> {formData.price} { " руб"}</p>
+          <div className={styles.stepContent}>
+            <div className={styles.sectionTitle}>Проверьте данные</div>
+            
+            <div className={styles.summarySection}>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryRow}>
+                  <span>Название:</span>
+                  <span>{formData.name}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>Вес:</span>
+                  <span>{formData.weight} т</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>Цена:</span>
+                  <span>{formData.price} руб</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>Маршрут:</span>
+                  <span>
+                    {formData.address?.city.city} → {formData.destiny?.city.city}
+                  </span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>Период:</span>
+                  <span>
+                    {formData.pickup_date} - {formData.delivery_date}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -300,44 +431,50 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
   // ======================
 
   return (
-    <div className={styles.cargoForm} ref={scrollRef}>
-      {/* Header */}
-      <div className={styles.header}>
-        <button onClick={handleBackNavigation} disabled={isSubmitting}>
-          <IonIcon icon={chevronBackOutline} />
-        </button>
-        <h2>
-          {cargo ? 'Редактировать груз' : 'Создать груз'} 
-          {currentStep > 0 && ` - Шаг ${currentStep}/7`}
-        </h2>
-      </div>
-
-      {/* Content */}
-      <div className={styles.content}>
-        {renderStepContent()}
-      </div>
-
-      {/* Footer */}
-      <div className={styles.footer}>
-        {currentStep === 7 ? (
+    <div className={styles.cargoFormWizard} ref={scrollRef}>
+      <div className={styles.wizardContent}>
+        {/* Заголовок шага */}
+        <div className={styles.stepHeader} data-step={currentStep}>
           <button 
-            className={styles.saveButton}
-            onClick={handleSave}
+            className={styles.navButton}
+            onClick={handleBackNavigation}
             disabled={isSubmitting}
           >
-            <IonIcon icon={saveOutline} />
-            {isSubmitting ? 'Сохранение...' : 'Сохранить'}
+            <IonIcon icon={chevronBackOutline} />
           </button>
-        ) : (
-          <button 
-            className={styles.nextButton}
-            onClick={handleForwardNavigation}
-            disabled={isSubmitting}
+          
+          <h2 className={styles.stepTitle}>
+            {cargo ? 'Редактировать груз' : 'Создать груз'}
+          </h2>
+          
+          {currentStep === 7 ? (
+            <button 
+              className={`${styles.navButton} ${styles.navButtonRight}`}
+              onClick={handleSave}
+              disabled={isSubmitting}
+            >
+              <IonIcon icon={saveOutline} />
+            </button>
+          ) : (
+            <button 
+              className={`${styles.navButton} ${styles.navButtonRight}`}
+              onClick={handleForwardNavigation}
+              disabled={isSubmitting || currentStep === 0}
+            >
+              <IonIcon icon={chevronForwardOutline} />
+            </button>
+          )}
+        </div>
+
+        {/* Контент шага */}
+        <div className={styles.stepContainer}>
+          <div 
+            className={styles.formContent}
+            style={{ opacity: isCompanyIncomplete && currentStep !== 0 ? 0.5 : 1 }}
           >
-            Далее
-            <IonIcon icon={chevronForwardOutline} />
-          </button>
-        )}
+            {renderStepContent()}
+          </div>
+        </div>
       </div>
     </div>
   );

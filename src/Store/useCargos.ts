@@ -130,7 +130,7 @@ export interface UseCargosReturn {
     
     // CRUD
     createCargo:        (data: CargoInfo) => Promise<boolean>
-    updateCargo:        (guid: string, data: CargoInfo ) => Promise<boolean>
+    updateCargo:        (data: CargoInfo ) => Promise<boolean>
     deleteCargo:        (guid: string) => Promise<boolean>
     publishCargo:       (guid: string) => Promise<boolean>
     getCargo:           (guid: string) => CargoInfo | undefined
@@ -296,7 +296,8 @@ export const useCargos = (): UseCargosReturn => {
         }
     }, [token])
 
-    const updateCargo = useCallback(async (guid: string, data: CargoInfo): Promise<boolean> => {
+    const updateCargo = useCallback(async ( data: CargoInfo): Promise<boolean> => {
+
         const socket = socketService.getSocket()
         if (!socket || !token) {
             toast.error('Нет подключения')
@@ -309,7 +310,7 @@ export const useCargos = (): UseCargosReturn => {
             // Optimistic update
             const currentCargos = cargoStore.getState().cargos
             const updatedCargos = currentCargos.map(cargo => 
-                cargo.guid === guid ? { ...cargo, ...data, updatedAt: new Date().toISOString() } : cargo
+                cargo.guid === data.guid ? { ...cargo, ...data, updatedAt: new Date().toISOString() } : cargo
             )
             cargoStore.dispatch({ type: 'cargos', data: updatedCargos })
 
