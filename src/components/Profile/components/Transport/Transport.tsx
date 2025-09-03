@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useTransport } from './useTransport'
 import { takePicture } from '../../../Files'
 import styles from './Transport.module.css'
 import { WizardHeader } from '../Company/WizardHeader'
+import { useTransport } from '../../../../Store/useTransport'
 
 interface Props {
   onBack: () => void

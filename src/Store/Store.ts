@@ -70,9 +70,6 @@ export class UniversalStore<T extends TState> {
 
     if (this.config.enableLogging) {
       console.group(`🔄 Store Action: ${action.type}`)
-      console.log('Previous:', oldState[action.type])
-      console.log('Action:', action)
-      console.log('Next:', this.state[action.type])
       console.groupEnd()
     }
 

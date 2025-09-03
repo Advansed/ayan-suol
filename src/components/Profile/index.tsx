@@ -3,9 +3,7 @@ import { IonLoading }                           from '@ionic/react'
 import { ProfileHeader }                        from './components/ProfileHeader'
 import { ProfileStats }                         from './components/ProfileStats'
 import { ProfileMenu }                          from './components/ProfileMenu'
-import { Security, Notifications }              from './pages/other-pages'
 import { PROFILE_PAGES, MENU_ITEMS, UI_TEXT }   from './constants'
-import { useProfile }                           from './hooks/use_Profile'
 import { Passport }                             from './components/Passport/Passport'
 import { PersonalInfo }                         from './components/PersonalInfo/PersonalInfo'
 import { Company }                              from './components/Company/Company'
@@ -78,14 +76,6 @@ export const Profile: React.FC = () => {
 
   if (currentPage === PROFILE_PAGES.PASSPORT) {
     return <Passport onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
-  }
-
-  if (currentPage === PROFILE_PAGES.SECURITY) {
-    return <Security onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
-  }
-
-  if (currentPage === PROFILE_PAGES.NOTIFICATIONS) {
-    return <Notifications onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
 
   if (currentPage === PROFILE_PAGES.TRANSPORT) {

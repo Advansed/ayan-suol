@@ -235,24 +235,34 @@ export function useLogin() {
   }, [emit, once])
 
   const toggleNotification = useCallback((key: keyof UserNotifications) => {
-      if (!notifications || isLoading) return
-
-      const newValue = !notifications[key]
+    console.log("toggle", key)
+    if (!notifications || isLoading) return
+    
+    const newValue = !notifications[key]
+    
+    // Обновляем локальное состояние
+    appStore.dispatch({
+      type: 'notifications',
+      data: { ...notifications, [key]: newValue }
+    })
+    
+    // Отправляем на сервер
+    if (token) {
+      console.log("emit..", token)
       
-      // Обновляем локальное состояние
-      appStore.dispatch({ 
-        type: 'notifications', 
-        data: { ...notifications, [key]: newValue } 
+      // Обработчик ответа от сервера
+      once('set_agreement', (response) => {
+        if(response.success){
+          toast.info("Соглашение сохранено")         
+        }
       })
-
-      // Отправляем на сервер
-      if (token) {
-        emit('set_agreement', { 
-          token, 
-          [key]: newValue 
-        })
-      }
-    }, [notifications, isLoading, token, emit])
+      
+      emit('set_agreement', {
+        token,
+        [key]: newValue
+      })
+    }
+  }, [notifications, isLoading, token, emit, once])
 
   return {
     auth,

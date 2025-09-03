@@ -2,21 +2,20 @@ import React from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import { CargoArchive } from '../components/Cargos';
 import { WorkArchive } from '../components/Works/components';
-import { useStoreField } from '../components/Store';
-import { useProfile } from '../components/Profile/hooks/use_Profile';
+import { useLogin } from '../Store/useLogin';
 
 const Tab4: React.FC = () => {
-  const { userType } = useProfile()
+  const { user_type } = useLogin()
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <div className='a-center fs-09'><b>{userType == 2 ? 'Архив работ' : 'Архив заказов'}</b></div>
+          <div className='a-center fs-09'><b>{user_type == 2 ? 'Архив работ' : 'Архив заказов'}</b></div>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        {userType == 2 ? <WorkArchive /> : <CargoArchive />}
+        {user_type == 2 ? <WorkArchive /> : <CargoArchive />}
       </IonContent>
     </IonPage>
   );
