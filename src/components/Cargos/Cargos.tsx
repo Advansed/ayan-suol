@@ -2,7 +2,7 @@
  * Главный компонент модуля Cargos - новая архитектура с useCargos из Store
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCargos } from '../../Store/useCargos';
 import { useLogin } from '../../Store/useLogin';
 import { CargosList } from './components/CargosList';
@@ -12,6 +12,8 @@ import { CargoInvoiceSections } from './components/CargoInvoices';
 import { PrepaymentPage } from './components/PrePaymentMethod';
 import { InsurancePage } from './components/InsurancePage';
 import { CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
+import DataEditor from '../DataEditor';
+import { PageData } from '../DataEditor/types';
 
 export const Cargos: React.FC = () => {
     const { user } = useLogin();
@@ -31,6 +33,31 @@ export const Cargos: React.FC = () => {
         refreshCargos
     } = useCargos();
 
+  const [formData, setFormData] = useState<PageData[]>([
+    {
+      name: { type: "string", data: "Коля" },
+      description: { type: "string", data: "Описание" }
+    },
+    {
+      addressFrom: { type: "string", data: "Москва" },
+      transport: { 
+        type: "select", 
+        values: ["truck", "auto", "moto"], 
+        data: "auto" 
+      },
+      weight: { type: "number", data: 500 }
+    }
+  ]);
+
+  const handleChangeEditor = (newData: PageData[]) => {
+    setFormData( newData );
+    console.log( newData )
+  };
+
+  const handleSaveEditor = (data: PageData[]) => {
+    console.log('Сохранено:', data);
+    // Отправить на сервер
+  };  
     // Проверка авторизации
     if (!user) {
         return <div>Необходима авторизация</div>;
@@ -85,14 +112,21 @@ export const Cargos: React.FC = () => {
                 );
 
             case 'create':
-                return (
-                    <CargoForm
-                        cargo           = { EMPTY_CARGO }
-                        onUpdate        = { updateCargo }
-                        onCreate        = { createCargo }
-                        onBack          = { handleBack }
-                    />
-                );
+                return(
+                    <DataEditor 
+                        data        = { formData }
+                        onChange    = { handleChangeEditor }
+                        onSave      = { handleSaveEditor }
+                    />   
+                )
+                // return (
+                //     <CargoForm
+                //         cargo           = { EMPTY_CARGO }
+                //         onUpdate        = { updateCargo }
+                //         onCreate        = { createCargo }
+                //         onBack          = { handleBack }
+                //     />
+                // );
 
             case 'edit':
                 return (
