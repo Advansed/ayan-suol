@@ -34,20 +34,53 @@ export const Cargos: React.FC = () => {
     } = useCargos();
 
   const [formData, setFormData] = useState<PageData[]>([
-    {
-      name: { type: "string", data: "Коля" },
-      description: { type: "string", data: "Описание" }
+  {
+    name: { 
+      label: "Имя",
+      type: "string", 
+      values: null,
+      data: "Коля" 
     },
-    {
-      addressFrom: { type: "string", data: "Москва" },
-      transport: { 
-        type: "select", 
-        values: ["truck", "auto", "moto"], 
-        data: "auto" 
-      },
-      weight: { type: "number", data: 500 }
+    description: { 
+      label: "Описание",
+      type: "string",
+      values: null, 
+      data: "Описание" 
     }
-  ]);
+  },
+  {
+    addressFrom: { 
+      label: "Город отправления",
+      type: "city",
+      values: null,
+      data: { 
+        city: "Москва", 
+        fias: "0c5b2444-70a0-4932-980c-b4dc0d3f02b5" 
+      }
+    },
+    addressTo: { 
+      label: "Город назначения",
+      type: "city",
+      values: null,
+      data: { 
+        city: "Санкт-Петербург", 
+        fias: "c2deb16a-0330-4f05-821f-1d09c93331e6" 
+      }
+    },
+    transport: { 
+      label: "Транспорт",
+      type: "select", 
+      values: ["truck", "auto", "moto"], 
+      data: "auto" 
+    },
+    weight: { 
+      label: "Вес",
+      type: "number",
+      values: null, 
+      data: 500 
+    }
+  }
+]);
 
   const handleChangeEditor = (newData: PageData[]) => {
     setFormData( newData );

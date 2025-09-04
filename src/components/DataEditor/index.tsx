@@ -1,5 +1,5 @@
 // src/components/DataEditor/index.tsx
-import React, { useRef }                from 'react';
+import React, { useRef, useState }                from 'react';
 import { DataEditorProps, FieldData }   from './types';
 import { useNavigation }                from './hooks/useNavigation';
 import { useFormState }                 from './hooks/useFormState';
@@ -9,6 +9,8 @@ import { SelectField }                  from './fields/SelectField';
 import { WizardHeader }                 from './components/WizardHeader';
 import './styles.css';
 import { DateField } from './fields/DateField';
+import { CityField } from './fields/СityField';
+import { AddressField } from './fields/AddressField';
 
 const DataEditor: React.FC<DataEditorProps> = ({ 
     data, 
@@ -19,6 +21,8 @@ const DataEditor: React.FC<DataEditorProps> = ({
   const scrollRef   = useRef<HTMLDivElement>(null);
   const navigation  = useNavigation(data.length);
   const formState   = useFormState(data);
+
+  const [ fias, setFias ] = useState( '' );
 
   // Получение заголовка для текущей страницы
   const getStepTitle = () => {
@@ -61,12 +65,13 @@ const DataEditor: React.FC<DataEditorProps> = ({
       formState.updateField(navigation.currentPage, fieldName, value);
     };
 
+
     switch (fieldData.type) {
       case 'string':
         return (
           <TextField
             key       = { fieldName }
-            label     = { fieldName }
+            label     = { fieldData.label } // используем label из fieldData
             value     = { fieldData.data }
             onChange  = { updateValue }
           />
@@ -75,7 +80,7 @@ const DataEditor: React.FC<DataEditorProps> = ({
         return (
           <NumberField
             key       = { fieldName }
-            label     = { fieldName }
+            label     = { fieldData.label } // используем label из fieldData
             value     = { fieldData.data }
             onChange  = { updateValue }
           />
@@ -84,7 +89,7 @@ const DataEditor: React.FC<DataEditorProps> = ({
         return (
           <SelectField
             key       = { fieldName }
-            label     = { fieldName }
+            label     = { fieldData.label } // используем label из fieldData
             value     = { fieldData.data }
             options   = { fieldData.values || [] }
             onChange  = { updateValue }
@@ -94,15 +99,36 @@ const DataEditor: React.FC<DataEditorProps> = ({
         return (
           <DateField
             key       = { fieldName }
-            label     = { fieldName }
+            label     = { fieldData.label } // используем label из fieldData
             value     = { fieldData.data }
             onChange  = { updateValue }
           />
         );
+      case 'city': // новый тип
+        return (
+          <CityField
+            key       = { fieldName }
+            label     = { fieldData.label }
+            value     = { fieldData.data }
+            onChange  = { updateValue }
+            onFIAS    = { setFias }
+          />
+        );
+      case 'address': // новый тип
+        return (
+          <AddressField
+            key       = { fieldName }
+            label     = { fieldData.label }
+            value     = { fieldData.data }
+            onChange  = { updateValue }
+            cityFias  = { fias } // передаем fias города если есть
+          />
+        );      
       default:
         return null;
     }
   };
+
 
   const currentPageData = formState.data[navigation.currentPage];
   
