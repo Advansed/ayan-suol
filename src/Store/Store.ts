@@ -295,15 +295,3 @@ export function normalizePhone(phone: string | null | undefined): string {
   
   return digits
 }
-
-export function initSocketHandlers( socket: any) {
-
-  initCargoSocketHandlers( socket )
-
-}
-
-export function destroySocketHandlers( socket: any) {
-
-  destroyCargoSocketHandlers( socket )
-
-}

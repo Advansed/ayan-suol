@@ -1,6 +1,5 @@
 // src/services/socketService.ts
 import { io, Socket } from 'socket.io-client';
-import { destroySocketHandlers, initSocketHandlers } from '../Store/Store';
 
 class SocketService {
   private socket: Socket | null = null;
