@@ -158,7 +158,7 @@ export const cargoStore = new UniversalStore<CargoState>({
 // ============================================
 export const cargoSocketHandlers = {
     
-    onGetCargos: (response: any) => {
+    onGetCargos:    (response: any) => {
         console.log('onGetCargos response:', response)
         cargoStore.dispatch({ type: 'isLoading', data: false })
         
@@ -169,7 +169,7 @@ export const cargoSocketHandlers = {
         }
     },
 
-    onSaveCargo: (response: any) => {
+    onSaveCargo:    (response: any) => {
         console.log('onSaveCargo response:', response)
         
         if (response.success && response.data) {
@@ -191,7 +191,7 @@ export const cargoSocketHandlers = {
         }
     },
 
-    onDeleteCargo: (response: any) => {
+    onDeleteCargo:  (response: any) => {
         console.log('onDeleteCargo response:', response)
         
         if (response.success && response.guid) {
