@@ -29,7 +29,6 @@ const Login: React.FC = () => {
   // ============================================
 
   const handleLogin = async (phone: string, password: string): Promise<boolean> => {
-    console.log('login')
     return await login(phone, password)
   }
 

@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { DriverCard } from '../../DriverCards';
-import { CargoInfo, CargoInvoice } from '../../../Store/useCargos';
+import { CargoInfo, CargoInvoice } from '../../../Store/cargoStore';
 
 interface CargoInvoiceSectionsProps {
     cargo: CargoInfo;

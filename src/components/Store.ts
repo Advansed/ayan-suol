@@ -214,100 +214,106 @@ export async function exec( method, params, name ){
 
 // Настройка обработчиков Socket событий
 export const setupSocketHandlers = () => {
-    // Получаем прямой доступ к socket для подписки на события
+
     const socket = socketService.getSocket();
     if (!socket) return;
 
-    // Обработчик подтверждения аутентификации
-    socket.on('authenticated', (data) => {
-        if (data.success) {
-            console.log('Socket.IO аутентификация успешна');
-            Store.dispatch({ type: "socketAuthenticated", data: true });
-            if(Store.getState().auth){
-                socket.emit("re_authorize", { token: Store.getState().login.token })
-            }
-        } else {
-            console.error('Socket.IO аутентификация не удалась:', data.message);
-            Store.dispatch({ type: "socketAuthenticated", data: false });
-        }
-    });
 
-    // Общий обработчик уведомлений
-    socket.on('notification', (data) => {
-        console.log( "notification" )
-    });
-
-    // Обработчики регистрации
-    socket.on('check_registration', (res) => {
-        console.log('Ответ на проверку регистрации:', res);
-    });
-
-    socket.on('test_call', (res) => {
-        console.log('Ответ на тест звонка:', res);
-    });
-
-    socket.on('get_cargos', (res) => {
-        if( res.success){
-            console.log( "getCargos received", res );
-            Store.dispatch({ type: "cargos", data: res.data });    
-        }
-    });
-
-    // Водительская
-    socket.on('get_works', (res) => {
-        if( res.success){
-            console.log( "Works received", res );
-            Store.dispatch({ type: "works", data: res.data });    
-        }
-    });
-
-    socket.on('get_transport', (res) => {
-        if( res.success){
-            console.log( "Transport received", res );
-            Store.dispatch({ type: "transport", data: res.data });    
-        }
-    });
-
-    socket.on('get_company', (res) => {
-        if( res.success){
-            console.log( "Company received", res );
-            Store.dispatch({ type: "company", data: res.data });    
-        }
-    });
-
-    socket.on('get_passport', (res) => {
-        if( res.success){
-            console.log( "Passport received", res );
-            Store.dispatch({ type: "passport", data: res.data });    
-        }
-    });
-
-    socket.on("new_cargo_notification", ()=> { 
-
-        const news = Store.getState().new_cargos
-        Store.dispatch({ type: "new_cargos", data: news + 1 })
-
-    })
-
-    // Обработчики ошибок подключения
-    socket.on('connect_error', (error) => {
-        console.error('Ошибка подключения сокета:', error);
-        Store.dispatch({ type: "socketConnected", data: false });
-        Store.dispatch({ type: "socketAuthenticated", data: false });
-    });
+    // socket.on('authenticated', (data) => {
+    //     if (data.success) {
+    //         console.log('Socket.IO аутентификация успешна');
+    //         Store.dispatch({ type: "socketAuthenticated", data: true });
+    //         if(Store.getState().auth){
+    //             socket.emit("re_authorize", { token: Store.getState().login.token })
+    //         }
+    //     } else {
+    //         console.error('Socket.IO аутентификация не удалась:', data.message);
+    //         Store.dispatch({ type: "socketAuthenticated", data: false });
+    //     }
+    // });
 
 
-    socket.on('disconnect', () => {
-        console.log('Сокет отключен');
-        Store.dispatch({ type: "socketConnected", data: false });
-        Store.dispatch({ type: "socketAuthenticated", data: false });
-    });
+    // socket.on('notification', (data) => {
+    //     console.log( "notification" )
+    // });
+
+
+    // socket.on('check_registration', (res) => {
+    //     console.log('Ответ на проверку регистрации:', res);
+    // });
+
+
+    // socket.on('test_call', (res) => {
+    //     console.log('Ответ на тест звонка:', res);
+    // });
+
+
+    // socket.on('get_cargos', (res) => {
+    //     if( res.success){
+    //         console.log( "getCargos received", res );
+    //         Store.dispatch({ type: "cargos", data: res.data });    
+    //     }
+    // });
+
+
+    // socket.on('get_works', (res) => {
+    //     if( res.success){
+    //         console.log( "Works received", res );
+    //         Store.dispatch({ type: "works", data: res.data });    
+    //     }
+    // });
+
+
+    // socket.on('get_transport', (res) => {
+    //     if( res.success){
+    //         console.log( "Transport received", res );
+    //         Store.dispatch({ type: "transport", data: res.data });    
+    //     }
+    // });
+
+
+    // socket.on('get_company', (res) => {
+    //     if( res.success){
+    //         console.log( "Company received", res );
+    //         Store.dispatch({ type: "company", data: res.data });    
+    //     }
+    // });
+
+
+    // socket.on('get_passport', (res) => {
+    //     if( res.success){
+    //         console.log( "Passport received", res );
+    //         Store.dispatch({ type: "passport", data: res.data });    
+    //     }
+    // });
+
+
+    // socket.on("new_cargo_notification", ()=> { 
+
+    //     const news = Store.getState().new_cargos
+    //     Store.dispatch({ type: "new_cargos", data: news + 1 })
+
+    // })
+
+
+    // socket.on('connect_error', (error) => {
+    //     console.error('Ошибка подключения сокета:', error);
+    //     Store.dispatch({ type: "socketConnected", data: false });
+    //     Store.dispatch({ type: "socketAuthenticated", data: false });
+    // });
+
+
+    // socket.on('disconnect', () => {
+    //     console.log('Сокет отключен');
+    //     Store.dispatch({ type: "socketConnected", data: false });
+    //     Store.dispatch({ type: "socketAuthenticated", data: false });
+    // });
 
     
-    socket.on('connect', () => {
-        console.log('Сокет подключен');
-        Store.dispatch({ type: "socketConnected", data: true });
-    });
+    // socket.on('connect', () => {
+    //     console.log('Сокет подключен');
+    //     Store.dispatch({ type: "socketConnected", data: true });
+    // });
     
 };
 

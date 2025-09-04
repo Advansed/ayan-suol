@@ -2,7 +2,7 @@ import React from 'react';
 import { IonIcon, IonText } from '@ionic/react';
 import { locationOutline, calendarOutline } from 'ionicons/icons';
 import { formatters, statusUtils } from '../utils';
-import { CargoInfo } from '../../../Store/useCargos';
+import { CargoInfo } from '../../../Store/cargoStore';
 
 interface CargoCardProps {
     cargo: CargoInfo;

@@ -19,7 +19,7 @@ import {
 } from 'ionicons/icons';
 import { CargoCard } from './CargoCard';
 import { Package } from "lucide-react";
-import { CargoFilters, CargoInfo, CargoStatus } from '../../../Store/useCargos';
+import { CargoFilters, CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 
 interface CargosListProps {
     cargos: CargoInfo[];

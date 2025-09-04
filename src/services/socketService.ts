@@ -1,5 +1,6 @@
 // src/services/socketService.ts
 import { io, Socket } from 'socket.io-client';
+import { destroySocketHandlers, initSocketHandlers } from '../Store/Store';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -29,6 +30,9 @@ class SocketService {
         this.isConnected = true;
         this.socket?.off('connect', handleConnect);
         this.socket?.off('connect_error', handleError);
+
+        initSocketHandlers( this.socket )
+
         resolve(true);
       };
 
@@ -59,6 +63,9 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
+
+      destroySocketHandlers( this.socket )
+
     }
   }
 

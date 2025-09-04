@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useSelector } from '../../Store';
-import { CargoStatus, useCargos } from '../../../Store/useCargos';
+import { useCargos } from '../../../Store/useCargos';
+import { CargoStatus } from '../../../Store/cargoStore';
 
 const useCargoArchive = () => {
   const { isLoading, refreshCargos } = useCargos();

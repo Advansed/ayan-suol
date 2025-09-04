@@ -2,8 +2,8 @@
  * Главный компонент модуля Cargos - новая архитектура с useCargos из Store
  */
 
-import React, { useEffect } from 'react';
-import { useCargos, CargoInfo, PageType, EMPTY_CARGO } from '../../Store/useCargos';
+import React from 'react';
+import { useCargos } from '../../Store/useCargos';
 import { useLogin } from '../../Store/useLogin';
 import { CargosList } from './components/CargosList';
 import { CargoForm } from './components/CargoForm';
@@ -11,6 +11,7 @@ import { CargoView } from './components/CargoView';
 import { CargoInvoiceSections } from './components/CargoInvoices';
 import { PrepaymentPage } from './components/PrePaymentMethod';
 import { InsurancePage } from './components/InsurancePage';
+import { CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
 
 export const Cargos: React.FC = () => {
     const { user } = useLogin();

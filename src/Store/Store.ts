@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { destroyCargoSocketHandlers, initCargoSocketHandlers } from './cargoStore'
 
 // ============================================
 // УНИВЕРСАЛЬНЫЕ ТИПЫ
@@ -68,11 +69,6 @@ export class UniversalStore<T extends TState> {
       }
     }
 
-    if (this.config.enableLogging) {
-      console.group(`🔄 Store Action: ${action.type}`)
-      console.groupEnd()
-    }
-
     this.notifyListeners(action.type)
     return action
   }
@@ -126,12 +122,6 @@ export class UniversalStore<T extends TState> {
       this.notifyListeners(key)
     })
 
-    if (this.config.enableLogging) {
-      console.group('🔄 Batch Update')
-      console.log('Updates:', updates)
-      console.log('New State:', this.state)
-      console.groupEnd()
-    }
   }
 }
 
@@ -304,4 +294,16 @@ export function normalizePhone(phone: string | null | undefined): string {
   }
   
   return digits
+}
+
+export function initSocketHandlers( socket: any) {
+
+  initCargoSocketHandlers( socket )
+
+}
+
+export function destroySocketHandlers( socket: any) {
+
+  destroyCargoSocketHandlers( socket )
+
 }

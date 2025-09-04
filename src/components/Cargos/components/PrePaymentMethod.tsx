@@ -3,7 +3,7 @@ import { IonIcon, IonAlert, IonLoading, IonInput } from '@ionic/react';
 import { arrowBackOutline, cardOutline, phonePortraitOutline, walletOutline } from 'ionicons/icons';
 import { formatters } from '../utils';
 import { usePayment } from './usePayment';
-import { CargoInfo } from '../../../Store/useCargos';
+import { CargoInfo } from '../../../Store/cargoStore';
 
 interface PrepaymentPageProps {
     cargo: CargoInfo;

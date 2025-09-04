@@ -7,7 +7,7 @@ import { IonIcon, IonAlert, IonLoading } from '@ionic/react';
 import { arrowBackOutline, shieldCheckmarkOutline, documentTextOutline, businessOutline } from 'ionicons/icons';
 import { formatters } from '../utils';
 import { usePayment } from './usePayment';
-import { CargoInfo } from '../../../Store/useCargos';
+import { CargoInfo } from '../../../Store/cargoStore';
 
 interface InsurancePageProps {
     cargo: CargoInfo;

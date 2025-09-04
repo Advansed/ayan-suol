@@ -9,7 +9,8 @@ import { Step5 } from './Step5';
 import { useHistory } from 'react-router';
 import { useStoreField } from '../../../Store';
 import { calculateCompanyCompletion } from '../../../utils';
-import { CargoInfo, EMPTY_CARGO, useCargos } from '../../../../Store/useCargos';
+import { useCargos } from '../../../../Store/useCargos';
+import { CargoInfo, EMPTY_CARGO } from '../../../../Store/cargoStore';
 import { useNavigation } from './useNavigation';
 
 interface CargoFormProps {

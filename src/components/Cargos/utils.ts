@@ -2,7 +2,7 @@
  * Утилиты для модуля Cargos
  */
 
-import { CargoInfo, CargoStatus } from '../../Store/useCargos';
+import { CargoInfo, CargoStatus } from '../../Store/cargoStore';
 import { 
     FIELD_LIMITS, 
     VALIDATION_MESSAGES, 

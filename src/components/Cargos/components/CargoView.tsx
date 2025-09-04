@@ -18,7 +18,7 @@ import {
 import { CargoCard } from './CargoCard';
 import { statusUtils, formatters } from '../utils';
 import { Store } from '../../Store';
-import { CargoInfo, CargoStatus } from '../../../Store/useCargos';
+import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 
 
 interface CargoViewProps {
