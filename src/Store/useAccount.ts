@@ -8,7 +8,7 @@ import {
 } from './Store'
 import socketService from '../components/Sockets'
 import { useToast } from '../components/Toast'
-import { useLogin } from './useLogin'
+import { loginGetters } from './loginStore'
 
 // ============================================
 // ТИПЫ
@@ -66,7 +66,8 @@ export const accountStore = new UniversalStore<AccountState>({
 // ============================================
 
 export const useAccount = () => {
-    const { token } = useLogin()
+
+    const token = loginGetters.getToken()
     
     const accountData               = useStore((state: AccountState) => state.accountData,              6001, accountStore)
     const transactions              = useStore((state: AccountState) => state.transactions,             6002, accountStore)

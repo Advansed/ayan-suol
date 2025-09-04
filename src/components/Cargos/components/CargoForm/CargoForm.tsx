@@ -24,9 +24,6 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onUpdate, o
   const toast = useToast();
   const hist = useHistory();
   
-  const companyData = useStoreField('company', 21);
-  const companyCompletion = calculateCompanyCompletion(companyData);
-  const isCompanyIncomplete = companyCompletion < 70;
 
   // Хуки
   const { currentStep, gotoStep, validateStep, getFieldError } = useNavigation();
@@ -97,11 +94,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onUpdate, o
 
   const handleForwardNavigation = () => {
     // Проверка незавершенности компании
-    if (isCompanyIncomplete) {
-      gotoStep(0); // Особый шаг для завершения компании
-      return;
-    }
-    
+
     if (currentStep < 7) {
       // Валидируем текущий шаг
       const isValid = validateStep(currentStep, formData);
@@ -172,6 +165,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onUpdate, o
     }
 
     switch (currentStep) {
+
       case 1:
         return (
           <div className={styles.stepContent}>
@@ -472,7 +466,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onUpdate, o
         <div className={styles.stepContainer}>
           <div 
             className={styles.formContent}
-            style={{ opacity: isCompanyIncomplete && currentStep !== 0 ? 0.5 : 1 }}
+            style={{ opacity: 1 }}
           >
             {renderStepContent()}
           </div>
