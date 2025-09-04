@@ -1,12 +1,12 @@
-import React, { useRef } from 'react';
+import React, { useRef }              from 'react';
 import { DataEditorProps, FieldData } from './types';
-import { useNavigation } from './hooks/useNavigation';
-import { useFormState } from './hooks/useFormState';
-import { TextField } from './fields/TextField';
-import { NumberField } from './fields/NumberField';
-import { SelectField } from './fields/SelectField';
-import { DateField } from './fields/DateField';
-import { WizardHeader } from './components/WizardHeader';
+import { useNavigation }              from './hooks/useNavigation';
+import { useFormState }               from './hooks/useFormState';
+import { TextField }                  from './fields/TextField';
+import { NumberField }                from './fields/NumberField';
+import { SelectField }                from './fields/SelectField';
+import { DateField }                  from './fields/DateField';
+import { WizardHeader }               from './components/WizardHeader';
 import './styles.css';
 
 const DataEditor: React.FC<DataEditorProps> = ({ 
@@ -78,7 +78,6 @@ const DataEditor: React.FC<DataEditorProps> = ({
         
         <div className="step-container">
           <div className="page-content">
-            <h2 className="section-title">{currentSection.title}</h2>
             {currentSection.data.map((field, idx) => 
               renderField(field, navigation.currentPage, idx)
             )}
