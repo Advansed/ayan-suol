@@ -57,6 +57,7 @@ export const useCargos = (): UseCargosReturn => {
     const toast = useToast()
 
     // State subscriptions
+    console.log("useCargos")
     const cargos            = useStore((state: CargoState) => state.cargos, 7001, cargoStore)
     const isLoading         = useStore((state: CargoState) => state.isLoading, 7002, cargoStore)
     const currentPage       = useStore((state: CargoState) => state.currentPage, 7003, cargoStore)

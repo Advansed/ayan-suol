@@ -146,18 +146,24 @@ export function useStore<T extends TState, TSelected>(
 
     const currentState = storeInstance.getState()
     const stateKeys = Object.keys(currentState)
+
+    let selected = selector.toString()
+    selected = selected.substring(17, selected.length) 
     
-    stateKeys.forEach(key => {
-      storeInstance.subscribe({
-        num: subscriptionId,
-        type: key,
-        func: () => {
-          if (isMountedRef.current) {
-            const newState = selector(storeInstance.getState())
-            setSelectedState(newState)
+    stateKeys.forEach((key) => {
+      if(key === selected) {
+        storeInstance.subscribe({
+          num: subscriptionId,
+          type: key,
+          func: () => {
+            if (isMountedRef.current) {
+              const newState = selector(storeInstance.getState())
+              setSelectedState(newState)
+            }
           }
-        }
-      })
+        })
+        console.log(" subscr " + key + " - " + subscriptionId + " " + selected )
+      }
     })
 
     return () => {
