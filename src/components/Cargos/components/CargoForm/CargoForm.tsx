@@ -9,17 +9,17 @@ import { Step5 } from './Step5';
 import { useHistory } from 'react-router';
 import { useStoreField } from '../../../Store';
 import { calculateCompanyCompletion } from '../../../utils';
-import { useCargos } from '../../../../Store/useCargos';
 import { CargoInfo, EMPTY_CARGO } from '../../../../Store/cargoStore';
 import { useNavigation } from './useNavigation';
 
 interface CargoFormProps {
   cargo?: CargoInfo;
   onBack: () => void;
-  onSave?: (data: CargoInfo) => Promise<void>;
+  onUpdate: (guid: string, data: CargoInfo) => Promise<boolean>;
+  onCreate: (data: CargoInfo) => Promise<boolean>;
 }
 
-export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) => {
+export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onUpdate, onCreate }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
   const hist = useHistory();
@@ -30,7 +30,6 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
 
   // Хуки
   const { currentStep, gotoStep, validateStep, getFieldError } = useNavigation();
-  const { createCargo, updateCargo } = useCargos();
   
   // Состояние формы
   const [formData, setFormData] = useState<CargoInfo>(EMPTY_CARGO);
@@ -128,10 +127,10 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
     try {
       if (cargo) {
         // Редактирование
-        await updateCargo(formData.guid, formData);
+        await onUpdate(formData.guid, formData);
       } else {
         // Создание
-        await createCargo(formData);
+        await onCreate(formData);
       }
       
       toast.success('Груз сохранен!');

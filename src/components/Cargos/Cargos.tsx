@@ -88,7 +88,8 @@ export const Cargos: React.FC = () => {
                 return (
                     <CargoForm
                         cargo           = { EMPTY_CARGO }
-                        onSave          = { handleSave }
+                        onUpdate        = { updateCargo }
+                        onCreate        = { createCargo }
                         onBack          = { handleBack }
                     />
                 );
@@ -97,7 +98,8 @@ export const Cargos: React.FC = () => {
                 return (
                     <CargoForm
                         cargo           = { currentPage.cargo }
-                        onSave          = { handleSave }
+                        onUpdate        = { updateCargo }
+                        onCreate        = { createCargo }
                         onBack          = { handleBack }
                     />
                 );

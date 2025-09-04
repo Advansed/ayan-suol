@@ -162,7 +162,6 @@ export function useStore<T extends TState, TSelected>(
             }
           }
         })
-        console.log(" subscr " + key + " - " + subscriptionId + " " + selected )
       }
     })
 
