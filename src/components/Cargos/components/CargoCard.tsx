@@ -27,7 +27,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({
                 {/* Статус и ID */}
                 <div className="flex fl-space">
                     <div className="flex">
-                        <div className={ cargo.status }>
+                        <div className={ statusUtils.getClassName( cargo.status ) }>
                             {cargo.status}
                         </div>
                         <IonText className="ml-1 fs-07 cl-black">
@@ -112,7 +112,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({
             {/* Верхняя строка: статус, ID, цена */}
             <div className="flex fl-space">
                 <div className="flex">
-                    <div className={ cargo.status }>
+                    <div className={ statusUtils.getClassName( cargo.status ) }>
                         {cargo.status}
                     </div>
                     <IonText className="ml-1 fs-07 cl-black">

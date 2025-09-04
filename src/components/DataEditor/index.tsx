@@ -1,4 +1,4 @@
-import React, { useRef }              from 'react';
+import React, { useRef, useState }              from 'react';
 import { DataEditorProps, FieldData } from './types';
 import { useNavigation }              from './hooks/useNavigation';
 import { useFormState }               from './hooks/useFormState';
@@ -8,6 +8,9 @@ import { SelectField }                from './fields/SelectField';
 import { DateField }                  from './fields/DateField';
 import { WizardHeader }               from './components/WizardHeader';
 import './styles.css';
+import { CityField } from './fields/СityField';
+import { useSelector } from '../Store';
+import { AddressField } from './fields/AddressField';
 
 const DataEditor: React.FC<DataEditorProps> = ({ 
   data, 
@@ -17,6 +20,8 @@ const DataEditor: React.FC<DataEditorProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigation = useNavigation(data.length);
   const formState = useFormState(data);
+
+  const [fias, setFias ] = useState('')
 
   const scrollToTop = () => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -51,11 +56,13 @@ const DataEditor: React.FC<DataEditorProps> = ({
     };
 
     switch (field.type) {
-      case 'string':  return <TextField {...props} />;
-      case 'number':  return <NumberField {...props} />;
-      case 'select':  return <SelectField {...props} options={field.values || []} />;
-      case 'date':    return <DateField {...props} />;
-      default:        return null;
+      case 'string':    return <TextField       {...props} />;
+      case 'number':    return <NumberField     {...props} />;
+      case 'select':    return <SelectField     {...props} options={field.values || []} />;
+      case 'date':      return <DateField       {...props} />;
+      case 'city':      return <CityField       {...props} onFIAS={ setFias}/>;
+      case 'address':   return <AddressField    {...props} cityFias = { fias } />;
+      default:          return null;
     }
   };
 
@@ -66,14 +73,14 @@ const DataEditor: React.FC<DataEditorProps> = ({
     <div className="data-editor-wizard">
       <div className="wizard-content" ref={scrollRef}>
         <WizardHeader
-          title={currentSection.title}
-          pages={ getPageTitle() }
-          onBack={handleBackNavigation}
-          onForward={handleForwardNavigation}
-          onSave={() => onSave?.(formState.data)}
-          isLastStep={navigation.currentPage === navigation.totalPages - 1}
-          canGoBack={true}
-          canGoForward={navigation.canGoNext}
+          title         = { currentSection.title }
+          pages         = { getPageTitle() }
+          onBack        = { handleBackNavigation }
+          onForward     = { handleForwardNavigation }
+          onSave        = { () => onSave?.(formState.data) }
+          isLastStep    = { navigation.currentPage === navigation.totalPages - 1 }
+          canGoBack     = { true }
+          canGoForward  = { navigation.canGoNext }
         />
         
         <div className="step-container">

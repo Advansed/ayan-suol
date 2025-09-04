@@ -14,6 +14,7 @@ import { InsurancePage } from './components/InsurancePage';
 import { CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
 import DataEditor from '../DataEditor';
 import { PageData, Section } from '../DataEditor/types';
+import { CargoFormNew } from './components/CargoFormNew';
 
 export const Cargos: React.FC = () => {
     const { user } = useLogin();
@@ -117,24 +118,17 @@ export const Cargos: React.FC = () => {
 
             case 'create':
                 return(
-                    <DataEditor 
-                        data        = { formData }
-                        onSave      = { handleSaveEditor }
-                        onBack      = { handleBack }
+                    <CargoFormNew 
+                         cargo           = { EMPTY_CARGO }
+                         onUpdate        = { updateCargo }
+                         onCreate        = { createCargo }
+                         onBack          = { handleBack }
                     />   
                 )
-                // return (
-                //     <CargoForm
-                //         cargo           = { EMPTY_CARGO }
-                //         onUpdate        = { updateCargo }
-                //         onCreate        = { createCargo }
-                //         onBack          = { handleBack }
-                //     />
-                // );
 
             case 'edit':
                 return (
-                    <CargoForm
+                    <CargoFormNew
                         cargo           = { currentPage.cargo }
                         onUpdate        = { updateCargo }
                         onCreate        = { createCargo }
