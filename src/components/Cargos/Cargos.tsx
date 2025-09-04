@@ -2,7 +2,7 @@
  * Главный компонент модуля Cargos - новая архитектура с useCargos из Store
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useCargos } from '../../Store/useCargos';
 import { useLogin } from '../../Store/useLogin';
 import { CargosList } from './components/CargosList';
@@ -22,7 +22,6 @@ export const Cargos: React.FC = () => {
         filters,
         searchQuery,
         navigateTo,
-        goBack,
         setFilters,
         setSearchQuery,
         createCargo,
@@ -37,6 +36,10 @@ export const Cargos: React.FC = () => {
         return <div>Необходима авторизация</div>;
     }
 
+    useEffect(()=>{
+        console.log('currentPage', currentPage)
+    },[currentPage])
+
     // Обработчики для списка
     const handleCreateNew = () => navigateTo({ type: 'create' });
     const handleCargoClick = (cargo: CargoInfo) => navigateTo({ type: 'view', cargo });
@@ -50,13 +53,18 @@ export const Cargos: React.FC = () => {
         }
     };
 
-    const handleCancel = () => {
+    const handleBack = () => {
+        console.log(currentPage)
+        if (currentPage.type === 'view') {
+            navigateTo({ type: 'list' });
+        } else 
         if (currentPage.type === 'create') {
             navigateTo({ type: 'list' });
-        } else if (currentPage.type === 'edit' && currentPage.cargo) {
+        } else 
             navigateTo({ type: 'view', cargo: currentPage.cargo });
-        }
     };
+
+
 
     // Рендер в зависимости от текущей страницы
     const renderContent = () => {
@@ -64,70 +72,70 @@ export const Cargos: React.FC = () => {
             case 'list':
                 return (
                     <CargosList
-                        cargos={cargos}
-                        filters={filters}
-                        searchQuery={searchQuery}
-                        onFiltersChange={setFilters}
-                        onSearchChange={setSearchQuery}
-                        onCargoClick={handleCargoClick}
-                        onCreateNew={handleCreateNew}
-                        onRefresh={refreshCargos}
+                        cargos          = { cargos }
+                        filters         = { filters }
+                        searchQuery     = { searchQuery }
+                        onFiltersChange = { setFilters }
+                        onSearchChange  = { setSearchQuery }
+                        onCargoClick    = { handleCargoClick }
+                        onCreateNew     = { handleCreateNew }
+                        onRefresh       = { refreshCargos }
                     />
                 );
 
             case 'create':
                 return (
                     <CargoForm
-                        cargo={ EMPTY_CARGO }
-                        onSave={handleSave}
-                        onBack={handleCancel}
+                        cargo           = { EMPTY_CARGO }
+                        onSave          = { handleSave }
+                        onBack          = { handleBack }
                     />
                 );
 
             case 'edit':
                 return (
                     <CargoForm
-                        cargo={currentPage.cargo}
-                        onSave={handleSave}
-                        onBack={handleCancel}
+                        cargo           = { currentPage.cargo }
+                        onSave          = { handleSave }
+                        onBack          = { handleBack }
                     />
                 );
 
             case 'view':
                 return (
                     <CargoView
-                        cargo={currentPage.cargo!}
-                        onEdit={(cargo) => navigateTo({ type: 'edit', cargo })}
-                        onDelete={deleteCargo}
-                        onPublish={publishCargo}
-                        onInvoices={(cargo) => navigateTo({ type: 'invoices', cargo })}
-                        onPayment={(cargo) => navigateTo({ type: 'prepayment', cargo })}
-                        onInsurance={(cargo) => navigateTo({ type: 'insurance', cargo })}
-                        onBack={goBack}
+                        cargo           = { currentPage.cargo! }
+                        onEdit          = { (cargo) => navigateTo({ type: 'edit', cargo }) }
+                        onDelete        = { deleteCargo }
+                        onPublish       = { publishCargo }
+                        onInvoices      = { (cargo) => navigateTo({ type: 'invoices', cargo }) }
+                        onPayment       = { (cargo) => navigateTo({ type: 'prepayment', cargo }) }
+                        onInsurance     = { (cargo) => navigateTo({ type: 'insurance', cargo }) }
+                        onBack          = { handleBack }
                     />
                 );
 
             case 'invoices':
                 return (
                     <CargoInvoiceSections
-                        cargo={currentPage.cargo!}
-                        onBack={goBack}
+                        cargo           = { currentPage.cargo! }
+                        onBack          = { handleBack }
                     />
                 );
 
             case 'prepayment':
                 return (
                     <PrepaymentPage
-                        cargo={currentPage.cargo!}
-                        onBack={goBack}
+                        cargo           = { currentPage.cargo! }
+                        onBack          = { handleBack }
                     />
                 );
 
             case 'insurance':
                 return (
                     <InsurancePage
-                        cargo={currentPage.cargo!}
-                        onBack={goBack}
+                        cargo           = { currentPage.cargo! }
+                        onBack          = { handleBack }
                     />
                 );
 

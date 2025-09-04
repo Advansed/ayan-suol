@@ -51,8 +51,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
     
     // Подписка на обновления cargo
     useEffect(() => {
-        console.log("useeffect")
-        console.log(cargo)
         Store.subscribe({num: 201, type: "cargos", func: ()=>{
             const cargos = Store.getState().cargos
             const updated = cargos.find((c: CargoInfo) => c.guid === currentCargo.guid);

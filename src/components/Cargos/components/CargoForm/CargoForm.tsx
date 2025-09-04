@@ -86,10 +86,12 @@ export const CargoForm: React.FC<CargoFormProps> = ({ cargo, onBack, onSave }) =
   // ======================
   
   const handleBackNavigation = () => {
+    console.log("handleBack", currentStep )
     if (currentStep > 1) {
       gotoStep(currentStep - 1);
       scrollToTop();
     } else {
+      console.log("onBack")
       onBack();
     }
   };
