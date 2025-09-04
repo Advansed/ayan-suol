@@ -46,6 +46,7 @@ import { ToastProvider } from './components/Toast/ToastManager';
 import { useLogin } from './Store/useLogin';
 import { ServerConnectionGuard } from './components/ServerConnectionGuard';
 import { Login } from './components/Login';
+import { useSocketManager } from './services/useSocketManager';
 
 setupIonicReact({
   mode: 'ios', // или 'md' для Material Design
@@ -55,6 +56,8 @@ setupIonicReact({
 
 const AppContent: React.FC = () => {
   const { auth, user_type } = useLogin();
+
+  useSocketManager()
 
   return (
     <ServerConnectionGuard>

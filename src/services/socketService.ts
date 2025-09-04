@@ -31,8 +31,6 @@ class SocketService {
         this.socket?.off('connect', handleConnect);
         this.socket?.off('connect_error', handleError);
 
-        initSocketHandlers( this.socket )
-
         resolve(true);
       };
 
@@ -63,8 +61,6 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
-
-      destroySocketHandlers( this.socket )
 
     }
   }
