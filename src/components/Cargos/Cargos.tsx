@@ -115,8 +115,8 @@ export const Cargos: React.FC = () => {
                 return(
                     <DataEditor 
                         data        = { formData }
-                        onChange    = { handleChangeEditor }
                         onSave      = { handleSaveEditor }
+                        onBack      = { handleBack }
                     />   
                 )
                 // return (

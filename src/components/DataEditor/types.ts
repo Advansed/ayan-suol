@@ -10,8 +10,9 @@ export interface PageData {
 
 export interface DataEditorProps {
   data: PageData[];
-  onChange: (data: PageData[]) => void;
   onSave?: (data: PageData[]) => void;
+  onBack: () => void;
+  title?: string; // Опциональный заголовок
 }
 
 export interface NavigationState {

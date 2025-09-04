@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PageData } from '../types';
 
-export const useFormState = (initialData: PageData[], onChange: (data: PageData[]) => void) => {
+export const useFormState = (initialData: PageData[]) => {
   const [data, setData] = useState<PageData[]>(initialData);
 
   useEffect(() => {
@@ -13,7 +13,6 @@ export const useFormState = (initialData: PageData[], onChange: (data: PageData[
     if (newData[pageIndex] && newData[pageIndex][fieldName]) {
       newData[pageIndex][fieldName].data = value;
       setData(newData);
-      onChange(newData);
     }
   };
 

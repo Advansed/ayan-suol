@@ -1,0 +1,255 @@
+.field {
+  margin-bottom: 1.5em;
+  position: relative;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5em;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #333;
+  letter-spacing: 0.02em;
+}
+
+.selectWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.select {
+  width: 100%;
+  padding: 0.85em 2.5em 0.85em 1em;
+  font-size: 1em;
+  font-family: inherit;
+  color: #333;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.select:hover:not(:disabled) {
+  border-color: #b0b0b0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.select:focus {
+  border-color: var(--main-color, #086CA2);
+  box-shadow: 0 0 0 3px rgba(8, 108, 162, 0.1), 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.select.placeholder {
+  color: #999;
+}
+
+.select:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.selectError {
+  border-color: #ff4444 !important;
+}
+
+.selectError:focus {
+  box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.1) !important;
+}
+
+.iconWrapper {
+  position: absolute;
+  right: 0.75em;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.select:focus ~ .iconWrapper {
+  color: var(--main-color, #086CA2);
+}
+
+.icon {
+  font-size: 1.2em;
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.select:hover:not(:disabled) ~ .iconWrapper .icon {
+  color: #333;
+}
+
+.select:focus ~ .iconWrapper .icon {
+  color: var(--main-color, #086CA2);
+}
+
+/* Анимация стрелки при фокусе */
+.select:focus ~ .iconWrapper {
+  animation: bounce 0.3s ease;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(-50%); }
+  50% { transform: translateY(-50%) translateY(2px); }
+}
+
+.option {
+  padding: 0.5em;
+  background: white;
+  color: #333;
+}
+
+.errorMessage {
+  display: block;
+  margin-top: 0.3em;
+  font-size: 0.85em;
+  color: #ff4444;
+  font-weight: 500;
+}
+
+/* Стили для разных браузеров */
+@-moz-document url-prefix() {
+  .select {
+    padding-right: 2.5em;
+  }
+}
+
+/* Темная тема (опционально) */
+@media (prefers-color-scheme: dark) {
+  .label {
+    color: #e0e0e0;
+  }
+  
+  .select {
+    background: #2a2a2a;
+    color: #e0e0e0;
+    border-color: #444;
+  }
+  
+  .select:hover:not(:disabled) {
+    border-color: #666;
+    background: #333;
+  }
+  
+  .select.placeholder {
+    color: #888;
+  }
+  
+  .icon {
+    color: #999;
+  }
+  
+  .select:hover:not(:disabled) ~ .iconWrapper .icon {
+    color: #e0e0e0;
+  }
+}
+
+/* Мобильная адаптация */
+@media (max-width: 480px) {
+  .field {
+    margin-bottom: 1.2em;
+  }
+  
+  .label {
+    font-size: 0.85em;
+    margin-bottom: 0.4em;
+  }
+  
+  .select {
+    padding: 0.75em 2.2em 0.75em 0.9em;
+    font-size: 0.95em;
+    border-radius: 8px;
+  }
+  
+  .iconWrapper {
+    right: 0.6em;
+  }
+  
+  .icon {
+    font-size: 1.1em;
+  }
+}
+
+/* Планшеты */
+@media (min-width: 481px) and (max-width: 768px) {
+  .select {
+    padding: 0.8em 2.3em 0.8em 0.95em;
+  }
+}
+
+/* Анимация появления */
+.field {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Состояние загрузки (опционально) */
+.selectLoading {
+  position: relative;
+  pointer-events: none;
+}
+
+.selectLoading::after {
+  content: '';
+  position: absolute;
+  right: 2.5em;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1em;
+  height: 1em;
+  border: 2px solid #ccc;
+  border-top-color: var(--main-color, #086CA2);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Кастомный скроллбар для длинных списков */
+@supports (scrollbar-width: thin) {
+  .select {
+    scrollbar-width: thin;
+    scrollbar-color: var(--main-color, #086CA2) #f0f0f0;
+  }
+}
+
+.select::-webkit-scrollbar {
+  width: 8px;
+}
+
+.select::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+.select::-webkit-scrollbar-thumb {
+  background: var(--main-color, #086CA2);
+  border-radius: 4px;
+}
+
+.select::-webkit-scrollbar-thumb:hover {
+  background: #065580;
+}
