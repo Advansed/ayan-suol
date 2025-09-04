@@ -17,15 +17,19 @@ export interface FieldData {
   data: any; // для address будет AddressData
 }
 
-export interface PageData {
-  [fieldName:   string]: FieldData;
+export interface Section {
+  title: string;
+  data: FieldData[];
 }
 
+export type PageData = Section[];
+
+
 export interface DataEditorProps {
-  data:         PageData[];
-  onSave?:      (data: PageData[]) => void;
-  onBack:       () => void;
-  title?:       string; // Опциональный заголовок
+  data: PageData;
+  onSave?: (data: PageData) => void;
+  onBack: () => void;
+  title?: string;
 }
 
 export interface NavigationState {

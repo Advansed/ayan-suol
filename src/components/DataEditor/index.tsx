@@ -1,35 +1,25 @@
-// src/components/DataEditor/index.tsx
-import React, { useRef, useState }                from 'react';
-import { DataEditorProps, FieldData }   from './types';
-import { useNavigation }                from './hooks/useNavigation';
-import { useFormState }                 from './hooks/useFormState';
-import { TextField }                    from './fields/TextField';
-import { NumberField }                  from './fields/NumberField';
-import { SelectField }                  from './fields/SelectField';
-import { WizardHeader }                 from './components/WizardHeader';
-import './styles.css';
+import React, { useRef } from 'react';
+import { DataEditorProps, FieldData } from './types';
+import { useNavigation } from './hooks/useNavigation';
+import { useFormState } from './hooks/useFormState';
+import { TextField } from './fields/TextField';
+import { NumberField } from './fields/NumberField';
+import { SelectField } from './fields/SelectField';
 import { DateField } from './fields/DateField';
-import { CityField } from './fields/СityField';
-import { AddressField } from './fields/AddressField';
+import { WizardHeader } from './components/WizardHeader';
+import './styles.css';
 
 const DataEditor: React.FC<DataEditorProps> = ({ 
-    data, 
-    onSave, 
-    onBack,
-    title = 'Редактор данных'
+  data, 
+  onSave, 
+  onBack
 }) => {
-  const scrollRef   = useRef<HTMLDivElement>(null);
-  const navigation  = useNavigation(data.length);
-  const formState   = useFormState(data);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const navigation = useNavigation(data.length);
+  const formState = useFormState(data);
 
-  const [ fias, setFias ] = useState( '' );
+  const scrollToTop = () => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Получение заголовка для текущей страницы
-  const getStepTitle = () => {
-    return `Страница ${navigation.currentPage + 1} из ${navigation.totalPages}`;
-  };
-
-  // Навигация назад
   const handleBackNavigation = () => {
     if (navigation.currentPage > 0) {
       navigation.prevPage();
@@ -39,7 +29,6 @@ const DataEditor: React.FC<DataEditorProps> = ({
     }
   };
 
-  // Навигация вперед
   const handleForwardNavigation = () => {
     if (navigation.canGoNext) {
       navigation.nextPage();
@@ -47,120 +36,56 @@ const DataEditor: React.FC<DataEditorProps> = ({
     }
   };
 
-  // Сохранение данных
-  const handleSave = () => {
-    if (onSave) {
-      onSave(formState.data);
-    }
-  };
+  const getPageTitle = () => {
+    return (navigation.currentPage + 1) + ' страница из ' +  data.length
+  }
 
-  // Скролл наверх
-  const scrollToTop = () => {
-    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Рендер полей
-  const renderField = (fieldName: string, fieldData: FieldData) => {
-    const updateValue = (value: any) => {
-      formState.updateField(navigation.currentPage, fieldName, value);
+  const renderField = (field: FieldData, sectionIdx: number, fieldIdx: number) => {
+    const update = (value: any) => formState.updateField(sectionIdx, fieldIdx, value);
+    
+    const props = {
+      key:            `${sectionIdx}-${fieldIdx}`,
+      label:          field.label,
+      value:          field.data,
+      onChange:       update
     };
 
-
-    switch (fieldData.type) {
-      case 'string':
-        return (
-          <TextField
-            key       = { fieldName }
-            label     = { fieldData.label } // используем label из fieldData
-            value     = { fieldData.data }
-            onChange  = { updateValue }
-          />
-        );
-      case 'number':
-        return (
-          <NumberField
-            key       = { fieldName }
-            label     = { fieldData.label } // используем label из fieldData
-            value     = { fieldData.data }
-            onChange  = { updateValue }
-          />
-        );
-      case 'select':
-        return (
-          <SelectField
-            key       = { fieldName }
-            label     = { fieldData.label } // используем label из fieldData
-            value     = { fieldData.data }
-            options   = { fieldData.values || [] }
-            onChange  = { updateValue }
-          />
-        );
-      case 'date':
-        return (
-          <DateField
-            key       = { fieldName }
-            label     = { fieldData.label } // используем label из fieldData
-            value     = { fieldData.data }
-            onChange  = { updateValue }
-          />
-        );
-      case 'city': // новый тип
-        return (
-          <CityField
-            key       = { fieldName }
-            label     = { fieldData.label }
-            value     = { fieldData.data }
-            onChange  = { updateValue }
-            onFIAS    = { setFias }
-          />
-        );
-      case 'address': // новый тип
-        return (
-          <AddressField
-            key       = { fieldName }
-            label     = { fieldData.label }
-            value     = { fieldData.data }
-            onChange  = { updateValue }
-            cityFias  = { fias } // передаем fias города если есть
-          />
-        );      
-      default:
-        return null;
+    switch (field.type) {
+      case 'string':  return <TextField {...props} />;
+      case 'number':  return <NumberField {...props} />;
+      case 'select':  return <SelectField {...props} options={field.values || []} />;
+      case 'date':    return <DateField {...props} />;
+      default:        return null;
     }
   };
 
-
-  const currentPageData = formState.data[navigation.currentPage];
-  
-  if (!currentPageData) return null;
-
-  const isLastStep = navigation.currentPage === navigation.totalPages - 1;
+  const currentSection = formState.data[navigation.currentPage];
+  if (!currentSection) return null;
 
   return (
-
     <div className="data-editor-wizard">
       <div className="wizard-content" ref={scrollRef}>
         <WizardHeader
-          title         = { title }
-          pages         = { getStepTitle() }
-          onBack        = { handleBackNavigation }
-          onForward     = { handleForwardNavigation }
-          onSave        = { handleSave }
-          isLastStep    = { isLastStep }
-          canGoBack     = { true }
-          canGoForward  = { navigation.canGoNext }
+          title={currentSection.title}
+          pages={ getPageTitle() }
+          onBack={handleBackNavigation}
+          onForward={handleForwardNavigation}
+          onSave={() => onSave?.(formState.data)}
+          isLastStep={navigation.currentPage === navigation.totalPages - 1}
+          canGoBack={true}
+          canGoForward={navigation.canGoNext}
         />
         
         <div className="step-container">
           <div className="page-content">
-            {Object.entries(currentPageData).map(([fieldName, fieldData]) => 
-              renderField(fieldName, fieldData)
+            <h2 className="section-title">{currentSection.title}</h2>
+            {currentSection.data.map((field, idx) => 
+              renderField(field, navigation.currentPage, idx)
             )}
           </div>
         </div>
       </div>
     </div>
-
   );
 };
 

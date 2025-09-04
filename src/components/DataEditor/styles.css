@@ -52,6 +52,15 @@
   box-shadow: 0 0 0 2px rgba(8, 108, 162, 0.1);
 }
 
+.section-title {
+  font-size: 1.2em;
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--main-color, #086ca2);
+}
+
+
 /* Мобильная адаптация */
 @media (max-width: 480px) {
   .wizard-content {

@@ -13,7 +13,7 @@ import { PrepaymentPage } from './components/PrePaymentMethod';
 import { InsurancePage } from './components/InsurancePage';
 import { CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
 import DataEditor from '../DataEditor';
-import { PageData } from '../DataEditor/types';
+import { PageData, Section } from '../DataEditor/types';
 
 export const Cargos: React.FC = () => {
     const { user } = useLogin();
@@ -33,61 +33,32 @@ export const Cargos: React.FC = () => {
         refreshCargos
     } = useCargos();
 
-  const [formData, setFormData] = useState<PageData[]>([
-  {
-    name: { 
-      label: "Имя",
-      type: "string", 
-      values: null,
-      data: "Коля" 
+  const [formData, setFormData] = useState<PageData>([
+    {
+        title: 'Основные данные',
+        data: [
+            { label: 'Название', type: 'string', data: 'Груз №1' },
+            { label: 'Описание', type: 'string', data: 'Описание груза' },
+            { label: 'Вес', type: 'number', data: 100 }
+        ]
     },
-    description: { 
-      label: "Описание",
-      type: "string",
-      values: null, 
-      data: "Описание" 
+    {
+        title: 'Адреса и транспорт',
+        data: [
+            { label: 'Откуда', type: 'string', data: 'Москва' },
+            { label: 'Куда', type: 'string', data: 'Санкт-Петербург' },
+            { label: 'Транспорт', type: 'select', values: ['truck', 'auto', 'train'], data: 'auto' },
+            { label: 'Дата отправки', type: 'date', data: '2025-01-15' }
+        ]
     }
-  },
-  {
-    addressFrom: { 
-      label: "Город отправления",
-      type: "city",
-      values: null,
-      data: { 
-        city: "Москва", 
-        fias: "0c5b2444-70a0-4932-980c-b4dc0d3f02b5" 
-      }
-    },
-    addressTo: { 
-      label: "Город назначения",
-      type: "city",
-      values: null,
-      data: { 
-        city: "Санкт-Петербург", 
-        fias: "c2deb16a-0330-4f05-821f-1d09c93331e6" 
-      }
-    },
-    transport: { 
-      label: "Транспорт",
-      type: "select", 
-      values: ["truck", "auto", "moto"], 
-      data: "auto" 
-    },
-    weight: { 
-      label: "Вес",
-      type: "number",
-      values: null, 
-      data: 500 
-    }
-  }
 ]);
 
-  const handleChangeEditor = (newData: PageData[]) => {
+  const handleChangeEditor = (newData: PageData) => {
     setFormData( newData );
     console.log( newData )
   };
 
-  const handleSaveEditor = (data: PageData[]) => {
+  const handleSaveEditor = (data: PageData) => {
     console.log('Сохранено:', data);
     // Отправить на сервер
   };  

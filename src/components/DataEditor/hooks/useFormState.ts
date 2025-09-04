@@ -1,23 +1,20 @@
 import { useState, useEffect } from 'react';
 import { PageData } from '../types';
 
-export const useFormState = (initialData: PageData[]) => {
-  const [data, setData] = useState<PageData[]>(initialData);
+export const useFormState = (initialData: PageData) => {
+  const [data, setData] = useState<PageData>(initialData);
 
   useEffect(() => {
     setData(initialData);
   }, [initialData]);
 
-  const updateField = (pageIndex: number, fieldName: string, value: any) => {
+  const updateField = (sectionIndex: number, fieldIndex: number, value: any) => {
     const newData = [...data];
-    if (newData[pageIndex] && newData[pageIndex][fieldName]) {
-      newData[pageIndex][fieldName].data = value;
+    if (newData[sectionIndex]?.data[fieldIndex]) {
+      newData[sectionIndex].data[fieldIndex].data = value;
       setData(newData);
     }
   };
 
-  return {
-    data,
-    updateField
-  };
+  return { data, updateField };
 };
