@@ -5,7 +5,7 @@ import { closeOutline } from 'ionicons/icons';
 
 interface Props1 {
   isOpen: boolean;
-  onClose: () => void;
+  onClose?: () => void;
 }
 const CargoAgree: React.FC<Props1> = ({ isOpen, onClose }) => {
   return (
@@ -16,7 +16,7 @@ const CargoAgree: React.FC<Props1> = ({ isOpen, onClose }) => {
               <IonButton 
                 fill="clear" 
                 slot="end" 
-                onClick={onClose}
+                onClick={(onClose)}
               >
                 <IonIcon icon={closeOutline} />
               </IonButton>

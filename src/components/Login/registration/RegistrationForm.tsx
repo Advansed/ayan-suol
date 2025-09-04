@@ -15,8 +15,6 @@ import {
 } from '../SharedComponents'
 import EULA from './eula'
 import styles from './Registration.module.css'
-import CargoAgree from '../../Profile/components/Agreements/CargoAgree'
-import { EscrowAgreement } from '../../Profile/components/Agreements/Escrow'
 
 interface RegistrationFormProps {
   onSwitchToLogin?: () => void
@@ -407,8 +405,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin, on
               ×
             </button>
             <EULA />
-            <CargoAgree/>
-            <EscrowAgreement/>
           </div>
         </div>
       )}
