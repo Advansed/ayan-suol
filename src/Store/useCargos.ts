@@ -1,10 +1,9 @@
 // src/Store/useCargos.ts
 
-import { useCallback, useEffect } from 'react'
+import { useCallback, } from 'react'
 import { useStore } from './Store'
 import { useSocket } from './useSocket'
 import { useToast } from '../components/Toast'
-import { useLogin } from './useLogin'
 import { 
     cargoStore,
     CargoInfo, 
@@ -14,45 +13,46 @@ import {
     PageType,
     EMPTY_CARGO
 } from './cargoStore'
+import { loginGetters } from './loginStore'
 
 // ============================================
 // ТИПЫ
 // ============================================
 export interface UseCargosReturn {
-    cargos: CargoInfo[]
-    isLoading: boolean
-    currentPage: PageType
-    filters: CargoFilters
-    searchQuery: string
-    navigateTo: (page: PageType) => void
-    goBack: () => void
-    setFilters: (filters: CargoFilters) => void  
-    setSearchQuery: (query: string) => void
-    createCargo: (data: Partial<CargoInfo>) => Promise<boolean>
-    updateCargo: (guid: string, data: Partial<CargoInfo>) => Promise<boolean>
-    deleteCargo: (guid: string) => Promise<boolean>
-    publishCargo: (guid: string) => Promise<boolean>
-    getCargo: (guid: string) => CargoInfo | undefined
-    refreshCargos: () => Promise<void>
+    cargos:             CargoInfo[]
+    isLoading:          boolean
+    currentPage:        PageType
+    filters:            CargoFilters
+    searchQuery:        string
+    navigateTo:         (page: PageType) => void
+    goBack:             () => void
+    setFilters:         (filters: CargoFilters) => void  
+    setSearchQuery:     (query: string) => void
+    createCargo:        (data: Partial<CargoInfo>) => Promise<boolean>
+    updateCargo:        (guid: string, data: Partial<CargoInfo>) => Promise<boolean>
+    deleteCargo:        (guid: string) => Promise<boolean>
+    publishCargo:       (guid: string) => Promise<boolean>
+    getCargo:           (guid: string) => CargoInfo | undefined
+    refreshCargos:      () => Promise<void>
 }
 
 // ============================================
 // КОНСТАНТЫ
 // ============================================
 const SOCKET_EVENTS = {
-    SAVE_CARGO: 'save_cargo',
-    UPDATE_CARGO: 'update_cargo', 
-    DELETE_CARGO: 'delete_cargo',
-    PUBLISH_CARGO: 'publish_cargo',
-    GET_CARGOS: 'get_cargos',
-    GET_ORGS: 'get_orgs'
+    SAVE_CARGO:         'save_cargo',
+    UPDATE_CARGO:       'update_cargo', 
+    DELETE_CARGO:       'delete_cargo',
+    PUBLISH_CARGO:      'publish_cargo',
+    GET_CARGOS:         'get_cargos',
+    GET_ORGS:           'get_orgs'
 }
 
 // ============================================
 // HOOK
 // ============================================
 export const useCargos = (): UseCargosReturn => {
-    const { token } = useLogin()
+    const token = loginGetters.getToken()
     const { emit, isConnected } = useSocket()
     const toast = useToast()
 

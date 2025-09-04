@@ -7,7 +7,6 @@ import {
   TState
 } from './Store'
 import socketService from '../components/Sockets'
-import { Socket } from 'socket.io-client'
 
 // ============================================
 // ТИПЫ

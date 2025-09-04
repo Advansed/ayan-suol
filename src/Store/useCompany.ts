@@ -7,6 +7,7 @@ import {
 import socketService from '../components/Sockets'
 import { useToast } from '../components/Toast'
 import { useLogin } from './useLogin'
+import { loginGetters } from './loginStore'
 
 // ============================================
 // ТИПЫ
@@ -62,7 +63,7 @@ export const companyStore = new UniversalStore<CompanyState>({
 // ============================================
 
 export const useCompany = () => {
-    const { token } = useLogin()
+    const token = loginGetters.getToken()
     
     const companyData   = useStore((state: CompanyState) => state.data, 4001, companyStore)
     const isLoading     = useStore((state: CompanyState) => state.isLoading, 4002, companyStore)

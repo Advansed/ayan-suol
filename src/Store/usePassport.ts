@@ -1,8 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import socketService from '../components/Sockets'
 import { UniversalStore, useStore, TState } from './Store'
 import { useToast } from '../components/Toast'
-import { useLogin } from './useLogin'
+import { loginGetters } from './loginStore'
 
 // ============================================
 // ТИПЫ
@@ -48,7 +48,7 @@ export const passportStore = new UniversalStore<PassportState>({
 // ============================================
 
 export const usePassport = () => {
-    const { token } = useLogin()
+    const token = loginGetters.getToken()
     
     const passportData  = useStore((state: PassportState) => state.data, 3001, passportStore)
     const isLoading     = useStore((state: PassportState) => state.isLoading, 3002, passportStore)

@@ -48,4 +48,5 @@ export interface UpdateUserData {
   password?: string
   image?: string
   user_type?: string
+  notifications?: UserNotifications
 }

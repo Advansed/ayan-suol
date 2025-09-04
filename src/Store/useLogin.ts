@@ -1,69 +1,9 @@
-// src/Store/useLogin.ts
-
-import { useCallback, useMemo } from 'react'
-import { 
-  UniversalStore, 
-  useStore, 
-  TState
-} from './Store'
-import { useToast } from '../components/Toast'
+import { useCallback } from 'react'
+import { useStore } from './Store'
 import { useSocket } from './useSocket'
-
-// ============================================
-// ТИПЫ
-// ============================================
-
-export interface UserRatings {
-  orders:             number;
-  rate:               number;
-  payd:               number;
-}
-
-export interface UserNotifications {
-  personalData:       boolean;
-  userAgreement:      boolean;
-  marketing:          boolean;
-  market:             boolean;
-}
-
-export interface AuthResponse {
-  guid:               string;
-  token:              string;
-  phone:              string;
-  name:               string;
-  email:              string;
-  image:              string;
-  user_type:          number;
-  description:        string;
-  account:            number;
-  ratings:            UserRatings;
-  notifications:      UserNotifications;
-}
-
-export interface AppState extends TState {
-  auth:               boolean
-  id:                 string | null
-  name:               string | null
-  phone:              string | null
-  email:              string | null
-  image:              string | null
-  token:              string | null
-  user_type:          number | null
-  description:        string | null
-  account:            number | null
-  ratings:            UserRatings |  null
-  notifications:      UserNotifications | null
-  isLoading:          boolean
-}
-
-export interface UpdateUserData {
-  name?:              string;
-  email?:             string;
-  description?:       string;
-  password?:          string;
-  image?:             string;
-  user_type?:         string;
-}
+import { useToast } from '../components/Toast'
+import { loginStore, loginActions, LoginState } from './loginStore'
+import { AuthResponse, UpdateUserData, UserNotifications } from './types/auth'
 
 // ============================================
 // УТИЛИТЫ
@@ -80,95 +20,58 @@ export function Phone(phone: string): string {
 }
 
 // ============================================
-// STORE
-// ============================================
-
-export const appStore = new UniversalStore<AppState>({
-  initialState: { 
-    auth:           false,
-    id:             null,
-    name:           null,
-    phone:          null,
-    email:          null,
-    image:          null,
-    token:          null,
-    user_type:      null,
-    description:    null,
-    account:        null,
-    ratings:        null,
-    notifications:  null,
-    isLoading:      false
-  },
-  enableLogging:    true
-})
-
-// ============================================
 // HOOK
 // ============================================
 
 export function useLogin() {
-  const auth              = useStore((state: AppState) => state.auth,               1001, appStore)
-  const id                = useStore((state: AppState) => state.id,                 1002, appStore)
-  const name              = useStore((state: AppState) => state.name,               1003, appStore)
-  const phone             = useStore((state: AppState) => state.phone,              1004, appStore)
-  const email             = useStore((state: AppState) => state.email,              1005, appStore)
-  const image             = useStore((state: AppState) => state.image,              1006, appStore)
-  const token             = useStore((state: AppState) => state.token,              1007, appStore)
-  const user_type         = useStore((state: AppState) => state.user_type,          1008, appStore)
-  const description       = useStore((state: AppState) => state.description,        1009, appStore)
-  const account           = useStore((state: AppState) => state.account,            1010, appStore)
-  const isLoading         = useStore((state: AppState) => state.isLoading,          1011, appStore)
-  const ratings           = useStore((state: AppState) => state.ratings,            1012, appStore)
-  const notifications     = useStore((state: AppState) => state.notifications,      1013, appStore)
+  // State subscriptions
+  const auth          = useStore((state: LoginState) => state.auth, 1001, loginStore)
+  const id            = useStore((state: LoginState) => state.id, 1002, loginStore)
+  const name          = useStore((state: LoginState) => state.name, 1003, loginStore)
+  const phone         = useStore((state: LoginState) => state.phone, 1004, loginStore)
+  const email         = useStore((state: LoginState) => state.email, 1005, loginStore)
+  const image         = useStore((state: LoginState) => state.image, 1006, loginStore)
+  const token         = useStore((state: LoginState) => state.token, 1007, loginStore)
+  const user_type     = useStore((state: LoginState) => state.user_type, 1008, loginStore)
+  const description   = useStore((state: LoginState) => state.description, 1009, loginStore)
+  const account       = useStore((state: LoginState) => state.account, 1010, loginStore)
+  const ratings       = useStore((state: LoginState) => state.ratings, 1011, loginStore)
+  const notifications = useStore((state: LoginState) => state.notifications, 1012, loginStore)
+  const isLoading     = useStore((state: LoginState) => state.isLoading, 1013, loginStore)
 
+  // Services
+  const { emit, once, isConnected } = useSocket()
   const toast = useToast()
-  const { isConnected, emit, once } = useSocket()
 
-  const user = useMemo(() => ({
-      id, name, phone, email, image, token, 
-      user_type, description, account, 
-      notifications, isLoading
-  }), [id, name, phone, email, image, token, user_type, description, account, notifications, isLoading])
+  // User object
+  const user = {
+    id, name, phone, email, image, token, 
+    user_type, description, account, ratings, notifications
+  }
+
+  // ============================================
+  // ACTIONS
+  // ============================================
 
   const login = useCallback(async (phoneNumber: string, password: string): Promise<boolean> => {
-    
-    appStore.dispatch({ type: 'isLoading', data: true })
+    if (!isConnected) {
+      toast.error('Нет подключения к серверу')
+      return false
+    }
+
+    loginActions.setLoading(true)
+    loginActions.setAuth(false)
 
     try {
-      if (!isConnected) {
-        throw new Error('Нет подключения к серверу')
-      }
-
-      return new Promise((resolve, reject) => {
-        const handleAuthResponse = (response: any) => {
+      return await new Promise<boolean>((resolve) => {
+        const handleAuthResponse = (response: { success: boolean; data?: AuthResponse; message?: string }) => {
           if (response.success && response.data) {
-            const authData: AuthResponse = response.data
-
-            localStorage.setItem("gvrs.login", phoneNumber )
-            localStorage.setItem("gvrs.password", password )
-            
-            appStore.batchUpdate({
-              auth:               true,
-              id:                 authData.guid,
-              name:               authData.name,
-              phone:              authData.phone,
-              email:              authData.email,
-              image:              authData.image,
-              token:              authData.token,
-              user_type:          authData.user_type,
-              description:        authData.description,
-              account:            authData.account,
-              ratings:           authData.ratings,
-              notifications:      authData.notifications,
-              isLoading:          false
-            })
-
-            toast.success(`Добро пожаловать, ${authData.name}!`)
+            loginActions.setUser(response.data)
+            toast.success(`Добро пожаловать, ${response.data.name}!`)
             resolve(true)
           } else {
-            appStore.dispatch({ type: 'isLoading', data: false })
-            appStore.dispatch({ type: 'auth', data: false })
-            
+            loginActions.setLoading(false)
+            loginActions.setAuth(false)
             toast.error(response.message || 'Неверные данные для входа')
             resolve(false)
           }
@@ -177,62 +80,44 @@ export function useLogin() {
         once('authorization', handleAuthResponse)
         emit('authorization', { login: Phone(phoneNumber), password })
       })
-
     } catch (error: any) {
-      appStore.dispatch({ type: 'isLoading', data: false })
-      appStore.dispatch({ type: 'auth', data: false })
-      
+      loginActions.setLoading(false)
+      loginActions.setAuth(false)
       toast.error('Ошибка подключения к серверу')
       return false
     }
   }, [toast, isConnected, emit, once])
 
   const logout = useCallback(() => {
-    appStore.batchUpdate({
-      auth:               false,
-      id:                 null,
-      name:               null,
-      phone:              null,
-      email:              null,
-      image:              null,
-      token:              null,
-      user_type:          null,
-      description:        null,
-      account:            null
-    })
-
+    loginActions.clearAuth()
     toast.info("Выход из системы")
   }, [toast])
 
   const updateUser = useCallback(async (userData: UpdateUserData): Promise<boolean> => {
-    appStore.dispatch({ type: 'isLoading', data: true })
+    loginActions.setLoading(true)
+    
     try {
-      once('set_user', (data) => {
-        if (data.success) {
-          Object.entries(userData).forEach(([key, value]) => {
-            appStore.dispatch({ type: key, data: value })
-          })
-          toast.success( data.message )
-        } else {
-          toast.error( data.message )
-        }
-        appStore.dispatch({ type: 'isLoading', data: false })
+      return await new Promise<boolean>((resolve) => {
+        once('set_user', (data: { success: boolean; message?: string }) => {
+          if (data.success) {
+            loginActions.updateUser(userData)
+            toast.success(data.message || 'Данные обновлены')
+            resolve(true)
+          } else {
+            toast.error(data.message || 'Ошибка обновления')
+            resolve(false)
+          }
+          loginActions.setLoading(false)
+        })
+        
+        emit('set_user', { token, ...userData })
       })
-      
-      console.log('emit...', userData );
-      const success = emit('set_user', { ...userData, token: token })
-      if (!success) {
-        toast.error('Ошибка подключения')
-        appStore.dispatch({ type: 'isLoading', data: false })
-        return false
-      }
-      return true
     } catch (error) {
-      toast.error('Ошибка обновления')
-      appStore.dispatch({ type: 'isLoading', data: false })
+      loginActions.setLoading(false)
+      toast.error('Ошибка обновления данных')
       return false
     }
-  }, [emit, once])
+  }, [token, emit, once, toast])
 
   const toggleNotification = useCallback((key: keyof UserNotifications) => {
     console.log("toggle", key)
@@ -240,10 +125,9 @@ export function useLogin() {
     
     const newValue = !notifications[key]
     
-    // Обновляем локальное состояние
-    appStore.dispatch({
-      type: 'notifications',
-      data: { ...notifications, [key]: newValue }
+    // Обновляем локальное состояние через actions
+    loginActions.updateUser({
+      notifications: { ...notifications, [key]: newValue }
     })
     
     // Отправляем на сервер
@@ -251,8 +135,8 @@ export function useLogin() {
       console.log("emit..", token)
       
       // Обработчик ответа от сервера
-      once('set_agreement', (response) => {
-        if(response.success){
+      once('set_agreement', (response: { success: boolean; message?: string }) => {
+        if (response.success) {
           toast.info("Соглашение сохранено")         
         }
       })
@@ -262,37 +146,27 @@ export function useLogin() {
         [key]: newValue
       })
     }
-  }, [notifications, isLoading, token, emit, once])
+  }, [notifications, isLoading, token, emit, once, toast])
+
+  // ============================================
+  // RETURN
+  // ============================================
 
   return {
+    // State
     auth,
-    user, 
-    id,
     name,
-    phone,
-    email,
-    image,
+    user,
     token,
     user_type,
-    description,
-    account,
     isLoading,
     ratings,
     notifications,
-    socketConnected: isConnected,
-    toggleNotification,
+    
+    // Actions
     login,
     logout,
-    updateUser
+    updateUser,
+    toggleNotification
   }
 }
-
-// ============================================
-// УТИЛИТЫ
-// ============================================
-
-export const getToken           = () => appStore.getState().token
-export const getName            = () => appStore.getState().name || ''
-export const getId              = () => appStore.getState().id || ''
-export const getAccount         = () => appStore.getState().account || 0
-export const isAuthenticated    = () => appStore.getState().auth

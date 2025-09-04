@@ -8,7 +8,7 @@ import {
 } from './Store'
 import socketService from '../components/Sockets'
 import { useToast } from '../components/Toast'
-import { useLogin } from './useLogin'
+import { loginGetters } from './loginStore'
 
 // ============================================
 // ТИПЫ
@@ -56,7 +56,7 @@ export const transportStore = new UniversalStore<TransportState>({
 // ============================================
 
 export const useTransport = () => {
-    const { token } = useLogin()
+    const token = loginGetters.getToken()
     
     const transportData = useStore((state: TransportState) => state.data, 5001, transportStore)
     const isLoading     = useStore((state: TransportState) => state.isLoading, 5002, transportStore)
