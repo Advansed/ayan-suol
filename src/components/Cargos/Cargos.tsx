@@ -68,6 +68,7 @@ export const Cargos: React.FC = () => {
 
     // Рендер в зависимости от текущей страницы
     const renderContent = () => {
+
         switch (currentPage.type) {
             case 'list':
                 return (
@@ -142,6 +143,7 @@ export const Cargos: React.FC = () => {
             default:
                 return <div>Неизвестная страница</div>;
         }
+        
     };
 
     return (

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { destroyCargoSocketHandlers, initCargoSocketHandlers } from './cargoStore'
 
 // ============================================
 // УНИВЕРСАЛЬНЫЕ ТИПЫ
@@ -150,7 +149,7 @@ export function useStore<T extends TState, TSelected>(
     
     stateKeys.forEach(key => {
       storeInstance.subscribe({
-        num: subscriptionId + key.length,
+        num: subscriptionId,
         type: key,
         func: () => {
           if (isMountedRef.current) {
@@ -164,7 +163,7 @@ export function useStore<T extends TState, TSelected>(
     return () => {
       isMountedRef.current = false
       stateKeys.forEach(key => {
-        storeInstance.unsubscribe(subscriptionId + key.length)
+        storeInstance.unsubscribe(subscriptionId)
       })
     }
   }, [selector, subscriptionId, storeInstance])

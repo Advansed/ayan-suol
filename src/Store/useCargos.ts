@@ -68,10 +68,8 @@ export const useCargos = (): UseCargosReturn => {
     // НАВИГАЦИЯ
     // ============================================
     const navigateTo = useCallback((page: PageType) => {
-        cargoStore.batchUpdate({
-            navigationHistory: [...navigationHistory, currentPage],
-            currentPage: page
-        })
+        cargoStore.dispatch( { type: "navigationHistory", data: [...navigationHistory, page] })
+        cargoStore.dispatch( { type: "currentPage", data: page })
         console.log('page', page )
     }, [currentPage, navigationHistory])
 
