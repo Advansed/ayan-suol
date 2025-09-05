@@ -12,7 +12,7 @@ export interface AddressData {
 
 export interface FieldData {
   label:      string;
-  type:       'string' | 'number' | 'select' | 'date' | 'boolean' | 'city' | 'address';
+  type:       'string' | 'number' | 'select' | 'date' | 'boolean' | 'city' | 'address' | 'view';
   values?:    string[] | null;
   validate:   boolean;
   data:       any; 
@@ -27,10 +27,11 @@ export type PageData = Section[];
 
 
 export interface DataEditorProps {
-  data: PageData;
-  onSave?: (data: PageData) => void;
-  onBack: () => void;
-  title?: string;
+  data:       PageData;
+  onSave?:    (data: PageData) => void;
+  onChange?:  (data: Section) => void;
+  onBack:     () => void;
+  title?:     string;
 }
 
 export interface NavigationState {

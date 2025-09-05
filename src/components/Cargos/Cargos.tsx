@@ -4,16 +4,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useCargos } from '../../Store/useCargos';
-import { useLogin } from '../../Store/useLogin';
 import { CargosList } from './components/CargosList';
-import { CargoForm } from './components/CargoForm';
 import { CargoView } from './components/CargoView';
 import { CargoInvoiceSections } from './components/CargoInvoices';
 import { PrepaymentPage } from './components/PrePaymentMethod';
 import { InsurancePage } from './components/InsurancePage';
-import { CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
-import DataEditor from '../DataEditor';
-import { PageData, Section } from '../DataEditor/types';
+import { cargoGetters, CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
 import { CargoFormNew } from './components/CargoFormNew';
 import { loginGetters } from '../../Store/loginStore';
 
@@ -46,7 +42,9 @@ export const Cargos: React.FC = () => {
     },[currentPage])
 
     // Обработчики для списка
+    
     const handleCreateNew = () => navigateTo({ type: 'create' });
+
     const handleCargoClick = (cargo: CargoInfo) => navigateTo({ type: 'view', cargo });
 
 
@@ -57,8 +55,16 @@ export const Cargos: React.FC = () => {
         } else 
         if (currentPage.type === 'create') {
             navigateTo({ type: 'list' });
-        } else 
-            navigateTo({ type: 'view', cargo: currentPage.cargo });
+        } else {
+            
+            console.log('handleBack.currentPage', currentPage.cargo)
+            const cargo = cargoGetters.getCargo( currentPage.cargo?.guid as string )
+            console.log('cargoGetters.cargo', cargo)
+
+            navigateTo({ type: 'view', cargo: cargo });
+
+        }
+            
     };
 
 
@@ -94,7 +100,7 @@ export const Cargos: React.FC = () => {
             case 'edit':
                 return (
                     <CargoFormNew
-                        cargo           = { currentPage.cargo }
+                        cargo           = { currentPage.cargo as CargoInfo }
                         onUpdate        = { updateCargo }
                         onCreate        = { createCargo }
                         onBack          = { handleBack }

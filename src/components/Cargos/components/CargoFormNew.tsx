@@ -3,14 +3,14 @@ import DataEditor from '../../DataEditor';
 import { AddressData, CityData, FieldData, PageData } from '../../DataEditor/types';
 import { CargoInfo, EMPTY_CARGO } from '../../../Store/cargoStore';
 import { useToast } from '../../Toast';
-import { useHistory } from 'react-router';
 
 interface CargoFormProps {
-  cargo?:     CargoInfo;
+  cargo:      CargoInfo;
   onBack:     () => void;
   onUpdate:   (guid: string, data: CargoInfo) => Promise<boolean>;
   onCreate:   (data: CargoInfo) => Promise<boolean>;
 }
+
 
 const cargoToPages = (cargo: CargoInfo): PageData => [
   {
@@ -138,38 +138,8 @@ const cargoToPages = (cargo: CargoInfo): PageData => [
         validate:   true
       }
     ]
-  },
-  {
-    title: "Сводка",
-    data: [
-      {
-        label:      "Цена доставки",
-        type:       "number",
-        data:       cargo.price || 0,
-        validate:   true
-      },
-      {
-        label:      "Стоимость груза",
-        type:       "number",
-        data:       cargo.cost || 0,
-        validate:   true
-      },
-      {
-        label:      "Телефон",
-        type:       "string",
-        data:       cargo.phone || "",
-        validate:   true
-
-      },
-      {
-        label:      "Контактное лицо",
-        type:       "string",
-        data:       cargo.face || "",
-        validate:   true
-      }
-    ]
   }
-
+ 
 ];
 
 const pagesToCargo = (pages: PageData, originalCargo?: CargoInfo): CargoInfo => {
@@ -236,6 +206,9 @@ const pagesToCargo = (pages: PageData, originalCargo?: CargoInfo): CargoInfo => 
   };
 };
 
+
+
+
 export const CargoFormNew: React.FC<CargoFormProps> = ({ 
   cargo, 
   onBack, 
@@ -243,7 +216,6 @@ export const CargoFormNew: React.FC<CargoFormProps> = ({
   onCreate 
 }) => {
   const toast = useToast();
-  const hist = useHistory();
   
   // Инициализация данных формы
   const [formData, setFormData] = useState<PageData>(() => 
@@ -262,9 +234,11 @@ export const CargoFormNew: React.FC<CargoFormProps> = ({
       }
       
       let success;
-      if (cargo) {
+      if (cargo?.guid) {
+        console.log("update", cargoData)
         success = await onUpdate(cargo.guid, cargoData);
       } else {
+        console.log("create", cargoData)
         success = await onCreate(cargoData);
       }
       
@@ -278,13 +252,14 @@ export const CargoFormNew: React.FC<CargoFormProps> = ({
     }
   };
   
-
+  
+  
   return (
     <DataEditor
-      data    = { formData }
-      onSave  = { handleSave }
-      onBack  = { onBack }
-      title   = { cargo ? 'Редактировать груз' : 'Создать груз' }
+      data      = { formData }
+      onSave    = { handleSave }
+      onBack    = { onBack }
+      title     = { cargo ? 'Редактировать груз' : 'Создать груз' }
     />
   );
 };

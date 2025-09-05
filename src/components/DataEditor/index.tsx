@@ -1,4 +1,4 @@
-import React, { useRef, useState }              from 'react';
+import React, { useEffect, useRef, useState }              from 'react';
 import { DataEditorProps, FieldData } from './types';
 import { useNavigation }              from './hooks/useNavigation';
 import { useFormState }               from './hooks/useFormState';
@@ -11,23 +11,25 @@ import './styles.css';
 import { CityField } from './fields/СityField';
 import { AddressField } from './fields/AddressField';
 import { useValidation } from './hooks/useValidation';
+import { ViewField } from './fields/ViewField';
 
 const DataEditor: React.FC<DataEditorProps> = ({ 
   data, 
   onSave, 
+  onChange,
   onBack
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigation = useNavigation(data.length);
   const formState = useFormState(data);
-  const { errors, validateField, validateAll, setError, clearError } = useValidation();
+  const { errors, validateField, validateAll, setError, clearAll } = useValidation();
  
 
   const [fias, setFias ] = useState('')
 
   const scrollToTop = () => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
 
-  const handleBackNavigation = () => {
+  const handleBackNavigation      = () => {
     if (navigation.currentPage > 0) {
       navigation.prevPage();
       scrollToTop();
@@ -36,7 +38,8 @@ const DataEditor: React.FC<DataEditorProps> = ({
     }
   };
 
-  const handleForwardNavigation = () => {
+  const handleForwardNavigation   = () => {
+    console.log("go", navigation.canGoNext)
     if (navigation.canGoNext) {
       // Валидация полей текущей страницы
       const currentSection = data[navigation.currentPage];
@@ -45,6 +48,7 @@ const DataEditor: React.FC<DataEditorProps> = ({
       currentSection.data.forEach((field, fIdx) => {
         if (field.validate) {
           const error = validateField(field, navigation.currentPage, fIdx);
+          console.log('validate',error)
           if (error) {
             setError(navigation.currentPage, fIdx, error);
             hasErrors = true;
@@ -54,23 +58,52 @@ const DataEditor: React.FC<DataEditorProps> = ({
       
       // Переход только если нет ошибок
       if (!hasErrors) {
+        clearAll();
         navigation.nextPage();
         scrollToTop();
       }
     }
   };
 
+  const handleSave                = () => {
+
+      const currentSection = data[navigation.currentPage];
+      let hasErrors = false;
+      
+      currentSection.data.forEach((field, fIdx) => {
+        if (field.validate) {
+          const error = validateField(field, navigation.currentPage, fIdx);
+          console.log('validate',error)
+          if (error) {
+            setError(navigation.currentPage, fIdx, error);
+            hasErrors = true;
+          }
+        }
+      });
+      
+      // Переход только если нет ошибок
+      if (!hasErrors) {
+        clearAll();
+        onSave?.(formState.data)
+
+      }
+      
+  }
+
   const getPageTitle = () => {
     return (navigation.currentPage + 1) + ' страница из ' +  data.length
   }
 
+  useEffect(()=>{
+    console.log(errors)
+  },[errors])
+  
   const renderField = (field: FieldData, sectionIdx: number, fieldIdx: number) => {
     const update = (value: any) => formState.updateField(sectionIdx, fieldIdx, value);
 
     const key = `${sectionIdx}-${fieldIdx}`
     
     const props = {
-      key:            `${sectionIdx}-${fieldIdx}`,
       label:          field.label,
       value:          field.data,
       error:          errors[key],
@@ -78,13 +111,14 @@ const DataEditor: React.FC<DataEditorProps> = ({
     };
 
     switch (field.type) {
-      case 'string':    return <TextField       {...props} />;
-      case 'number':    return <NumberField     {...props} />;
-      case 'select':    return <SelectField     {...props} options={field.values || []} />;
-      case 'date':      return <DateField       {...props} />;
-      case 'city':      return <CityField       {...props} onFIAS={ setFias}/>;
-      case 'address':   return <AddressField    {...props} cityFias = { fias } />;
-      default:          return null;
+        case 'view':      return <ViewField       {...props} />;
+        case 'string':    return <TextField       {...props} />;
+        case 'number':    return <NumberField     {...props} />;
+        case 'select':    return <SelectField     {...props} options={field.values || []} />;
+        case 'date':      return <DateField       {...props} />;
+        case 'city':      return <CityField       {...props} onFIAS={ setFias}/>;
+        case 'address':   return <AddressField    {...props} cityFias = { fias } />;
+        default:          return null;
     }
   };
 
@@ -99,7 +133,7 @@ const DataEditor: React.FC<DataEditorProps> = ({
           pages         = { getPageTitle() }
           onBack        = { handleBackNavigation }
           onForward     = { handleForwardNavigation }
-          onSave        = { () => onSave?.(formState.data) }
+          onSave        = { handleSave } //{ () => onSave?.(formState.data) }
           isLastStep    = { navigation.currentPage === navigation.totalPages - 1 }
           canGoBack     = { true }
           canGoForward  = { navigation.canGoNext }
@@ -107,9 +141,11 @@ const DataEditor: React.FC<DataEditorProps> = ({
         
         <div className="step-container">
           <div className="page-content">
-            {currentSection.data.map((field, idx) => 
-              renderField(field, navigation.currentPage, idx)
-            )}
+            {currentSection.data.map((field, idx) => (
+              <div key={idx}>
+                {renderField(field, navigation.currentPage, idx)}
+              </div>
+            ))}
           </div>
         </div>
       </div>

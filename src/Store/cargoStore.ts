@@ -153,6 +153,27 @@ export const cargoStore = new UniversalStore<CargoState>({
     enableLogging: true
 })
 
+export const cargoGetters = {
+
+  getCargo: (guid: string): CargoInfo | undefined => {
+    return cargoStore.getState().cargos.find(c => c.guid === guid)
+  }
+
+}
+
+export const cargoActions = {
+
+  updateCargo: (guid: string, data: Partial<CargoInfo>) => {
+    const cargos = cargoStore.getState().cargos
+    const updated = cargos.map(c => 
+      c.guid === guid ? { ...c, ...data } : c
+    )
+    cargoStore.dispatch({ type: 'cargos', data: updated })
+  }
+  
+}
+
+
 // ============================================
 // SOCKET ОБРАБОТЧИКИ
 // ============================================

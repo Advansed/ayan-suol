@@ -11,7 +11,8 @@ import {
     CargoStatus, 
     CargoFilters,
     PageType,
-    EMPTY_CARGO
+    EMPTY_CARGO,
+    cargoActions
 } from './cargoStore'
 import { loginGetters } from './loginStore'
 
@@ -56,8 +57,6 @@ export const useCargos = (): UseCargosReturn => {
     const { emit, isConnected } = useSocket()
     const toast = useToast()
 
-    // State subscriptions
-    console.log("useCargos")
     const cargos            = useStore((state: CargoState) => state.cargos, 7001, cargoStore)
     const isLoading         = useStore((state: CargoState) => state.isLoading, 7002, cargoStore)
     const currentPage       = useStore((state: CargoState) => state.currentPage, 7003, cargoStore)
@@ -151,9 +150,13 @@ export const useCargos = (): UseCargosReturn => {
                 updatedAt: new Date().toISOString()
             }
 
+            cargoActions.updateCargo( updatedCargo.guid, updatedCargo )
+
             console.log('Updating cargo:', updatedCargo)
+
             emit(SOCKET_EVENTS.SAVE_CARGO, { token, ...updatedCargo })
 
+            
             return true
         } catch (error) {
             console.error('Error updating cargo:', error)

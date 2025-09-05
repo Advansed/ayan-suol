@@ -8,7 +8,7 @@ interface ValidationErrors {
 export const useValidation = () => {
   const [errors, setErrors] = useState<ValidationErrors>({});
 
-  const validateField   = useCallback((field: FieldData, sectionIndex: number, fieldIndex: number): string | null => {
+  const validateField   = useCallback( (field: FieldData, sectionIndex: number, fieldIndex: number): string | null => {
     if (!field.validate) return null;
 
     const value = field.data;
@@ -45,7 +45,7 @@ export const useValidation = () => {
     return null;
   }, []);
 
-  const validateAll     = useCallback((data: PageData): boolean => {
+  const validateAll     = useCallback( (data: PageData): boolean => {
     const newErrors: ValidationErrors = {};
     
     data.forEach((section, sIdx) => {
@@ -61,16 +61,11 @@ export const useValidation = () => {
     return Object.keys(newErrors).length === 0;
   }, [validateField]);
 
-  const clearError      = useCallback((sectionIndex: number, fieldIndex: number) => {
-    const key = `${sectionIndex}-${fieldIndex}`;
-    setErrors(prev => {
-      const updated = { ...prev };
-      delete updated[key];
-      return updated;
-    });
+  const clearAll        = useCallback( () => {
+    setErrors({});
   }, []);
 
-  const setError        = useCallback((sectionIndex: number, fieldIndex: number, error: string) => {
+  const setError        = useCallback( (sectionIndex: number, fieldIndex: number, error: string) => {
     const key = `${sectionIndex}-${fieldIndex}`;
     setErrors(prev => ({ ...prev, [key]: error }));
   }, []);
@@ -79,7 +74,7 @@ export const useValidation = () => {
     errors,
     validateField,
     validateAll,
-    clearError,
+    clearAll,
     setError,
     isValid: Object.keys(errors).length === 0
   };

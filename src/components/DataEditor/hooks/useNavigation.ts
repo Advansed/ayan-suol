@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { NavigationState } from '../types';
 
 export const useNavigation = (totalPages: number) => {
   const [currentPage, setCurrentPage] = useState(0);
