@@ -9,6 +9,8 @@ interface TextFieldProps {
   disabled?: boolean;
   error?: string;
   type?: 'text' | 'email' | 'password' | 'tel';
+  validate?: boolean;
+
 }
 
 export const TextField: React.FC<TextFieldProps> = ({ 

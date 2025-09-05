@@ -10,6 +10,8 @@ interface CityFieldProps {
   onFIAS:           (fias: string) => void;
   disabled?:        boolean;
   error?:           string;
+  validate?: boolean;
+
 }
 
 export const CityField: React.FC<CityFieldProps> = ({ 

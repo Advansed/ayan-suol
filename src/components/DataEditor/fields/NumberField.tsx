@@ -11,6 +11,7 @@ interface NumberFieldProps {
   min?: number;
   max?: number;
   step?: number;
+  validate?: boolean;
 }
 
 export const NumberField: React.FC<NumberFieldProps> = ({ 

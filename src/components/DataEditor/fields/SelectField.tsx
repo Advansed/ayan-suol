@@ -12,6 +12,8 @@ interface SelectFieldProps {
   placeholder?: string;
   disabled?: boolean;
   error?: string;
+  validate?: boolean;
+
 }
 
 export const SelectField: React.FC<SelectFieldProps> = ({ 

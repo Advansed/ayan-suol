@@ -9,8 +9,8 @@ import { DateField }                  from './fields/DateField';
 import { WizardHeader }               from './components/WizardHeader';
 import './styles.css';
 import { CityField } from './fields/СityField';
-import { useSelector } from '../Store';
 import { AddressField } from './fields/AddressField';
+import { useValidation } from './hooks/useValidation';
 
 const DataEditor: React.FC<DataEditorProps> = ({ 
   data, 
@@ -20,6 +20,8 @@ const DataEditor: React.FC<DataEditorProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigation = useNavigation(data.length);
   const formState = useFormState(data);
+  const { errors, validateField, validateAll, setError, clearError } = useValidation();
+ 
 
   const [fias, setFias ] = useState('')
 
@@ -36,8 +38,25 @@ const DataEditor: React.FC<DataEditorProps> = ({
 
   const handleForwardNavigation = () => {
     if (navigation.canGoNext) {
-      navigation.nextPage();
-      scrollToTop();
+      // Валидация полей текущей страницы
+      const currentSection = data[navigation.currentPage];
+      let hasErrors = false;
+      
+      currentSection.data.forEach((field, fIdx) => {
+        if (field.validate) {
+          const error = validateField(field, navigation.currentPage, fIdx);
+          if (error) {
+            setError(navigation.currentPage, fIdx, error);
+            hasErrors = true;
+          }
+        }
+      });
+      
+      // Переход только если нет ошибок
+      if (!hasErrors) {
+        navigation.nextPage();
+        scrollToTop();
+      }
     }
   };
 
@@ -47,11 +66,14 @@ const DataEditor: React.FC<DataEditorProps> = ({
 
   const renderField = (field: FieldData, sectionIdx: number, fieldIdx: number) => {
     const update = (value: any) => formState.updateField(sectionIdx, fieldIdx, value);
+
+    const key = `${sectionIdx}-${fieldIdx}`
     
     const props = {
       key:            `${sectionIdx}-${fieldIdx}`,
       label:          field.label,
       value:          field.data,
+      error:          errors[key],
       onChange:       update
     };
 

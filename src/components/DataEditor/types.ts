@@ -11,10 +11,11 @@ export interface AddressData {
 }
 
 export interface FieldData {
-  label: string;
-  type: 'string' | 'number' | 'select' | 'date' | 'boolean' | 'city' | 'address'; // добавлен 'address'
-  values?: string[] | null;
-  data: any; // для address будет AddressData
+  label:      string;
+  type:       'string' | 'number' | 'select' | 'date' | 'boolean' | 'city' | 'address';
+  values?:    string[] | null;
+  validate:   boolean;
+  data:       any; 
 }
 
 export interface Section {

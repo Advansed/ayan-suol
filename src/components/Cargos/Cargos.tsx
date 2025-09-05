@@ -15,9 +15,10 @@ import { CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
 import DataEditor from '../DataEditor';
 import { PageData, Section } from '../DataEditor/types';
 import { CargoFormNew } from './components/CargoFormNew';
+import { loginGetters } from '../../Store/loginStore';
 
 export const Cargos: React.FC = () => {
-    const { user } = useLogin();
+    const token = loginGetters.getToken()
     const {
         cargos,
         isLoading,
@@ -34,37 +35,9 @@ export const Cargos: React.FC = () => {
         refreshCargos
     } = useCargos();
 
-  const [formData, setFormData] = useState<PageData>([
-    {
-        title: 'Основные данные',
-        data: [
-            { label: 'Название', type: 'string', data: 'Груз №1' },
-            { label: 'Описание', type: 'string', data: 'Описание груза' },
-            { label: 'Вес', type: 'number', data: 100 }
-        ]
-    },
-    {
-        title: 'Адреса и транспорт',
-        data: [
-            { label: 'Откуда', type: 'string', data: 'Москва' },
-            { label: 'Куда', type: 'string', data: 'Санкт-Петербург' },
-            { label: 'Транспорт', type: 'select', values: ['truck', 'auto', 'train'], data: 'auto' },
-            { label: 'Дата отправки', type: 'date', data: '2025-01-15' }
-        ]
-    }
-]);
 
-  const handleChangeEditor = (newData: PageData) => {
-    setFormData( newData );
-    console.log( newData )
-  };
-
-  const handleSaveEditor = (data: PageData) => {
-    console.log('Сохранено:', data);
-    // Отправить на сервер
-  };  
     // Проверка авторизации
-    if (!user) {
+    if (!token) {
         return <div>Необходима авторизация</div>;
     }
 
@@ -76,14 +49,6 @@ export const Cargos: React.FC = () => {
     const handleCreateNew = () => navigateTo({ type: 'create' });
     const handleCargoClick = (cargo: CargoInfo) => navigateTo({ type: 'view', cargo });
 
-    // Обработчики для форм
-    const handleSave = async (data: CargoInfo) => {
-        if (currentPage.type === 'create') {
-            await createCargo(data);
-        } else if (currentPage.type === 'edit') {
-            await updateCargo(data.guid, data);
-        }
-    };
 
     const handleBack = () => {
         console.log(currentPage)

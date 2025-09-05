@@ -379,24 +379,21 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin, on
   return (
     <div className="container">
       <IonCard className="login-container">
-        {/* Показываем ошибки */}
-        {reg.error && (
-          <div className="error-alert">
-            <div className="error-message">{reg.error}</div>
-            <button onClick={reg.clearErrors}>×</button>
-          </div>
-        )}
-        
-        {/* Прогресс бар */}
-        <ProgressBar current={reg.registrationStep} total={4} />
+
         
         {/* Текущий шаг */}
         {steps[reg.registrationStep]}
         
         {/* Навигационные ссылки на последнем шаге */}
         {reg.registrationStep === 3 && navigationLinks.length > 0 && (
-          <NavigationLinks links={navigationLinks} />
+          <>
+            <NavigationLinks links={navigationLinks} />
+          </>
+          
         )}
+        <div className='ml-3 pb-1'
+          onClick={ onSwitchToLogin }
+        >Есть аккаунт? Авторизироваться</div>
       </IonCard>
         {showAgreement && (
         <div className={ styles.showAgreementOverlay }  onClick={() => setShowAgreement(false)}>

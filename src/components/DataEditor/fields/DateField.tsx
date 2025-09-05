@@ -13,6 +13,7 @@ interface DateFieldProps {
   error?: string;
   min?: string;
   max?: string;
+  validate?: boolean;
 }
 
 export const DateField: React.FC<DateFieldProps> = ({ 

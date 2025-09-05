@@ -6,10 +6,10 @@ import { useToast } from '../../Toast';
 import { useHistory } from 'react-router';
 
 interface CargoFormProps {
-  cargo?: CargoInfo;
-  onBack: () => void;
-  onUpdate: (guid: string, data: CargoInfo) => Promise<boolean>;
-  onCreate: (data: CargoInfo) => Promise<boolean>;
+  cargo?:     CargoInfo;
+  onBack:     () => void;
+  onUpdate:   (guid: string, data: CargoInfo) => Promise<boolean>;
+  onCreate:   (data: CargoInfo) => Promise<boolean>;
 }
 
 const cargoToPages = (cargo: CargoInfo): PageData => [
@@ -17,14 +17,16 @@ const cargoToPages = (cargo: CargoInfo): PageData => [
     title: "Основная информация",
     data: [
       {
-        label: "Название груза",
-        type: "string",
-        data: cargo.name || ""
+        label:      "Название груза",
+        type:       "string",
+        data:       cargo.name || "",
+        validate:   true
       },
       {
-        label: "Описание",
-        type: "string", 
-        data: cargo.description || ""
+        label:      "Описание",
+        type:       "string", 
+        data:       cargo.description || "",
+        validate:   false
       }
     ]
   },
@@ -32,22 +34,24 @@ const cargoToPages = (cargo: CargoInfo): PageData => [
     title: "Адрес отправления",
     data: [
       {
-        label: "Город",
-        type: "city",
+        label:      "Город",
+        type:       "city",
         data: {
-          city: cargo.address?.city?.city || "",
-          fias: cargo.address?.city?.fias || ""
-        }
+          city:     cargo.address?.city?.city || "",
+          fias:     cargo.address?.city?.fias || ""
+        },
+        validate:   false
       },
       {
-        label: "Адрес",
-        type: "address",
+        label:      "Адрес",
+        type:       "address",
         data: {
-          address: cargo.address?.address || "",
-          fias: cargo.address?.fias || "",
-          lat: String(cargo.address?.lat || 0),
-          lon: String(cargo.address?.lon || 0)
-        }
+          address:  cargo.address?.address || "",
+          fias:     cargo.address?.fias || "",
+          lat:      String(cargo.address?.lat || 0),
+          lon:      String(cargo.address?.lon || 0)
+        },
+        validate:   true
       }
     ]
   },
@@ -55,22 +59,24 @@ const cargoToPages = (cargo: CargoInfo): PageData => [
     title: "Адрес доставки",
     data: [
       {
-        label: "Город",
-        type: "city",
+        label:      "Город",
+        type:       "city",
         data: {
-          city: cargo.destiny?.city?.city || "",
-          fias: cargo.destiny?.city?.fias || ""
-        }
+          city:     cargo.destiny?.city?.city || "",
+          fias:     cargo.destiny?.city?.fias || ""
+        },
+        validate:   false
       },
       {
-        label: "Адрес",
-        type: "address",
+        label:      "Адрес",
+        type:       "address",
         data: {
-          address: cargo.destiny?.address || "",
-          fias: cargo.destiny?.fias || "",
-          lat: String(cargo.destiny?.lat || 0),
-          lon: String(cargo.destiny?.lon || 0)
-        }
+          address:  cargo.destiny?.address || "",
+          fias:     cargo.destiny?.fias || "",
+          lat:      String(cargo.destiny?.lat || 0),
+          lon:      String(cargo.destiny?.lon || 0)
+        },
+        validate:   true
       }
     ]
   },
@@ -78,24 +84,28 @@ const cargoToPages = (cargo: CargoInfo): PageData => [
     title: "Даты и параметры",
     data: [
       {
-        label: "Дата забора",
-        type: "date",
-        data: cargo.pickup_date || ""
+        label:      "Дата забора",
+        type:       "date",
+        data:       cargo.pickup_date || "",
+        validate:   true
       },
       {
-        label: "Дата доставки",
-        type: "date",
-        data: cargo.delivery_date || ""
+        label:      "Дата доставки",
+        type:       "date",
+        data:       cargo.delivery_date || "",
+        validate:   true
       },
       {
-        label: "Вес (т)",
-        type: "number",
-        data: cargo.weight || 0
+        label:      "Вес (т)",
+        type:       "number",
+        data:       cargo.weight || 0,
+        validate:   false
       },
       {
-        label: "Объем (м³)",
-        type: "number",
-        data: cargo.volume || 0
+        label:      "Объем (м³)",
+        type:       "number",
+        data:       cargo.volume || 0,
+        validate:   false
       }
     ]
   },
@@ -103,24 +113,59 @@ const cargoToPages = (cargo: CargoInfo): PageData => [
     title: "Финансы, контакты",
     data: [
       {
-        label: "Цена доставки",
-        type: "number",
-        data: cargo.price || 0
+        label:      "Цена доставки",
+        type:       "number",
+        data:       cargo.price || 0,
+        validate:   true
       },
       {
-        label: "Стоимость груза",
-        type: "number",
-        data: cargo.cost || 0
+        label:      "Стоимость груза",
+        type:       "number",
+        data:       cargo.cost || 0,
+        validate:   true
       },
       {
-        label: "Телефон",
-        type: "string",
-        data: cargo.phone || ""
+        label:      "Телефон",
+        type:       "string",
+        data:       cargo.phone || "",
+        validate:   true
+
       },
       {
-        label: "Контактное лицо",
-        type: "string",
-        data: cargo.face || ""
+        label:      "Контактное лицо",
+        type:       "string",
+        data:       cargo.face || "",
+        validate:   true
+      }
+    ]
+  },
+  {
+    title: "Сводка",
+    data: [
+      {
+        label:      "Цена доставки",
+        type:       "number",
+        data:       cargo.price || 0,
+        validate:   true
+      },
+      {
+        label:      "Стоимость груза",
+        type:       "number",
+        data:       cargo.cost || 0,
+        validate:   true
+      },
+      {
+        label:      "Телефон",
+        type:       "string",
+        data:       cargo.phone || "",
+        validate:   true
+
+      },
+      {
+        label:      "Контактное лицо",
+        type:       "string",
+        data:       cargo.face || "",
+        validate:   true
       }
     ]
   }
@@ -205,8 +250,6 @@ export const CargoFormNew: React.FC<CargoFormProps> = ({
     cargoToPages(cargo || EMPTY_CARGO)
   );
   
-  console.log(formData)
-  
   // Обработчик сохранения
   const handleSave = async (data: PageData) => {
     try {
@@ -238,10 +281,10 @@ export const CargoFormNew: React.FC<CargoFormProps> = ({
 
   return (
     <DataEditor
-      data={formData}
-      onSave={handleSave}
-      onBack={onBack}
-      title={cargo ? 'Редактировать груз' : 'Создать груз'}
+      data    = { formData }
+      onSave  = { handleSave }
+      onBack  = { onBack }
+      title   = { cargo ? 'Редактировать груз' : 'Создать груз' }
     />
   );
 };

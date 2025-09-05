@@ -10,6 +10,7 @@ interface AddressFieldProps {
   cityFias?: string; // фиас код города для фильтрации
   disabled?: boolean;
   error?: string;
+  validate?: string;
 }
 
 
@@ -46,6 +47,7 @@ export const AddressField: React.FC<AddressFieldProps> = ({
         }}
       />
       {error && <span className={styles.errorMessage}>{error}</span>}
+      
     </div>
   );
 };
