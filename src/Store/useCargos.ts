@@ -53,16 +53,16 @@ const SOCKET_EVENTS = {
 // HOOK
 // ============================================
 export const useCargos = (): UseCargosReturn => {
-    const token = loginGetters.getToken()
-    const { emit, isConnected } = useSocket()
-    const toast = useToast()
+    const token                     = loginGetters.getToken()
+    const { emit, isConnected }     = useSocket()
+    const toast                     = useToast()
 
-    const cargos            = useStore((state: CargoState) => state.cargos, 7001, cargoStore)
-    const isLoading         = useStore((state: CargoState) => state.isLoading, 7002, cargoStore)
-    const currentPage       = useStore((state: CargoState) => state.currentPage, 7003, cargoStore)
-    const filters           = useStore((state: CargoState) => state.filters, 7004, cargoStore)
-    const searchQuery       = useStore((state: CargoState) => state.searchQuery, 7005, cargoStore)
-    const navigationHistory = useStore((state: CargoState) => state.navigationHistory, 7006, cargoStore)
+    const cargos                    = useStore((state: CargoState) => state.cargos, 7001, cargoStore)
+    const isLoading                 = useStore((state: CargoState) => state.isLoading, 7002, cargoStore)
+    const currentPage               = useStore((state: CargoState) => state.currentPage, 7003, cargoStore)
+    const filters                   = useStore((state: CargoState) => state.filters, 7004, cargoStore)
+    const searchQuery               = useStore((state: CargoState) => state.searchQuery, 7005, cargoStore)
+    const navigationHistory         = useStore((state: CargoState) => state.navigationHistory, 7006, cargoStore)
 
     // ============================================
     // НАВИГАЦИЯ
