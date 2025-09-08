@@ -11,10 +11,11 @@ import { RenderCurrentScaleProps, RenderZoomInProps, RenderZoomOutProps, zoomPlu
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/zoom/lib/styles/index.css';
+import UTIF from 'utif';
 
 defineCustomElements(window)
 
-export async function    takePicture() {
+export async function   takePicture() {
     const image = await Camera.getPhoto({
       quality: 90,
       allowEditing: false,
@@ -31,7 +32,7 @@ export async function    takePicture() {
   
 }
 
-export async function toPDF( pages, name ) {
+export async function   toPDF( pages, name ) {
     const doc = new jsPDF('p', 'mm', 'a4');
     
     for(let i = 0; i < pages.length; i++){
@@ -73,7 +74,39 @@ export async function toPDF( pages, name ) {
     return doc.output("datauristring",{ filename: name})
 }
 
-export function PDFDoc( props ){
+export async function   toTIFF(pages, name) {
+    if (!pages.length) return null;
+    
+    const imageBuffers:any = [];
+    
+    for(const page of pages) {
+        const img = new Image();
+        img.src = page.dataUrl;
+        await img.decode();
+        
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        if(ctx) {
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            imageBuffers.push({
+                width: img.width,
+                height: img.height,
+                data: new Uint8Array(imageData.data.buffer)
+            });
+
+            const tiffBuffer = UTIF.encodeImages(imageBuffers);
+            return "data:image/tiff;base64," + btoa(String.fromCharCode(...tiffBuffer));
+
+        } else {
+            return ''
+        }
+    }
+}
+
+export function         PDFDoc( props ){
     const [ pages ] = useState<any>(1)
     const [ page, setPage ] = useState(1)
     const [ message, setMessage ] = useState("")
@@ -170,7 +203,7 @@ export function PDFDoc( props ){
 }
 
 
-export function Files(props: { info, name, check, title }) {
+export function         Files(props: { info, name, check, title }) {
     const [ upd,    setUpd] = useState( 0 )
     const [ modal,  setModal] = useState<any>() // eslint-disable-line @typescript-eslint/no-explicit-any
     const [ modal1, setModal1] = useState( false )
