@@ -70,7 +70,6 @@ export const useCargos = (): UseCargosReturn => {
     const navigateTo = useCallback((page: PageType) => {
         cargoStore.dispatch( { type: "navigationHistory", data: [...navigationHistory, page] })
         cargoStore.dispatch( { type: "currentPage", data: page })
-        console.log('page', page )
     }, [currentPage, navigationHistory])
 
     const goBack = useCallback(() => {
@@ -111,7 +110,6 @@ export const useCargos = (): UseCargosReturn => {
                 updatedAt: new Date().toISOString()
             }
 
-            console.log('Creating cargo:', newCargo)
             emit(SOCKET_EVENTS.SAVE_CARGO, { token, ...newCargo })
 
             cargoStore.dispatch({ 
@@ -139,7 +137,6 @@ export const useCargos = (): UseCargosReturn => {
         try {
             const existingCargo = cargos.find(c => c.guid === guid)
             if (!existingCargo) {
-                console.error('Cargo not found:', guid)
                 toast.error('Груз не найден')
                 return false
             }
@@ -152,14 +149,12 @@ export const useCargos = (): UseCargosReturn => {
 
             cargoActions.updateCargo( updatedCargo.guid, updatedCargo )
 
-            console.log('Updating cargo:', updatedCargo)
 
             emit(SOCKET_EVENTS.SAVE_CARGO, { token, ...updatedCargo })
 
-            
+
             return true
         } catch (error) {
-            console.error('Error updating cargo:', error)
             toast.error('Ошибка обновления груза')
             return false
         } finally {
@@ -175,7 +170,6 @@ export const useCargos = (): UseCargosReturn => {
 
         cargoStore.dispatch({ type: 'isLoading', data: true })
         try {
-            console.log('Deleting cargo:', { guid, token })
             emit(SOCKET_EVENTS.DELETE_CARGO, { guid, token })
 
             cargoStore.dispatch({ 
@@ -185,7 +179,6 @@ export const useCargos = (): UseCargosReturn => {
 
             return true
         } catch (error) {
-            console.error('Error deleting cargo:', error)
             toast.error('Ошибка удаления груза')
             return false
         } finally {
@@ -208,12 +201,14 @@ export const useCargos = (): UseCargosReturn => {
                 return false
             }
 
-            console.log('Publishing cargo:', { guid, token })
+            cargoActions.publishCargo( guid )
+
             emit(SOCKET_EVENTS.PUBLISH_CARGO, { guid, token })
+
+            toast.info('Груз опубликован')
 
             return true
         } catch (error) {
-            console.error('Error publishing cargo:', error)
             toast.error('Ошибка публикации груза')
             return false
         } finally {
@@ -233,11 +228,9 @@ export const useCargos = (): UseCargosReturn => {
 
         cargoStore.dispatch({ type: 'isLoading', data: true })
         try {
-            console.log('Refreshing cargos...')
             emit(SOCKET_EVENTS.GET_CARGOS, { token })
             emit(SOCKET_EVENTS.GET_ORGS, { token })
         } catch (error) {
-            console.error('Error refreshing cargos:', error)
             toast.error('Ошибка обновления данных')
         } finally {
             cargoStore.dispatch({ type: 'isLoading', data: false })

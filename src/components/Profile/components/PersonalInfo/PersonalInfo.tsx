@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import styles from './PersonalInfo.module.css'
-import { WizardHeader } from '../Company/WizardHeader'
+import { WizardHeader } from '../Company_a/WizardHeader'
 import { useLogin } from '../../../../Store/useLogin'
 
 interface Props {

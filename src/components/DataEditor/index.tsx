@@ -6,6 +6,7 @@ import { TextField }                  from './fields/TextField';
 import { NumberField }                from './fields/NumberField';
 import { SelectField }                from './fields/SelectField';
 import { DateField }                  from './fields/DateField';
+import { PartyField }                 from './fields/PartyField';
 import { WizardHeader }               from './components/WizardHeader';
 import './styles.css';
 import { CityField } from './fields/СityField';
@@ -118,6 +119,7 @@ const DataEditor: React.FC<DataEditorProps> = ({
         case 'date':      return <DateField       {...props} />;
         case 'city':      return <CityField       {...props} onFIAS={ setFias}/>;
         case 'address':   return <AddressField    {...props} cityFias = { fias } />;
+        case 'party':     return <PartyField    {...props} cityFias = { fias } />;
         default:          return null;
     }
   };

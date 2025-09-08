@@ -163,10 +163,18 @@ export const cargoGetters = {
 
 export const cargoActions = {
 
-  updateCargo: (guid: string, data: Partial<CargoInfo>) => {
+  updateCargo: ( guid: string, data: Partial<CargoInfo> ) => {
     const cargos = cargoStore.getState().cargos
     const updated = cargos.map(c => 
       c.guid === guid ? { ...c, ...data } : c
+    )
+    cargoStore.dispatch({ type: 'cargos', data: updated })
+  },
+
+  publishCargo: ( guid: string ) => {
+    const cargos = cargoStore.getState().cargos
+    const updated = cargos.map(c => 
+      c.guid === guid ? { ...c, status: "В ожидании" } : c
     )
     cargoStore.dispatch({ type: 'cargos', data: updated })
   }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { takePicture } from '../../../Files'
 import styles from './Transport.module.css'
-import { WizardHeader } from '../Company/WizardHeader'
+import { WizardHeader } from '../Company_a/WizardHeader'
 import { useTransport } from '../../../../Store/useTransport'
 
 interface Props {

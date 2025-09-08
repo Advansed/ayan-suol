@@ -18,7 +18,7 @@ import {
 import { CargoCard } from './CargoCard';
 import { statusUtils, formatters } from '../utils';
 import { Store } from '../../Store';
-import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
+import { cargoGetters, CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 
 
 interface CargoViewProps {
@@ -70,6 +70,9 @@ export const CargoView: React.FC<CargoViewProps> = ({
     const handlePublish = async () => {
         setShowPublishAlert(false);
         await onPublish( cargo.guid );
+
+        setCurrentCargo( cargoGetters.getCargo( cargo.guid ) as CargoInfo )
+        
     };
 
 

@@ -6,7 +6,6 @@ import { ProfileMenu }                          from './components/ProfileMenu'
 import { PROFILE_PAGES, MENU_ITEMS, UI_TEXT }   from './constants'
 import { Passport }                             from './components/Passport/Passport'
 import { PersonalInfo }                         from './components/PersonalInfo/PersonalInfo'
-import { Company }                              from './components/Company/Company'
 import { Transport }                            from './components/Transport/Transport'
 import { Agreements }                           from './components/Agreements/Agreements'
 import { useStoreField }                        from '../Store'
@@ -18,6 +17,7 @@ import {
 import { Account } from './components/Account/Account'
 import { useLogin } from '../../Store/useLogin'
 import { UserRatings } from './types'
+import { Company } from './components/Company'
 
 
 export const Profile: React.FC = () => {
@@ -83,7 +83,11 @@ export const Profile: React.FC = () => {
   }
 
   if (currentPage === PROFILE_PAGES.COMPANY) {
-    return <Company onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
+    return <>
+        <Company 
+          onBack={() => setCurrentPage(PROFILE_PAGES.MAIN) } 
+        />
+      </>
   }
   if (currentPage === PROFILE_PAGES.ACCOUNT) {
     return <Account onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />

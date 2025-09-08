@@ -60,7 +60,7 @@ export const useCompany = (): UseCompanyReturn => {
 
         socket.emit('get_company', { token: Store.getState().login.token })
 
-        socket.on('get_company', (response) => {
+        socket.once('get_company', (response) => {
             setIsLoading(false)
             if (response.success) {
                 

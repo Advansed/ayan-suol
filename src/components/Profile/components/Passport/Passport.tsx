@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { usePassport } from '../../../../Store/usePassport'
 import styles from './Passport.module.css'
-import { WizardHeader } from '../Company/WizardHeader'
+import { WizardHeader } from '../Company_a/WizardHeader'
 import { useToast } from '../../../Toast'
 
 interface Props {

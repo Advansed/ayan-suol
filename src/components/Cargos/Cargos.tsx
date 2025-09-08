@@ -1,17 +1,13 @@
-/**
- * Главный компонент модуля Cargos - новая архитектура с useCargos из Store
- */
-
-import React, { useEffect, useState } from 'react';
-import { useCargos } from '../../Store/useCargos';
-import { CargosList } from './components/CargosList';
-import { CargoView } from './components/CargoView';
-import { CargoInvoiceSections } from './components/CargoInvoices';
-import { PrepaymentPage } from './components/PrePaymentMethod';
-import { InsurancePage } from './components/InsurancePage';
+import React                                    from 'react';
+import { useCargos }                            from '../../Store/useCargos';
+import { CargosList }                           from './components/CargosList';
+import { CargoView }                            from './components/CargoView';
+import { CargoInvoiceSections }                 from './components/CargoInvoices';
+import { PrepaymentPage }                       from './components/PrePaymentMethod';
+import { InsurancePage }                        from './components/InsurancePage';
 import { cargoGetters, CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
-import { CargoFormNew } from './components/CargoFormNew';
-import { loginGetters } from '../../Store/loginStore';
+import { loginGetters }                         from '../../Store/loginStore';
+import { CargoForm }                            from './components';
 
 export const Cargos: React.FC = () => {
     const token = loginGetters.getToken()
@@ -37,29 +33,23 @@ export const Cargos: React.FC = () => {
         return <div>Необходима авторизация</div>;
     }
 
-    useEffect(()=>{
-        console.log('currentPage', currentPage)
-    },[currentPage])
-
     // Обработчики для списка
     
     const handleCreateNew = () => navigateTo({ type: 'create' });
 
+    
     const handleCargoClick = (cargo: CargoInfo) => navigateTo({ type: 'view', cargo });
 
 
     const handleBack = () => {
-        console.log(currentPage)
         if (currentPage.type === 'view') {
             navigateTo({ type: 'list' });
         } else 
         if (currentPage.type === 'create') {
             navigateTo({ type: 'list' });
         } else {
-            
-            console.log('handleBack.currentPage', currentPage.cargo)
+
             const cargo = cargoGetters.getCargo( currentPage.cargo?.guid as string )
-            console.log('cargoGetters.cargo', cargo)
 
             navigateTo({ type: 'view', cargo: cargo });
 
@@ -68,8 +58,6 @@ export const Cargos: React.FC = () => {
     };
 
 
-
-    // Рендер в зависимости от текущей страницы
     const renderContent = () => {
 
         switch (currentPage.type) {
@@ -89,7 +77,7 @@ export const Cargos: React.FC = () => {
 
             case 'create':
                 return(
-                    <CargoFormNew 
+                    <CargoForm 
                          cargo           = { EMPTY_CARGO }
                          onUpdate        = { updateCargo }
                          onCreate        = { createCargo }
@@ -99,7 +87,7 @@ export const Cargos: React.FC = () => {
 
             case 'edit':
                 return (
-                    <CargoFormNew
+                    <CargoForm
                         cargo           = { currentPage.cargo as CargoInfo }
                         onUpdate        = { updateCargo }
                         onCreate        = { createCargo }

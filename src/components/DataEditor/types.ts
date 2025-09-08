@@ -12,7 +12,7 @@ export interface AddressData {
 
 export interface FieldData {
   label:      string;
-  type:       'string' | 'number' | 'select' | 'date' | 'boolean' | 'city' | 'address' | 'view';
+  type:       'string' | 'number' | 'select' | 'date' | 'boolean' | 'city' | 'address' | 'view' | 'party';
   values?:    string[] | null;
   validate:   boolean;
   data:       any; 

@@ -1,73 +1,28 @@
 import { useCallback } from 'react'
 import { 
-  UniversalStore, 
-  useStore, 
-  TState
+  useStore
 } from './Store'
 import socketService from '../components/Sockets'
 import { useToast } from '../components/Toast'
-import { useLogin } from './useLogin'
 import { loginGetters } from './loginStore'
+import { CompanyData, CompanyState, companyStore } from './companyStore'
 
 // ============================================
 // ТИПЫ
 // ============================================
 
-export interface CompanyData {
-    guid?: string
-    company_type?: number
-    inn?: string
-    kpp?: string
-    ogrn?: string
-    name?: string
-    short_name?: string
-    address?: string
-    postal_address?: string
-    phone?: string
-    email?: string
-    description?: string
-    bank_name?: string
-    bank_bik?: string
-    bank_account?: string
-    bank_corr_account?: string
-    is_verified?: boolean
-    files?: Array<{
-        file_guid: string
-        file_type: string
-        file_name: string
-        file_path: string
-    }>
-}
-
-export interface CompanyState extends TState {
-  data: CompanyData | null
-  isLoading: boolean
-  isSaving: boolean
-}
-
-// ============================================
-// STORE
-// ============================================
-
-export const companyStore = new UniversalStore<CompanyState>({
-  initialState: {
-    data: null,
-    isLoading: false,
-    isSaving: false
-  },
-  enableLogging: true
-})
 
 // ============================================
 // HOOK
 // ============================================
 
 export const useCompany = () => {
-    const token = loginGetters.getToken()
     
-    const companyData   = useStore((state: CompanyState) => state.data, 4001, companyStore)
-    const isLoading     = useStore((state: CompanyState) => state.isLoading, 4002, companyStore)
-    const isSaving      = useStore((state: CompanyState) => state.isSaving, 4003, companyStore)
+    const token         = loginGetters.getToken()
+    
+    const companyData   = useStore((state: CompanyState) => state.data,         4001, companyStore)
+    const isLoading     = useStore((state: CompanyState) => state.isLoading,    4002, companyStore)
+    const isSaving      = useStore((state: CompanyState) => state.isSaving,     4003, companyStore)
     
     const toast = useToast()
     
