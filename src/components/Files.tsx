@@ -17,10 +17,11 @@ defineCustomElements(window)
 
 export async function   takePicture() {
     const image = await Camera.getPhoto({
-      quality: 90,
-      allowEditing: false,
-      resultType: CameraResultType.DataUrl,
-      source: CameraSource.Prompt
+
+      quality:          80,
+      allowEditing:     false,
+      resultType:       CameraResultType.DataUrl,
+      source:           CameraSource.Prompt
     });
     //const imageUrl = "data:image/jpeg;base64," + image.base64String;
     let arr = image.dataUrl?.split(";")
@@ -75,10 +76,9 @@ export async function   toPDF( pages, name ) {
 }
 
 export async function   toTIFF(pages, name) {
-    if (!pages.length) return null;
-    
-    const imageBuffers:any = [];
-    
+  if (!pages.length) return null;
+    const imageBuffers: any = [];
+
     for(const page of pages) {
         const img = new Image();
         img.src = page.dataUrl;
@@ -88,22 +88,24 @@ export async function   toTIFF(pages, name) {
         const ctx = canvas.getContext("2d");
         canvas.width = img.width;
         canvas.height = img.height;
+        
         if(ctx) {
             ctx.drawImage(img, 0, 0);
             const imageData = ctx.getImageData(0, 0, img.width, img.height);
             imageBuffers.push({
-                width: img.width,
-                height: img.height,
-                data: new Uint8Array(imageData.data.buffer)
+                width:          img.width,
+                height:         img.height,
+                data:           new Uint8Array(imageData.data.buffer),
+                compression:    1, // JPEG сжатие
+                quality:        100 // Качество JPEG 0-100
             });
-
-            const tiffBuffer = UTIF.encodeImages(imageBuffers);
-            return "data:image/tiff;base64," + btoa(String.fromCharCode(...tiffBuffer));
-
-        } else {
-            return ''
         }
     }
+
+    if(imageBuffers.length === 0) return '';
+
+    const tiffBuffer = UTIF.encodeImages(imageBuffers);
+    return "data:image/tiff;base64," + btoa(String.fromCharCode(...tiffBuffer));
 }
 
 export function         PDFDoc( props ){
