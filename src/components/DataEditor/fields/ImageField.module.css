@@ -1,4 +1,4 @@
-/* src/components/DataEditor/fields/ImageField.module.css */
+/* src/components/DataEditor/fields/ImageField.module.css - для одного изображения */
 
 .field {
   margin-bottom: 1rem;
@@ -42,9 +42,15 @@
   height: 80px;
 }
 
+.imageContainer {
+  position: relative;
+  width: 90%;
+  height: 100%;
+  margin-bottom: 12px;
+}
 .imagePreview {
-  width: 10em;
-  height: 10em;
+  width: 70%;
+  height: 70%;
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid #e5e7eb;

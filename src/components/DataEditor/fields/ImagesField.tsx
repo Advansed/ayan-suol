@@ -1,9 +1,9 @@
 // src/components/DataEditor/fields/ImageField.tsx
-import React, { useState } from "react";
-import { IonButton, IonIcon, IonModal } from "@ionic/react";
-import { cameraOutline, trashOutline, closeOutline } from "ionicons/icons";
-import { takePicture } from "../../Files";
-import styles from './ImageField.module.css';
+import React, { useState }                            from "react";
+import { IonButton, IonIcon, IonModal }               from "@ionic/react";
+import { cameraOutline, trashOutline, closeOutline }  from "ionicons/icons";
+import { takePicture }                                from "../../Files";
+import styles                                         from './ImageField.module.css';
 
 // TODO: Добавить функцию toTIFF позже
 
@@ -64,7 +64,7 @@ export const ImagesField: React.FC<ImagesFieldProps> = ({
               <img 
                 src={image} 
                 alt={`${label} ${index + 1}`}
-                className={styles.imagePreview}
+                className={styles.imageItem}
                 onClick={() => !disabled && setModalImage(image)}
               />
               {!disabled && (

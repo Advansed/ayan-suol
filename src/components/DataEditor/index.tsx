@@ -14,6 +14,7 @@ import { useValidation }                        from './hooks/useValidation';
 import { ViewField }                            from './fields/ViewField';
 import { ImagesField }                          from './fields/ImagesField';
 import './styles.css';
+import { ImageField } from './fields/ImageField';
 
 const DataEditor: React.FC<DataEditorProps> = ({ 
     data, 
@@ -112,15 +113,17 @@ const DataEditor: React.FC<DataEditorProps> = ({
     };
 
     switch (field.type) {
-        case 'view':      return <ViewField       {...props} />;
-        case 'string':    return <TextField       {...props} />;
-        case 'number':    return <NumberField     {...props} />;
-        case 'select':    return <SelectField     {...props} options={field.values || []} />;
-        case 'date':      return <DateField       {...props} />;
-        case 'city':      return <CityField       {...props} onFIAS={ setFias}/>;
-        case 'address':   return <AddressField    {...props} cityFias = { fias } />;
-        case 'party':     return <PartyField      {...props} cityFias = { fias } />;
-        case 'image':     return <ImagesField     {...props} />;
+        case 'view':      return <ViewField       { ...props } />;
+        case 'string':    return <TextField       { ...props } />;
+        case 'password':  return <TextField       { ...props } type = { "password" }/>;
+        case 'number':    return <NumberField     { ...props } />;
+        case 'select':    return <SelectField     { ...props } options={field.values || []} />;
+        case 'date':      return <DateField       { ...props } />;
+        case 'city':      return <CityField       { ...props } onFIAS={ setFias}/>;
+        case 'address':   return <AddressField    { ...props } cityFias = { fias } />;
+        case 'party':     return <PartyField      { ...props } cityFias = { fias } />;
+        case 'image':     return <ImageField      { ...props } />;
+        case 'images':    return <ImagesField     { ...props } />;
         default:          return null;
     }
   };

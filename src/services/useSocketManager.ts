@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import socketService from '../components/Sockets'
 import { useSocket } from '../Store/useSocket'
 import { destroyCargoSocketHandlers, initCargoSocketHandlers } from '../Store/cargoStore'
+import { destroyPassportSocketHandlers, initPassportSocketHandlers } from '../Store/passportStore'
 
 // ============================================
 // SOCKET MANAGER HOOK
@@ -50,10 +51,14 @@ export function initSocketHandlers( socket: any) {
 
   initCargoSocketHandlers( socket )
 
+  initPassportSocketHandlers( socket )
+
 }
 
 export function destroySocketHandlers( socket: any) {
 
   destroyCargoSocketHandlers( socket )
 
+  destroyPassportSocketHandlers( socket )
+  
 }

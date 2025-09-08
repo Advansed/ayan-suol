@@ -2,6 +2,7 @@ import React from 'react';
 import { PageData } from '../../DataEditor/types';
 import DataEditor from '../../DataEditor';
 import { UserData } from '../../../Store/types/auth';
+import { useToast } from '../../Toast';
 
 interface PersonalInfoProps {
     user:   Partial<UserData>
@@ -10,6 +11,7 @@ interface PersonalInfoProps {
 }
 
 export const PersonalInfo: React.FC<PersonalInfoProps> = ({ user, onBack, onSave }) => {
+  const toast = useToast()
 
   const getFormData = (): PageData => [
     {
@@ -40,13 +42,13 @@ export const PersonalInfo: React.FC<PersonalInfoProps> = ({ user, onBack, onSave
       data: [
         { 
           label: 'Новый пароль', 
-          type: 'string', 
+          type: 'password', 
           data: '', 
           validate: false 
         },
         { 
           label: 'Подтверждение пароля', 
-          type: 'string', 
+          type: 'password', 
           data: '', 
           validate: false 
         }
@@ -60,7 +62,7 @@ export const PersonalInfo: React.FC<PersonalInfoProps> = ({ user, onBack, onSave
 
     // Валидация паролей
     if (newPassword && newPassword !== confirmPassword) {
-      alert('Пароли не совпадают');
+      toast.error('Пароли не совпадают');
       return;
     }
 
@@ -78,7 +80,7 @@ export const PersonalInfo: React.FC<PersonalInfoProps> = ({ user, onBack, onSave
      await onSave( updateData )
 
      onBack()
-     
+
   };
 
   return (
