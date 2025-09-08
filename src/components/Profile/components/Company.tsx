@@ -31,10 +31,9 @@ export const Company: React.FC<CompanyProps> = ({onBack}) => {
     {
       title: 'Основные данные',
       data: [
-        { label: 'Тип компании', type: 'select', values: ['Самозанятый', 'ИП', 'Компания'], data: jur(company?.company_type || 3), validate: true },
-        { label: 'ИНН', type: 'party', data: company?.inn || '', validate: true },
-        { label: 'Название', type: 'string', data: company?.name || '', validate: true },
-        { label: 'Краткое название', type: 'string', data: company?.short_name || '', validate: true },
+        { label: 'Тип компании',      type: 'select', values: ['Самозанятый', 'ИП', 'Компания'], data: jur(company?.company_type || 3), validate: true },
+        { label: 'Введите ИНН или наименование',               type: 'party'
+          ,  data: { name: company?.name, short_name: company?.short_name, address: company?.address, inn: company?.inn, kpp: company?.kpp, ogrn: company?.ogrn }, validate: true },
       ]
     }
   ];
