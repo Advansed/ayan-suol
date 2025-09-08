@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
-import { useSelector } from '../../Store';
-import { CargoStatus } from '../../../Store/cargoStore';
+import { useState, useMemo }  from 'react';
+import { useSelector }        from '../../Store';
+import { CargoStatus }        from '../../../Store/cargoStore';
 
 const useCargoArchive = () => {
   const cargos = useSelector((state) => state.cargos, 12);

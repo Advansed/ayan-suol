@@ -8,6 +8,7 @@ import { InsurancePage }                        from './components/InsurancePage
 import { cargoGetters, CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
 import { loginGetters }                         from '../../Store/loginStore';
 import { CargoForm }                            from './components';
+import { useSocket } from '../../Store/useSocket';
 
 export const Cargos: React.FC = () => {
     const token = loginGetters.getToken()
@@ -27,7 +28,7 @@ export const Cargos: React.FC = () => {
         refreshCargos
     } = useCargos();
 
-
+    const { emit, once } = useSocket()
     // Проверка авторизации
     if (!token) {
         return <div>Необходима авторизация</div>;
@@ -35,7 +36,9 @@ export const Cargos: React.FC = () => {
 
     // Обработчики для списка
     
-    const handleCreateNew = () => navigateTo({ type: 'create' });
+    const handleCreateNew = () => {
+        navigateTo({ type: 'create' });
+    }
 
     
     const handleCargoClick = (cargo: CargoInfo) => navigateTo({ type: 'view', cargo });
