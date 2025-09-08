@@ -97,7 +97,7 @@ export async function   toTIFF(pages, name) {
                 height:         img.height,
                 data:           new Uint8Array(imageData.data.buffer),
                 compression:    1, // JPEG сжатие
-                quality:        100 // Качество JPEG 0-100
+                quality:        90 // Качество JPEG 0-100
             });
         }
     }
@@ -106,6 +106,56 @@ export async function   toTIFF(pages, name) {
 
     const tiffBuffer = UTIF.encodeImages(imageBuffers);
     return "data:image/tiff;base64," + btoa(String.fromCharCode(...tiffBuffer));
+}
+
+export async function   fromTIFF(tiffDataUrl) {
+    try {
+        // Удаляем префикс data:image/tiff;base64,
+        const base64Data = tiffDataUrl.split(',')[1];
+        const arrayBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+        
+        // Декодируем TIFF
+        const ifds = UTIF.decode(arrayBuffer);
+        const images:any = [];
+        
+        for(let i = 0; i < ifds.length; i++) {
+            const ifd = ifds[i];
+            
+            // Декодируем данные изображения
+            UTIF.decodeImage(arrayBuffer, ifd);
+            
+            // Создаем canvas для конвертации в dataUrl
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            if(ctx){
+                canvas.width = ifd.width;
+                canvas.height = ifd.height;
+                
+                // Создаем ImageData из декодированных данных
+                const imageData = ctx.createImageData(ifd.width, ifd.height);
+                imageData.data.set(new Uint8ClampedArray(ifd.data));
+                
+                // Рисуем на canvas
+                ctx.putImageData(imageData, 0, 0);
+                
+                // Получаем dataUrl
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                
+                images.push({
+                    dataUrl: dataUrl,
+                    format: 'jpeg',
+                    width: ifd.width,
+                    height: ifd.height,
+                    page: i + 1
+                });
+            }
+        }
+        
+        return images;
+    } catch (error) {
+        console.error('Ошибка извлечения из TIFF:', error);
+        return [];
+    }
 }
 
 export function         PDFDoc( props ){
@@ -203,7 +253,6 @@ export function         PDFDoc( props ){
         </div>
     </>
 }
-
 
 export function         Files(props: { info, name, check, title }) {
     const [ upd,    setUpd] = useState( 0 )
