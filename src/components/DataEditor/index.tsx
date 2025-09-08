@@ -1,30 +1,29 @@
-import React, { useEffect, useRef, useState }              from 'react';
-import { DataEditorProps, FieldData } from './types';
-import { useNavigation }              from './hooks/useNavigation';
-import { useFormState }               from './hooks/useFormState';
-import { TextField }                  from './fields/TextField';
-import { NumberField }                from './fields/NumberField';
-import { SelectField }                from './fields/SelectField';
-import { DateField }                  from './fields/DateField';
-import { PartyField }                 from './fields/PartyField';
-import { WizardHeader }               from './components/WizardHeader';
+import React, { useEffect, useRef, useState }   from 'react';
+import { DataEditorProps, FieldData }           from './types';
+import { useNavigation }                        from './hooks/useNavigation';
+import { useFormState }                         from './hooks/useFormState';
+import { TextField }                            from './fields/TextField';
+import { NumberField }                          from './fields/NumberField';
+import { SelectField }                          from './fields/SelectField';
+import { DateField }                            from './fields/DateField';
+import { PartyField }                           from './fields/PartyField';
+import { WizardHeader }                         from './components/WizardHeader';
+import { CityField }                            from './fields/СityField';
+import { AddressField }                         from './fields/AddressField';
+import { useValidation }                        from './hooks/useValidation';
+import { ViewField }                            from './fields/ViewField';
+import { ImagesField }                          from './fields/ImagesField';
 import './styles.css';
-import { CityField } from './fields/СityField';
-import { AddressField } from './fields/AddressField';
-import { useValidation } from './hooks/useValidation';
-import { ViewField } from './fields/ViewField';
-import { ImageField } from './fields/ImageField';
 
 const DataEditor: React.FC<DataEditorProps> = ({ 
-  data, 
-  onSave, 
-  onChange,
-  onBack
+    data, 
+    onSave, 
+    onBack
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigation = useNavigation(data.length);
   const formState = useFormState(data);
-  const { errors, validateField, validateAll, setError, clearAll } = useValidation();
+  const { errors, validateField, setError, clearAll } = useValidation();
  
 
   const [fias, setFias ] = useState('')
@@ -120,8 +119,8 @@ const DataEditor: React.FC<DataEditorProps> = ({
         case 'date':      return <DateField       {...props} />;
         case 'city':      return <CityField       {...props} onFIAS={ setFias}/>;
         case 'address':   return <AddressField    {...props} cityFias = { fias } />;
-        case 'party':     return <PartyField    {...props} cityFias = { fias } />;
-        case 'image':     return <ImageField    {...props} />;
+        case 'party':     return <PartyField      {...props} cityFias = { fias } />;
+        case 'image':     return <ImagesField     {...props} />;
         default:          return null;
     }
   };

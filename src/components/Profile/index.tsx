@@ -5,7 +5,6 @@ import { ProfileStats }                         from './components/ProfileStats'
 import { ProfileMenu }                          from './components/ProfileMenu'
 import { PROFILE_PAGES, MENU_ITEMS, UI_TEXT }   from './constants'
 import { Passport }                             from './components/Passport/Passport'
-import { PersonalInfo }                         from './components/PersonalInfo/PersonalInfo'
 import { Transport }                            from './components/Transport/Transport'
 import { Agreements }                           from './components/Agreements/Agreements'
 import { useStoreField }                        from '../Store'
@@ -18,10 +17,11 @@ import { Account } from './components/Account/Account'
 import { useLogin } from '../../Store/useLogin'
 import { UserRatings } from './types'
 import { Company } from './components/Company'
+import { PersonalInfo } from './components/PersonalInfo'
 
 
 export const Profile: React.FC = () => {
-  const { name, user_type, ratings, isLoading } = useLogin()
+  const { user, user_type, ratings, isLoading, updateUser } = useLogin()
   const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
   
   // Получаем данные из Store
@@ -71,7 +71,13 @@ export const Profile: React.FC = () => {
 
   // Страницы
   if (currentPage === PROFILE_PAGES.PERSONAL) {
-    return <PersonalInfo onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
+    return <>
+        <PersonalInfo 
+            user    = { user }
+            onBack  = {() => setCurrentPage(PROFILE_PAGES.MAIN)} 
+            onSave  = { updateUser }
+        />
+    </> 
   }
 
   if (currentPage === PROFILE_PAGES.PASSPORT) {
@@ -104,7 +110,7 @@ export const Profile: React.FC = () => {
         <div>{UI_TEXT.MY_PROFILE}</div>
       </div>
 
-      <ProfileHeader name ={ name as string } userType={ user_type as number }  onClick={ handleClick }/>
+      <ProfileHeader name ={ user.name as string } userType={ user_type as number }  onClick={ handleClick }/>
 
       <ProfileStats ratings = { ratings as UserRatings } userType = { user_type as number } />
       

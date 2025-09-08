@@ -7,18 +7,18 @@ import styles from './ImageField.module.css';
 
 // TODO: Добавить функцию toTIFF позже
 
-interface ImageFieldProps {
-  label: string;
-  value: string[];
-  onChange: (value: string[]) => void;
+interface ImagesFieldProps {
+  label:        string;
+  value:        string[];
+  onChange:     (value: string[]) => void;
   placeholder?: string;
-  disabled?: boolean;
-  error?: string;
-  maxImages?: number;
-  validate?: boolean;
+  disabled?:    boolean;
+  error?:       string;
+  maxImages?:   number;
+  validate?:    boolean;
 }
 
-export const ImageField: React.FC<ImageFieldProps> = ({
+export const ImagesField: React.FC<ImagesFieldProps> = ({
   label,
   value = [],
   onChange,

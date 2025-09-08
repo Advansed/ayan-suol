@@ -3,7 +3,7 @@ import { useStore } from './Store'
 import { useSocket } from './useSocket'
 import { useToast } from '../components/Toast'
 import { loginStore, loginActions, LoginState } from './loginStore'
-import { AuthResponse, UpdateUserData, UserNotifications } from './types/auth'
+import { AuthResponse, UserData, UserNotifications } from './types/auth'
 
 // ============================================
 // УТИЛИТЫ
@@ -93,7 +93,7 @@ export function useLogin() {
     toast.info("Выход из системы")
   }, [toast])
 
-  const updateUser = useCallback(async (userData: UpdateUserData): Promise<boolean> => {
+  const updateUser = useCallback(async (userData: Partial<UserData>): Promise<boolean> => {
     loginActions.setLoading(true)
     
     try {
