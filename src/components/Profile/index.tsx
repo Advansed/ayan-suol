@@ -84,9 +84,9 @@ export const Profile: React.FC = () => {
     return <Passport onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
   }
 
-  if (currentPage === PROFILE_PAGES.TRANSPORT) {
-    return <Transport onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
-  }
+  // if (currentPage === PROFILE_PAGES.TRANSPORT) {
+  //   return <Transport onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
+  // }
 
   if (currentPage === PROFILE_PAGES.COMPANY) {
     return <>
