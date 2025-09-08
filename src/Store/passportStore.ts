@@ -3,6 +3,13 @@ import { UniversalStore, TState } from './Store';
 // ============================================
 // ТИПЫ
 // ============================================
+export interface PassportAddress {
+    address:            string;
+    fias:               string;
+    lat:                number;
+    lon:                number;
+}
+
 export interface PassportData {
   series?:              string
   number?:              string
@@ -10,8 +17,8 @@ export interface PassportData {
   issued_by?:           string
   birth_date?:          string
   birth_place?:         string
-  reg_address?:         string
-  act_address?:         string
+  reg_address?:         PassportAddress
+  act_address?:         PassportAddress
   main_photo?:          string
   reg_photo?:           string
   isVerified?:          boolean
@@ -95,18 +102,18 @@ export const passportActions = {
 
 export const passportSocketHandlers = {
     
-    onPassportCargos:    (response: any) => {
+    onPassportCargos:   (response: any) => {
         console.log('onGetPassport response:', response)
         passportStore.dispatch({ type: 'isLoading', data: false })
         
-        if (response.success && Array.isArray(response.data)) {
+        if (response.success) {
             passportStore.dispatch({ type: 'data', data: response.data })
         } else {
             console.error('Invalid passport response:', response)
         }
     },
 
-    onSavePassport:    (response: any) => {
+    onSavePassport:     (response: any) => {
         console.log('onSavePassport response:', response)
         
         if (response.success && response.data) {

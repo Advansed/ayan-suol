@@ -4,7 +4,6 @@ import { ProfileHeader }                        from './components/ProfileHeader
 import { ProfileStats }                         from './components/ProfileStats'
 import { ProfileMenu }                          from './components/ProfileMenu'
 import { PROFILE_PAGES, MENU_ITEMS, UI_TEXT }   from './constants'
-import { Passport }                             from './components/Passport/Passport'
 import { Transport }                            from './components/Transport/Transport'
 import { Agreements }                           from './components/Agreements/Agreements'
 import { useStoreField }                        from '../Store'
@@ -18,6 +17,7 @@ import { useLogin } from '../../Store/useLogin'
 import { UserRatings } from './types'
 import { Company } from './components/Company'
 import { PersonalInfo } from './components/PersonalInfo'
+import { Passport } from './components/Passport'
 
 
 export const Profile: React.FC = () => {

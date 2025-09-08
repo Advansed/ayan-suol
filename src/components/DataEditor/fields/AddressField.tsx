@@ -22,6 +22,9 @@ export const AddressField: React.FC<AddressFieldProps> = ({
   disabled = false,
   error
 }) => {
+
+  console.log("AddressField")
+
   return (
     <div className={styles.field}>
       <label className={styles.label}>{label}</label>

@@ -19,31 +19,31 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
     {
       title: 'Паспортные данные',
       data: [
-        { label: 'Серия',               type: 'string',     data: passport?.series || '', validate: true },
-        { label: 'Номер',               type: 'string',     data: passport?.number || '', validate: true },
-        { label: 'Дата выдачи',         type: 'date',       data: passport?.issue_date || '', validate: true },
-        { label: 'Кем выдан',           type: 'string',     data: passport?.issued_by || '', validate: true }
+        { label: 'Серия',               type: 'string',     data: passport?.series      || '', validate: true },
+        { label: 'Номер',               type: 'string',     data: passport?.number      || '', validate: true },
+        { label: 'Дата выдачи',         type: 'date',       data: passport?.issue_date  || '', validate: true },
+        { label: 'Кем выдан',           type: 'string',     data: passport?.issued_by   || '', validate: true }
       ]
     },
     {
       title: 'Персональные данные',
       data: [
-        { label: 'Дата рождения',       type: 'date',       data: passport?.birth_date || '', validate: true },
+        { label: 'Дата рождения',       type: 'date',       data: passport?.birth_date  || '', validate: true },
         { label: 'Место рождения',      type: 'string',     data: passport?.birth_place || '', validate: true }
       ]
     },
     {
       title: 'Адресные данные',
       data: [
-        { label: 'Адрес регистрации',   type: 'string',     data: passport?.reg_address || '', validate: true },
-        { label: 'Фактический адрес',   type: 'string',     data: passport?.act_address || '', validate: true }
+        { label: 'Адрес регистрации',   type: 'address',    data: passport?.reg_address || '', validate: true },
+        { label: 'Фактический адрес',   type: 'address',    data: passport?.act_address || '', validate: true }
       ]
     },
     {
       title: 'Документы',
       data: [
-        { label: 'Фото паспорта',       type: 'images',     data: passport?.main_photo || '', validate: true },
-        { label: 'Фото регистрации',    type: 'images',     data: passport?.reg_photo || '', validate: true }
+        { label: 'Фото паспорта',       type: 'images',     data: passport?.main_photo  || '', validate: true },
+        { label: 'Фото регистрации',    type: 'images',     data: passport?.reg_photo   || '', validate: true }
       ]
     }
   ]
@@ -62,6 +62,7 @@ export const Passport: React.FC<Props> = ({ onBack }) => {
       reg_photo:    data[3].data[1].data
     }
     save(formData)
+    onBack()
   }
 
   if (isLoading) return <div>Загрузка...</div>

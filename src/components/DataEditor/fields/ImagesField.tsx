@@ -52,6 +52,8 @@ export const ImagesField: React.FC<ImagesFieldProps> = ({
     onChange(newImages);
   }
 
+  console.log(label, value)
+
   return (
     <div className={styles.field}>
       <label className={styles.label}>{label}</label>
