@@ -13,6 +13,7 @@ import { CityField } from './fields/СityField';
 import { AddressField } from './fields/AddressField';
 import { useValidation } from './hooks/useValidation';
 import { ViewField } from './fields/ViewField';
+import { ImageField } from './fields/ImageField';
 
 const DataEditor: React.FC<DataEditorProps> = ({ 
   data, 
@@ -120,6 +121,7 @@ const DataEditor: React.FC<DataEditorProps> = ({
         case 'city':      return <CityField       {...props} onFIAS={ setFias}/>;
         case 'address':   return <AddressField    {...props} cityFias = { fias } />;
         case 'party':     return <PartyField    {...props} cityFias = { fias } />;
+        case 'image':     return <ImageField    {...props} />;
         default:          return null;
     }
   };
