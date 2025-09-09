@@ -1,7 +1,3 @@
-/**
- * Утилиты для модуля Works
- */
-
 import { WorkInfo, WorkStatus, OfferStatus, CreateOfferData } from './types';
 import { 
     OFFER_FIELD_LIMITS, 
@@ -239,8 +235,8 @@ export const workDataUtils = {
         const lowerQuery = query.toLowerCase();
         return works.filter(work => 
             work.name.toLowerCase().includes(lowerQuery) ||
-            work.address?.city.toLowerCase().includes(lowerQuery) ||
-            work.destiny?.city.toLowerCase().includes(lowerQuery) ||
+            work.address?.city.city.toLowerCase().includes(lowerQuery) ||
+            work.destiny?.city.city.toLowerCase().includes(lowerQuery) ||
             work.client.toLowerCase().includes(lowerQuery)
         );
     },
@@ -295,18 +291,6 @@ export const workDataUtils = {
         return groups;
     },
 
-    // Проверка наличия активного предложения
-    hasActiveOffer: (work: WorkInfo, driverId: string): boolean => {
-        return work.offers?.some(offer => 
-            offer.driverId === driverId && 
-            offer.status === OfferStatus.PENDING
-        ) || false;
-    },
-
-    // Получение предложения водителя
-    getDriverOffer: (work: WorkInfo, driverId: string) => {
-        return work.offers?.find(offer => offer.driverId === driverId);
-    }
 };
 
 // ======================

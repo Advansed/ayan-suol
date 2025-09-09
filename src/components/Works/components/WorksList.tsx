@@ -1,6 +1,5 @@
 import React from 'react';
 import { IonButton, IonLabel, IonIcon, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { chatboxEllipsesOutline } from 'ionicons/icons';
 import { WorkInfo, WorkStatus } from '../types';
 import { WorkCard } from './WorkCard';
 import { useHistory } from 'react-router';

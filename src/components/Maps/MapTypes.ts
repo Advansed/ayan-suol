@@ -1,3 +1,5 @@
+import { WorkInfo } from "../Works";
+
 export interface Coordinates {
   lat: number;
   long: number;
@@ -21,25 +23,7 @@ export interface CargoInfo {
   };
 }
 
-export interface WorkInfo {
-  guid?: string;
-  name?: string;
-  client?: string;
-  weight?: number;
-  price?: number;
-  status?: string;
-  pickup_date?: string;
-  address?: {
-    lat: number;
-    long: number;
-    city?: { city: string };
-  };
-  destiny?: {
-    lat: number;
-    long: number;
-    city?: { city: string };
-  };
-}
+
 
 export interface MapProps {
   startCoords: Coordinates;

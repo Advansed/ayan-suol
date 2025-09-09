@@ -3,25 +3,20 @@
  */
 
 import React from 'react';
-import { WorkPageType, WorkInfo } from './types';
-import { useWorks } from './hooks';
+import { WorkPageType, WorkInfo, OfferInfo } from './types';
 import { WorksList, WorkView, WorkOffer } from './components';
 import { WorkMap } from './components/WorkMap';
+import { useWorks } from '../../Store/useWorks';
 
 export const Works: React.FC = () => {
     const {
         works,
-        archiveWorks,
         isLoading,
         currentPage,
         navigateTo,
         goBack,
-        filters,
-        setFilters,
-        searchQuery,
-        setSearchQuery,
-        createOffer,
-        markCompleted,
+        setOffer,
+        setDeliver,
         refreshWorks
     } = useWorks();
 
@@ -33,12 +28,29 @@ export const Works: React.FC = () => {
     };
 
     const handleOfferClick = (work: WorkInfo) => {
+
         navigateTo({ type: 'offer', work });
+
     };
 
     // Добавить обработчик после handleOfferClick
     const handleMapClick = (work: WorkInfo) => {
+
         navigateTo({ type: 'map', work });
+
+    };
+
+    const handleOfferSubmit = async (offer: OfferInfo) => {
+
+       return await setOffer( offer ) 
+
+    };
+
+    const handleStatus = async (status: string, offer: Partial<OfferInfo>) => {
+       
+        if( status === "delivered")
+            await setDeliver( offer )
+
     };
 
     // Рендер страниц
@@ -47,28 +59,30 @@ export const Works: React.FC = () => {
             case 'list':
                 return (
                     <WorksList
-                        works={works}
-                        isLoading={isLoading}
-                        onWorkClick={handleWorkClick}
-                        onOfferClick={handleOfferClick}
-                        onRefresh={ refreshWorks }
-                        onMapClick={ handleMapClick }
+                        works           = { works }
+                        isLoading       = { isLoading } 
+                        onWorkClick     = { handleWorkClick }
+                        onOfferClick    = { handleOfferClick }
+                        onRefresh       = { refreshWorks }
+                        onMapClick      = { handleMapClick }
                     />
                 );
 
             case 'view':
                 return (
                     <WorkView
-                        work={currentPage.work}
-                        onBack={goBack}
+                        work            = { currentPage.work }
+                        onBack          = { goBack }
+                        onStatus        = { handleStatus }
                     />
                 );
 
             case 'offer':
                 return (
                     <WorkOffer
-                        work={currentPage.work}
-                        onBack={goBack}
+                        work            = { currentPage.work }
+                        onBack          = { goBack }
+                        onOffer         = { handleOfferSubmit }
                     />
                 );
 
@@ -76,18 +90,18 @@ export const Works: React.FC = () => {
             case 'map':
                 return (
                     <WorkMap
-                        work={currentPage.work}
-                        onBack={goBack}
+                        work            = { currentPage.work }
+                        onBack          = { goBack }
                     />
                 );
             default:
                 return (
                     <WorksList
-                        works={works}
-                        isLoading={isLoading}
-                        onWorkClick={handleWorkClick}
-                        onOfferClick={handleOfferClick}
-                        onMapClick={handleMapClick}
+                        works           = { works }
+                        isLoading       = { isLoading }
+                        onWorkClick     = { handleWorkClick }
+                        onOfferClick    = { handleOfferClick }
+                        onMapClick      = { handleMapClick }
                     />
                 );
         }

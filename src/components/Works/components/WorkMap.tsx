@@ -5,7 +5,7 @@ import { WorkInfo } from '../types';
 import Maps from '../../Maps/Maps';
 
 interface WorkMapProps {
-    work: WorkInfo;
+    work:   WorkInfo;
     onBack: () => void;
 }
 
@@ -25,9 +25,9 @@ export const WorkMap: React.FC<WorkMapProps> = ({ work, onBack }) => {
             </div>
 
             <Maps
-                startCoords={{lat: work.address.lat, long: work.address.long}}
-                endCoords={{lat: work.destiny.lat, long: work.destiny.long}} 
-                workInfo={work}
+                startCoords =   {{lat: work.address.lat, long: work.address.lon}}
+                endCoords   =   {{lat: work.destiny.lat, long: work.destiny.lon}} 
+                workInfo    =   { work }
             />
         </>
     );

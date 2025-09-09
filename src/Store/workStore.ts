@@ -113,16 +113,6 @@ export const workActions = {
         workStore.dispatch({ type: 'works', data: updated })
     },
 
-    updateOffer: (workId: string, offerData: Partial<OfferInfo>) => {
-        const works = workStore.getState().works
-        const updated = works.map(w => 
-            w.guid === workId 
-                ? { ...w, currentOffer: w.currentOffer ? { ...w.currentOffer, ...offerData } : undefined }
-                : w
-        )
-        workStore.dispatch({ type: 'works', data: updated })
-    },
-
     addToArchive: (guid: string) => {
         const works = workStore.getState().works
         const archiveWorks = workStore.getState().archiveWorks

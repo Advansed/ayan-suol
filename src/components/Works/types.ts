@@ -25,18 +25,17 @@ export enum WorkPriority {
 
 // Информация о предложении водителя
 export interface OfferInfo {
-    id:             string;
-    workId:         string;
-    driverId:       string;
-    transportId:    string;
-    transportName:  string;
-    price:          number;
-    weight:         number;
-    comment:        string;
-    status:         OfferStatus;
-    createdAt:      string;
-    updatedAt?:     string;
+
+    guid:               string;
+    recipient:          string;
+    price:              number;
+    weight:             number;
+    volume:             number;
+    transport:          string;
+    comment:            string;
+
 }
+
 
 // Статусы предложения
 export enum OfferStatus {

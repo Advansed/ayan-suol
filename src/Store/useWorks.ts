@@ -5,17 +5,14 @@ import { useLogin } from './useLogin'
 import { useToast } from '../components/Toast'
 import { 
     workStore, 
-    workActions, 
     workGetters, 
     WorkState,
-    EMPTY_WORK
 } from './workStore'
 import { 
     WorkInfo, 
     WorkPageType, 
     WorkFilters, 
-    CreateOfferData,
-    WorkStatus
+    OfferInfo
 } from '../components/Works/types'
 import { useSocket } from './useSocket'
 import { loginGetters } from './loginStore'
@@ -63,7 +60,7 @@ export const useWorks = () => {
     // ============================================
     // ОПЕРАЦИИ С ПРЕДЛОЖЕНИЯМИ
     // ============================================
-    const setOffer = useCallback(async (data: CreateOfferData): Promise<boolean> => {
+    const setOffer = useCallback(async (data: OfferInfo): Promise<boolean> => {
         if (!isConnected) {
             toast.error('Нет соединения с сервером')
             return false
@@ -73,12 +70,37 @@ export const useWorks = () => {
         try {
             const offerData = {
                 ...data,
-                driverId: token, // TODO: получать из профиля водителя
                 status: 'pending',
                 createdAt: new Date().toISOString()
             }
 
             emit('set_offer', { token, ...offerData })
+            return true
+        } catch (error) {
+            console.error('Error creating offer:', error)
+            toast.error('Ошибка создания предложения')
+            return false
+        } finally {
+            workStore.dispatch({ type: 'isLoading', data: false })
+        }
+    }, [token, isConnected, emit, toast])
+    
+    
+    const setDeliver = useCallback(async (data: Partial<OfferInfo>): Promise<boolean> => {
+        if (!isConnected) {
+            toast.error('Нет соединения с сервером')
+            return false
+        }
+
+        workStore.dispatch({ type: 'isLoading', data: true })
+        try {
+            const offerData = {
+                ...data,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            }
+
+            emit('delivered', { token, ...offerData })
             return true
         } catch (error) {
             console.error('Error creating offer:', error)
@@ -136,6 +158,8 @@ export const useWorks = () => {
         // Загрузка
         refreshWorks,
         loadArchiveWorks,
+        setDeliver,
+        setOffer,
 
         // Утилиты
         getWork

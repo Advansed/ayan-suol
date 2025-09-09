@@ -5,7 +5,7 @@
 import React from 'react';
 import { IonIcon, IonButton, IonLabel } from '@ionic/react';
 import { locationOutline, calendarOutline, chatboxEllipsesOutline, addCircleOutline } from 'ionicons/icons';
-import { WorkInfo, WorkStatus } from '../types';
+import { OfferInfo, WorkInfo, WorkStatus } from '../types';
 import { workFormatters, workStatusUtils, workDataUtils } from '../utils';
 
 interface WorkCardProps {
@@ -31,8 +31,8 @@ export const WorkCard: React.FC<WorkCardProps> = ({
 }) => {
     
     // Проверяем наличие активного предложения
-    const hasActiveOffer = driverId ? workDataUtils.hasActiveOffer(work, driverId) : false;
-    const currentOffer = driverId ? workDataUtils.getDriverOffer(work, driverId) : undefined;
+    const hasActiveOffer    = false;
+    const currentOffer:any      = undefined;
     
     // Определяем возможность создания предложения
     const canOffer = workStatusUtils.canOffer(work.status) && !hasActiveOffer;

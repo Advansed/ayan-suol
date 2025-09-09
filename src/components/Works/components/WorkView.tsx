@@ -1,41 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { IonButton, IonIcon } from '@ionic/react';
 import { arrowBackOutline, chatboxEllipsesOutline } from 'ionicons/icons';
-import { WorkInfo } from '../types';
+import { OfferInfo, WorkInfo } from '../types';
 import { WorkCard } from './WorkCard';
 import { Store } from '../../Store';
-import socketService from '../../Sockets';
+import { useSocket } from '../../../Store/useSocket';
 
 interface WorkViewProps {
-    work: WorkInfo;
-    onBack: () => void;
+    work:       WorkInfo;
+    onBack:     () => void;
+    onStatus:   (status: string, offer: Partial<OfferInfo>) => Promise<void>
 }
 
-export const WorkView: React.FC<WorkViewProps> = ({ work, onBack }) => {
+export const WorkView: React.FC<WorkViewProps> = ({ work, onBack, onStatus }) => {
     const [workInfo, setWorkInfo] = useState(work);
+    const { isConnected, on, emit } = useSocket()
 
-    useEffect(() => {
-        const socket = socketService.getSocket();
 
-        if (socket) {
-            socket.on("delivered", (res) => {
-                if (res.success) {
-                    onBack();
-                }
-            });
-        }
 
-        return () => {
-            if (socket) socket.off("delivered");
-        };
-    }, [onBack]);
+    const handleDelivered = async() => {
 
-    const handleDelivered = () => {
-        socketService.emit("delivered", {
-            token: Store.getState().login.token,
-            guid: workInfo.guid,
-            recipient: workInfo.recipient
-        });
+        await onStatus("delivered", {
+            guid:       workInfo.guid,
+            recipient:  workInfo.recipient
+        })
+        
     };
 
     return (

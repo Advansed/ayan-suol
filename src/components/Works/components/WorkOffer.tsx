@@ -1,75 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { IonButton, IonIcon, IonLoading } from '@ionic/react';
 import { arrowBackOutline } from 'ionicons/icons';
-import Select from "react-tailwindcss-select";
-import { WorkInfo, CreateOfferData, DriverTransport } from '../types';
-import { Store } from '../../Store';
+import { WorkInfo, CreateOfferData, OfferInfo } from '../types';
 import socketService from '../../Sockets';
 import { workFormatters } from '../utils';
 import './WorkOffer.css';
+import { transportGetters } from '../../../Store/transportStore';
 
-interface SelectOption {
-    value: string;
-    label: string;
-}
 
 interface WorkOfferProps {
-    work: WorkInfo;
-    onBack: () => void;
+    work:       WorkInfo;
+    onBack:     () => void;
+    onOffer:    ( offer: OfferInfo ) => Promise<boolean>;
 }
 
-export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack }) => {
+export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack, onOffer }) => {
     const [formData, setFormData] = useState<CreateOfferData>({
-        workId: work.guid,
-        transportId: "",
-        price: work.price,
-        weight: work.weight,
-        comment: ""
+        workId:         work.guid,
+        transportId:    transportGetters.getData()?.guid || "",
+        price:          work.price,
+        weight:         work.weight,
+        comment:        ""
     });
-    
-    const [selectedTransport, setSelectedTransport] = useState<SelectOption>({ 
-        value: "Выберите..", 
-        label: "Выберите.." 
-    });
-    
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
 
-    // Формируем опции транспорта
-    const transportOptions: SelectOption[] = Store.getState().transport.map((elem: DriverTransport) => ({
-        value: elem.guid,
-        label: elem.name
-    }));
-
-    useEffect(() => {
-        const socket = socketService.getSocket();
+    const transport = transportGetters.getData();
         
-        const handleOffer = (data: any) => {
-            setLoading(false);
-            if (data.success) {
-                onBack();
-            } else {
-                setError("Ошибка при отправке предложения");
-            }
-        };
+    const [ loading, setLoading ]   = useState(false);
+    const [ error,   setError ]     = useState("");
 
-        if (socket) {
-            socket.on("set_offer", handleOffer);
-        }
 
-        return () => {
-            if (socket) {
-                socket.off("set_offer", handleOffer);
-            }
-        };
-    }, [onBack]);
-
-    const handleSubmit = () => {
+    const handleSubmit = async() => {
         // Валидация
-        if (selectedTransport.value === "Выберите..") {
-            setError("Выберите транспорт");
-            return;
-        }
         
         if (!formData.price || formData.price <= 0) {
             setError("Укажите корректную цену");
@@ -81,48 +42,35 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack }) => {
             return;
         }
 
-        setError("");
-        setLoading(true);
-
         // Формируем данные для отправки
-        const offerData = {
-            token: Store.getState().login.token,
-            guid: work.cargo,
-            recipient: work.recipient,
-            price: formData.price,
-            weight: formData.weight,
-            volume: work.volume,
-            transport: selectedTransport.value,
-            comment: formData.comment
+        const offerData: OfferInfo = {
+
+            guid:       work.cargo,
+            recipient:  work.recipient,
+            price:      formData.price,
+            weight:     formData.weight,
+            volume:     work.volume,
+            transport:  transport?.guid || '',
+            comment:    formData.comment || ''
+
         };
 
-        const socket = socketService.getSocket();
-        if (socket) {
-            console.log( offerData )
-            socket.emit("set_offer", offerData);
-        } else {
-            setLoading(false);
-            setError("Ошибка подключения");
-        }
+        const result = await onOffer( offerData )
+
     };
 
     const handleReset = () => {
-        setFormData({
-            workId: work.guid,
-            transportId: "",
-            price: work.price,
-            weight: work.weight,
-            comment: ""
-        });
-        setSelectedTransport({ value: "Выберите..", label: "Выберите.." });
-        setError("");
-    };
 
-    const hasChanges = () => {
-        return selectedTransport.value !== "Выберите.." ||
-               formData.price !== work.price ||
-               formData.weight !== work.weight ||
-               formData.comment !== "";
+        setFormData({
+
+            workId:         work.guid,
+            transportId:    "",
+            price:          work.price,
+            weight:         work.weight,
+            comment:        ""
+
+        });
+
     };
 
     return (
@@ -173,23 +121,10 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack }) => {
                 </div>
 
                 {/* Форма предложения */}
-                <div className="field">
-                    <div className="label fs-09">Выберите транспорт</div>
+                <div className="field flex fl-space">
+                    <div className="label fs-09">Транспорт</div>
                     <div className="transport-select">
-                        <Select
-                            value={selectedTransport}
-                            onChange={(value: any) => {
-                                setSelectedTransport(value || { value: "Выберите..", label: "Выберите.." });
-                                setFormData({...formData, transportId: value?.value || ""});
-                            }}
-                            options={transportOptions}
-                            primaryColor={"blue"}
-                            classNames={{
-                                menuButton: () => "flex text-sm text-gray-500 border border-gray-300 rounded shadow-sm transition-all duration-300 focus:outline-none bg-white hover:border-gray-400 focus:border-blue-500 focus:ring focus:ring-blue-500/20",
-                                menu: "absolute z-10 w-full bg-white shadow-lg border rounded py-1 mt-1.5 text-sm text-gray-700",
-                                listItem: () => "list-none py-1.5 px-2 hover:bg-blue-500 hover:text-white"
-                            }}
-                        />
+                        { transport?.name }
                     </div>
                 </div>
 
@@ -237,15 +172,15 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack }) => {
 
                 <div className="buttons">
                     <IonButton
-                        onClick={handleSubmit}
-                        disabled={!hasChanges() || loading}
+                        onClick     = { handleSubmit }
+                        disabled    = { loading }
                     >
                         Отправить предложение
                     </IonButton>
                     <IonButton
-                        fill="outline"
-                        onClick={handleReset}
-                        disabled={loading}
+                        fill        = "outline"
+                        onClick     = { handleReset }
+                        disabled    = { loading }
                     >
                         Сбросить
                     </IonButton>
