@@ -5,6 +5,7 @@ import EULA from './eula'
 import CargoAgree from './CargoAgree'
 import { EscrowAgreement } from './Escrow'
 import Signs from './Signs'
+import Oferta from './Oferta'
 
 export const UI_TEXT = {
   AGREEMENTS_TITLE: 'Согласия',
@@ -19,6 +20,7 @@ export const Agreements: React.FC = () => {
   const [isCargoOpen, setIsCargoOpen] = useState(false)
   const [isEscrowOpen, setIsEscrowOpen] = useState(false)
   const [isSignOpen, setIsSignOpen] = useState(false)
+  const [isOferta,    setIsOferta] = useState(false)
 
   const handleUserAgreementClick = () => {
     setIsEulaOpen(true)
@@ -65,6 +67,9 @@ export const Agreements: React.FC = () => {
             <div className='ml-2 mt-1' onClick={()=>{ setIsSignOpen(true) }}>
               <b className='cl-blue t-underline'>{ "- Об использовании ПЭП" }</b>
             </div>
+            <div className='ml-2 mt-1' onClick={()=>{ setIsOferta(true) }}>
+              <b className='cl-blue t-underline'>{ "- Лицензионное соглашение" }</b>
+            </div>
           </div>
         </div>
         
@@ -82,9 +87,15 @@ export const Agreements: React.FC = () => {
       </div>
 
       <EULA             isOpen = { isEulaOpen }   onClose = { () => setIsEulaOpen(false) } />
+
       <CargoAgree       isOpen = { isCargoOpen }  onClose = { () => setIsCargoOpen(false) } />
+
       <EscrowAgreement  isOpen = { isEscrowOpen } onClose = { () => setIsEscrowOpen(false) } />
+
       <Signs            isOpen = { isSignOpen }   onClose = { () => setIsSignOpen(false) } />
+        
+      <Oferta           isOpen = { isOferta }     onClose = { () => setIsOferta(false) } />
+        
     </div>
   )
 }

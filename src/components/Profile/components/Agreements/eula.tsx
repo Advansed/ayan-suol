@@ -1,7 +1,4 @@
 import React from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { useAgreements } from './useAgreements';
-import { Store } from '../../../Store';
 import { IonButton, IonContent, IonHeader, IonIcon, IonModal, IonTitle, IonToolbar } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
 import { useLogin } from '../../../../Store/useLogin';
