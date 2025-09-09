@@ -17,7 +17,7 @@ export const ROLE_TYPES = {
 export const MENU_ITEMS = {
   BUY_REQUESTS:           'Купить заявки',
   PERSONAL_DATA:          'Личные данные',
-  PASSPORT:               'Паспортные данные',
+  PASSPORT:               'Паспорт',
   SECURITY:               'Безопасность',
   NOTIFICATIONS:          'Уведомления',
   TRANSPORT:              'Транспорт',

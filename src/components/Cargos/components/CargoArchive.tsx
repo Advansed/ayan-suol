@@ -5,7 +5,7 @@ import useCargoArchive from '../hooks/useCargoArchive';
 import './CargoArchive.css'
 
 const CargoArchive = () => {
-  const { cargos, loading, refreshing, refresh } = useCargoArchive();
+  const { cargos, refreshing, refresh } = useCargoArchive();
 
   const handleRefresh = async (event: any) => {
     await refresh();
@@ -17,7 +17,7 @@ const CargoArchive = () => {
     console.log('Clicked cargo:', cargo);
   };
 
-  if (loading) {
+  if (refreshing) {
     return (
       <div className="cr-loading">
         <IonSpinner />

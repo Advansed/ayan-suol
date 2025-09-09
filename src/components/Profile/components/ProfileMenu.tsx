@@ -1,17 +1,17 @@
 import React from 'react'
 import { IonIcon } from '@ionic/react'
-import { 
-  chevronForwardOutline, 
-  personOutline, 
-  cardOutline, 
-  businessOutline, 
-  carOutline 
+import {
+   chevronForwardOutline,
+   personOutline,
+   cardOutline,
+   businessOutline,
+   carOutline
 } from 'ionicons/icons'
 import { ProfileMenuItem } from '../types'
 import './ProfileMenu.css'
 
 interface Props {
-    items:        ProfileMenuItem[]
+    items: ProfileMenuItem[]
 }
 
 const getMenuIcon = (index: number) => {
@@ -33,32 +33,31 @@ const getProgressColor = (completion: number) => {
 
 const MenuItem: React.FC<{item: ProfileMenuItem, index: number}> = React.memo(({ item, index }) => {
   const completion = parseInt(item.completion?.replace('%', '') || '0')
-  
+     
   return (
     <div 
-      className="menu-card"
+       className="menu-card compact"
       onClick={item.onClick}
-    > 
-      <div className='flex fl-space w-100'>
-        <div className="flex">
+    >
+       <div className='card-content'>
+        <div className="card-left">
           <div className="menu-icon">
             <IonIcon icon={getMenuIcon(index)} />
           </div>
-          
           <div className="menu-content">
             <div className="menu-title">{item.title}</div>
             <div className="progress-container">
               <div className="progress-bar">
                 <div 
-                  className={`progress-fill ${getProgressColor(completion)}`}
+                   className={`progress-fill ${getProgressColor(completion)}`}
                   style={{ width: `${completion}%` }}
                 />
               </div>
             </div>
           </div>
         </div>
-        
-        <div className="flex">
+                 
+        <div className="card-right">
           <div className={`completion-badge ${getCompletionColor(completion)}`}>
             {item.completion}
           </div>
@@ -70,16 +69,11 @@ const MenuItem: React.FC<{item: ProfileMenuItem, index: number}> = React.memo(({
 })
 
 export const ProfileMenu: React.FC<Props> = React.memo(({ items }) => (
-  
-  <div className="profile-menu">
+     
+  <div className="profile-menu compact-grid">
     {items.map((item, idx) => (
       <MenuItem key={idx} item={item} index={idx} />
     ))}
   </div>
-
+ 
 ))
-
-// CSS стили для добавления в файл стилей
-/*
-
-*/

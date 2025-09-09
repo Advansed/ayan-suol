@@ -2,105 +2,107 @@
  * Типы для модуля Works (работы для водителей)
  */
 
-// Переиспользуем типы из Cargos
-import { CargoAddress, ValidationErrors, ValidationResult } from '../Cargos/types';
+import { CargoAddress }         from "../../Store/cargoStore";
+import { ValidationErrors }     from "../Cargos";
+import { ValidationResult }     from "../Cargos/types";
+
 
 // Статусы работ с точки зрения водителя
 export enum WorkStatus {
-    NEW = "Новый",           // Доступна для предложения
-    OFFERED = "Предложен",   // Водитель сделал предложение
-    IN_WORK = "В работе",    // Предложение принято, выполняется
-    COMPLETED = "Выполнен"   // Работа завершена
+    NEW             = "Новый",           // Доступна для предложения
+    OFFERED         = "Предложен",   // Водитель сделал предложение
+    IN_WORK         = "В работе",    // Предложение принято, выполняется
+    COMPLETED       = "Выполнен"   // Работа завершена
 }
 
 // Приоритет работы
 export enum WorkPriority {
-    LOW = "Низкий",
-    NORMAL = "Обычный", 
-    HIGH = "Высокий",
-    URGENT = "Срочный"
+    LOW             = "Низкий",
+    NORMAL          = "Обычный", 
+    HIGH            = "Высокий",
+    URGENT          = "Срочный"
 }
 
 // Информация о предложении водителя
 export interface OfferInfo {
-    id: string;
-    workId: string;
-    driverId: string;
-    transportId: string;
-    transportName: string;
-    price: number;
-    weight: number;
-    comment: string;
-    status: OfferStatus;
-    createdAt: string;
-    updatedAt?: string;
+    id:             string;
+    workId:         string;
+    driverId:       string;
+    transportId:    string;
+    transportName:  string;
+    price:          number;
+    weight:         number;
+    comment:        string;
+    status:         OfferStatus;
+    createdAt:      string;
+    updatedAt?:     string;
 }
 
 // Статусы предложения
 export enum OfferStatus {
-    PENDING = "Ожидает",
-    ACCEPTED = "Принят",
-    REJECTED = "Отклонен"
+    PENDING         = "Ожидает",
+    ACCEPTED        = "Принят",
+    REJECTED        = "Отклонен"
 }
 
 // Основная информация о работе (адаптированная CargoInfo)
 export interface WorkInfo {
-    guid: string;
-    cargo: string;           // ID исходного груза
-    recipient: string;       // ID заказчика
-    client: string;          // Имя заказчика
-    name: string;
-    description: string;
+    guid:           string;
+    cargo:          string;           // ID исходного груза
+    recipient:      string;       // ID заказчика
+    client:         string;          // Имя заказчика
+    name:           string;
+    description:    string;
     
     // Адреса (переиспользуем из Cargos)
-    address: CargoAddress;
-    destiny: CargoAddress;
+    address:        CargoAddress;
+    destiny:        CargoAddress;
     
     // Характеристики груза
-    weight: number;
-    volume: number;
-    price: number;
+    weight:         number;
+    volume:         number;
+    price:          number;
 
-    pickup_date: string;
-    delivery_date: string;
+    pickup_date:    string;
+    delivery_date:  string;
     
     // Контакты
-    phone: string;
-    face: string;
+    phone:          string;
+    face:           string;
     
     // Статус работы
-    status: WorkStatus;
-    priority?: WorkPriority;
+    status:         WorkStatus;
+    priority?:      WorkPriority;
     
     // Предложения
-    offers?: OfferInfo[];
-    currentOffer?: OfferInfo;  // Текущее предложение водителя
+    offers?:        OfferInfo[];
+    currentOffer?:  OfferInfo;  // Текущее предложение водителя
     
     // Метаданные
-    createdAt?: string;
-    updatedAt?: string;
+    createdAt?:     string;
+    updatedAt?:     string;
 }
 
 // Данные для создания предложения
 export interface CreateOfferData {
-    workId: string;
-    transportId: string;
-    price: number;
-    weight: number;
-    comment?: string;
+    workId:         string;
+    transportId:    string;
+    price:          number;
+    weight:         number;
+    comment?:       string;
 }
 
 // Фильтры для списка работ
 export interface WorkFilters {
-    status?: WorkStatus[];
-    cityFrom?: string;
-    cityTo?: string;
-    priceMin?: number;
-    priceMax?: number;
-    weightMin?: number;
-    weightMax?: number;
-    dateFrom?: string;
-    dateTo?: string;
+    status?:        WorkStatus[];
+    cityFrom?:      string;
+    cityTo?:        string;
+    priceMin?:      number;
+    priceMax?:      number;
+    weightMin?:     number;
+    weightMax?:     number;
+    dateFrom?:      string;
+    dateTo?:        string;
 }
 
 // Типы страниц для навигации
@@ -113,19 +115,19 @@ export type WorkPageType =
 
 // Состояние формы предложения
 export interface OfferFormState {
-    data: CreateOfferData;
-    errors: ValidationErrors;
-    isValid: boolean;
-    isSubmitting: boolean;
-    isDirty: boolean;
+    data:           CreateOfferData;
+    errors:         ValidationErrors;
+    isValid:        boolean;
+    isSubmitting:   boolean;
+    isDirty:        boolean;
 }
 
 // Действия с формой предложения
 export interface OfferFormActions {
     setFieldValue: (fieldPath: string, value: any) => void;
-    resetForm: () => void;
-    validateForm: () => ValidationResult;
-    submitForm: () => Promise<boolean>;
+    resetForm:      () => void;
+    validateForm:   () => ValidationResult;
+    submitForm:     () => Promise<boolean>;
 }
 
 // Хук управления работами

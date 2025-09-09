@@ -1,42 +1,72 @@
-.profile-menu {
+/* Компактная сетка - по 2 элемента в строке */
+.profile-menu.compact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px;
+}
+
+/* Компактные карточки */
+.menu-card.compact {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e1e5e9;
   padding: 8px;
-}
-
-.menu-card {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border-radius: 12px;
-  padding: 0.8em;
-  margin-bottom: 8px;
-  margin-left: 8px;
-  margin-right: 8px;
-  border-left: 4px solid #3b82f6;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+  min-height: 60px;
 }
 
-.menu-card:hover {
-  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+.menu-card.compact:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.card-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+}
+
+.card-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .menu-icon {
-  font-size: 24px;
-  color: #3b82f6;
-  margin-right: 12px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  color: #6366f1;
+  flex-shrink: 0;
 }
 
 .menu-content {
   flex: 1;
+  min-width: 0;
 }
 
 .menu-title {
-  /* font-weight: 500; */
-  color: #1f2937;
-  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .progress-container {
@@ -45,49 +75,57 @@
 
 .progress-bar {
   width: 100%;
-  height: 4px;
-  background-color: #f1f5f9;
+  height: 3px;
+  background-color: #f3f4f6;
   border-radius: 2px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  transition: width 0.5s ease;
   border-radius: 2px;
+  transition: width 0.3s ease;
 }
 
-.progress-high {
-  background: linear-gradient(90deg, #10b981, #34d399);
+.progress-fill.progress-high {
+  background-color: #10b981;
 }
 
-.progress-medium {
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+.progress-fill.progress-medium {
+  background-color: #f59e0b;
 }
 
-.progress-low {
-  background: linear-gradient(90deg, #ef4444, #f87171);
+.progress-fill.progress-low {
+  background-color: #ef4444;
 }
 
 .completion-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: bold;
-  margin-right: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
-.completion-high {
+.completion-badge.completion-high {
   background-color: #dcfce7;
   color: #166534;
 }
 
-.completion-medium {
+.completion-badge.completion-medium {
   background-color: #fef3c7;
   color: #92400e;
 }
 
-.completion-low {
+.completion-badge.completion-low {
   background-color: #fee2e2;
   color: #991b1b;
 }
+
+/* Responsive: вертикально на мобильных */
+
+
+/* Утилитарные классы (если используются в оригинале) */
+.flex { display: flex; }
+.fl-space { justify-content: space-between; }
+.w-100 { width: 100%; }

@@ -7,6 +7,7 @@ import { destroyCargoSocketHandlers, initCargoSocketHandlers } from '../Store/ca
 import { destroyPassportSocketHandlers, initPassportSocketHandlers } from '../Store/passportStore'
 import { destroyCompanySocketHandlers, initCompanySocketHandlers } from '../Store/companyStore'
 import { destroyTransportSocketHandlers, initTransportSocketHandlers } from '../Store/transportStore'
+import { destroyWorkSocketHandlers, initWorkSocketHandlers } from '../Store/workStore'
 
 // ============================================
 // SOCKET MANAGER HOOK
@@ -58,6 +59,8 @@ export function initSocketHandlers( socket: any) {
   initCompanySocketHandlers( socket )
 
   initTransportSocketHandlers( socket )
+
+  initWorkSocketHandlers( socket )
   
 }
 
@@ -71,4 +74,6 @@ export function destroySocketHandlers( socket: any) {
 
   destroyTransportSocketHandlers( socket )
   
+  destroyWorkSocketHandlers( socket )
+
 }

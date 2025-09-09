@@ -32,7 +32,7 @@ export interface CargoAddress {
     address:    string;
     fias:       string;
     lat:        number;
-    long:       number;
+    lon:       number;
 }
 
 // Предложение от водителя
