@@ -4,14 +4,7 @@ import { ProfileHeader }                                from './components/Profi
 import { ProfileStats }                                 from './components/ProfileStats'
 import { ProfileMenu }                                  from './components/ProfileMenu'
 import { PROFILE_PAGES, MENU_ITEMS, UI_TEXT }           from './constants'
-import { Transport }                                    from './components/Transport/Transport'
 import { Agreements }                                   from './components/Agreements/Agreements'
-import { useStoreField }                                from '../Store'
-import { 
-  calculatePassportCompletion, 
-  calculateTransportCompletion, 
-  calculateCompanyCompletion 
-}                                                       from '../utils'
 import { Account }                                      from './components/Account/Account'
 import { useLogin }                                     from '../../Store/useLogin'
 import { UserRatings }                                  from './types'
@@ -22,6 +15,9 @@ import { companyGetters, CompanyState, companyStore }   from '../../Store/compan
 import { useStore }                                     from '../../Store/Store'
 import { passportGetters, PassportState, 
   passportStore }                                       from '../../Store/passportStore'
+import { transportGetters, TransportState, 
+  transportStore }                                      from '../../Store/transportStore'
+import { Transport } from './components/Transport'
 
 
 export const Profile: React.FC = () => {
@@ -29,9 +25,9 @@ export const Profile: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
   
   // Получаем данные из Store
-  const transportData = useStoreField('transport',  62)?.[0]
-  const companyData   = useStore((state: CompanyState)  => state.data, 41, companyStore )
-  const passportData  = useStore((state: PassportState) => state.data, 31, passportStore )
+  const transportData = useStore((state: TransportState ) => state.data, 51,    transportStore )
+  const companyData   = useStore((state: CompanyState )   => state.data, 41,    companyStore )
+  const passportData  = useStore((state: PassportState )  => state.data, 31,    passportStore )
 
   useEffect(() => {
     const loadings = document.querySelectorAll('ion-loading')
@@ -45,8 +41,8 @@ export const Profile: React.FC = () => {
     let common: any = []
   
     // Вычисляем проценты заполненности
-    const passportCompletion  = passportGetters.getCompletionPercentage(passportData)
-    const transportCompletion = calculateTransportCompletion(transportData)  
+    const passportCompletion  = passportGetters.getCompletionPercentage( passportData )
+    const transportCompletion = transportGetters.getCompletionPercentage( transportData )  
     const companyCompletion   = companyGetters.getCompletionPercentage( companyData )
 
   
@@ -85,12 +81,17 @@ export const Profile: React.FC = () => {
   }
 
   if (currentPage === PROFILE_PAGES.PASSPORT) {
-    return <Passport onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
+    return <Passport onBack = { () => setCurrentPage(PROFILE_PAGES.MAIN) } />
   }
 
-  // if (currentPage === PROFILE_PAGES.TRANSPORT) {
-  //   return <Transport onBack={() => setCurrentPage(PROFILE_PAGES.MAIN)} />
-  // }
+  if (currentPage === PROFILE_PAGES.TRANSPORT) {
+    return <>
+        <Transport 
+            onBack  = { () => setCurrentPage(PROFILE_PAGES.MAIN) } 
+        
+        />
+    </> 
+  }
 
   if (currentPage === PROFILE_PAGES.COMPANY) {
     return <>

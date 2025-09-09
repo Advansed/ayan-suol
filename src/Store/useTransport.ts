@@ -1,61 +1,18 @@
 // src/Store/useTransport.ts
 
 import { useCallback } from 'react'
-import { 
-  UniversalStore, 
-  useStore, 
-  TState
-} from './Store'
-import socketService from '../components/Sockets'
+import { useStore } from './Store'
 import { useToast } from '../components/Toast'
 import { loginGetters } from './loginStore'
-
-// ============================================
-// ТИПЫ
-// ============================================
-
-export interface TransportData {
-    guid?: string
-    name?: string
-    license_plate?: string
-    vin?: string
-    manufacture_year?: number
-    image?: string
-    transport_type?: string
-    experience?: number
-    load_capacity?: number
-    // Альтернативные поля для совместимости
-    type?: string
-    capacity?: number
-    year?: number
-    number?: string
-    exp?: number
-}
-
-export interface TransportState extends TState {
-  data: TransportData | null
-  isLoading: boolean
-  isSaving: boolean
-}
-
-// ============================================
-// STORE
-// ============================================
-
-export const transportStore = new UniversalStore<TransportState>({
-  initialState: {
-    data: null,
-    isLoading: false,
-    isSaving: false
-  },
-  enableLogging: true
-})
+import { TransportData, TransportState, transportStore } from './transportStore'
+import { useSocket } from './useSocket'
 
 // ============================================
 // HOOK
 // ============================================
 
 export const useTransport = () => {
+    const { emit, once, isConnected } = useSocket()
     const token = loginGetters.getToken()
     
     const transportData = useStore((state: TransportState) => state.data, 5001, transportStore)
@@ -65,8 +22,7 @@ export const useTransport = () => {
     const toast = useToast()
     
     const loadData = useCallback(() => {
-        const socket = socketService.getSocket()
-        if (!socket) {
+        if (!isConnected) {
             toast.error('Нет подключения')
             return
         }
@@ -78,25 +34,13 @@ export const useTransport = () => {
 
         transportStore.dispatch({ type: 'isLoading', data: true })
 
-        socket.once('get_transport', (response) => {
-            transportStore.dispatch({ type: 'isLoading', data: false })
-            
-            if (response.success) {
-                // Берем первый элемент массива если данные приходят как массив
-                const data = Array.isArray(response.data) ? response.data[0] : response.data
-                transportStore.dispatch({ type: 'data', data })
-            } else {
-                toast.error(response.message || 'Ошибка загрузки данных транспорта')
-            }
-        })
-
-        socket.emit('get_transport', { token })
+        emit('get_transport', { token })
         
-    }, [ token ])
+    }, [token])
 
     const saveData = useCallback((data: TransportData) => {
-        const socket = socketService.getSocket()
-        if (!socket) {
+
+        if (!isConnected) {
             toast.error('Нет подключения')
             return
         }
@@ -108,39 +52,29 @@ export const useTransport = () => {
 
         transportStore.dispatch({ type: 'isSaving', data: true })
 
-        socket.once('set_transport', (response) => {
+        once('set_transport', (response) => {
             transportStore.dispatch({ type: 'isSaving', data: false })
             
             if (response.success) {
                 toast.success('Данные транспорта сохранены')
-                // Обновляем данные в сторе
-                const updatedData = response.data || data
-                transportStore.dispatch({ type: 'data', data: updatedData })
+                transportStore.dispatch({ type: 'data', data: response.data || data })
             } else {
                 toast.error(response.message || 'Ошибка сохранения данных транспорта')
             }
         })
 
-        // Подготавливаем данные для отправки
-        const payload = {
-            token,
-            guid: transportData?.guid,
-            ...data
-        }
+        const payload = { token, guid: transportData?.guid, ...data }
 
-        socket.emit('set_transport', payload)
+        emit('set_transport', payload)
+
         toast.info("Данные транспорта сохраняются...")
         
-    }, [ token, transportData?.guid])
+    }, [token, transportData?.guid])
 
-    // Альтернативные методы для совместимости со старым API
-    const load = useCallback(() => {
-        loadData()
-    }, [loadData])
+    // Алиасы для совместимости
+    const load = useCallback(() => { loadData() }, [loadData])
 
-    const save = useCallback((data: TransportData) => {
-        saveData(data)
-    }, [saveData])
+    const save = useCallback((data: TransportData) => { saveData(data) }, [saveData])
 
     return {
         transportData,
