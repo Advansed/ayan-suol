@@ -1,23 +1,27 @@
-import React, { useEffect, useMemo, useState }  from 'react'
-import { IonLoading }                           from '@ionic/react'
-import { ProfileHeader }                        from './components/ProfileHeader'
-import { ProfileStats }                         from './components/ProfileStats'
-import { ProfileMenu }                          from './components/ProfileMenu'
-import { PROFILE_PAGES, MENU_ITEMS, UI_TEXT }   from './constants'
-import { Transport }                            from './components/Transport/Transport'
-import { Agreements }                           from './components/Agreements/Agreements'
-import { useStoreField }                        from '../Store'
+import React, { useEffect, useMemo, useState }          from 'react'
+import { IonLoading }                                   from '@ionic/react'
+import { ProfileHeader }                                from './components/ProfileHeader'
+import { ProfileStats }                                 from './components/ProfileStats'
+import { ProfileMenu }                                  from './components/ProfileMenu'
+import { PROFILE_PAGES, MENU_ITEMS, UI_TEXT }           from './constants'
+import { Transport }                                    from './components/Transport/Transport'
+import { Agreements }                                   from './components/Agreements/Agreements'
+import { useStoreField }                                from '../Store'
 import { 
   calculatePassportCompletion, 
   calculateTransportCompletion, 
   calculateCompanyCompletion 
-} from '../utils'
-import { Account } from './components/Account/Account'
-import { useLogin } from '../../Store/useLogin'
-import { UserRatings } from './types'
-import { Company } from './components/Company'
-import { PersonalInfo } from './components/PersonalInfo'
-import { Passport } from './components/Passport'
+}                                                       from '../utils'
+import { Account }                                      from './components/Account/Account'
+import { useLogin }                                     from '../../Store/useLogin'
+import { UserRatings }                                  from './types'
+import { Company }                                      from './components/Company'
+import { PersonalInfo }                                 from './components/PersonalInfo'
+import { Passport }                                     from './components/Passport'
+import { companyGetters, CompanyState, companyStore }   from '../../Store/companyStore'
+import { useStore }                                     from '../../Store/Store'
+import { passportGetters, PassportState, 
+  passportStore }                                       from '../../Store/passportStore'
 
 
 export const Profile: React.FC = () => {
@@ -25,9 +29,9 @@ export const Profile: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
   
   // Получаем данные из Store
-  const passportData  = useStoreField('passport',   61)
   const transportData = useStoreField('transport',  62)?.[0]
-  const companyData   = useStoreField('company',    63)
+  const companyData   = useStore((state: CompanyState)  => state.data, 41, companyStore )
+  const passportData  = useStore((state: PassportState) => state.data, 31, passportStore )
 
   useEffect(() => {
     const loadings = document.querySelectorAll('ion-loading')
@@ -41,9 +45,9 @@ export const Profile: React.FC = () => {
     let common: any = []
   
     // Вычисляем проценты заполненности
-    const passportCompletion  = calculatePassportCompletion(passportData)
+    const passportCompletion  = passportGetters.getCompletionPercentage(passportData)
     const transportCompletion = calculateTransportCompletion(transportData)  
-    const companyCompletion   = calculateCompanyCompletion(companyData)
+    const companyCompletion   = companyGetters.getCompletionPercentage( companyData )
 
   
     switch(user_type) {

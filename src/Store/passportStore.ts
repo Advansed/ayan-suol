@@ -65,6 +65,29 @@ export const passportGetters = {
   isVerified: (): boolean => {
     const data = passportStore.getState().data
     return data?.isVerified || false
+  },
+
+  getCompletionPercentage: (data: PassportData | null): number => {
+    if (!data) return 0
+    
+    const requiredFields = ['series', 'number', 'issue_date', 'issued_by', 'birth_date', 'birth_place']
+    const optionalFields = ['reg_address', 'act_address', 'main_photo', 'reg_photo']
+    
+    const totalFields = requiredFields.length + optionalFields.length
+    let filledCount = 0
+    
+    // Обязательные поля
+    requiredFields.forEach(field => {
+      if (data[field as keyof PassportData]) filledCount++
+    })
+    
+    // Опциональные поля  
+    optionalFields.forEach(field => {
+      const value = data[field as keyof PassportData]
+      if (value && (typeof value === 'object' ? Object.keys(value).length > 0 : true)) filledCount++
+    })
+    
+    return Math.round((filledCount / totalFields) * 100)
   }
 }
 

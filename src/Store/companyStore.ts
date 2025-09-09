@@ -53,7 +53,31 @@ export const COMPANY_TYPES = {
 
 export const companyGetters = {
 
+// В src/Store/companyStore.ts добавить в companyGetters:
 
+    getCompletionPercentage: (data: CompanyData | null): number => {
+
+        if (!data) return 0
+        
+        const requiredFields = ['company_type', 'inn', 'name', 'phone', 'email']
+        const optionalFields = ['kpp', 'ogrn', 'short_name', 'address', 'postal_address', 'description', 'bank_name', 'bank_bik', 'bank_account', 'bank_corr_account']
+        
+        const totalFields = requiredFields.length + optionalFields.length
+        let filledCount = 0
+        
+        // Обязательные поля
+        requiredFields.forEach(field => {
+            if (data[field as keyof CompanyData]) filledCount++
+        })
+        
+        // Опциональные поля  
+        optionalFields.forEach(field => {
+            if (data[field as keyof CompanyData]) filledCount++
+        })
+        
+        return Math.round((filledCount / totalFields) * 100)
+        
+    }
 
 }
 
