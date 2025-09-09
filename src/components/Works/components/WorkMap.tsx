@@ -10,6 +10,9 @@ interface WorkMapProps {
 }
 
 export const WorkMap: React.FC<WorkMapProps> = ({ work, onBack }) => {
+
+    console.log(work)
+
     return (
         <>
             {/* Header */}

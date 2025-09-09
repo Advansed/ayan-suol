@@ -5,13 +5,14 @@
 import React from 'react';
 import { DriverCard } from '../../DriverCards';
 import { CargoInfo, CargoInvoice } from '../../../Store/cargoStore';
+import { WizardHeader } from '../../Header/WizardHeader';
 
 interface CargoInvoiceSectionsProps {
     cargo: CargoInfo;
     onBack: ()=>void;
 }
 
-export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ cargo }) => {
+export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ cargo, onBack }) => {
     
     // Адаптер данных инвойса к формату водителя
     const mapInvoiceToDriver = (invoice: any): any => ({
@@ -66,6 +67,14 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
 
     return (
         <>
+            <div className='ml-1 mr-1 mt-1'>
+                <WizardHeader 
+                    title   = "Заявки "
+                    pages   = ''
+                    onBack  = { onBack }
+                />
+
+            </div>
             {/* Предложения от водителей */}
             {renderInvoiceSection(
                 "Предложения от водителей",

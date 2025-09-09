@@ -3,7 +3,6 @@ import { IonButton, IonIcon } from '@ionic/react';
 import { arrowBackOutline, chatboxEllipsesOutline } from 'ionicons/icons';
 import { OfferInfo, WorkInfo } from '../types';
 import { WorkCard } from './WorkCard';
-import { Store } from '../../Store';
 import { useSocket } from '../../../Store/useSocket';
 
 interface WorkViewProps {
@@ -25,6 +24,7 @@ export const WorkView: React.FC<WorkViewProps> = ({ work, onBack, onStatus }) =>
             recipient:  workInfo.recipient
         })
         
+        onBack()
     };
 
     return (

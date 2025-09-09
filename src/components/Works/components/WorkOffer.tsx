@@ -57,6 +57,7 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack, onOffer }) =
 
         const result = await onOffer( offerData )
 
+        onBack()
     };
 
     const handleReset = () => {

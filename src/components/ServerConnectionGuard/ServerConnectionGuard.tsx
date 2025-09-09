@@ -37,15 +37,16 @@ export const ServerConnectionGuard: React.FC<ServerConnectionGuardProps> = ({ ch
 
   // Если сервер доступен - показываем приложение
   if (isConnected) {
+    console.log("show children")
     return <>{children}</>;
   }
 
   // Показываем форму переподключения
   return (
     <ReconnectToServerForm 
-      isConnecting={isConnecting}
-      error={error}
-      onRetry={checkServerConnection}
+      isConnecting  = { isConnecting }
+      error         = { error }
+      onRetry       = { checkServerConnection }
     />
   );
 };

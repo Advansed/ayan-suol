@@ -23,7 +23,6 @@ export type {
 
 // Хуки для внешнего использования
 export { 
-    useWorks,
     useOfferForm
 } from './hooks';
 
