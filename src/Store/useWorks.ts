@@ -1,7 +1,6 @@
 // src/Store/useWorks.ts
 import { useCallback } from 'react'
 import { useStore } from './Store'
-import { useLogin } from './useLogin'
 import { useToast } from '../components/Toast'
 import { 
     workStore, 
@@ -16,10 +15,11 @@ import {
 } from '../components/Works/types'
 import { useSocket } from './useSocket'
 import { loginGetters } from './loginStore'
+import { SocketState, socketStore } from './socketStore'
 
 export const useWorks = () => {
     const token = loginGetters.getToken()
-    const { emit, isConnected } = useSocket()
+    const { emit } = useSocket()
     const toast = useToast()
 
     // ============================================
@@ -33,6 +33,7 @@ export const useWorks = () => {
     const filters           = useStore((state: WorkState) => state.filters, 8006, workStore)
     const searchQuery       = useStore((state: WorkState) => state.searchQuery, 8007, workStore)
     const navigationHistory = useStore((state: WorkState) => state.navigationHistory, 8008, workStore)
+    const isConnected       = useStore((state: SocketState) => state.isConnected, 8009, socketStore)
 
     // ============================================
     // НАВИГАЦИЯ

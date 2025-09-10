@@ -15,6 +15,7 @@ import {
     cargoActions
 } from './cargoStore'
 import { loginGetters } from './loginStore'
+import { SocketState, socketStore } from './socketStore'
 
 // ============================================
 // ТИПЫ
@@ -54,7 +55,7 @@ const SOCKET_EVENTS = {
 // ============================================
 export const useCargos = (): UseCargosReturn => {
     const token                     = loginGetters.getToken()
-    const { emit, isConnected }     = useSocket()
+    const { emit }                  = useSocket()
     const toast                     = useToast()
 
     const cargos                    = useStore((state: CargoState) => state.cargos, 7001, cargoStore)
@@ -63,6 +64,8 @@ export const useCargos = (): UseCargosReturn => {
     const filters                   = useStore((state: CargoState) => state.filters, 7004, cargoStore)
     const searchQuery               = useStore((state: CargoState) => state.searchQuery, 7005, cargoStore)
     const navigationHistory         = useStore((state: CargoState) => state.navigationHistory, 7006, cargoStore)
+    const isConnected               = useStore((state: SocketState) => state.isConnected, 7007, socketStore)
+  
 
     // ============================================
     // НАВИГАЦИЯ

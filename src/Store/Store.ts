@@ -161,7 +161,7 @@ export function useStore<T extends TState, TSelected>(
               setSelectedState(newState)
             }
           }
-        })
+        }); 
       }
     })
 

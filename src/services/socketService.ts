@@ -1,5 +1,6 @@
 // src/services/socketService.ts
 import { io, Socket } from 'socket.io-client';
+import { socketActions } from '../Store/socketStore';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -9,6 +10,9 @@ class SocketService {
   private readonly SOCKET_PATH = '/node/socket.io/';
 
   connect(token: string): Promise<boolean> {
+
+    socketActions.setConnecting(true)
+
     return new Promise((resolve, reject) => {
       if (this.socket?.connected) {
         resolve(true);
@@ -26,9 +30,12 @@ class SocketService {
 
       // Только критичные обработчики для Promise
       const handleConnect = () => {
+        console.log("socketService connect", true)
         this.isConnected = true;
         this.socket?.off('connect', handleConnect);
         this.socket?.off('connect_error', handleError);
+
+        socketActions.setConnecting(false)
 
         resolve(true);
       };
@@ -37,6 +44,9 @@ class SocketService {
         console.error('Ошибка подключения:', error);
         this.socket?.off('connect', handleConnect);
         this.socket?.off('connect_error', handleError);
+        
+        socketActions.updateStatus(false, false)
+
         reject(error);
       };
 
@@ -60,8 +70,8 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
-
     }
+    socketActions.updateStatus(false, false)
   }
 
   isSocketConnected(): boolean {

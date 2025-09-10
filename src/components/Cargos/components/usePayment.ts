@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
-import socketService from '../../Sockets';
 import { Store } from '../../Store';
+import { useSocket } from '../../../Store/useSocket';
 
 interface PaymentResult {
   success: boolean;
@@ -18,12 +18,12 @@ export const usePayment = (): UsePaymentReturn => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pendingRequests = useRef<Map<string, { resolve: Function, reject: Function }>>(new Map());
+  const { socket } = useSocket()
 
   // Универсальная функция для socket запросов с ответом
   const socketRequest = useCallback((event: string, data: any, responseEvent: string): Promise<PaymentResult> => {
     return new Promise((resolve, reject) => {
       const requestId = `${event}_${Date.now()}`;
-      const socket = socketService.getSocket();
       if(!socket) return
       
       // Сохраняем промис для данного запроса

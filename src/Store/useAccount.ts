@@ -6,9 +6,10 @@ import {
   useStore, 
   TState
 } from './Store'
-import socketService from '../components/Sockets'
 import { useToast } from '../components/Toast'
 import { loginGetters } from './loginStore'
+import { SocketState, socketStore } from './socketStore'
+import { useSocket } from './useSocket'
 
 // ============================================
 // ТИПЫ
@@ -74,13 +75,16 @@ export const useAccount = () => {
     const isLoading                 = useStore((state: AccountState) => state.isLoading,                6003, accountStore)
     const isSaving                  = useStore((state: AccountState) => state.isSaving,                 6004, accountStore)
     const isLoadingTransactions     = useStore((state: AccountState) => state.isLoadingTransactions,    6005, accountStore)
+    const isConnected               = useStore((state: SocketState) => state.isConnected,               6006, socketStore)
+
+    const { once, emit }              = useSocket()
     
     const toast = useToast()
     
     // Получение баланса
     const loadBalance = useCallback(() => {
-        const socket = socketService.getSocket()
-        if (!socket) {
+
+        if (!isConnected) {
             toast.error('Нет подключения')
             return
         }
@@ -92,7 +96,7 @@ export const useAccount = () => {
 
         accountStore.dispatch({ type: 'isLoading', data: true })
 
-        socket.once('get_balance', (response) => {
+        once('get_balance', (response) => {
             accountStore.dispatch({ type: 'isLoading', data: false })
             
             if (response.success) {
@@ -107,14 +111,14 @@ export const useAccount = () => {
             }
         })
 
-        socket.emit('get_balance', { token })
+        emit('get_balance', { token })
         
     }, [token, toast])
 
     // Создание платежа
     const makePayment = useCallback((paymentData: PaymentData) => {
-        const socket = socketService.getSocket()
-        if (!socket) {
+        
+        if (!isConnected) {
             toast.error('Нет подключения')
             return Promise.resolve(false)
         }
@@ -127,7 +131,7 @@ export const useAccount = () => {
         accountStore.dispatch({ type: 'isSaving', data: true })
 
         return new Promise<boolean>((resolve) => {
-            socket.once('set_payment', (response) => {
+            once('set_payment', (response) => {
                 accountStore.dispatch({ type: 'isSaving', data: false })
                 
                 if (response.success) {
@@ -148,7 +152,7 @@ export const useAccount = () => {
                 ...paymentData
             }
 
-            socket.emit('set_payment', payload)
+            emit('set_payment', payload)
             toast.info("Создание платежа...")
         })
         
@@ -156,8 +160,8 @@ export const useAccount = () => {
 
     // Получение истории транзакций
     const loadTransactions = useCallback(() => {
-        const socket = socketService.getSocket()
-        if (!socket) {
+
+        if (!isConnected) {
             toast.error('Нет подключения')
             return
         }
@@ -169,7 +173,7 @@ export const useAccount = () => {
 
         accountStore.dispatch({ type: 'isLoadingTransactions', data: true })
 
-        socket.once('get_transactions', (response) => {
+        once('get_transactions', (response) => {
             accountStore.dispatch({ type: 'isLoadingTransactions', data: false })
             
             if (response.success) {
@@ -189,7 +193,7 @@ export const useAccount = () => {
             }
         })
 
-        socket.emit('get_transactions', { token })
+        emit('get_transactions', { token })
         
     }, [token, toast])
 

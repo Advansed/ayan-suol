@@ -1,16 +1,22 @@
 // src/components/ServerConnectionGuard/ServerConnectionGuard.tsx
 import React, { useEffect, useState } from 'react';
 import { useSocket } from '../../Store/useSocket';
-import { setupSocketHandlers } from '../Store';
 import { ReconnectToServerForm } from '../ReconnectToServerForm/ReconnectToServerForm';
+import { useStore } from '../../Store/Store';
+import { SocketState, socketStore } from '../../Store/socketStore';
 
 interface ServerConnectionGuardProps {
   children: React.ReactNode;
 }
 
 export const ServerConnectionGuard: React.FC<ServerConnectionGuardProps> = ({ children }) => {
+  
   const [error, setError] = useState<string | null>(null);
-  const { isConnecting, isConnected, connect } = useSocket();
+  const { connect } = useSocket();
+
+  const isConnected   = useStore((state: SocketState) => state.isConnected,   2001, socketStore)
+  const isConnecting  = useStore((state: SocketState) => state.isConnecting,  2002, socketStore)
+  
 
   const checkServerConnection = async () => {
     console.log("check server");
@@ -18,13 +24,10 @@ export const ServerConnectionGuard: React.FC<ServerConnectionGuardProps> = ({ ch
 
     try {
       if (isConnected) {
-        console.log("connected");
+        console.log("check connected");
       } else {
-        const success = await connect('');
+        await connect('');
         // Устанавливаем обработчики ПОСЛЕ успешного подключения
-        if (success) {
-          setupSocketHandlers();
-        }
       }
     } catch (err: any) {
       setError(err.message || 'Сервер недоступен');
@@ -33,11 +36,11 @@ export const ServerConnectionGuard: React.FC<ServerConnectionGuardProps> = ({ ch
 
   useEffect(() => {
     checkServerConnection();
-  }, []);
+  }, [isConnected]);
 
+  console.log("isConnected", isConnected)
   // Если сервер доступен - показываем приложение
   if (isConnected) {
-    console.log("show children")
     return <>{children}</>;
   }
 

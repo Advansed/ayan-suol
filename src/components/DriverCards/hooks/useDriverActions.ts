@@ -1,17 +1,18 @@
 import { useCallback, useState } from 'react';
 import { useHistory } from 'react-router';
 import { Store } from '../../Store';
-import socketService from '../../Sockets';
-import { DriverInfo, UseDriverActionsProps, TaskCompletion } from '../types';
+import { UseDriverActionsProps, TaskCompletion } from '../types';
+import { useSocket } from '../../../Store/useSocket';
 
 export const useDriverActions = ({ info, mode, setPage }: UseDriverActionsProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const history = useHistory();
+    const { socket, emit } = useSocket()
 
     const handleAccept = useCallback(async () => {
         setIsLoading(true);
         try {
-            socketService.emit('set_inv', {
+            emit('set_inv', {
                 token: Store.getState().login.token,
                 recipient: info.recipient,
                 id: info.guid,
@@ -27,7 +28,7 @@ export const useDriverActions = ({ info, mode, setPage }: UseDriverActionsProps)
     const handleReject = useCallback(async () => {
         setIsLoading(true);
         try {
-            socketService.emit('rejected', {
+            emit('rejected', {
                 token: Store.getState().login.token,
                 id: info.guid
             });
@@ -41,7 +42,7 @@ export const useDriverActions = ({ info, mode, setPage }: UseDriverActionsProps)
     const handleComplete = useCallback(async (rating: number, tasks: TaskCompletion) => {
         setIsLoading(true);
         try {
-            socketService.emit('completed', {
+            emit('completed', {
                 token: Store.getState().login.token,
                 id: info.guid,
                 recipient: info.recipient,

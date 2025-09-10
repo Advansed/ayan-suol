@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import socketService from '../../Sockets'
 import { Store } from '../../Store'
+import { useSocket } from '../../../Store/useSocket'
 
 // ======================
 // ТИПЫ РЕГИСТРАЦИИ  
@@ -158,6 +158,7 @@ const INITIAL_REG_STATE: RegistrationState = {
 export const useReg = (): UseRegReturn => {
   const [state, setState] = useState<RegistrationState>(INITIAL_REG_STATE)
   const isMountedRef = useRef(true)
+  const { socket, emit } = useSocket()
 
   // ======================
   // УТИЛИТЫ СОСТОЯНИЯ
@@ -218,7 +219,7 @@ export const useReg = (): UseRegReturn => {
         return
       }
 
-      const success = socketService.emit('check_registration', {
+      const success = emit('check_registration', {
         code: phone,
         name: userData.name.trim(),
         email: userData.email?.trim() || '',
@@ -243,7 +244,7 @@ export const useReg = (): UseRegReturn => {
 
     try {
       console.log("check_sms")
-      const success = socketService.emit('check_sms', {
+      const success = emit('check_sms', {
         token: data.token,
         pincode: data.pincode
       })
@@ -310,7 +311,7 @@ export const useReg = (): UseRegReturn => {
           return
         }
 
-        socketService.emit('save_password', passwordData)
+        emit('save_password', passwordData)
         break
     }
   }, [state.registrationStep, state.registrationData, state.formData, register, updateState])
@@ -322,7 +323,6 @@ export const useReg = (): UseRegReturn => {
   useEffect(() => {
     isMountedRef.current = true
 
-    const socket = socketService.getSocket()
     if (!socket) return
 
     const handleRegistration = (response: SocketResponse) => {

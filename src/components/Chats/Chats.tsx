@@ -3,8 +3,8 @@ import { useIonViewDidEnter, useIonViewDidLeave } from "@ionic/react";
 import { IonIcon, IonRefresher, IonRefresherContent, useIonRouter } from "@ionic/react";
 import { arrowBackOutline, sendSharp } from "ionicons/icons";
 import { Store } from "../Store";
-import socketService from "../Sockets";
 import "./Chats.css";
+import { useSocket } from "../../Store/useSocket";
 
 interface ChatsProps {
     name: string;
@@ -163,6 +163,8 @@ export function Chats(props: ChatsProps) {
     const socketRef = useRef<any>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    const { socket } = useSocket()
+
     // Мемоизируем разбор имени
     const { arr, userName, userInitials } = useMemo(() => {
         const arr = props.name.split(":");
@@ -191,7 +193,6 @@ export function Chats(props: ChatsProps) {
 
     // Функция загрузки чата
     const loadChat = useCallback(() => {
-        const socket = socketService.getSocket();
         if (socket) {
             socket.emit("get_chat", socketParams);
         }
@@ -205,7 +206,7 @@ export function Chats(props: ChatsProps) {
 
     // Настройка сокет соединения
     const setupSocketConnection = useCallback(() => {
-        const socket = socketService.getSocket();
+
         if (!socket) return;
 
         socketRef.current = socket;

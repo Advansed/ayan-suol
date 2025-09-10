@@ -2,10 +2,11 @@ import { useCallback } from 'react'
 import { 
   useStore
 } from './Store'
-import socketService from '../components/Sockets'
 import { useToast } from '../components/Toast'
 import { loginGetters } from './loginStore'
 import { CompanyData, CompanyState, companyStore } from './companyStore'
+import { useSocket } from './useSocket'
+import { SocketState, socketStore } from './socketStore'
 
 // ============================================
 // ТИПЫ
@@ -19,16 +20,19 @@ import { CompanyData, CompanyState, companyStore } from './companyStore'
 export const useCompany = () => {
     
     const token         = loginGetters.getToken()
+
+    const { once, emit } = useSocket()
     
     const companyData   = useStore((state: CompanyState) => state.data,         4001, companyStore)
     const isLoading     = useStore((state: CompanyState) => state.isLoading,    4002, companyStore)
     const isSaving      = useStore((state: CompanyState) => state.isSaving,     4003, companyStore)
-    
+    const isConnected  = useStore((state: SocketState)   => state.isConnected,  4004, socketStore)
+
     const toast = useToast()
     
     const loadData = useCallback(() => {
-        const socket = socketService.getSocket()
-        if (!socket) {
+
+        if (!isConnected) {
             toast.error('Нет подключения')
             return
         }
@@ -40,7 +44,7 @@ export const useCompany = () => {
 
         companyStore.dispatch({ type: 'isLoading', data: true })
 
-        socket.once('get_company', (response) => {
+        once('get_company', (response) => {
             companyStore.dispatch({ type: 'isLoading', data: false })
             
             if (response.success) {
@@ -50,13 +54,13 @@ export const useCompany = () => {
             }
         })
 
-        socket.emit('get_company', { token })
+        emit('get_company', { token })
         
     }, [token])
 
     const saveData = useCallback((data: CompanyData) => {
-        const socket = socketService.getSocket()
-        if (!socket) {
+
+        if (!isConnected) {
             toast.error('Нет подключения')
             return
         }
@@ -68,7 +72,7 @@ export const useCompany = () => {
 
         companyStore.dispatch({ type: 'isSaving', data: true })
 
-        socket.once('set_company', (response) => {
+        once('set_company', (response) => {
             companyStore.dispatch({ type: 'isSaving', data: false })
             
             if (response.success) {
@@ -80,7 +84,7 @@ export const useCompany = () => {
             }
         })
 
-        socket.emit('set_company', { token, ...data })
+        emit('set_company', { token, ...data })
         toast.info("Данные компании сохраняются...")
         
     }, [token])

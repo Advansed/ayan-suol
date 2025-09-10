@@ -131,7 +131,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({
 
             {/* Название груза */}
             <div className="fs-08 mt-05 cl-black">
-                <b>{cargo.name}</b>
+                <b>{ cargo.name }</b>
             </div>
 
             {/* Маршрут в одну строку */}
