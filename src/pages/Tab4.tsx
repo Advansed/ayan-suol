@@ -2,10 +2,10 @@ import React from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import { CargoArchive } from '../components/Cargos';
 import { WorkArchive } from '../components/Works/components';
-import { useLogin } from '../Store/useLogin';
+import { useUserType } from '../Store/loginStore';
 
 const Tab4: React.FC = () => {
-  const { user_type } = useLogin()
+  const user_type = useUserType()
 
   return (
     <IonPage>

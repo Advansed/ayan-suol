@@ -16,15 +16,11 @@ export const ServerConnectionGuard: React.FC<ServerConnectionGuardProps> = ({ ch
   const isConnected = useSocketStore((state) => state.isConnected)
   const isConnecting = useSocketStore((state) => state.isConnecting)
   
-  console.log("ServerConnectionGuard render, isConnected:", isConnected)
-
   const checkServerConnection = async () => {
-    console.log("check server");
     setError(null);
 
     try {
       if (isConnected) {
-        console.log("check connected");
       } else {
         await connect('');
         // Устанавливаем обработчики ПОСЛЕ успешного подключения
@@ -38,7 +34,6 @@ export const ServerConnectionGuard: React.FC<ServerConnectionGuardProps> = ({ ch
     checkServerConnection();
   }, [isConnected]);
 
-  console.log("isConnected", isConnected)
   // Если сервер доступен - показываем приложение
   if (isConnected) {
     return <>{children}</>;

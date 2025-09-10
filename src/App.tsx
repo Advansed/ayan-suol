@@ -55,7 +55,7 @@ setupIonicReact({
 
 
 const AppContent: React.FC = () => {
-  const { auth, user_type } = useLogin();
+  const { auth, user } = useLogin();
 
   useSocketManager()
 
@@ -95,7 +95,7 @@ const AppContent: React.FC = () => {
 
               <IonTabButton tab="tab1" href="/tab1">
                 <IonIcon aria-hidden="true" icon={ contractOutline } />
-                <IonLabel>{user_type === 2 ? "Работы" : "Заказы"}</IonLabel>
+                <IonLabel>{user.user_type === 2 ? "Работы" : "Заказы"}</IonLabel>
               </IonTabButton>
 
               <IonTabButton tab="tab4" href="/tab4">
@@ -109,7 +109,7 @@ const AppContent: React.FC = () => {
                 }}
               >
                 <IonIcon aria-hidden="true" icon={ chatboxEllipsesOutline } />
-                <IonLabel>{user_type === 2 ? "Чат" : "Чат"}</IonLabel>
+                <IonLabel>{user.user_type === 2 ? "Чат" : "Чат"}</IonLabel>
               </IonTabButton>
 
               <IonTabButton tab="tab3" href="/tab3">

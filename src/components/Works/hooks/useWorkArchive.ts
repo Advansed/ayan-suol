@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react';
-import { WorkStatus } from '../types';
-import { useSelector } from '../../Store';
+import { WorkInfo, WorkStatus } from '../types';
 import { useWorks } from '../../../Store/useWorks';
 
 const useWorkArchive = () => {
   const { isLoading, refreshWorks } = useWorks();
-  const works = useSelector((state) => state.works, 13); // TODO: добавить works в Store
+  const works: WorkInfo[] =  [] //useSelector((state) => state.works, 13); // TODO: добавить works в Store
   const [refreshing, setRefreshing] = useState(false);
 
   // Фильтруем выполненные работы

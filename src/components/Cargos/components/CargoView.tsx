@@ -17,7 +17,6 @@ import {
 } from 'ionicons/icons';
 import { CargoCard } from './CargoCard';
 import { statusUtils, formatters } from '../utils';
-import { Store } from '../../Store';
 import { cargoGetters, CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 
 
@@ -49,19 +48,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
     const [ showPublishAlert,    setShowPublishAlert ]    = useState(false);
     const [ currentCargo,        setCurrentCargo ]        = useState(cargo);
     
-    // Подписка на обновления cargo
-    useEffect(() => {
-        Store.subscribe({num: 201, type: "cargos", func: ()=>{
-            const cargos = Store.getState().cargos
-            const updated = cargos.find((c: CargoInfo) => c.guid === currentCargo.guid);
-            if (updated) setCurrentCargo(updated);
-        }})
-
-        return () => {
-            Store.unSubscribe(201)
-        };
-    }, []);
-
     const handleDelete = async () => {
         setShowDeleteAlert(false);
         await onDelete( cargo.guid );
@@ -74,7 +60,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
         setCurrentCargo( cargoGetters.getCargo( cargo.guid ) as CargoInfo )
         
     };
-
 
     const renderActionButtons = () => {
         const canEdit = statusUtils.canEdit(currentCargo.status);

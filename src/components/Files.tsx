@@ -5,7 +5,6 @@ import { cameraOutline, sendOutline } from "ionicons/icons";
 import { jsPDF } from "jspdf";
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { IonButton, IonChip, IonIcon, IonLoading, IonModal } from "@ionic/react";
-import { Store, getData } from "./Store";
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import { RenderCurrentScaleProps, RenderZoomInProps, RenderZoomOutProps, zoomPlugin } from '@react-pdf-viewer/zoom';
 
@@ -222,15 +221,7 @@ export function         PDFDoc( props ){
                     /* eslint-disable */
                     onClick={()=>{ 
                         async function send() {
-                            const res = await getData('SendMail', {
-                                token: Store.getState().login.token,
-                                type: props.title,
-                                name: props.name,
-                                email: Store.getState().profile.email,
-                                image: props.url,
-                            } )
-                            console.log(res)
-                            setMessage(res.message)
+                            console.log("send email")
                         }
                         send()
                     }}

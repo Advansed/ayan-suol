@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Store } from '../Store'
 import { useSocket } from '../../Store/useSocket'
+import { loginGetters } from '../../Store/loginStore'
 
 export interface ChatItem {
   recipient: string
@@ -26,6 +26,7 @@ export const useChatList = (): UseChatListReturn => {
   const [chats, setChats] = useState<ChatItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const token = loginGetters.getToken()
   const { emit, socket } = useSocket()
 
   // Загрузка чатов
@@ -34,7 +35,7 @@ export const useChatList = (): UseChatListReturn => {
     if (socket) {
       setIsLoading(true)
       socket.emit('get_chats', {
-        token: Store.getState().login.token
+        token: token
       })
     }
   }, [])

@@ -1,7 +1,3 @@
-/**
- * Компонент списка грузов
- */
-
 import React, { useState } from 'react';
 import { 
     IonIcon, 

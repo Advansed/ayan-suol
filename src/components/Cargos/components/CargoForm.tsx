@@ -207,8 +207,6 @@ const pagesToCargo = (pages: PageData, originalCargo?: CargoInfo): CargoInfo => 
 };
 
 
-
-
 export const CargoForm: React.FC<CargoFormProps> = ({ 
   cargo, 
   onBack, 

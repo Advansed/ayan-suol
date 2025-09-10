@@ -1,10 +1,10 @@
 // src/Store/cargoStore.ts
-import socketService from '../components/Sockets' // Добавили импорт
-
-import { UniversalStore, TState } from './Store'
+import { archive } from 'ionicons/icons';
+import { create } from 'zustand'
+import { devtools } from 'zustand/middleware'
 
 // ============================================
-// ТИПЫ
+// ТИПЫ (сохраняем существующие)
 // ============================================
 export interface CargoCity {
     city: string,
@@ -93,15 +93,6 @@ export interface CargoFilters {
     maxPrice?: number
 }
 
-export interface CargoState extends TState {
-    cargos: CargoInfo[]
-    isLoading: boolean
-    currentPage: PageType
-    filters: CargoFilters
-    searchQuery: string
-    navigationHistory: PageType[]
-}
-
 // ============================================
 // КОНСТАНТЫ
 // ============================================
@@ -139,94 +130,159 @@ export const EMPTY_CARGO: CargoInfo = {
 }
 
 // ============================================
-// STORE
+// ZUSTAND STORE
 // ============================================
-export const cargoStore = new UniversalStore<CargoState>({
-    initialState: {
-        cargos: [],
-        isLoading: false,
-        currentPage: { type: 'list' },
-        filters: {},
-        searchQuery: '',
-        navigationHistory: [{ type: 'list' }]
-    },
-    enableLogging: true
-})
+export interface CargoState {
+    cargos:             CargoInfo[]
+    archives:           CargoInfo[]
+    isLoading:          boolean
+    currentPage:        PageType
+    filters:            CargoFilters
+    searchQuery:        string
+    navigationHistory:  PageType[]
+}
 
+interface CargoActions {
+    setCargos:      (cargos: CargoInfo[]) => void
+    setLoading:     (loading: boolean) => void
+    setCurrentPage: (page: PageType) => void
+    setFilters:     (filters: CargoFilters) => void
+    setSearchQuery: (query: string) => void
+    navigateTo:     (page: PageType) => void
+    goBack:         () => void
+    updateCargo:    (guid: string, data: Partial<CargoInfo>) => void
+    publishCargo:   (guid: string) => void
+    addCargo:       (cargo: CargoInfo) => void
+    removeCargo:    (guid: string) => void
+}
+
+type CargoStore = CargoState & CargoActions
+
+export const useCargoStore = create<CargoStore>()(
+  devtools(
+    (set, get) => ({
+      // STATE
+      cargos:             [],
+      archives:           [],
+      isLoading:          false,
+      currentPage:        { type: 'list' },
+      filters:            {},
+      searchQuery:        '',
+      navigationHistory:  [{ type: 'list' }],
+
+      // ACTIONS
+      setCargos:          (cargos)        => set({ cargos }),
+      setCargoArhcives:   (archives)      => set({ archives }),
+      setLoading:         (isLoading)     => set({ isLoading }),
+      setCurrentPage:     (currentPage)   => set({ currentPage }),
+      setFilters:         (filters)       => set({ filters }),
+      setSearchQuery:     (searchQuery)   => set({ searchQuery }),
+
+      navigateTo: (page) => {
+        const { navigationHistory } = get()
+        set({ 
+          currentPage: page,
+          navigationHistory: [...navigationHistory, page]
+        })
+      },
+
+      goBack: () => set({ currentPage: { type: 'list' } }),
+
+      updateCargo: (guid, data) => {
+        const { cargos } = get()
+        const updated = cargos.map(c => 
+          c.guid === guid ? { ...c, ...data } : c
+        )
+        set({ cargos: updated })
+      },
+
+      publishCargo: (guid) => {
+        const { cargos } = get()
+        const updated = cargos.map(c => 
+          c.guid === guid ? { ...c, status: CargoStatus.WAITING } : c
+        )
+        set({ cargos: updated })
+      },
+
+      addCargo: (cargo) => {
+        const { cargos } = get()
+        set({ cargos: [...cargos, cargo] })
+      },
+
+      removeCargo: (guid) => {
+        const { cargos } = get()
+        set({ cargos: cargos.filter(c => c.guid !== guid) })
+      }
+    }),
+    { name: 'cargo-store' }
+  )
+)
+
+// ============================================
+// GETTERS (совместимость)
+// ============================================
 export const cargoGetters = {
-
-  getCargo: (guid: string): CargoInfo | undefined => {
-    return cargoStore.getState().cargos.find(c => c.guid === guid)
-  }
-
+  getCargo: (guid: string): CargoInfo | undefined => 
+    useCargoStore.getState().cargos.find(c => c.guid === guid)
 }
 
+// ============================================
+// ACTIONS (совместимость)
+// ============================================
 export const cargoActions = {
-
-  updateCargo: ( guid: string, data: Partial<CargoInfo> ) => {
-    const cargos = cargoStore.getState().cargos
-    const updated = cargos.map(c => 
-      c.guid === guid ? { ...c, ...data } : c
-    )
-    cargoStore.dispatch({ type: 'cargos', data: updated })
-  },
-
-  publishCargo: ( guid: string ) => {
-    const cargos = cargoStore.getState().cargos
-    const updated = cargos.map(c => 
-      c.guid === guid ? { ...c, status: "В ожидании" } : c
-    )
-    cargoStore.dispatch({ type: 'cargos', data: updated })
-  }
-  
+  updateCargo: (guid: string, data: Partial<CargoInfo>) => 
+    useCargoStore.getState().updateCargo(guid, data),
+  publishCargo: (guid: string) => 
+    useCargoStore.getState().publishCargo(guid)
 }
-
 
 // ============================================
 // SOCKET ОБРАБОТЧИКИ
 // ============================================
 export const cargoSocketHandlers = {
-    
-    onGetCargos:    (response: any) => {
+
+    onGetCargos: (response: any) => {
         console.log('onGetCargos response:', response)
-        cargoStore.dispatch({ type: 'isLoading', data: false })
+        useCargoStore.getState().setLoading(false)
         
         if (response.success && Array.isArray(response.data)) {
-            cargoStore.dispatch({ type: 'cargos', data: response.data })
+            useCargoStore.getState().setCargos(response.data)
         } else {
             console.error('Invalid cargos response:', response)
         }
     },
 
-    onSaveCargo:    (response: any) => {
-        console.log('onSaveCargo response:', response)
+    onGetCargoArchives: (response: any) => {
+        console.log('onGetCargoArchives response:', response)
+        useCargoStore.getState().setLoading(false)
         
-        if (response.success && response.data) {
-            const currentCargos = cargoStore.getState().cargos
-            const existingIndex = currentCargos.findIndex(c => c.guid === response.data.guid)
-            
-            let updatedCargos: CargoInfo[]
-            if (existingIndex >= 0) {
-                // Обновляем существующий
-                updatedCargos = currentCargos.map((c, i) => 
-                    i === existingIndex ? response.data : c
-                )
-            } else {
-                // Добавляем новый
-                updatedCargos = [...currentCargos, response.data]
-            }
-            
-            cargoStore.dispatch({ type: 'cargos', data: updatedCargos })
+        if (response.success && Array.isArray(response.data)) {
+            useCargoStore.getState().setCargos(response.data)
+        } else {
+            console.error('Invalid cargos response:', response)
         }
     },
 
-    onDeleteCargo:  (response: any) => {
+    onSaveCargo: (response: any) => {
+        console.log('onSaveCargo response:', response)
+        
+        if (response.success && response.data) {
+            const { cargos } = useCargoStore.getState()
+            const existingIndex = cargos.findIndex(c => c.guid === response.data.guid)
+            
+            if (existingIndex >= 0) {
+                useCargoStore.getState().updateCargo(response.data.guid, response.data)
+            } else {
+                useCargoStore.getState().addCargo(response.data)
+            }
+        }
+    },
+
+    onDeleteCargo: (response: any) => {
         console.log('onDeleteCargo response:', response)
         
         if (response.success && response.guid) {
-            const currentCargos = cargoStore.getState().cargos
-            const updatedCargos = currentCargos.filter(c => c.guid !== response.guid)
-            cargoStore.dispatch({ type: 'cargos', data: updatedCargos })
+            useCargoStore.getState().removeCargo(response.guid)
         }
     },
 
@@ -234,11 +290,7 @@ export const cargoSocketHandlers = {
         console.log('onPublishCargo response:', response)
         
         if (response.success && response.data) {
-            const currentCargos = cargoStore.getState().cargos
-            const updatedCargos = currentCargos.map(c => 
-                c.guid === response.data.guid ? response.data : c
-            )
-            cargoStore.dispatch({ type: 'cargos', data: updatedCargos })
+            useCargoStore.getState().updateCargo(response.data.guid, response.data)
         }
     }
 }
@@ -249,11 +301,11 @@ export const cargoSocketHandlers = {
 export const initCargoSocketHandlers = (socket: any) => {
     if (!socket) return
     
-    // Подписываемся на события
-    socket.on('get_cargos', cargoSocketHandlers.onGetCargos)
-    socket.on('save_cargo', cargoSocketHandlers.onSaveCargo)  
-    socket.on('delete_cargo', cargoSocketHandlers.onDeleteCargo)
-    socket.on('publish_cargo', cargoSocketHandlers.onPublishCargo)
+    socket.on('get_cargos',           cargoSocketHandlers.onGetCargos)
+    socket.on('get_cargo_archives',   cargoSocketHandlers.onGetCargoArchives)
+    socket.on('save_cargo',           cargoSocketHandlers.onSaveCargo)  
+    socket.on('delete_cargo',         cargoSocketHandlers.onDeleteCargo)
+    socket.on('publish_cargo',        cargoSocketHandlers.onPublishCargo)
     
     console.log('Cargo socket handlers initialized')
 }
@@ -261,12 +313,11 @@ export const initCargoSocketHandlers = (socket: any) => {
 export const destroyCargoSocketHandlers = (socket: any) => {
     if (!socket) return
     
-    // Отписываемся от событий
-    socket.off('get_cargos', cargoSocketHandlers.onGetCargos)
-    socket.off('save_cargo', cargoSocketHandlers.onSaveCargo)
-    socket.off('delete_cargo', cargoSocketHandlers.onDeleteCargo)
-    socket.off('publish_cargo', cargoSocketHandlers.onPublishCargo)
+    socket.off('get_cargos',          cargoSocketHandlers.onGetCargos)
+    socket.off('get_cargo_archives',  cargoSocketHandlers.onGetCargoArchives)
+    socket.off('save_cargo',          cargoSocketHandlers.onSaveCargo)
+    socket.off('delete_cargo',        cargoSocketHandlers.onDeleteCargo)
+    socket.off('publish_cargo',       cargoSocketHandlers.onPublishCargo)
     
     console.log('Cargo socket handlers destroyed')
 }
-

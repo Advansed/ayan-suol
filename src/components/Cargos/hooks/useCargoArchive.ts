@@ -1,9 +1,8 @@
 import { useState, useMemo }  from 'react';
-import { useSelector }        from '../../Store';
-import { CargoStatus }        from '../../../Store/cargoStore';
+import { CargoInfo, CargoStatus }        from '../../../Store/cargoStore';
 
 const useCargoArchive = () => {
-  const cargos = useSelector((state) => state.cargos, 12);
+  const cargos: CargoInfo[] = [] //useSelector((state) => state.cargos, 12);
   const [refreshing, setRefreshing] = useState(false);
 
   // Фильтруем завершенные заказы

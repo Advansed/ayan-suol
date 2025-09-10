@@ -1,7 +1,3 @@
-/**
- * Компонент секций инвойсов для груза
- */
-
 import React from 'react';
 import { DriverCard } from '../../DriverCards';
 import { CargoInfo, CargoInvoice } from '../../../Store/cargoStore';

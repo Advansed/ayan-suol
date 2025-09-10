@@ -1,12 +1,11 @@
 import { IonButton, IonContent, IonModal, IonPage } from '@ionic/react';
 import './Tab1.css';
 import { Cargos }     from '../components/Cargos/';
-import { useState }   from 'react';
 import { Works } from '../components/Works';
-import { useLogin } from '../Store/useLogin';
+import { useUserType } from '../Store/loginStore';
 
 const Tab1: React.FC = () => {
-  const { user_type } = useLogin()
+  const user_type  = useUserType()
   
   
   return (

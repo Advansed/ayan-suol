@@ -8,7 +8,7 @@ import { InsurancePage }                        from './components/InsurancePage
 import { cargoGetters, CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
 import { loginGetters }                         from '../../Store/loginStore';
 import { CargoForm }                            from './components';
-import { useSocket } from '../../Store/useSocket';
+import { IonLoading } from '@ionic/react';
 
 export const Cargos: React.FC = () => {
     const token = loginGetters.getToken()
@@ -28,7 +28,6 @@ export const Cargos: React.FC = () => {
         refreshCargos
     } = useCargos();
 
-    const { emit, once } = useSocket()
     // Проверка авторизации
     if (!token) {
         return <div>Необходима авторизация</div>;
@@ -144,6 +143,7 @@ export const Cargos: React.FC = () => {
 
     return (
         <div className="cargos-module">
+            <IonLoading isOpen = { isLoading } message = { "Подождите" } />
             {renderContent()}
         </div>
     );

@@ -1,19 +1,20 @@
 import { useCallback, useState } from 'react';
 import { useHistory } from 'react-router';
-import { Store } from '../../Store';
 import { UseDriverActionsProps, TaskCompletion } from '../types';
 import { useSocket } from '../../../Store/useSocket';
+import { useToken } from '../../../Store/loginStore';
 
 export const useDriverActions = ({ info, mode, setPage }: UseDriverActionsProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const history = useHistory();
-    const { socket, emit } = useSocket()
+    const { emit } = useSocket()
+    const token = useToken()
 
     const handleAccept = useCallback(async () => {
         setIsLoading(true);
         try {
             emit('set_inv', {
-                token: Store.getState().login.token,
+                token: token,
                 recipient: info.recipient,
                 id: info.guid,
                 status: "Принято"
@@ -29,7 +30,7 @@ export const useDriverActions = ({ info, mode, setPage }: UseDriverActionsProps)
         setIsLoading(true);
         try {
             emit('rejected', {
-                token: Store.getState().login.token,
+                token: token,
                 id: info.guid
             });
         } catch (error) {
@@ -43,7 +44,7 @@ export const useDriverActions = ({ info, mode, setPage }: UseDriverActionsProps)
         setIsLoading(true);
         try {
             emit('completed', {
-                token: Store.getState().login.token,
+                token: token,
                 id: info.guid,
                 recipient: info.recipient,
                 rating,

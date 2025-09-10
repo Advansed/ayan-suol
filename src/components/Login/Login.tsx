@@ -56,16 +56,16 @@ const Login: React.FC = () => {
       {/* Условный рендеринг форм */}
       {currentForm === 'login' && (
         <LoginForm 
-          onLogin={handleLogin}
-          onSwitchToRegister={handleSwitchToRegister}
-          onSwitchToRecovery={handleSwitchToRecovery}
+          onLogin             = { handleLogin }
+          onSwitchToRegister  = { handleSwitchToRegister }
+          onSwitchToRecovery  = { handleSwitchToRecovery }
         />
       )}
       
       {currentForm === 'register' && (
         <RegistrationForm 
-          onSwitchToLogin={handleSwitchToLogin}
-          onSwitchToRecovery={handleSwitchToRecovery}
+          onSwitchToLogin     = { handleSwitchToLogin }
+          onSwitchToRecovery  = { handleSwitchToRecovery }
         />
       )}
       

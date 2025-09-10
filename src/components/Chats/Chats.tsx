@@ -2,9 +2,9 @@ import React, { useState, useRef, useCallback, useMemo, useEffect } from "react"
 import { useIonViewDidEnter, useIonViewDidLeave } from "@ionic/react";
 import { IonIcon, IonRefresher, IonRefresherContent, useIonRouter } from "@ionic/react";
 import { arrowBackOutline, sendSharp } from "ionicons/icons";
-import { Store } from "../Store";
 import "./Chats.css";
 import { useSocket } from "../../Store/useSocket";
+import { loginGetters } from "../../Store/loginStore";
 
 interface ChatsProps {
     name: string;
@@ -163,6 +163,8 @@ export function Chats(props: ChatsProps) {
     const socketRef = useRef<any>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    const token = loginGetters.getToken()
+
     const { socket } = useSocket()
 
     // Мемоизируем разбор имени
@@ -181,7 +183,7 @@ export function Chats(props: ChatsProps) {
 
     // Мемоизируем параметры для сокета
     const socketParams = useMemo(() => ({
-        token: Store.getState().login.token,
+        token:  token,
         recipient: arr[0],
         cargo: arr[1]
     }), [arr]);
@@ -244,7 +246,7 @@ export function Chats(props: ChatsProps) {
         if (!value.trim() || !socketRef.current) return;
         
         socketRef.current.emit("send_message", {
-            token:          Store.getState().login.token,
+            token:          token,
             cargo:          arr[1],
             recipient:      arr[0],
             message:        value

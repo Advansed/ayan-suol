@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Store } from '../../Store'
 import { useSocket } from '../../../Store/useSocket'
 
 // ======================
@@ -366,8 +365,8 @@ export const useReg = (): UseRegReturn => {
         // Успешная регистрация - можно показать успех или перенаправить
         console.log("Registration completed successfully")
         updateState({ error: '', registrationStep: 0 }) // Сброс формы
-        Store.dispatch({ type: "auth", data: true })
-        Store.dispatch({ type: "login", data: response.data })
+        // Store.dispatch({ type: "auth", data: true })
+        // Store.dispatch({ type: "login", data: response.data })
       } else {
         updateState({ error: response.message || 'Ошибка сохранения пароля' })
       }

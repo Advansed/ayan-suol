@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
-import { Store } from '../../Store';
 import { useSocket } from '../../../Store/useSocket';
+import { loginGetters } from '../../../Store/loginStore';
 
 interface PaymentResult {
   success: boolean;
@@ -19,6 +19,7 @@ export const usePayment = (): UsePaymentReturn => {
   const [error, setError] = useState<string | null>(null);
   const pendingRequests = useRef<Map<string, { resolve: Function, reject: Function }>>(new Map());
   const { socket } = useSocket()
+  const token = loginGetters.getToken()
 
   // Универсальная функция для socket запросов с ответом
   const socketRequest = useCallback((event: string, data: any, responseEvent: string): Promise<PaymentResult> => {
@@ -72,7 +73,6 @@ export const usePayment = (): UsePaymentReturn => {
     setError(null);
 
     try {
-      const token = Store.getState().login.token;
       
       const result = await socketRequest(
         'set_advance', 
@@ -100,7 +100,6 @@ export const usePayment = (): UsePaymentReturn => {
     setError(null);
 
     try {
-      const token = Store.getState().login.token;
       
       const result = await socketRequest(
         'set_insurance',

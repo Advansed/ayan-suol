@@ -2,13 +2,15 @@
 
 import { useEffect, useCallback } from 'react'
 import socketService from '../services/socketService'
-import { socketActions } from './socketStore'
+import { socketActions, useSocketStore } from './socketStore'
 
 // ============================================
 // HOOK
 // ============================================
 
 export function useSocket() {
+
+  const isConnected = useSocketStore((state) => state.isConnected)
 
 
   const connect     = useCallback(async (token: string) => {
@@ -38,6 +40,7 @@ export function useSocket() {
   }, [])
 
   const emit        = useCallback((event: string, data?: any) => {
+    console.log("emit... " + event, data)
     return socketService.emit(event, data)
   }, [])
 
@@ -69,6 +72,7 @@ export function useSocket() {
   const socket      = socketService.getSocket()
 
   return {
+    isConnected,
     socket,
     connect,
     disconnect,
