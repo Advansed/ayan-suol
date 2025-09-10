@@ -221,7 +221,6 @@ export const useCargos = (): UseCargosReturn => {
         setLoading(true)
         try {
             emit(SOCKET_EVENTS.GET_CARGOS, { token })
-            emit(SOCKET_EVENTS.GET_ORGS, { token })
         } catch (error) {
             toast.error('Ошибка обновления данных')
         } finally {

@@ -6,12 +6,10 @@ import { CargoInvoiceSections }                 from './components/CargoInvoices
 import { PrepaymentPage }                       from './components/PrePaymentMethod';
 import { InsurancePage }                        from './components/InsurancePage';
 import { cargoGetters, CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
-import { loginGetters }                         from '../../Store/loginStore';
 import { CargoForm }                            from './components';
-import { IonLoading } from '@ionic/react';
+import { IonLoading }                           from '@ionic/react';
 
 export const Cargos: React.FC = () => {
-    const token = loginGetters.getToken()
     const {
         cargos,
         isLoading,
@@ -28,18 +26,14 @@ export const Cargos: React.FC = () => {
         refreshCargos
     } = useCargos();
 
-    // Проверка авторизации
-    if (!token) {
-        return <div>Необходима авторизация</div>;
-    }
+    console.log("Cargos", cargos)
 
     // Обработчики для списка
     
     const handleCreateNew = () => {
         navigateTo({ type: 'create' });
     }
-
-    
+  
     const handleCargoClick = (cargo: CargoInfo) => navigateTo({ type: 'view', cargo });
 
 
