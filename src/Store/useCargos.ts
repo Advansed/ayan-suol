@@ -6,8 +6,7 @@ import {
     useCargoStore,
     CargoInfo, 
     CargoFilters,
-    EMPTY_CARGO,
-    CargoStatus
+    EMPTY_CARGO
 } from './cargoStore'
 import { useToken } from './loginStore'
 import { useSocketStore } from './socketStore'
@@ -18,10 +17,6 @@ import { useSocketStore } from './socketStore'
 export interface UseCargosReturn {
     cargos:             CargoInfo[]
     isLoading:          boolean
-    filters:            CargoFilters
-    searchQuery:        string
-    setFilters:         (filters: CargoFilters) => void  
-    setSearchQuery:     (query: string) => void
     createCargo:        (data: Partial<CargoInfo>) => Promise<boolean>
     updateCargo:        (guid: string, data: Partial<CargoInfo>) => Promise<boolean>
     deleteCargo:        (guid: string) => Promise<boolean>
@@ -169,10 +164,6 @@ export const useCargos = (): UseCargosReturn => {
     return {
         cargos,
         isLoading,
-        filters,
-        searchQuery,
-        setFilters,
-        setSearchQuery,
         createCargo,
         updateCargo,
         deleteCargo,

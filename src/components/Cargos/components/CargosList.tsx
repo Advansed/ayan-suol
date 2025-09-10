@@ -1,29 +1,16 @@
 import React, { useState } from 'react';
 import { 
-    IonIcon, 
-    IonInput, 
-    IonButton,
-    IonLabel,
-    IonSelect,
-    IonSelectOption,
     IonRefresher,
     IonRefresherContent,
     IonSpinner
 } from '@ionic/react';
-import { 
-    filterOutline
-} from 'ionicons/icons';
 import { CargoCard } from './CargoCard';
 import { Package } from "lucide-react";
-import { CargoFilters, CargoInfo, CargoStatus } from '../../../Store/cargoStore';
+import { CargoInfo } from '../../../Store/cargoStore';
 
 interface CargosListProps {
     cargos: CargoInfo[];
     isLoading?: boolean;
-    searchQuery: string;
-    onSearchChange: (query: string) => void;
-    filters: CargoFilters;
-    onFiltersChange: (filters: CargoFilters) => void;
     onCreateNew: () => void;
     onCargoClick: (cargo: CargoInfo) => void;
     onRefresh?: () => Promise<void>;
@@ -32,10 +19,6 @@ interface CargosListProps {
 export const CargosList: React.FC<CargosListProps> = ({
     cargos,
     isLoading = false,
-    searchQuery,
-    onSearchChange,
-    filters,
-    onFiltersChange,
     onCreateNew,
     onCargoClick,
     onRefresh
@@ -49,39 +32,16 @@ export const CargosList: React.FC<CargosListProps> = ({
         event.detail.complete();
     };
 
-    const handleStatusFilterChange = (statuses: CargoStatus[]) => {
-        onFiltersChange({
-            ...filters,
-            status: statuses.length > 0 ? statuses : undefined
-        });
-    };
-
-    const clearFilters = () => {
-        onFiltersChange({});
-        onSearchChange('');
-    };
-
-    const hasActiveFilters = () => {
-        return searchQuery || 
-               filters.status?.length || 
-               filters.cityTo || 
-               filters.cityFrom || 
-               filters.dateFrom || 
-               filters.dateTo || 
-               filters.minPrice ||
-               filters.maxPrice;
-    };
-
     const renderEmptyState = () => (
         <div className="cr-card mt-1 text-center">
             <div className="fs-09 cl-gray mb-1">
-                {hasActiveFilters() ? 'Грузы не найдены' : 'У вас пока нет грузов'}
+                { 'Грузы не найдены' }
             </div>
-            {!hasActiveFilters() && (
+            {
                 <div className="fs-08 cl-gray">
                     Создайте первый груз для перевозки
                 </div>
-            )}
+            }
         </div>
     );
 
@@ -119,168 +79,6 @@ export const CargosList: React.FC<CargosListProps> = ({
                 <span className="ml-3 font-semibold">Создать новый груз</span>
                 </div>
             </div>
-
-            {/* Поиск */}
-            <div className="cr-card mt-1">
-                <div className="flex">
-                    <div className="flex-1">
-                        <IonInput
-                            value={searchQuery}
-                            placeholder="Поиск по названию или городу..."
-                            onIonInput={(e) => onSearchChange(e.detail.value as string)}
-                            className="custom-input"
-                        />
-                    </div>
-                    <IonButton
-                        fill="clear"
-                        size="small"
-                        onClick={() => setShowFilters(!showFilters)}
-                        color={hasActiveFilters() ? 'primary' : 'medium'}
-                    >
-                        <IonIcon icon={filterOutline} />
-                    </IonButton>
-                </div>
-            </div>
-
-            {/* Фильтры */}
-            {showFilters && (
-                <div className="cr-card mt-1">
-                    <div className="fs-09 mb-1"><b>Фильтры</b></div>
-                    
-                    {/* Фильтр по статусу */}
-                    <div className="mb-1">
-                        <div className="fs-08 mb-05">Статус</div>
-                        <IonSelect
-                            value={filters.status}
-                            placeholder="Выберите статусы..."
-                            multiple={true}
-                            onIonChange={(e) => handleStatusFilterChange(e.detail.value)}
-                        >
-                            {Object.values(CargoStatus).map(status => (
-                                <IonSelectOption key={status} value={status}>
-                                    {status}
-                                </IonSelectOption>
-                            ))}
-                        </IonSelect>
-                    </div>
-
-                    {/* Фильтр по городам */}
-                    <div className="flex mb-1">
-                        <div className="w-50">
-                            <div className="fs-08 mb-05">Откуда</div>
-                            <IonInput
-                                value={filters.cityFrom}
-                                placeholder="Город отправления..."
-                                onIonInput={(e) => onFiltersChange({
-                                    ...filters,
-                                    cityFrom: e.detail.value as string
-                                })}
-                                className="custom-input"
-                            />
-                        </div>
-                        <div className="w-50 ml-1">
-                            <div className="fs-08 mb-05">Куда</div>
-                            <IonInput
-                                value={filters.cityTo}
-                                placeholder="Город назначения..."
-                                onIonInput={(e) => onFiltersChange({
-                                    ...filters,
-                                    cityTo: e.detail.value as string
-                                })}
-                                className="custom-input"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Фильтр по цене */}
-                    <div className="flex mb-1">
-                        <div className="w-50">
-                            <div className="fs-08 mb-05">Цена от</div>
-                            <IonInput
-                                value={filters.minPrice}
-                                type="number"
-                                placeholder="0"
-                                onIonInput={(e) => onFiltersChange({
-                                    ...filters,
-                                    minPrice: parseInt(e.detail.value as string) || undefined
-                                })}
-                                className="custom-input"
-                            />
-                        </div>
-                        <div className="w-50 ml-1">
-                            <div className="fs-08 mb-05">Цена до</div>
-                            <IonInput
-                                value={filters.maxPrice}
-                                type="number"
-                                placeholder="1000000"
-                                onIonInput={(e) => onFiltersChange({
-                                    ...filters,
-                                    maxPrice: parseInt(e.detail.value as string) || undefined
-                                })}
-                                className="custom-input"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Кнопки управления фильтрами */}
-                    <div className="flex">
-                        <IonButton
-                            fill="clear"
-                            size="small"
-                            onClick={clearFilters}
-                            disabled={!hasActiveFilters()}
-                        >
-                            <IonLabel>Очистить</IonLabel>
-                        </IonButton>
-                        <IonButton
-                            fill="clear"
-                            size="small"
-                            onClick={() => setShowFilters(false)}
-                        >
-                            <IonLabel>Скрыть</IonLabel>
-                        </IonButton>
-                    </div>
-                </div>
-            )}
-
-            {/* Активные фильтры */}
-            {hasActiveFilters() && (
-                <div className="cr-card mt-1">
-                    <div className="fs-08 cl-gray mb-05">Активные фильтры:</div>
-                    <div className="flex flex-wrap">
-                        {searchQuery && (
-                            <div className="cr-chip mr-05 mb-05">
-                                Поиск: {searchQuery}
-                            </div>
-                        )}
-                        {filters.status?.map(status => (
-                            <div key={status} className="cr-chip mr-05 mb-05">
-                                {status}
-                            </div>
-                        ))}
-                        {filters.cityFrom && (
-                            <div className="cr-chip mr-05 mb-05">
-                                Откуда: {filters.cityFrom}
-                            </div>
-                        )}
-                        {filters.cityTo && (
-                            <div className="cr-chip mr-05 mb-05">
-                                Куда: {filters.cityTo}
-                            </div>
-                        )}
-                        {filters.minPrice && (
-                            <div className="cr-chip mr-05 mb-05">
-                                От: {filters.minPrice}₽
-                            </div>
-                        )}
-                        {filters.maxPrice && (
-                            <div className="cr-chip mr-05 mb-05">
-                                До: {filters.maxPrice}₽
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
 
             {/* Список грузов */}
             {isLoading ? (

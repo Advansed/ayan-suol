@@ -15,10 +15,6 @@ export const Cargos: React.FC = () => {
     const {
         cargos,
         isLoading,
-        filters,
-        searchQuery,
-        setFilters,
-        setSearchQuery,
         createCargo,
         updateCargo,
         deleteCargo,
@@ -63,10 +59,6 @@ export const Cargos: React.FC = () => {
                 return (
                     <CargosList
                         cargos          = { cargos }
-                        filters         = { filters }
-                        searchQuery     = { searchQuery }
-                        onFiltersChange = { setFilters }
-                        onSearchChange  = { setSearchQuery }
                         onCargoClick    = { handleCargoClick }
                         onCreateNew     = { handleCreateNew }
                         onRefresh       = { refreshCargos }
