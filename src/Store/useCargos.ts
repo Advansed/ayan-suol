@@ -1,12 +1,11 @@
 // src/Store/useCargos.ts
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useSocket } from './useSocket'
 import { useToast } from '../components/Toast'
 import { 
     useCargoStore,
     CargoInfo, 
     CargoFilters,
-    PageType,
     EMPTY_CARGO,
     CargoStatus
 } from './cargoStore'
@@ -19,11 +18,8 @@ import { useSocketStore } from './socketStore'
 export interface UseCargosReturn {
     cargos:             CargoInfo[]
     isLoading:          boolean
-    currentPage:        PageType
     filters:            CargoFilters
     searchQuery:        string
-    navigateTo:         (page: PageType) => void
-    goBack:             () => void
     setFilters:         (filters: CargoFilters) => void  
     setSearchQuery:     (query: string) => void
     createCargo:        (data: Partial<CargoInfo>) => Promise<boolean>
@@ -50,54 +46,19 @@ const SOCKET_EVENTS = {
 // HOOK
 // ============================================
 export const useCargos = (): UseCargosReturn => {
-    const token     = useToken()
-    const { emit }  = useSocket()
-    const toast     = useToast()
+    const token = useToken()
+    const { emit } = useSocket()
+    const toast = useToast()
+    const isConnected = useSocketStore(state => state.isConnected)
 
-    // zustand store
-    const {
-        cargos,
-        isLoading,
-        currentPage,
-        filters,
-        searchQuery,
-        navigateTo: storeNavigateTo,
-        goBack: storeGoBack,
-        setFilters: storeSetFilters,
-        setSearchQuery: storeSetSearchQuery,
-        setLoading,
-        setCurrentPage,
-        updateCargo: storeUpdateCargo,
-        publishCargo: storePublishCargo
-    } = useCargoStore()
+    // Мемоизированные селекторы
+    const cargos = useCargoStore(state => state.cargos)
+    const isLoading = useCargoStore(state => state.isLoading)
+    const filters = useCargoStore(state => state.filters)
+    const searchQuery = useCargoStore(state => state.searchQuery)
 
-    const isConnected = useSocketStore((state) => state.isConnected)
+    const { setLoading, setFilters, setSearchQuery, addCargo, updateCargo: storeUpdateCargo, deleteCargo: storeDeleteCargo, publishCargo: storePublishCargo } = useCargoStore()
 
-    // ============================================
-    // NAVIGATION
-    // ============================================
-    const navigateTo = useCallback((page: PageType) => {
-        storeNavigateTo(page)
-    }, [storeNavigateTo])
-
-    const goBack = useCallback(() => {
-        storeGoBack()
-    }, [storeGoBack])
-
-    // ============================================
-    // FILTERS
-    // ============================================
-    const setFilters = useCallback((newFilters: CargoFilters) => {
-        storeSetFilters(newFilters)
-    }, [storeSetFilters])
-
-    const setSearchQuery = useCallback((query: string) => {
-        storeSetSearchQuery(query)
-    }, [storeSetSearchQuery])
-
-    // ============================================
-    // CRUD
-    // ============================================
     const createCargo = useCallback(async (data: Partial<CargoInfo>): Promise<boolean> => {
         if (!isConnected) {
             toast.error('Нет соединения с сервером')
@@ -106,27 +67,18 @@ export const useCargos = (): UseCargosReturn => {
 
         setLoading(true)
         try {
-            const newCargo: CargoInfo = {
-                ...EMPTY_CARGO,
-                ...data,
-                guid: generateGuid(),
-                status: CargoStatus.NEW,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            }
-
-            emit(SOCKET_EVENTS.SAVE_CARGO, { token, ...newCargo })
-            setCurrentPage({ type: 'list' })
-
+            const newCargo = { ...EMPTY_CARGO, ...data }
+            addCargo(newCargo)
+            emit(SOCKET_EVENTS.SAVE_CARGO, { cargo: newCargo, token })
+            toast.success('Груз создан')
             return true
         } catch (error) {
-            console.error('Error creating cargo:', error)
             toast.error('Ошибка создания груза')
             return false
         } finally {
             setLoading(false)
         }
-    }, [token, isConnected, emit, toast, setLoading, setCurrentPage])
+    }, [token, isConnected, emit, toast, setLoading, addCargo])
 
     const updateCargo = useCallback(async (guid: string, data: Partial<CargoInfo>): Promise<boolean> => {
         if (!isConnected) {
@@ -136,21 +88,9 @@ export const useCargos = (): UseCargosReturn => {
 
         setLoading(true)
         try {
-            const existingCargo = cargos.find(c => c.guid === guid)
-            if (!existingCargo) {
-                toast.error('Груз не найден')
-                return false
-            }
-
-            const updatedCargo: CargoInfo = {
-                ...existingCargo,
-                ...data,
-                updatedAt: new Date().toISOString()
-            }
-
-            storeUpdateCargo(updatedCargo.guid, updatedCargo)
-            emit(SOCKET_EVENTS.SAVE_CARGO, { token, ...updatedCargo })
-
+            storeUpdateCargo(guid, data)
+            emit(SOCKET_EVENTS.UPDATE_CARGO, { guid, cargo: data, token })
+            toast.success('Груз обновлен')
             return true
         } catch (error) {
             toast.error('Ошибка обновления груза')
@@ -158,7 +98,7 @@ export const useCargos = (): UseCargosReturn => {
         } finally {
             setLoading(false)
         }
-    }, [token, isConnected, emit, toast, cargos, setLoading, storeUpdateCargo])
+    }, [token, isConnected, emit, toast, setLoading, storeUpdateCargo])
 
     const deleteCargo = useCallback(async (guid: string): Promise<boolean> => {
         if (!isConnected) {
@@ -168,9 +108,9 @@ export const useCargos = (): UseCargosReturn => {
 
         setLoading(true)
         try {
+            storeDeleteCargo(guid)
             emit(SOCKET_EVENTS.DELETE_CARGO, { guid, token })
-            setCurrentPage({ type: 'list' })
-
+            toast.success('Груз удален')
             return true
         } catch (error) {
             toast.error('Ошибка удаления груза')
@@ -178,7 +118,7 @@ export const useCargos = (): UseCargosReturn => {
         } finally {
             setLoading(false)
         }
-    }, [token, isConnected, emit, toast, setLoading, setCurrentPage])
+    }, [token, isConnected, emit, toast, setLoading, storeDeleteCargo])
 
     const publishCargo = useCallback(async (guid: string): Promise<boolean> => {
         if (!isConnected) {
@@ -190,7 +130,6 @@ export const useCargos = (): UseCargosReturn => {
         try {
             const cargo = cargos.find(c => c.guid === guid)
             if (!cargo) {
-                console.error('Cargo not found for publishing:', guid)
                 toast.error('Груз не найден')
                 return false
             }
@@ -198,7 +137,6 @@ export const useCargos = (): UseCargosReturn => {
             storePublishCargo(guid)
             emit(SOCKET_EVENTS.PUBLISH_CARGO, { guid, token })
             toast.info('Груз опубликован')
-
             return true
         } catch (error) {
             toast.error('Ошибка публикации груза')
@@ -231,11 +169,8 @@ export const useCargos = (): UseCargosReturn => {
     return {
         cargos,
         isLoading,
-        currentPage,
         filters,
         searchQuery,
-        navigateTo,
-        goBack,
         setFilters,
         setSearchQuery,
         createCargo,
@@ -247,35 +182,3 @@ export const useCargos = (): UseCargosReturn => {
     }
 }
 
-// ============================================
-// УТИЛИТЫ
-// ============================================
-const generateGuid = (): string => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0
-        const v = c == 'x' ? r : (r & 0x3 | 0x8)
-        return v.toString(16)
-    })
-}
-
-// ============================================
-// ДОПОЛНИТЕЛЬНЫЙ КОД (в комментариях)
-// ============================================
-/* 
-После внедрения нужно:
-
-1. Удалить старые файлы:
-   - Убрать import { useStore } из useCargos
-   - Убрать UniversalStore из cargoStore
-   - Убрать все dispatch вызовы
-
-2. Обновить компоненты:
-   - Заменить все cargoStore.dispatch на zustand actions
-   - Обновить импорты в компонентах
-
-3. Протестировать:
-   - Socket обработчики
-   - CRUD операции  
-   - Навигацию
-   - Фильтры и поиск
-*/

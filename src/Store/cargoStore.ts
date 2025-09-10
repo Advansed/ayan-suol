@@ -1,5 +1,4 @@
 // src/Store/cargoStore.ts
-import { archive } from 'ionicons/icons';
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
@@ -153,7 +152,7 @@ interface CargoActions {
     updateCargo:    (guid: string, data: Partial<CargoInfo>) => void
     publishCargo:   (guid: string) => void
     addCargo:       (cargo: CargoInfo) => void
-    removeCargo:    (guid: string) => void
+    deleteCargo:    (guid: string) => void
 }
 
 type CargoStore = CargoState & CargoActions
@@ -209,7 +208,7 @@ export const useCargoStore = create<CargoStore>()(
         set({ cargos: [...cargos, cargo] })
       },
 
-      removeCargo: (guid) => {
+      deleteCargo: (guid) => {
         const { cargos } = get()
         set({ cargos: cargos.filter(c => c.guid !== guid) })
       }
@@ -232,8 +231,12 @@ export const cargoGetters = {
 export const cargoActions = {
   updateCargo: (guid: string, data: Partial<CargoInfo>) => 
     useCargoStore.getState().updateCargo(guid, data),
+
   publishCargo: (guid: string) => 
-    useCargoStore.getState().publishCargo(guid)
+    useCargoStore.getState().publishCargo(guid),
+
+  deleteCargo: (guid: string) =>
+    useCargoStore.getState().deleteCargo(guid)
 }
 
 // ============================================
@@ -282,7 +285,7 @@ export const cargoSocketHandlers = {
         console.log('onDeleteCargo response:', response)
         
         if (response.success && response.guid) {
-            useCargoStore.getState().removeCargo(response.guid)
+            useCargoStore.getState().deleteCargo(response.guid)
         }
     },
 

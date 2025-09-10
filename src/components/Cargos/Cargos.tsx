@@ -8,15 +8,15 @@ import { InsurancePage }                        from './components/InsurancePage
 import { cargoGetters, CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
 import { CargoForm }                            from './components';
 import { IonLoading }                           from '@ionic/react';
+import { useCargoNavigation } from './hooks/useNavigation';
 
 export const Cargos: React.FC = () => {
+    
     const {
         cargos,
         isLoading,
-        currentPage,
         filters,
         searchQuery,
-        navigateTo,
         setFilters,
         setSearchQuery,
         createCargo,
@@ -24,18 +24,20 @@ export const Cargos: React.FC = () => {
         deleteCargo,
         publishCargo,
         refreshCargos
-    } = useCargos();
+    } = useCargos()
+
+    // Навигация
+    const {
+        currentPage,
+        navigateTo,
+        handleCreateNew,
+        handleCargoClick
+    } = useCargoNavigation()
 
     console.log("Cargos", cargos)
 
     // Обработчики для списка
     
-    const handleCreateNew = () => {
-        navigateTo({ type: 'create' });
-    }
-  
-    const handleCargoClick = (cargo: CargoInfo) => navigateTo({ type: 'view', cargo });
-
 
     const handleBack = () => {
         if (currentPage.type === 'view') {
