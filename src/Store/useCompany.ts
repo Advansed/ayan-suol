@@ -6,7 +6,7 @@ import { useToast } from '../components/Toast'
 import { loginGetters } from './loginStore'
 import { CompanyData, CompanyState, companyStore } from './companyStore'
 import { useSocket } from './useSocket'
-import { SocketState, socketStore } from './socketStore'
+import { useSocketStore } from './socketStore'
 
 // ============================================
 // ТИПЫ
@@ -26,7 +26,7 @@ export const useCompany = () => {
     const companyData   = useStore((state: CompanyState) => state.data,         4001, companyStore)
     const isLoading     = useStore((state: CompanyState) => state.isLoading,    4002, companyStore)
     const isSaving      = useStore((state: CompanyState) => state.isSaving,     4003, companyStore)
-    const isConnected  = useStore((state: SocketState)   => state.isConnected,  4004, socketStore)
+    const isConnected   = useSocketStore((state) => state.isConnected)
 
     const toast = useToast()
     

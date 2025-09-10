@@ -15,7 +15,7 @@ import {
 } from '../components/Works/types'
 import { useSocket } from './useSocket'
 import { loginGetters } from './loginStore'
-import { SocketState, socketStore } from './socketStore'
+import { useSocketStore } from './socketStore'
 
 export const useWorks = () => {
     const token = loginGetters.getToken()
@@ -33,7 +33,7 @@ export const useWorks = () => {
     const filters           = useStore((state: WorkState) => state.filters, 8006, workStore)
     const searchQuery       = useStore((state: WorkState) => state.searchQuery, 8007, workStore)
     const navigationHistory = useStore((state: WorkState) => state.navigationHistory, 8008, workStore)
-    const isConnected       = useStore((state: SocketState) => state.isConnected, 8009, socketStore)
+    const isConnected       = useSocketStore((state) => state.isConnected)
 
     // ============================================
     // НАВИГАЦИЯ

@@ -1,62 +1,69 @@
 // src/Store/socketStore.ts
-
-import { UniversalStore, TState } from './Store'
+import { create } from 'zustand'
+import { devtools } from 'zustand/middleware'
 
 // ============================================
 // ТИПЫ
 // ============================================
 
-export interface SocketState extends TState {
+export interface SocketState {
   isConnected: boolean
   isConnecting: boolean
 }
+
+interface SocketActions {
+  setConnected: (connected: boolean) => void
+  setConnecting: (connecting: boolean) => void
+  updateStatus: (isConnected: boolean, isConnecting: boolean) => void
+}
+
+type SocketStore = SocketState & SocketActions
 
 // ============================================
 // STORE
 // ============================================
 
-export const socketStore = new UniversalStore<SocketState>({
-  initialState: { 
-    isConnected: false,
-    isConnecting: false
-  },
-  enableLogging: true
-})
+export const useSocketStore = create<SocketStore>()(
+  devtools(
+    (set) => ({
+      isConnected: false,
+      isConnecting: false,
+
+      setConnected: (connected: boolean) => {
+        console.log("socketStore connect:", connected)
+        set({ isConnected: connected })
+      },
+
+      setConnecting: (connecting: boolean) => {
+        console.log("socketStore connecting:", connecting)
+        set({ isConnecting: connecting })
+      },
+
+      updateStatus: (isConnected: boolean, isConnecting: boolean) => {
+        console.log("socketStore {isConnected, isConnecting}:", isConnected, isConnecting)
+        set({ isConnected, isConnecting })
+      }
+    }),
+    { name: 'socket-store' }
+  )
+)
 
 // ============================================
-// GETTERS
+// GETTERS (совместимость)
 // ============================================
 
 export const socketGetters = {
-
-    isConnected: () => socketStore.getState().isConnected,
-
-    isConnecting: () => socketStore.getState().isConnecting
-
+  isConnected: () => useSocketStore.getState().isConnected,
+  isConnecting: () => useSocketStore.getState().isConnecting
 }
 
 // ============================================
-// ACTIONS
+// ACTIONS (совместимость)
 // ============================================
 
 export const socketActions = {
-
-  setConnected: (connected: boolean) => {
-    console.log("socketStore connect:", connected)
-    socketStore.dispatch({ type: 'isConnected', data: connected })
-  },
-    
-    
-  setConnecting: (connecting: boolean) => {
-    console.log("socketStore connecting:", connecting)
-    socketStore.dispatch({ type: 'isConnecting', data: connecting })
-  },
-    
-    
-  updateStatus: (isConnected: boolean, isConnecting: boolean) => {
-    console.log("socketStore {isConnected, isConnecting}:", isConnected, isConnecting)
-    socketStore.dispatch({ type: 'isConnected', data: isConnected })
-    socketStore.dispatch({ type: 'isConnecting', data: isConnecting })
-  }
-  
+  setConnected: (connected: boolean) => useSocketStore.getState().setConnected(connected),
+  setConnecting: (connecting: boolean) => useSocketStore.getState().setConnecting(connecting),
+  updateStatus: (isConnected: boolean, isConnecting: boolean) => 
+    useSocketStore.getState().updateStatus(isConnected, isConnecting)
 }

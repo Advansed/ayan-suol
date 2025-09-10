@@ -7,8 +7,7 @@ import { destroyPassportSocketHandlers, initPassportSocketHandlers } from '../St
 import { destroyCompanySocketHandlers, initCompanySocketHandlers } from '../Store/companyStore'
 import { destroyTransportSocketHandlers, initTransportSocketHandlers } from '../Store/transportStore'
 import { destroyWorkSocketHandlers, initWorkSocketHandlers } from '../Store/workStore'
-import { useStore } from '../Store/Store'
-import { SocketState, socketStore } from '../Store/socketStore'
+import { useSocketStore } from '../Store/socketStore'
 
 // ============================================
 // SOCKET MANAGER HOOK
@@ -16,7 +15,7 @@ import { SocketState, socketStore } from '../Store/socketStore'
 
 export const useSocketManager = () => {
   const isInitialized = useRef(false)
-  const isConnected   = useStore((state: SocketState) => state.isConnected, 2003, socketStore)
+  const isConnected   = useSocketStore((state) => state.isConnected)
   const { socket }    = useSocket()
 
   useEffect(() => {

@@ -8,8 +8,8 @@ import {
 } from './Store'
 import { useToast } from '../components/Toast'
 import { loginGetters } from './loginStore'
-import { SocketState, socketStore } from './socketStore'
 import { useSocket } from './useSocket'
+import { useSocketStore } from './socketStore'
 
 // ============================================
 // ТИПЫ
@@ -75,7 +75,7 @@ export const useAccount = () => {
     const isLoading                 = useStore((state: AccountState) => state.isLoading,                6003, accountStore)
     const isSaving                  = useStore((state: AccountState) => state.isSaving,                 6004, accountStore)
     const isLoadingTransactions     = useStore((state: AccountState) => state.isLoadingTransactions,    6005, accountStore)
-    const isConnected               = useStore((state: SocketState) => state.isConnected,               6006, socketStore)
+    const isConnected               = useSocketStore((state) => state.isConnected)
 
     const { once, emit }              = useSocket()
     

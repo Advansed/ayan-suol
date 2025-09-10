@@ -4,7 +4,7 @@ import { useSocket } from './useSocket'
 import { useToast } from '../components/Toast'
 import { loginStore, loginActions, LoginState } from './loginStore'
 import { AuthResponse, UserData, UserNotifications } from './types/auth'
-import { SocketState, socketStore } from './socketStore'
+import { useSocketStore } from './socketStore'
 
 // ============================================
 // УТИЛИТЫ
@@ -39,7 +39,7 @@ export function useLogin() {
   const ratings       = useStore((state: LoginState) => state.ratings, 1011, loginStore)
   const notifications = useStore((state: LoginState) => state.notifications, 1012, loginStore)
   const isLoading     = useStore((state: LoginState) => state.isLoading, 1013, loginStore)
-  const isConnected   = useStore((state: SocketState) => state.isConnected, 1014, socketStore)
+  const isConnected   = useSocketStore((state) => state.isConnected)
 
   // Services
   const { emit, once  } = useSocket()

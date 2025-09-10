@@ -1,23 +1,20 @@
 // src/Store/useSocket.ts
 
 import { useEffect, useCallback } from 'react'
-import { socketStore, socketActions } from './socketStore'
 import socketService from '../services/socketService'
+import { socketActions } from './socketStore'
 
 // ============================================
 // HOOK
 // ============================================
 
 export function useSocket() {
-  // const isConnected   = useStore((state: SocketState) => state.isConnected, 2001, socketStore)
-  // const isConnecting  = useStore((state: SocketState) => state.isConnecting, 2002, socketStore)
-  // Отслеживание состояния подключения
 
 
   const connect     = useCallback(async (token: string) => {
     try {
       socketActions.setConnecting(true)
-      
+
       console.log("connecting...")
       
       const success = await socketService.connect(token)
@@ -82,8 +79,3 @@ export function useSocket() {
   }
 }
 
-// ============================================
-// УТИЛИТЫ
-// ============================================
-
-export const isSocketConnected = () => socketStore.getState().isConnected

@@ -6,7 +6,7 @@ import { useToast } from '../components/Toast'
 import { loginGetters } from './loginStore'
 import { TransportData, TransportState, transportStore } from './transportStore'
 import { useSocket } from './useSocket'
-import { SocketState, socketStore } from './socketStore'
+import { useSocketStore } from './socketStore'
 
 // ============================================
 // HOOK
@@ -19,7 +19,7 @@ export const useTransport = () => {
     const transportData = useStore((state: TransportState) => state.data, 5001, transportStore)
     const isLoading     = useStore((state: TransportState) => state.isLoading, 5002, transportStore)
     const isSaving      = useStore((state: TransportState) => state.isSaving, 5003, transportStore)
-    const isConnected   = useStore((state: SocketState)    => state.isConnected, 5004, socketStore)
+    const isConnected   = useSocketStore((state) => state.isConnected)  
     
     const toast = useToast()
     
