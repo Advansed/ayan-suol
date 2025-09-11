@@ -30,8 +30,6 @@ export const Cargos: React.FC = () => {
         handleCargoClick
     } = useCargoNavigation()
 
-    console.log("Cargos", cargos)
-
     // Обработчики для списка
     
 

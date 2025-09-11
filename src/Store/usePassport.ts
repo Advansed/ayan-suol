@@ -1,86 +1,98 @@
 import { useCallback } from 'react'
-import { useStore } from './Store'
 import { useToast } from '../components/Toast'
 import { loginGetters } from './loginStore'
-import { PassportData, PassportState, passportStore } from './passportStore'
 import { useSocket } from './useSocket'
 import { useSocketStore } from './socketStore'
+import { 
+  usePassportStore, 
+  passportActions, 
+  PassportData 
+} from './passportStore'
 
 // ============================================
 // HOOK
 // ============================================
 
 export const usePassport = () => {
-    const token = loginGetters.getToken()
-    const { emit, once } = useSocket()
-    
-    const passportData  = useStore((state: PassportState) => state.data, 3001, passportStore)
-    const isLoading     = useStore((state: PassportState) => state.isLoading, 3002, passportStore)
-    const isSaving      = useStore((state: PassportState) => state.isSaving, 3003, passportStore)
-    const isConnected   = useSocketStore((state) => state.isConnected)
-    
-    const toast = useToast()
-    
-    const load = useCallback(() => {
-        passportStore.dispatch({ type: 'isLoading', data: true })
-                
-        if (!isConnected) {
-            toast.error('Нет подключения')
-            passportStore.dispatch({ type: 'isLoading', data: false })
-            return
-        }
-
-        if (!token) {
-            toast.error('Нет токена авторизации')
-            passportStore.dispatch({ type: 'isLoading', data: false })
-            return
-        }
-
-        emit('get_passport', { token })
+  const token = loginGetters.getToken()
+  const { emit, once } = useSocket()
+  
+  // Используем хуки из нового passportStore
+  const passportData = usePassportStore(state => state.data)
+  const isLoading = usePassportStore(state => state.isLoading)
+  const isSaving = usePassportStore(state => state.isSaving)
+  const isConnected = useSocketStore(state => state.isConnected)
+  
+  const toast = useToast()
+  
+  const load = useCallback(() => {
+    passportActions.setLoading(true)
             
-    }, [])
-    
-    const save = useCallback((data: PassportData) => {
-        passportStore.dispatch({ type: 'isSaving', data: true })
-
-        if (!isConnected) {
-            toast.error('Нет подключения')
-            passportStore.dispatch({ type: 'isSaving', data: false })
-            return
-        }
-
-        if (!token) {
-            toast.error('Нет токена авторизации')
-            passportStore.dispatch({ type: 'isSaving', data: false })
-            return
-        }
-
-        const payload = { ...data, token }
-
-        once('set_passport', (response) => {
-            passportStore.dispatch({ type: 'isSaving', data: false })
-            if(response.success) {
-                toast.success('Паспортные данные сохранены')
-            } else {
-                toast.error("Ошибка сохранения данных")
-            }
-        })
-
-        emit('set_passport', payload)
-                
-        toast.info("Сохраняются паспортные данные...")
-    }, [])
-    
-    const updatePassportData = useCallback((data: PassportData) => {
-        passportStore.dispatch({ type: 'data', data })
-    }, [])
-    
-    return {
-        passportData,
-        load,
-        save,
-        updatePassportData,
-        isSaving,
-        isLoading
+    if (!isConnected) {
+      toast.error('Нет подключения')
+      passportActions.setLoading(false)
+      return
     }
+
+    if (!token) {
+      toast.error('Нет токена авторизации')
+      passportActions.setLoading(false)
+      return
+    }
+
+    once('get_passport', (response) => {
+      passportActions.setLoading(false)
+      
+      if (response.success) {
+        passportActions.setData(response.data)
+      } else {
+        toast.error(response.message || 'Ошибка загрузки паспортных данных')
+      }
+    })
+
+    emit('get_passport', { token })
+        
+  }, [token, isConnected, once, emit ])
+  
+  const save = useCallback((data: PassportData) => {
+    passportActions.setSaving(true)
+
+    if (!isConnected) {
+      toast.error('Нет подключения')
+      passportActions.setSaving(false)
+      return
+    }
+
+    if (!token) {
+      toast.error('Нет токена авторизации')
+      passportActions.setSaving(false)
+      return
+    }
+
+    once('set_passport', (response) => {
+      passportActions.setSaving(false)
+      if (response.success) {
+        toast.success('Паспортные данные сохранены')
+        passportActions.setData(response.data || data)
+      } else {
+        toast.error(response.message || "Ошибка сохранения данных")
+      }
+    })
+
+    emit('set_passport', { ...data, token })
+    toast.info("Сохраняются паспортные данные...")
+  }, [token, isConnected, once, emit ])
+  
+  const updatePassportData = useCallback((data: PassportData) => {
+    passportActions.setData(data)
+  }, [])
+  
+  return {
+    passportData,
+    load,
+    save,
+    updatePassportData,
+    isSaving,
+    isLoading
+  }
 }

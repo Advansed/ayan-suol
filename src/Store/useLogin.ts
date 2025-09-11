@@ -3,7 +3,6 @@ import { useCallback } from 'react'
 import { useSocket } from './useSocket'
 import { useToast } from '../components/Toast'
 import { AuthResponse, useLoginStore, UserData } from './loginStore'
-import { useSocketStore } from './socketStore'
 
 // ============================================
 // УТИЛИТЫ
@@ -27,7 +26,7 @@ export function useLogin() {
   // State subscriptions
   const {
     auth, id, name, phone, email, image, token, user_type,
-    description, account, ratings, notifications, isLoading,
+    description, account, ratings, agreements, isLoading,
     setAuth, setLoading, setUser, updateUser, clearAuth
   } = useLoginStore()
   
@@ -39,7 +38,7 @@ export function useLogin() {
   // User object
   const user = {
     id, name, phone, email, image, token, 
-    user_type, description, account, ratings, notifications
+    user_type, description, account, ratings, agreements
   }
 
   // ============================================
@@ -64,6 +63,7 @@ export function useLogin() {
           setLoading(false)
           
           if (response.success && response.data) {
+            console.log( response.data )
             setUser(response.data)
             toast.success('Вход выполнен успешно')
             resolve(true)

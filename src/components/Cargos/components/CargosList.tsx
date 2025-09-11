@@ -1,19 +1,17 @@
-import React, { useState } from 'react';
-import { 
-    IonRefresher,
-    IonRefresherContent,
-    IonSpinner
-} from '@ionic/react';
-import { CargoCard } from './CargoCard';
-import { Package } from "lucide-react";
-import { CargoInfo } from '../../../Store/cargoStore';
+import React, { useState } 
+                        from 'react';
+import { IonRefresher, IonRefresherContent, IonSpinner
+}                       from '@ionic/react';
+import { CargoCard }    from './CargoCard';
+import { Package }      from "lucide-react";
+import { CargoInfo }    from '../../../Store/cargoStore';
 
 interface CargosListProps {
-    cargos: CargoInfo[];
-    isLoading?: boolean;
-    onCreateNew: () => void;
-    onCargoClick: (cargo: CargoInfo) => void;
-    onRefresh?: () => Promise<void>;
+    cargos:         CargoInfo[];
+    isLoading?:     boolean;
+    onCreateNew:    ( ) => void;
+    onCargoClick:   ( cargo: CargoInfo) => void;
+    onRefresh?:     ( ) => Promise<void>;
 }
 
 export const CargosList: React.FC<CargosListProps> = ({

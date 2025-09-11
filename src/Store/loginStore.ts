@@ -5,18 +5,32 @@ import { devtools } from 'zustand/middleware'
 // ============================================
 // ТИПЫ
 // ============================================
+
+export interface UserRatings {
+  orders:             number
+  rate:               number
+  invoices:           number
+  payd:               number
+}
+
+export interface Agreements {
+  personalData:       boolean
+  userAgreement:      boolean
+  marketing:          boolean
+}
+
 export interface UserData {
-  id:             string
-  name:           string
-  phone:          string
-  email:          string
-  image:          string
-  token:          string
-  user_type:      number
-  description:    string
-  account:        string
-  ratings:        number
-  notifications:  any[]
+  id:                 string
+  name:               string
+  phone:              string
+  email:              string
+  image:              string
+  token:              string
+  user_type:          number
+  description:        string
+  account:            string
+  ratings:            UserRatings
+  agreements:         Agreements
 }
 
 export interface AuthResponse extends UserData {
@@ -24,27 +38,28 @@ export interface AuthResponse extends UserData {
 }
 
 interface LoginState {
-  auth:           boolean
-  isLoading:      boolean
-  id:             string
-  name:           string
-  phone:          string
-  email:          string
-  image:          string
-  token:          string
-  user_type:      number
-  description:    string
-  account:        string
-  ratings:        number
-  notifications:  any[]
+  auth:               boolean
+  isLoading:          boolean
+  id:                 string
+  name:               string
+  phone:              string
+  email:              string
+  image:              string
+  token:              string
+  user_type:          number
+  description:        string
+  account:            string
+  ratings:            UserRatings
+  agreements:         Agreements
 }
 
 interface LoginActions {
-  setAuth: (auth: boolean) => void
-  setLoading: (loading: boolean) => void
-  setUser: (userData: AuthResponse) => void
-  updateUser: (updates: Partial<UserData>) => void
-  clearAuth: () => void
+  setAuth:            ( auth: boolean ) => void
+  setLoading:         ( loading: boolean ) => void
+  setUser:            ( userData: AuthResponse ) => void
+  updateUser:         ( updates: Partial<UserData> ) => void
+  clearAuth:          ( ) => void
+  toggleAgreements:   ( agreementType: keyof Agreements ) => void
 }
 
 type LoginStore = LoginState & LoginActions
@@ -67,8 +82,8 @@ export const useLoginStore = create<LoginStore>()(
       user_type:      0,
       description:    '',
       account:        '',
-      ratings:        0,
-      notifications:  [],
+      ratings:        { orders: 0, rate: 0, invoices: 0, payd: 0 },
+      agreements:     { personalData: false, userAgreement: false, marketing: false },
 
       // ACTIONS
       setAuth: (auth) => set({ auth }),
@@ -91,9 +106,16 @@ export const useLoginStore = create<LoginStore>()(
         user_type:      0,
         description:    '',
         account:        '',
-        ratings:        0,
-        notifications:  []
-      })
+        ratings:        { orders: 0, rate: 0, invoices: 0, payd: 0 },
+        agreements:     { personalData: false, userAgreement: false, marketing: false }
+      }),
+      toggleAgreements: (agreementType) => 
+        set((state) => ({
+          agreements: {
+            ...state.agreements,
+            [agreementType]: !state.agreements[agreementType]
+          }
+        }))
     }),
     { name: 'login-store' }
   )
@@ -128,8 +150,10 @@ export const useUserProfile = () => useLoginStore(state => ({
   description: state.description,
   account: state.account,
   ratings: state.ratings,
-  notifications: state.notifications
+  agreements: state.agreements
 }))
+
+export const useAgreements = () => useLoginStore(state => state.agreements)
 
 // ============================================
 // ГЕТТЕРЫ (совместимость)
@@ -151,17 +175,22 @@ export const loginGetters = {
   hasValidToken: () => {
     const token = useLoginStore.getState().token
     return !!token && token.length > 0
-  }
+  },
+  getAgreements: () => useLoginStore.getState().agreements,
+  getAgreement: (agreementType: keyof Agreements) => useLoginStore.getState().agreements[agreementType]
+
 }
 
 // ============================================
 // ACTIONS (совместимость)
 // ============================================
 export const loginActions = {
-  setAuth:      ( auth: boolean ) => useLoginStore.getState().setAuth(auth),
-  setUser:      ( userData: AuthResponse ) => useLoginStore.getState().setUser(userData),
-  clearAuth:    ( ) => useLoginStore.getState().clearAuth(),
-  updateUser:   ( updates: Partial<UserData> ) => useLoginStore.getState().updateUser(updates)
+  
+  setAuth:            ( auth: boolean ) => useLoginStore.getState().setAuth(auth),
+  setUser:            ( userData: AuthResponse ) => useLoginStore.getState().setUser(userData),
+  clearAuth:          ( ) => useLoginStore.getState().clearAuth(),
+  updateUser:         ( updates: Partial<UserData> ) => useLoginStore.getState().updateUser(updates),
+  toggleAgreements:   ( agreementType: keyof Agreements ) => useLoginStore.getState().toggleAgreements(agreementType),
 }
 
 // ============================================

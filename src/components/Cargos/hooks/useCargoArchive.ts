@@ -1,27 +1,57 @@
-import { useState, useMemo }  from 'react';
-import { CargoInfo, CargoStatus }        from '../../../Store/cargoStore';
+// src/hooks/useCargoArchive.ts
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { CargoInfo, CargoStatus, useCargoStore } from '../../../Store/cargoStore';
 
-const useCargoArchive = () => {
-  const cargos: CargoInfo[] = [] //useSelector((state) => state.cargos, 12);
+interface UseCargoArchiveReturn {
+  cargos: CargoInfo[];
+  refreshing: boolean;
+  refresh: () => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export const useCargoArchive = (): UseCargoArchiveReturn => {
+  const { archives, isLoading, setLoading } = useCargoStore();
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Фильтруем завершенные заказы
-  const archiveCargos = useMemo(() => {
-    const jarr = cargos.filter(cargo => cargo.status === CargoStatus.COMPLETED);
-    console.log( jarr )
-    return jarr
-  }, [cargos]);
+  // Фильтруем только завершенные заказы
 
-  const refresh = async () => {
-    setRefreshing(true);
-    // await refreshCargos();
-    setRefreshing(false);
-  };
+  const refresh = useCallback(async () => {
+    try {
+
+      setRefreshing(true);
+      setError(null);
+      setLoading(true);
+
+      // Эмуляция запроса к серверу через socket
+      // В реальном приложении здесь будет вызов socket.emit('get_cargo_archives')
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Данные уже будут обновлены через socket handlers в store
+      
+    } catch (err) {
+      console.error('Error refreshing cargo archive:', err);
+      setError('Не удалось загрузить архив заказов');
+    } finally {
+      setRefreshing(false);
+      setLoading(false);
+    }
+  }, [setLoading]);
+
+  // Первоначальная загрузка при монтировании
+  useEffect(() => {
+    if (archives.length === 0) {
+      refresh();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
-    cargos:     archiveCargos,
-    refreshing,
-    refresh
+    cargos:     archives,
+    refreshing: refreshing || isLoading,
+    refresh,
+    isLoading,
+    error
   };
 };
 

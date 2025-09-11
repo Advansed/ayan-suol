@@ -1,28 +1,10 @@
+import { CargoInfo } from "../../Store/cargoStore";
 import { WorkInfo } from "../Works";
 
 export interface Coordinates {
   lat: number;
   long: number;
 }
-
-export interface CargoInfo {
-  name?: string;
-  client?: string;
-  weight?: number;
-  volume?: number;
-  price?: number;
-  address?: {
-    lat: number;
-    long: number;
-    city?: { city: string };
-  };
-  destiny?: {
-    lat: number;
-    long: number;
-    city?: { city: string };
-  };
-}
-
 
 
 export interface MapProps {

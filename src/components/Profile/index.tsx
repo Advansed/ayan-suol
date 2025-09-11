@@ -11,23 +11,20 @@ import { UserRatings }                                  from './types'
 import { Company }                                      from './components/Company'
 import { PersonalInfo }                                 from './components/PersonalInfo'
 import { Passport }                                     from './components/Passport'
-import { companyGetters, CompanyState, companyStore }   from '../../Store/companyStore'
-import { useStore }                                     from '../../Store/Store'
-import { passportGetters, PassportState, 
-  passportStore }                                       from '../../Store/passportStore'
-import { transportGetters, TransportState, 
-  transportStore }                                      from '../../Store/transportStore'
+import { companyGetters,  useCompanyData }              from '../../Store/companyStore'
+import { passportGetters, usePassportData }             from '../../Store/passportStore'
+import { transportGetters,  useTransportData}           from '../../Store/transportStore'
 import { Transport } from './components/Transport'
 
 
 export const Profile: React.FC = () => {
-  const { user, user_type, ratings, isLoading, updateUser } = useLogin()
+  const { user, isLoading, updateProfile } = useLogin()
   const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
   
   // Получаем данные из Store
-  const transportData = useStore((state: TransportState ) => state.data, 51,    transportStore )
-  const companyData   = useStore((state: CompanyState )   => state.data, 41,    companyStore )
-  const passportData  = useStore((state: PassportState )  => state.data, 31,    passportStore )
+  const transportData = useTransportData()
+  const companyData   = useCompanyData() 
+  const passportData  = usePassportData()
 
   useEffect(() => {
     const loadings = document.querySelectorAll('ion-loading')
@@ -41,12 +38,12 @@ export const Profile: React.FC = () => {
     let common: any = []
   
     // Вычисляем проценты заполненности
-    const passportCompletion  = passportGetters.getCompletionPercentage( passportData )
-    const transportCompletion = transportGetters.getCompletionPercentage( transportData )  
-    const companyCompletion   = companyGetters.getCompletionPercentage( companyData )
+    const passportCompletion  = passportGetters.getCompletionPercentage()
+    const transportCompletion = transportGetters.getCompletionPercentage()  
+    const companyCompletion   = companyGetters.getCompletionPercentage()
 
   
-    switch(user_type) {
+    switch(user.user_type) {
       case 0: common = []; break;
       case 1: common = [
         { title: MENU_ITEMS.PERSONAL_DATA,  onClick: () => setCurrentPage(PROFILE_PAGES.PERSONAL) },
@@ -63,7 +60,7 @@ export const Profile: React.FC = () => {
     }
 
     return common
-  }, [user_type, passportData, transportData, companyData])
+  }, [user.user_type, passportData, transportData, companyData])
 
   if (isLoading ) {
     return <IonLoading isOpen={true} message={UI_TEXT.LOADING} />
@@ -75,7 +72,7 @@ export const Profile: React.FC = () => {
         <PersonalInfo 
             user    = { user }
             onBack  = {() => setCurrentPage(PROFILE_PAGES.MAIN)} 
-            onSave  = { updateUser }
+            onSave  = { updateProfile }
         />
     </> 
   }
@@ -115,9 +112,9 @@ export const Profile: React.FC = () => {
         <div>{UI_TEXT.MY_PROFILE}</div>
       </div>
 
-      <ProfileHeader name ={ user.name as string } userType={ user_type as number }  onClick={ handleClick }/>
+      <ProfileHeader name ={ user.name as string } userType={ user.user_type as number }  onClick={ handleClick }/>
 
-      <ProfileStats ratings = { ratings as UserRatings } userType = { user_type as number } />
+      <ProfileStats ratings = { user.ratings as UserRatings } userType = { user.user_type as number } />
       
       <ProfileMenu items = { menuItems } />
 

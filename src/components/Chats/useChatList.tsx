@@ -27,7 +27,7 @@ export const useChatList = (): UseChatListReturn => {
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const token = loginGetters.getToken()
-  const { emit, socket } = useSocket()
+  const { socket } = useSocket()
 
   // Загрузка чатов
   const loadChats = useCallback(() => {
@@ -69,7 +69,8 @@ export const useChatList = (): UseChatListReturn => {
         }
       }
 
-      socket.on('get_chats', handleChatsData)
+      socket.once('get_chats', handleChatsData)
+      
       loadChats()
 
       return () => {

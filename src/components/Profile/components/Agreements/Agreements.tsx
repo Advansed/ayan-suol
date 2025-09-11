@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
-import { useLogin } from '../../../../Store/useLogin'
 import styles from './Agreements.module.css'
 import EULA from './eula'
 import CargoAgree from './CargoAgree'
 import { EscrowAgreement } from './Escrow'
 import Signs from './Signs'
 import Oferta from './Oferta'
+import { useAgreements } from './useAgreements'
 
 export const UI_TEXT = {
   AGREEMENTS_TITLE: 'Согласия',
@@ -15,12 +15,12 @@ export const UI_TEXT = {
 } as const
 
 export const Agreements: React.FC = () => {
-  const { notifications, toggleNotification, isLoading } = useLogin()
+  const { agreements, toggleAgreement, isLoading } = useAgreements()
   const [isEulaOpen, setIsEulaOpen] = useState(false)
   const [isCargoOpen, setIsCargoOpen] = useState(false)
   const [isEscrowOpen, setIsEscrowOpen] = useState(false)
   const [isSignOpen, setIsSignOpen] = useState(false)
-  const [isOferta,    setIsOferta] = useState(false)
+  const [isOferta, setIsOferta] = useState(false)
 
   const handleUserAgreementClick = () => {
     setIsEulaOpen(true)
@@ -36,9 +36,9 @@ export const Agreements: React.FC = () => {
         
         <div 
           className={`${styles.agreementItem} ${isLoading ? styles.disabled : ''}`}
-          onClick={() => !isLoading && toggleNotification('personalData')}
+            onClick={() => !isLoading && toggleAgreement('personalData')}
         >
-          <div className={`${styles.checkbox} ${notifications?.personalData ? styles.checked : styles.unchecked}`}>
+          <div className={`${styles.checkbox} ${agreements.personalData ? styles.checked : styles.unchecked}`}>
             <div className={styles.checkIcon}>✓</div>
           </div>
           <div className={styles.agreementText}>
@@ -49,7 +49,7 @@ export const Agreements: React.FC = () => {
         <div 
           className={`${styles.agreementItem} ${isLoading ? styles.disabled : ''}`}          
         >
-          <div className={`${styles.checkbox} ${notifications?.userAgreement ? styles.checked : styles.unchecked}`}
+          <div className={`${styles.checkbox} ${agreements.userAgreement ? styles.checked : styles.unchecked}`}
               onClick={handleUserAgreementClick}
           >
             <div className={styles.checkIcon}>✓</div>
@@ -75,9 +75,9 @@ export const Agreements: React.FC = () => {
         
         <div 
           className={`${styles.agreementItem} ${isLoading ? styles.disabled : ''}`}
-          onClick={() => !isLoading && toggleNotification('marketing')}
+          onClick={() => !isLoading && toggleAgreement('marketing')}
         >
-          <div className={`${styles.checkbox} ${notifications?.marketing ? styles.checked : styles.unchecked}`}>
+          <div className={`${styles.checkbox} ${agreements.marketing ? styles.checked : styles.unchecked}`}>
             <div className={styles.checkIcon}>✓</div>
           </div>
           <div className={styles.agreementText}>
@@ -87,13 +87,9 @@ export const Agreements: React.FC = () => {
       </div>
 
       <EULA             isOpen = { isEulaOpen }   onClose = { () => setIsEulaOpen(false) } />
-
       <CargoAgree       isOpen = { isCargoOpen }  onClose = { () => setIsCargoOpen(false) } />
-
       <EscrowAgreement  isOpen = { isEscrowOpen } onClose = { () => setIsEscrowOpen(false) } />
-
       <Signs            isOpen = { isSignOpen }   onClose = { () => setIsSignOpen(false) } />
-        
       <Oferta           isOpen = { isOferta }     onClose = { () => setIsOferta(false) } />
         
     </div>

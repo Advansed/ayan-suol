@@ -142,17 +142,18 @@ export interface CargoState {
 }
 
 interface CargoActions {
-    setCargos:      (cargos: CargoInfo[]) => void
-    setLoading:     (loading: boolean) => void
-    setCurrentPage: (page: PageType) => void
-    setFilters:     (filters: CargoFilters) => void
-    setSearchQuery: (query: string) => void
-    navigateTo:     (page: PageType) => void
-    goBack:         () => void
-    updateCargo:    (guid: string, data: Partial<CargoInfo>) => void
-    publishCargo:   (guid: string) => void
-    addCargo:       (cargo: CargoInfo) => void
-    deleteCargo:    (guid: string) => void
+    setCargos:            ( cargos: CargoInfo[] ) => void
+    setCargoArchives:     ( cargos: CargoInfo[] ) => void
+    setLoading:           ( loading: boolean ) => void
+    setCurrentPage:       ( page: PageType ) => void
+    setFilters:           ( filters: CargoFilters ) => void
+    setSearchQuery:       ( query: string ) => void
+    navigateTo:           ( page: PageType ) => void
+    goBack:               ( ) => void
+    updateCargo:          ( guid: string, data: Partial<CargoInfo >) => void
+    publishCargo:         ( guid: string ) => void
+    addCargo:             ( cargo: CargoInfo ) => void
+    deleteCargo:          ( guid: string ) => void
 }
 
 type CargoStore = CargoState & CargoActions
@@ -221,8 +222,12 @@ export const useCargoStore = create<CargoStore>()(
 // GETTERS (совместимость)
 // ============================================
 export const cargoGetters = {
+
+  getCargos: (): CargoInfo[] => useCargoStore.getState().cargos,
+
   getCargo: (guid: string): CargoInfo | undefined => 
     useCargoStore.getState().cargos.find(c => c.guid === guid)
+
 }
 
 // ============================================
@@ -260,7 +265,7 @@ export const cargoSocketHandlers = {
         useCargoStore.getState().setLoading(false)
         
         if (response.success && Array.isArray(response.data)) {
-            useCargoStore.getState().setCargos(response.data)
+            useCargoStore.getState().setCargoArchives(response.data)
         } else {
             console.error('Invalid cargos response:', response)
         }
