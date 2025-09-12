@@ -18,54 +18,61 @@ export interface CargoAddress {
     lon: number;
 }
 
-export interface CargoInvoice {
-    id: string;
-    cargo: string;
-    driverId: string;
-    driverName: string;
-    driverPhone: string;
-    transport: string;
-    price: number;
-    weight: number;
-    volume: number;
-    status: string;
-    createdAt: string;
-    rating: number;
+export type DriverStatus = 'Заказано' | 'Принято' | 'Доставлено' | 'Отказано' | 'Завершен';
+
+
+export type DriverCardMode = 'offered' | 'assigned' | 'delivered' | 'completed';
+
+
+export interface DriverInfo {
+    
+    guid:           string;
+    cargo:          string;
+    recipient:      string;
+    client:         string;
+    weight:         number;
+    volume:         number;
+    status:         DriverStatus;
+    transport:      string;
+    capacity:       string;
+    rating:         number;
+    price:          number;
+
 }
 
 export interface CargoInfo {
-    guid: string;
-    name: string;
-    description: string;
-    client: string;
-    address: CargoAddress;
-    destiny: CargoAddress;
-    pickup_date: string;
+    guid:           string;
+    name:           string;
+    description:    string;
+    client:         string;
+    address:        CargoAddress;
+    destiny:        CargoAddress;
+    pickup_date:    string;
     delivery_date: string;
     weight: number;
-    weight1?: number;
-    volume: number;
-    price: number;
-    cost: number;
-    advance: number;
-    insurance: number;
-    phone: string;
-    face: string;
-    status: CargoStatus;
-    invoices?: CargoInvoice[];
-    priority?: CargoPriority;
-    createdAt?: string;
-    updatedAt?: string;
+    weight1?:       number;
+    volume:         number;
+    price:          number;
+    cost:           number;
+    advance:        number;
+    insurance:      number;
+    phone:          string;
+    face:           string;
+    status:         CargoStatus;
+    invoices?:      DriverInfo[];
+    priority?:      CargoPriority;
+    createdAt?:     string;
+    updatedAt?:     string;
 }
 
 export enum CargoStatus {
-    NEW = "Новый",
-    WAITING = "В ожидании",
-    HAS_ORDERS = "Есть заказы",
-    NEGOTIATION = "Торг",
-    IN_WORK = "В работе",
-    DELIVERED = "Доставлено",
-    COMPLETED = "Выполнено"
+    NEW           = "Новый",
+    WAITING       = "В ожидании",
+    HAS_ORDERS    = "Есть заказы",
+    NEGOTIATION   = "Торг",
+    IN_WORK       = "В работе",
+    DELIVERED     = "Доставлено",
+    COMPLETED     = "Выполнено"
 }
 
 export enum CargoPriority {
@@ -143,7 +150,7 @@ export interface CargoState {
 
 interface CargoActions {
     setCargos:            ( cargos: CargoInfo[] ) => void
-    setCargoArchives:     ( cargos: CargoInfo[] ) => void
+    setCargoArchives:     ( archives: CargoInfo[] ) => void
     setLoading:           ( loading: boolean ) => void
     setCurrentPage:       ( page: PageType ) => void
     setFilters:           ( filters: CargoFilters ) => void
@@ -172,7 +179,7 @@ export const useCargoStore = create<CargoStore>()(
 
       // ACTIONS
       setCargos:          (cargos)        => set({ cargos }),
-      setCargoArhcives:   (archives)      => set({ archives }),
+      setCargoArchives:   (archives)      => set({ archives }),
       setLoading:         (isLoading)     => set({ isLoading }),
       setCurrentPage:     (currentPage)   => set({ currentPage }),
       setFilters:         (filters)       => set({ filters }),
@@ -264,10 +271,14 @@ export const cargoSocketHandlers = {
         console.log('onGetCargoArchives response:', response)
         useCargoStore.getState().setLoading(false)
         
-        if (response.success && Array.isArray(response.data)) {
-            useCargoStore.getState().setCargoArchives(response.data)
+        if (response.success && Array.isArray( response.data )) {
+
+            useCargoStore.getState().setCargoArchives( response.data as CargoInfo[] )
+
         } else {
+
             console.error('Invalid cargos response:', response)
+
         }
     },
 

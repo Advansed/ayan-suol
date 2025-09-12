@@ -16,13 +16,10 @@ export const DriverInfo: React.FC<DriverInfoProps> = ({
 }) => {
     const getWeightLabel = () => {
         switch (mode) {
-            case 'assigned':
-            case 'completed':
-                return 'Взято груза';
-            case 'delivered':
-                return 'Доставлено';
-            default:
-                return 'Грузоподъёмность';
+            case 'assigned'     :
+            case 'completed'    : return 'Взято груза';
+            case 'delivered'    : return 'Доставлено';
+            default             : return 'Грузоподъёмность';
         }
     };
 

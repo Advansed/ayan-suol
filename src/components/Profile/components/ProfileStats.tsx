@@ -17,14 +17,14 @@ const StatBlock: React.FC<{value: number, label: string, index: number}> = ({ va
 export const ProfileStats: React.FC<Props> = React.memo(({ ratings, userType }) => (
   <div className="flex mt-1 fl-space ml-1 mr-1">
     <StatBlock 
-        value={ratings.orders} 
-        label={STAT_LABELS.ORDERS} 
-        index={0} 
-    />
-    <StatBlock 
         value={ratings.rate} 
         label={STAT_LABELS.RATING} 
         index={1} 
+    />
+    <StatBlock 
+        value={ratings.orders} 
+        label={STAT_LABELS.ORDERS} 
+        index={0} 
     />
     <StatBlock 
       value={userType == 2 ? ratings.invoices : ratings.payd} 

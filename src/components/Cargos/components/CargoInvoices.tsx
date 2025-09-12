@@ -1,64 +1,159 @@
-import React from 'react';
-import { DriverCard } from '../../DriverCards';
-import { CargoInfo, CargoInvoice } from '../../../Store/cargoStore';
-import { WizardHeader } from '../../Header/WizardHeader';
+import React, { useState }              from 'react';
+import { CargoInfo, DriverInfo }        from '../../../Store/cargoStore';
+import { WizardHeader }                 from '../../Header/WizardHeader';
+import { IonButton, IonCard, IonIcon }  from '@ionic/react';
+import { DriverCard }                   from './DriverCard';
+import { useInvoices }                  from '../hooks/useInvoices';
+import { chatboxEllipsesOutline }       from 'ionicons/icons';
 
 interface CargoInvoiceSectionsProps {
-    cargo: CargoInfo;
-    onBack: ()=>void;
+    cargo:      CargoInfo;
+    onBack:     ()=>void;
 }
 
 export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ cargo, onBack }) => {
-    
-    // Адаптер данных инвойса к формату водителя
-    const mapInvoiceToDriver = (invoice: any): any => ({
-        guid: invoice.id,
-        cargo: invoice.cargo,
-        recipient: invoice.driverId,
-        client: invoice.driverName,
-        weight: invoice.weight,
-        status: invoice.status,
-        transport: invoice.transport,
-        capacity: `${invoice.weight} т`,
-        rating: invoice.rating || 4.5,
-        ratingCount: 12,
-        rate: invoice.rating || 4.5,
-        price: invoice.price,
-        accepted: invoice.status === 'Принято'
-    });
+    const { invoices, isLoading,  handleAccept,  handleReject,  handleComplete,  handleChat } = useInvoices({ info: cargo })
 
     // Рендер секции инвойсов
-    const renderInvoiceSection = (title: string, invoices: CargoInvoice[], type: 'offered' | 'assigned' | 'delivered' | 'completed') => {
+    const renderInvoiceSection = (
+            invoices: DriverInfo[]
+    ) => {
+
         if (!invoices || invoices.length === 0) {
-            return null;
+            return <></>;
         }
 
         return (
             <>
-                <div className="ml-1 mt-1">
-                    <div className="fs-09 mb-1">
-                        <b>{title}</b>
-                        <span className="ml-1 fs-08 cl-gray">({invoices.length})</span>
-                    </div>
-                </div>
                 
                 {invoices.map((invoice, index) => (
-                    <DriverCard
-                        key={index}
-                        info={mapInvoiceToDriver(invoice)}
-                        mode={type}
-                    />
+
+                    <IonCard className='ml-1 mr-1 mt-1 pt-1 pl-1 pr-1 pb-1'
+                        key = { index }
+                    >
+                        <DriverCard
+                            info                = { invoice }
+                            cargo               = { cargo }    
+                            mode                = { invoice.status }
+                        />
+                        
+                        { renderButtons( invoice ) }
+
+                    </IonCard>
+
                 ))}
             </>
         );
     };
 
+    const renderButtons = (invoice:DriverInfo) => {
+        switch (invoice.status) {
+            case 'Заказано':
+                return (
+                    <div className='flex mt-1'>
+                        <IonButton
+                            className   = "w-50 cr-button-2"
+                            mode        = "ios"
+                            fill        = "clear"
+                            color       = "primary"
+                            onClick     = { () => handleChat( invoice ) }
+                            disabled    = { isLoading }
+                        >
+                            <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
+                            <span className="ml-1 fs-08">Чат</span>
+                        </IonButton>
+
+                        <IonButton
+                            className   = "w-50 cr-button-1"
+                            mode        = "ios"
+                            color       = "primary"
+                            onClick     = { () => handleAccept( invoice, 2 ) }
+                            disabled    = { isLoading }
+                        >
+                            <span className="ml-1 fs-08">Выбрать</span>
+                        </IonButton>
+
+                        <IonButton
+                            className   = "w-50 cr-button-1"
+                            mode        = "ios"
+                            color       = "warning"
+                            onClick     = { () => handleReject( invoice ) }
+                            disabled    = { isLoading }
+                        >
+                            <span className="ml-1 fs-08">Отказать</span>
+                        </IonButton>
+                    </div>
+                );
+
+            case 'Принято':
+                return (
+                    <div className='flex'>
+                        <IonButton
+                            className   = "w-50 cr-button-2"
+                            mode        = "ios"
+                            fill        = "clear"
+                            color       = "primary"
+                            onClick     = { () => handleChat( invoice) }
+                            disabled    = { isLoading }
+                        >
+                            <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
+                            <span className="ml-1 fs-08">Чат</span>
+                        </IonButton>
+
+                        <IonButton
+                            className   = "w-50 cr-button-1"
+                            mode        = "ios"
+                            color       = "warning"
+                            onClick     = { () => handleReject( invoice ) }
+                            disabled    = { isLoading }
+                        >
+                            <span className="ml-1 fs-08">Отказать</span>
+                        </IonButton>
+                    </div>
+                );
+
+            case 'Доставлено':
+                return (
+                    <>
+                    </>
+                    // <IonButton
+                    //     mode        = "ios"
+                    //     color       = "primary"
+                    //     expand      = "block"
+                    //     onClick     = { () => handleComplete( info, ) }
+                    //     style={{
+                    //         '--background': true ? '' : '#e0e0e0',
+                    //         '--color': true ? '' : '#999'
+                    //     }}
+                    // >
+                    //     <span className="fs-08">
+                    //         {isLoading ? 'Подтверждение...' : 'Подтвердить выполнение заказа'}
+                    //     </span>
+                    // </IonButton>
+                );
+
+            case 'Завершен':
+                return (
+                    <IonButton
+                        className   = "w-50 cr-button-2"
+                        mode        = "ios"
+                        fill        = "clear"
+                        color       = "primary"
+                        onClick     = { () => handleChat( invoice ) }
+                        disabled    = { isLoading }
+                    >
+                        <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
+                        <span className="ml-1 fs-08">Чат</span>
+                    </IonButton>
+                );
+
+            default:
+                return null;
+        }
+    };
     // Группировка инвойсов по статусам
     const groupedInvoices = {
-        offered: cargo.invoices?.filter(inv => inv.status === "Заказано") || [],
-        accepted: cargo.invoices?.filter(inv => inv.status === "Принято") || [],
-        delivered: cargo.invoices?.filter(inv => inv.status === "Доставлено") || [],
-        completed: cargo.invoices?.filter(inv => inv.status === "Завершен") || []
+        invoices:    invoices || [],
     };
 
     return (
@@ -71,33 +166,11 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
                 />
 
             </div>
+
             {/* Предложения от водителей */}
             {renderInvoiceSection(
-                "Предложения от водителей",
-                groupedInvoices.offered,
-                "offered"
+                groupedInvoices.invoices
             )}
-
-            {/* Назначенные водители */}
-            {renderInvoiceSection(
-                "Назначенные водители",
-                groupedInvoices.accepted,
-                "assigned"
-            )}
-
-            {/* Доставленные */}
-            {renderInvoiceSection(
-                "Доставленные",
-                groupedInvoices.delivered,
-                "delivered"
-            )}
-
-            {/* Завершенные */}
-            {renderInvoiceSection(
-                "Завершенные",
-                groupedInvoices.completed,
-                "completed"
-            )}
-        </>
+      </>
     );
 };

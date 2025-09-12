@@ -5,7 +5,8 @@ import { useToast } from '../components/Toast'
 import { 
     useCargoStore,
     CargoInfo, 
-    EMPTY_CARGO
+    EMPTY_CARGO,
+    cargoGetters
 } from './cargoStore'
 import { useToken } from './loginStore'
 import { useSocketStore } from './socketStore'

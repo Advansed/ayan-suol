@@ -33,7 +33,7 @@ export const UI_TEXT = {
 } as const
 
 export const STAT_LABELS = {
-  ORDERS:                 'Выполнено заказов',
+  ORDERS:                 'Заказов',
   RATING:                 'Рейтинг',
   INVOICES:               'Заявки',
   PAID:                   'Оплачено'

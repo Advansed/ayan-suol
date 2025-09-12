@@ -59,11 +59,9 @@ export function useLogin() {
       return await new Promise<boolean>((resolve) => {
 
         const handleAuthResponse = (response: { success: boolean; data?: AuthResponse; message?: string }) => {
-          console.log("handle once login...", response)
           setLoading(false)
           
           if (response.success && response.data) {
-            console.log( response.data )
             setUser(response.data)
             toast.success('Вход выполнен успешно')
             resolve(true)
