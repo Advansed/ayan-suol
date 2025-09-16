@@ -1,48 +1,42 @@
-import React from 'react';
-import { IonButton, IonLabel, IonIcon, IonRefresher, IonRefresherContent } from '@ionic/react';
+import React, { useState } from 'react';
+import { IonButton, IonLabel, IonRefresher, IonRefresherContent, IonSegment, IonSegmentButton } from '@ionic/react';
 import { WorkInfo, WorkStatus } from '../types';
 import { WorkCard } from './WorkCard';
 import { useHistory } from 'react-router';
 import Lottie from 'lottie-react';
 import animationData from './data.json';
+import './WorkList.css'
 
 interface WorksListProps {
     works:          WorkInfo[];
     title?:         string;
     isLoading?:     boolean;
-    onWorkClick:    (work: WorkInfo) => void;
-    onOfferClick:   (work: WorkInfo) => void;
-    onMapClick:     (work: WorkInfo) => void;  // Добавлено
+    onWorkClick:    (work: WorkInfo ) => void;
     onRefresh?:     () => Promise<void>;
 }
 
 export const WorksList: React.FC<WorksListProps> = ({
     works,
-    title,
     isLoading = false,
     onWorkClick,
-    onOfferClick,
-    onMapClick,
     onRefresh
 }) => {
     const history = useHistory();
+    const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
     
     // Разделяем работы по статусам
-    const activeWorks = works.filter(w => w.status !== WorkStatus.COMPLETED);
-    const completedWorks = works.filter(w => w.status === WorkStatus.COMPLETED);
+    const activeWorks = works.filter(w => w.status === WorkStatus.NEW);
+    const completedWorks = works.filter(w => w.status !== WorkStatus.NEW);
 
-    const handleChat = (work: WorkInfo, e: React.MouseEvent) => {
-        e.stopPropagation();
-        history.push(`/tab2/${work.recipient}:${work.cargo}:${work.client}`);
-    };
 
-    const handleRefresh = async (event: any) => {
+    const handleRefresh     = async (event: any) => {
         if (onRefresh) {
             await onRefresh();
         }
         event.detail.complete();
     };
-    const EmptyState = () => (
+
+    const EmptyState        = () => (
         <div className="empty-state-container">
             <div className="empty-state-content">
                 <div className="empty-state-text">
@@ -71,6 +65,20 @@ export const WorksList: React.FC<WorksListProps> = ({
         </div>
     );
 
+    const renderWorks       = (worksToRender: WorkInfo[]) => {
+        return worksToRender.map((work) => (
+            <div 
+                key={work.guid} 
+                className='cr-card mt-1'
+                onClick={() => { onWorkClick(work); }}
+            >
+                <WorkCard work={work} mode="view" />
+
+            </div>
+        ));
+    };
+
+
     return (
         <>
             {/* Refresher */}
@@ -79,95 +87,63 @@ export const WorksList: React.FC<WorksListProps> = ({
                     <IonRefresherContent></IonRefresherContent>
                 </IonRefresher>
             )}
+            
             <div className="bg-2 scroll">
+                {/* Переключатель вкладок */}
                 {/* Активные работы */}
-                {activeWorks.length > 0 && (
-                    <>
-                        <div className="a-center w-90 fs-09 mt-1">
-                            <b>{ title ? title : "Доступные заказы"}</b>
-                        </div>
-                        {activeWorks.map((work) => (
-                            <div 
-                                key={work.guid} 
-                                className='cr-card mt-1'
-                                onClick={() => work.status === WorkStatus.IN_WORK && onWorkClick(work)}
-                            >
-                                <WorkCard work = { work } mode="view" />
-                                
-                                <div className="flex">
-                                    <IonButton
-                                        className="w-50 cr-button-2"
-                                        mode="ios"
-                                        fill="clear"
-                                        color="primary"
-                                        onClick={(e) => handleChat(work, e)}
-                                    >
-                                        <IonLabel className="fs-08">Чат</IonLabel>
-                                    </IonButton>
-                                    
-                                    {work.status === WorkStatus.NEW && (
-                                        <IonButton
-                                            className="w-50 cr-button-2"
-                                            mode="ios"
-                                            color="primary"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onOfferClick(work);
-                                            }}
-                                        >
-                                            <IonLabel className="fs-08">Предложить</IonLabel>
-                                        </IonButton>
-                                    )}
-                                        <IonButton
-                                            className="w-50 cr-button-2"
-                                            mode="ios"
-                                            color="tertiary"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onMapClick(work);
-                                            }}
-                                        >
-                                            <IonLabel className="fs-08">Карта</IonLabel>
-                                        </IonButton>
+                
 
-                                </div>
-                                <div>
-                                </div>
-                            </div>
-                        ))}
+                <IonSegment 
+                    value={activeTab} 
+                    onIonChange={e => setActiveTab(e.detail.value as 'active' | 'completed')}
+                    className="custom-segment sticky-top"
+                >
+                    <IonSegmentButton value="active" className="segment-button">
+                        <IonLabel className="segment-label"><b>Новые ({activeWorks.length})</b></IonLabel>
+                    </IonSegmentButton>
+                    <IonSegmentButton value="completed" className="segment-button">
+                        <IonLabel className="segment-label"><b>Активные ({completedWorks.length})</b></IonLabel>
+                    </IonSegmentButton>
+                </IonSegment>
+
+
+                {/* Активные работы */}
+                {activeTab === 'active' && (
+                    <>
+                        {activeWorks.length > 0 ? (
+                            <>
+                                {renderWorks(activeWorks)}
+                            </>
+                        ) : (
+                            !isLoading && <EmptyState />
+                        )}
                     </>
                 )}
 
                 {/* Выполненные работы */}
-                {completedWorks.length > 0 && (
+                {activeTab === 'completed' && completedWorks.length > 0 && (
                     <>
-                        <div className="a-center w-90 fs-09 mt-1">
-                            <b>Выполненные</b>
-                        </div>
-                        {completedWorks.map((work) => (
-                            <div key={work.guid} className='cr-card mt-1'>
-                                <WorkCard work = {work} mode="view" />
-                                <div className="flex">
-                                    <IonButton
-                                        className="w-50 cr-button-2"
-                                        mode="ios"
-                                        fill="clear"
-                                        color="primary"
-                                        onClick={(e) => handleChat(work, e)}
-                                    >
-                                        <IonLabel className="fs-08">Чат с заказчиком</IonLabel>
-                                    </IonButton>
-                                </div>
-                            </div>
-                        ))}
+                        {renderWorks(completedWorks)}
                     </>
                 )}
 
-                {/* Пустое состояние */}
-                {activeWorks.length === 0 && completedWorks.length === 0 && !isLoading && (
-                    <EmptyState />
+                {/* Пустое состояние для выполненных */}
+                {activeTab === 'completed' && completedWorks.length === 0 && !isLoading && (
+                    <div className="empty-state-container">
+                        <div className="empty-state-content">
+                            <div className="empty-state-text">
+                                <h3 className="fs-12 cl-gray a-center">
+                                    Нет выполненных заказов
+                                </h3>
+                                <p className="fs-09 cl-gray a-center mt-05">
+                                    Здесь будут отображаться завершенные заказы
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
+
         </>
     );
 };

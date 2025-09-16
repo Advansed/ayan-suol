@@ -10,11 +10,11 @@ export interface TaskCompletion {
 }
 
 export const useInvoices = ({ info }) => {
-    const [invoices, setInvoices] = useState(info.invoices);
-    const [isLoading, setIsLoading] = useState(false);
-    const history = useHistory();
-    const { emit, once } = useSocket();
-    const token = useToken();
+    const [invoices, setInvoices]       = useState(info.invoices);
+    const [isLoading, setIsLoading]     = useState(false);
+    const history                       = useHistory();
+    const { emit, once }                = useSocket();
+    const token                         = useToken();
 
     const handleAccept = useCallback(async (info: DriverInfo, status: number ) => {
         
@@ -51,19 +51,18 @@ export const useInvoices = ({ info }) => {
     const handleReject = useCallback(async (info: DriverInfo) => {
         setIsLoading(true);
         try {
-            emit('set_rejected', {
-                token: token,
-                id: info.guid
+            emit('set_inv', {
+                token:      token,
+                recipient:  info.recipient,
+                id:         info.guid,
+                status:     21
             });
             
             // Также можно обновить статус при отказе, если нужно
             setInvoices(prevInvoices => 
-                prevInvoices.map(invoice => 
-                    invoice.guid === info.guid 
-                        ? { ...invoice, status: 3 } // или другой статус для отказа
-                        : invoice
-                )
+                prevInvoices.filter(invoice => invoice.guid !== info.guid)
             );
+            
         } catch (error) {
             console.error("Ошибка при отказе:", error);
         } finally {
@@ -112,13 +111,29 @@ export const useInvoices = ({ info }) => {
 };
 
 
-function setStatus( status: number ) {
+export function setStatus( status: number ) {
 
     switch(status) {
 
-        case 1 :   return "Заказано";
+        case 11 :   return "Заказано";
 
-        case 2 :   return "Принято";
+        case 12 :   return "Принято";
+
+        case 13 :   return "На погрузке";
+
+        case 14 :   return "Загружается";
+
+        case 15 :   return "Загружено";
+
+        case 16 :   return "В пути";
+
+        case 17 :   return "Прибыл";
+
+        case 18 :   return "Разгружается";
+
+        case 19 :   return "Разгружено";
+
+        case 20 :   return "Завершено";
 
         default:   return ""
         

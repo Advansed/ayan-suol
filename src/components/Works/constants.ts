@@ -6,26 +6,44 @@ import { WorkStatus, WorkPriority, OfferStatus, CreateOfferData } from './types'
 
 // CSS классы для статусов работ
 export const WORK_STATUS_CLASSES: Record<WorkStatus, string> = {
-    [WorkStatus.NEW]: "cr-status-1",
-    [WorkStatus.OFFERED]: "cr-status-2", 
-    [WorkStatus.IN_WORK]: "cr-status-3",
-    [WorkStatus.COMPLETED]: "cr-status-4"
+    [WorkStatus.NEW]:       "cr-status-1",
+    [WorkStatus.OFFERED]:   "cr-status-1", 
+    [WorkStatus.TO_LOAD]:   "cr-status-2",
+    [WorkStatus.ON_LOAD]:   "cr-status-2",
+    [WorkStatus.IN_WORK]:   "cr-status-3",
+    [WorkStatus.TO_UNLOAD]: "cr-status-3",
+    [WorkStatus.ON_UNLOAD]: "cr-status-4",
+    [WorkStatus.COMPLETED]: "cr-status-4",
+    [WorkStatus.REJECTED]:  "cr-status-5"
 };
 
 // Цвета статусов работ
 export const WORK_STATUS_COLORS: Record<WorkStatus, string> = {
-    [WorkStatus.NEW]: "#1976d2",
-    [WorkStatus.OFFERED]: "#f57c00",
-    [WorkStatus.IN_WORK]: "#7b1fa2", 
-    [WorkStatus.COMPLETED]: "#2e7d32"
+
+    [WorkStatus.NEW]:       "#1976d2",
+    [WorkStatus.OFFERED]:   "#1976d2",
+    [WorkStatus.TO_LOAD]:   "#f57c00",
+    [WorkStatus.ON_LOAD]:   "#f57c00",
+    [WorkStatus.IN_WORK]:   "#7b1fa2", 
+    [WorkStatus.TO_UNLOAD]: "#7b1fa2", 
+    [WorkStatus.ON_UNLOAD]: "#2e7d32",
+    [WorkStatus.COMPLETED]: "#2e7d32",
+    [WorkStatus.REJECTED]:  "#e41414ff"
+
 };
 
 // Описания статусов работ
 export const WORK_STATUS_DESCRIPTIONS: Record<WorkStatus, string> = {
-    [WorkStatus.NEW]: 'Доступна для предложения',
-    [WorkStatus.OFFERED]: 'Ваше предложение рассматривается',
-    [WorkStatus.IN_WORK]: 'Работа выполняется',
-    [WorkStatus.COMPLETED]: 'Работа завершена'
+
+    [WorkStatus.NEW]:       'Доступна для предложения',
+    [WorkStatus.OFFERED]:   'Ваше предложение рассматривается', 
+    [WorkStatus.TO_LOAD]:   "Нужно поехать на погрузку",
+    [WorkStatus.ON_LOAD]:   "Груз загружается",
+    [WorkStatus.IN_WORK]:   "Работа выполняется",
+    [WorkStatus.TO_UNLOAD]: "Подъехал к месту разгрузки",
+    [WorkStatus.ON_UNLOAD]: "Груз разгружается",
+    [WorkStatus.COMPLETED]: "Работа заверщена",
+    [WorkStatus.REJECTED]:  "Предложение отказано"
 };
 
 // CSS классы для статусов предложений

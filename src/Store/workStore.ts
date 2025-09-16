@@ -2,43 +2,43 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { 
-  WorkInfo, 
-  WorkStatus, 
-  WorkPageType, 
-  WorkFilters, 
-  OfferInfo 
+    WorkInfo, 
+    WorkStatus, 
+    WorkPageType, 
+    WorkFilters, 
+    OfferInfo 
 } from '../components/Works/types'
 
 // ============================================
 // ТИПЫ
 // ============================================
 export interface WorkState {
-  works: WorkInfo[]
-  archiveWorks: WorkInfo[]
-  isLoading: boolean
-  isArchiveLoading: boolean
-  currentPage: WorkPageType
-  filters: WorkFilters
-  searchQuery: string
-  navigationHistory: WorkPageType[]
-  error: string | null
+  works:              WorkInfo[]
+  archiveWorks:       WorkInfo[]
+  isLoading:          boolean
+  isArchiveLoading:   boolean
+  currentPage:        WorkPageType
+  filters:            WorkFilters
+  searchQuery:        string
+  navigationHistory:  WorkPageType[]
+  error:              string | null
 }
 
 interface WorkActions {
-  setWorks: (works: WorkInfo[]) => void
-  setArchiveWorks: (archiveWorks: WorkInfo[]) => void
-  setLoading: (loading: boolean) => void
-  setArchiveLoading: (loading: boolean) => void
-  setCurrentPage: (page: WorkPageType) => void
-  setFilters: (filters: WorkFilters) => void
-  setSearchQuery: (query: string) => void
-  setNavigationHistory: (history: WorkPageType[]) => void
-  setError: (error: string | null) => void
-  updateWork: (guid: string, data: Partial<WorkInfo>) => void
-  addToArchive: (guid: string) => void
-  markCompleted: (guid: string) => void
-  clearError: () => void
-  reset: () => void
+  setWorks:               ( works: WorkInfo[] ) => void
+  setArchiveWorks:        ( archiveWorks: WorkInfo[] ) => void
+  setLoading:             ( loading: boolean ) => void
+  setArchiveLoading:      ( loading: boolean ) => void
+  setCurrentPage:         ( page: WorkPageType ) => void
+  setFilters:             ( filters: WorkFilters ) => void
+  setSearchQuery:         ( query: string ) => void
+  setNavigationHistory:   ( history: WorkPageType[] ) => void
+  setError:               ( error: string | null ) => void
+  updateWork:             ( guid: string, data: Partial<WorkInfo> ) => void
+  addToArchive:           ( guid: string ) => void
+  markCompleted:          ( guid: string ) => void
+  clearError:             ( ) => void
+  reset:                  ( ) => void
 }
 
 type WorkStore = WorkState & WorkActions

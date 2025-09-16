@@ -5,12 +5,12 @@ import { devtools } from 'zustand/middleware'
 // ============================================
 // ТИПЫ (сохраняем существующие)
 // ============================================
-export interface CargoCity {
+export interface  CargoCity {
     city: string,
     fias: string
 }
 
-export interface CargoAddress {
+export interface  CargoAddress {
     city: CargoCity;
     address: string;
     fias: string;
@@ -18,13 +18,13 @@ export interface CargoAddress {
     lon: number;
 }
 
-export type DriverStatus = 'Заказано' | 'Принято' | 'Доставлено' | 'Отказано' | 'Завершен';
+export type       DriverStatus    = 'Заказано'  | 'Принято'   | 'На погрузке'   | 'Загружается'   | 'Загружено'   | 'В пути'  | 'Доставлено'  | 'Разгружается'  |  'Разгружено'  | 'Завершено';
 
 
-export type DriverCardMode = 'offered' | 'assigned' | 'delivered' | 'completed';
+export type       DriverCardMode  = 'offered'   | 'assigned'  | 'to_load'       | 'on_load'       | 'loaded'      | 'on_way'  | 'delivered'   | 'on_unload'     | 'unloaded'    | 'completed';
 
 
-export interface DriverInfo {
+export interface  DriverInfo {
     
     guid:           string;
     cargo:          string;
@@ -40,7 +40,7 @@ export interface DriverInfo {
 
 }
 
-export interface CargoInfo {
+export interface  CargoInfo {
     guid:           string;
     name:           string;
     description:    string;
@@ -65,7 +65,7 @@ export interface CargoInfo {
     updatedAt?:     string;
 }
 
-export enum CargoStatus {
+export enum       CargoStatus {
     NEW           = "Новый",
     WAITING       = "В ожидании",
     HAS_ORDERS    = "Есть заказы",
@@ -75,20 +75,20 @@ export enum CargoStatus {
     COMPLETED     = "Выполнено"
 }
 
-export enum CargoPriority {
+export enum       CargoPriority {
     LOW = 'low',
     NORMAL = 'normal', 
     HIGH = 'high',
     URGENT = 'urgent'
 }
 
-export interface PageType {
+export interface  PageType {
     type: 'list' | 'create' | 'edit' | 'view' | 'invoices' | 'prepayment' | 'insurance'
     cargo?: CargoInfo
     subPage?: string
 }
 
-export interface CargoFilters {
+export interface  CargoFilters {
     status?: CargoStatus[]
     priority?: CargoPriority[]
     dateFrom?: string

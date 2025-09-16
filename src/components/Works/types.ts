@@ -4,15 +4,22 @@
 
 import { CargoAddress }         from "../../Store/cargoStore";
 import { ValidationErrors }     from "../Cargos";
-import { ValidationResult }     from "../Cargos/types";
 
 
 // Статусы работ с точки зрения водителя
 export enum WorkStatus {
-    NEW             = "Новый",           // Доступна для предложения
-    OFFERED         = "Предложен",   // Водитель сделал предложение
-    IN_WORK         = "В работе",    // Предложение принято, выполняется
-    COMPLETED       = "Выполнен"   // Работа завершена
+    NEW             = "Новый",              // Доступна для предложения             10
+    OFFERED         = "Торг",               // Водитель сделал предложение          11    
+    TO_LOAD         = "На погрузку",        // Едет на погрузку                     12    
+    ON_LOAD         = "На погрузке",        // Прибыл на погрузку                   13 
+    LOADING         = "Загружается",        // Загружается                          14 
+    LOADED          = "Загружено",          // Загрузился                           15 
+    IN_WORK         = "В работе",           // Груз в работе                        16
+    TO_UNLOAD       = "Доставлено",         // Прибыл на место выгрузки             17
+    UNLOADING       = "Разгружается",        // Груз выгружается                     18
+    UNLOADED        = "Выгружено",          // Груз выгружен                        19
+    COMPLETED       = "Завершено" ,         // Работа завершена                     20
+    REJECTED        = "Отказано"            // Отказано                             21    
 }
 
 // Приоритет работы
@@ -33,6 +40,7 @@ export interface OfferInfo {
     volume:             number;
     transport:          string;
     comment:            string;
+    status:             number;
 
 }
 
@@ -125,7 +133,6 @@ export interface OfferFormState {
 export interface OfferFormActions {
     setFieldValue: (fieldPath: string, value: any) => void;
     resetForm:      () => void;
-    validateForm:   () => ValidationResult;
     submitForm:     () => Promise<boolean>;
 }
 

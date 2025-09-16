@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IonButton, IonIcon, IonLoading } from '@ionic/react';
 import { arrowBackOutline } from 'ionicons/icons';
-import { WorkInfo, CreateOfferData, OfferInfo } from '../types';
-import socketService from '../../Sockets';
+import { WorkInfo, CreateOfferData, OfferInfo, WorkStatus } from '../types';
 import { workFormatters } from '../utils';
 import './WorkOffer.css';
 import { transportGetters } from '../../../Store/transportStore';
@@ -51,8 +50,8 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack, onOffer }) =
             weight:     formData.weight,
             volume:     work.volume,
             transport:  transport?.guid || '',
-            comment:    formData.comment || ''
-
+            comment:    formData.comment || '',
+            status:     nextStatus(work.status)
         };
 
         const result = await onOffer( offerData )
@@ -195,3 +194,30 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack, onOffer }) =
         </div>
     );
 };
+
+
+function nextStatus( status: WorkStatus) {
+
+    switch(status) {
+        case WorkStatus.NEW:            return 11;
+        case WorkStatus.TO_LOAD:        return 13;
+        case WorkStatus.LOADING:        return 15;
+        case WorkStatus.IN_WORK:        return 17;
+        case WorkStatus.UNLOADING:      return 19;
+        case WorkStatus.REJECTED:       return 11;
+        default: return 22;
+    }
+    
+    // NEW             = "Новый",              // Доступна для предложения             10
+    // OFFERED         = "Торг",               // Водитель сделал предложение          11    
+    // TO_LOAD         = "На погрузку",        // Едет на погрузку                     12    
+    // ON_LOAD         = "На погрузке",        // Прибыл на погрузку                   13 
+    // LOADING         = "Загружается",        // Загружается                          14 
+    // LOADED          = "Загружено",          // Загрузился                           15 
+    // IN_WORK         = "В работе",           // Груз в работе                        16
+    // TO_UNLOAD       = "Доставлено",         // Прибыл на место выгрузки             17
+    // UNLOADING       = "Выгружается",        // Груз выгружается                     18
+    // UNLOADED        = "Выгружено",          // Груз выгружен                        19
+    // COMPLETED       = "Завершено" ,         // Работа завершена                     20
+    // REJECTED        = "Отказано"            // Отказано                             21           
+}

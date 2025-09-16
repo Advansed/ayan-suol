@@ -1,25 +1,25 @@
 import React, { useMemo } from 'react';
 import { IonIcon } from '@ionic/react';
 import { personCircleOutline } from 'ionicons/icons';
-import { CargoInfo, DriverInfo, DriverStatus } from '../../../Store/cargoStore';
+import { CargoInfo, DriverInfo } from '../../../Store/cargoStore';
 
 
 interface DriverInfoProps {
 
     info:           DriverInfo;
     cargo:          CargoInfo;
-    mode:           DriverStatus;
 
 }
 
 export const DriverCard: React.FC<DriverInfoProps> = ({ 
-    info, cargo, mode
+    info, cargo
 }) => {
+
     const getWeightLabel = () => {
-        switch (mode) {
+        switch ( info.status ) {
             case 'Заказано'         : return "Заказано"
-            case 'Принято'          : return ""
-            case 'Завершен'         : return 'Взято груза';
+            case 'Принято'          : return "Принято"
+            case 'Завершено'        : return 'Взято груза';
             case 'Доставлено'       : return 'Доставлено';
             default                 : return 'Грузоподъёмность';
         }
@@ -37,7 +37,7 @@ export const DriverCard: React.FC<DriverInfoProps> = ({
         <>
             {/* Основная информация о водителе */}
             <div className='flex fl-space'>
-                <div className='cr-status-2 fs-1'>{ info.status }</div>
+                <div className='cr-status-2 fs-1'>{ info.status + "" }</div>
                 <div className="fs-09 cl-prim">
                     <div className='cr-status-5 fs-11'><b>{ formattedCurrency }</b></div>
                 </div>

@@ -1,34 +1,121 @@
-import React, { useState, useEffect } from 'react';
-import { IonButton, IonIcon } from '@ionic/react';
-import { arrowBackOutline, chatboxEllipsesOutline } from 'ionicons/icons';
-import { OfferInfo, WorkInfo } from '../types';
-import { WorkCard } from './WorkCard';
-import { useSocket } from '../../../Store/useSocket';
+import React, { useEffect, useState } from 'react';
+import { IonButton, IonIcon, IonLabel } from '@ionic/react';
+import { arrowBackOutline, callOutline, locationOutline } from 'ionicons/icons';
+import { WorkInfo, WorkStatus } from '../types';
+import { workFormatters, workStatusUtils } from '../utils';
+import { useHistory } from 'react-router-dom';
+import { useWorkStore } from '../../../Store/workStore';
 
 interface WorkViewProps {
-    work:       WorkInfo;
-    onBack:     () => void;
-    onStatus:   (status: string, offer: Partial<OfferInfo>) => Promise<void>
+    work:           WorkInfo;
+    onBack:         () => void;
+    onOfferClick:   (work: WorkInfo ) => void;
+    onStatusClick:  (work: WorkInfo ) => void;
+    onMapClick:     (work: WorkInfo ) => void;
 }
 
-export const WorkView: React.FC<WorkViewProps> = ({ work, onBack, onStatus }) => {
+export const WorkView: React.FC<WorkViewProps> = ({ 
+    work, onBack, 
+    onOfferClick,
+    onStatusClick,
+    onMapClick,
+
+}) => {
     const [workInfo, setWorkInfo] = useState(work);
-    const { isConnected, on, emit } = useSocket()
+    
+    const works             = useWorkStore(state => state.works)
 
+    useEffect(()=>{
+        const w = works.find( w => w.guid === workInfo.guid )
+        setWorkInfo( w as WorkInfo )
+    },[ works ])
 
+    const hist = useHistory()
 
-    const handleDelivered = async() => {
-
-        await onStatus("delivered", {
-            guid:       workInfo.guid,
-            recipient:  workInfo.recipient
-        })
-        
-        onBack()
+    const handleChat        = (work: WorkInfo, e: React.MouseEvent) => {
+        e.stopPropagation();
+        hist.push(`/tab2/${work.recipient}:${work.cargo}:${work.client}`);
     };
 
-    return (
-        <>
+    const StatusClick = (work: WorkInfo) => {
+
+        onStatusClick( work )
+
+    }
+
+    const renderButtons     = ( work: WorkInfo) => {
+        return <>
+            <div className="flex">
+                <IonButton
+                    className   = "w-50 cr-button-2"
+                    mode        = "ios"
+                    fill        = "clear"
+                    color       = "primary"
+                    onClick     = { (e) => handleChat( work, e) }
+                >
+                    <IonLabel className="fs-08">
+                        {work.status === WorkStatus.NEW ? 'Чат' : 'Чат'}
+                    </IonLabel>
+                </IonButton>
+                
+                {( 
+                    work.status === WorkStatus.NEW 
+                  
+                    ||  work.status === WorkStatus.TO_LOAD
+                    ||  work.status === WorkStatus.LOADING
+                    ||  work.status === WorkStatus.IN_WORK
+                    ||  work.status === WorkStatus.UNLOADING
+                    ||  work.status === WorkStatus.REJECTED
+
+                ) &&  (<>
+                        <IonButton
+                            className   = "w-50 cr-button-2"
+                            mode        = "ios"
+                            color       = "primary"
+                            onClick     = {(e) => {
+                                e.stopPropagation();
+                                switch(work.status) {
+                                    case WorkStatus.NEW:        onOfferClick( work );   break;
+                                    case WorkStatus.TO_LOAD:     StatusClick( work );   break;
+                                    case WorkStatus.LOADING:     StatusClick( work );   break;
+                                    case WorkStatus.IN_WORK:     StatusClick( work );   break;
+                                    case WorkStatus.UNLOADING:   StatusClick( work );   break;
+                                    case WorkStatus.REJECTED:   onOfferClick( work );   break;
+                                    default: break;
+                                }
+                                
+                            }}
+                        >
+                            <IonLabel className="fs-08">{
+                                  work.status ===  WorkStatus.NEW           ? "Предложить"  
+                                : work.status ===  WorkStatus.TO_LOAD       ? "Прибыл"  
+                                : work.status ===  WorkStatus.LOADING       ? "Загружено"  
+                                : work.status ===  WorkStatus.IN_WORK       ? "Доставлено"  
+                                : work.status ===  WorkStatus.UNLOADING     ? "Разгружено"  
+                                : work.status ===  WorkStatus.REJECTED      ? "Предложить"  
+                                : ""
+                            }</IonLabel>
+                        </IonButton>
+                    </>)
+                }
+                        
+                <IonButton
+                    className   = "w-50 cr-button-2"
+                    mode        = "ios"
+                    color       = "tertiary"
+                    onClick     = {(e) => {
+                        e.stopPropagation();
+                        onMapClick(work);
+                    }}
+                >
+                    <IonLabel className="fs-08">Карта</IonLabel>
+                </IonButton>
+            </div>
+        </>                
+    }
+
+    const renderView        = ( work: WorkInfo) => {
+        return <>
             {/* Header */}
             <div className="flex ml-05 mt-05">
                 <IonIcon 
@@ -42,99 +129,151 @@ export const WorkView: React.FC<WorkViewProps> = ({ work, onBack, onStatus }) =>
             </div>
 
             <div className='cr-card mt-1'>
-                <WorkCard work={workInfo} mode="view" />
+
+                <div className="flex fl-space">
+                    <div className="flex">
+                        <div className={workStatusUtils.getClassName(work.status)}>
+                            {work.status}
+                        </div>
+                        <div className="ml-1 fs-07 cl-black">
+                            {"ID: " + workFormatters.shortId(work.guid)}
+                        </div>
+                    </div>
+                    <div>
+                        <div className="fs-09 cl-prim">
+                            <b>{workFormatters.currency(work.price)}</b>
+                        </div>
+                        <div className="fs-08 cl-black">
+                            <b>{workFormatters.weight(work.weight)}</b>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Название груза */}
+                <div className="fs-08 mt-05 cl-black">
+                    <b>{work.name}</b>
+                </div>
+
+                {/* Заказчик */}
+                <div className="fs-08 mt-05 cl-gray">
+                    Заказчик: <span className="cl-black"><b>{work.client}</b></span>
+                </div>
+
+                {/* Маршрут отправления */}
+                <div className="flex fl-space mt-05 cl-black">
+                    <div className="flex">
+                        <IonIcon icon={locationOutline} color="danger"/>
+                        <div className="fs-08 cl-prim">
+                            <div className="ml-1 fs-09 cl-gray">Откуда:</div>
+                            <div className="ml-1 fs-09">
+                                <b>{work.address?.city.city || 'Не указано'}</b>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div className="fs-08 cl-prim">
+                            <div className="ml-1 fs-09 cl-gray mr-1">Дата загрузки:</div>
+                            <div className="ml-1 fs-09">
+                                <b>{workFormatters.date(work.pickup_date || '')}</b>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
-                {/* Информация о грузе */}
-                <div className="borders-wp mt-1">
-                    <div className="pl-1 pr-1 pt-1 pb-05">
-                        <div className="fs-09 cl-gray pb-05 cl-black">
-                            <b>Информация о грузе</b>
-                        </div>
-                        
-                        <div className="flex fl-space">
-                            <div className="w-50">
-                                <div className="fs-08">Вес (т)</div>
-                                <div className="fs-09 pt-05 borders-wp pl-1 pb-05">
-                                    {workInfo.weight || '-'}
-                                </div>
-                            </div>
-                            <div className="w-50 pl-1">
-                                <div className="fs-08">Объем (м³)</div>
-                                <div className="fs-09 pt-05 borders-wp pl-1 pb-05">
-                                    {workInfo.volume || '-'}
-                                </div>
+                <div className="flex fl-space mt-05">
+                    <div className="flex">
+                        <div className="fs-08 cl-prim ml-1">
+                            <div className="ml-1 fs-09 cl-gray">Точный адрес груза:</div>
+                            <div className="ml-1 fs-09">
+                                <b>{work.address?.address || 'Не указано'}</b>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Адреса и контакты */}
-                <div className="borders-wp mt-1">
-                    <div className="pl-1 pr-1 pt-1 pb-05">
-                        <div className="fs-09 cl-gray pb-1 cl-black">
-                            <b>Адреса и контакты</b>
-                        </div>
-                        
-                        <div className="pb-1">
-                            <div className="fs-08">Адрес погрузки</div>
-                            <div className="fs-09 pt-05 a-right borders-wp pr-1 pb-05">
-                                {workInfo.address.city.city + ', ' + workInfo.address.address || '-'}
+
+                {/* Маршрут назначения */}
+                <div className="flex fl-space mt-05">
+                    <div className="flex">
+                        <IonIcon icon={locationOutline} color="success"/>
+                        <div className="fs-08 cl-prim">
+                            <div className="ml-1 fs-09 cl-gray">Куда:</div>
+                            <div className="ml-1 fs-09">
+                                <b>{work.destiny?.city.city || 'Не указано'}</b>
                             </div>
                         </div>
-
-                        <div className="pb-1">
-                            <div className="fs-08">Адрес разгрузки</div>
-                            <div className="fs-09 pt-05 a-right borders-wp pr-1 pb-05">
-                                {workInfo.destiny.city.city + ', ' + workInfo.destiny.address || '-'}
-                            </div>
-                        </div>
-
-                        <div className="pb-1">
-                            <div className="fs-08">Контактное лицо</div>
-                            <div className="fs-09 pt-05 a-right borders-wp pr-1 pb-05">
-                                {workInfo.face || '-'}
-                            </div>
-                        </div>
-
-                        <div className="pb-1">
-                            <div className="fs-08">Телефон</div>
-                            <div className="fs-09 pt-05 a-right borders-wp pr-1 pb-05">
-                                {workInfo.phone || '-'}
+                    </div>
+                    <div>
+                        <div className="fs-08 cl-prim">
+                            <div className="ml-1 fs-09 cl-gray mr-1">Дата выгрузки:</div>
+                            <div className="ml-1 fs-09 mr-1">
+                                <b>{workFormatters.date(work.delivery_date || '')}</b>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <div className="flex fl-space mt-05">
+                    <div className="flex">
+                        <div className="fs-08 cl-prim ml-1">
+                            <div className="ml-1 fs-09 cl-gray">Точный адрес груза:</div>
+                            <div className="ml-1 fs-09">
+                                <b>{work.destiny?.address || 'Не указано'}</b>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex fl-space mt-05">
+                    <div className="flex">
+                        <IonIcon icon={ callOutline } color="primary"/>
+                        <div className="fs-08 cl-prim">
+                            <div className="ml-1 fs-09 cl-gray">Контактное лицо:</div>
+                            <div className="ml-1 fs-09">
+                                <b>{work.face || 'Не указано'}</b>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div className="fs-08 cl-prim">
+                            <div className="ml-1 fs-09 cl-gray">Телефон:</div>
+                            <div className="ml-1 fs-09 mr-1">
+                                <b>{workFormatters.date(work.phone || '')}</b>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Описание работы */}
+                {work.description && (
+                    <div className="fs-08 mt-1 cr-detali">
+                        <b>Детали груза:</b>
+                        <div className="mt-05">{work.description}</div>
+                    </div>
+                )}
+
+                
                 {/* Кнопки действий */}
                 <div className="flex fl-space mt-05 pb-05">
                     <IonButton
-                        className="w-50"
+                        className="w-100"
                         mode="ios"
                         color="danger"
                     >
                         <span className="fs-08">Обратиться в тех. поддержку</span>
                     </IonButton>
 
-                    <IonButton
-                        className="w-50"
-                        mode="ios"
-                        color="primary"
-                        onClick={handleDelivered}
-                    >
-                        <span className="fs-08 cl-white">Заказ выполнен</span>
-                    </IonButton>
                 </div>
+
+                { renderButtons( work ) }
                 
-                <IonButton
-                    className="w-100 cr-button-2"
-                    mode="ios"
-                    fill="clear"
-                    color="primary"
-                >
-                    <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
-                    <span className="ml-1 fs-08">Чат</span>
-                </IonButton>
             </div>
+        </>
+    }
+
+    return (
+        <>
+            { renderView( workInfo ) }
         </>
     );
 };

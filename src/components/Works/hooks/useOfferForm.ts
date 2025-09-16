@@ -5,8 +5,6 @@
 import { useState, useCallback } from 'react';
 import { WorkInfo, CreateOfferData, OfferFormState, UseOfferFormReturn } from '../types';
 import { EMPTY_OFFER } from '../constants';
-import { validateOfferField, validateOfferForm, workDataUtils } from '../utils';
-import { ValidationResult } from '../../Cargos/types';
 
 export const useOfferForm = (): UseOfferFormReturn => {
     // Состояние формы
@@ -18,48 +16,20 @@ export const useOfferForm = (): UseOfferFormReturn => {
         isDirty: false
     });
 
-    // Информация о работе (для валидации)
+    // Информация о работе
     const [workInfo, setWorkInfo] = useState<WorkInfo | undefined>();
-
-    // ======================
-    // ВАЛИДАЦИЯ
-    // ======================
-
-    const validateFieldInternal = useCallback((fieldPath: string): string | null => {
-        const value = formState.data[fieldPath];
-        return validateOfferField(fieldPath, value, workInfo);
-    }, [formState.data, workInfo]);
-
-    const validateFormInternal = useCallback((): ValidationResult => {
-        return validateOfferForm(formState.data, workInfo);
-    }, [formState.data, workInfo]);
-
-    const updateFormValidation = useCallback((newData: CreateOfferData) => {
-        const validationResult = validateOfferForm(newData, workInfo);
-        return {
-            errors: validationResult.errors,
-            isValid: validationResult.isValid
-        };
-    }, [workInfo]);
 
     // ======================
     // ДЕЙСТВИЯ С ФОРМОЙ
     // ======================
 
     const setFieldValue = useCallback((fieldPath: string, value: any) => {
-        setFormState(prev => {
-            const newData = { ...prev.data, [fieldPath]: value };
-            const validation = updateFormValidation(newData);
-            
-            return {
-                ...prev,
-                data: newData,
-                errors: validation.errors,
-                isValid: validation.isValid,
-                isDirty: true
-            };
-        });
-    }, [updateFormValidation]);
+        setFormState(prev => ({
+            ...prev,
+            data: { ...prev.data, [fieldPath]: value },
+            isDirty: true
+        }));
+    }, []);
 
     const resetForm = useCallback(() => {
         setFormState({
@@ -81,35 +51,22 @@ export const useOfferForm = (): UseOfferFormReturn => {
             comment: ""
         };
         
-        const validation = updateFormValidation(initialData);
-        
         setFormState({
             data: initialData,
-            errors: validation.errors,
-            isValid: validation.isValid,
+            errors: {},
+            isValid: false,
             isSubmitting: false,
             isDirty: false
         });
         
         setWorkInfo(work);
-    }, [updateFormValidation]);
+    }, []);
 
     const submitForm = useCallback(async (): Promise<boolean> => {
-        // Валидируем форму перед отправкой
-        const validationResult = validateFormInternal();
-        const { errors, isValid } = validationResult;
-
         setFormState(prev => ({
             ...prev,
-            errors,
-            isValid,
             isSubmitting: true
         }));
-
-        if (!isValid) {
-            setFormState(prev => ({ ...prev, isSubmitting: false }));
-            return false;
-        }
 
         try {
             // Форма готова к отправке - результат будет обработан в useWorks
@@ -131,7 +88,7 @@ export const useOfferForm = (): UseOfferFormReturn => {
             setFormState(prev => ({ ...prev, isSubmitting: false }));
             return false;
         }
-    }, [formState.data, validateFormInternal]);
+    }, [formState.data]);
 
     // ======================
     // УТИЛИТЫ
@@ -161,8 +118,7 @@ export const useOfferForm = (): UseOfferFormReturn => {
 
     // Проверка, можно ли отправить форму
     const canSubmit = useCallback((): boolean => {
-        return formState.isValid && 
-               formState.isDirty && 
+        return formState.isDirty && 
                !formState.isSubmitting &&
                formState.data.transportId !== "" &&
                formState.data.price > 0 &&
@@ -181,12 +137,11 @@ export const useOfferForm = (): UseOfferFormReturn => {
         actions: {
             setFieldValue,
             resetForm,
-            validateForm: validateFormInternal,
             submitForm
         },
 
-        // Валидация
-        validateField: validateFieldInternal,
+        // Валидация (оставлены пустые функции для совместимости)
+        validateField: () => null,
         hasErrors,
         getFieldError,
 

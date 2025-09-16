@@ -15,7 +15,6 @@ import {
 
 // Переиспользуем базовые форматтеры из Cargos
 import { formatters as cargoFormatters } from '../Cargos/utils';
-import { ValidationErrors, ValidationResult } from '../Cargos/types';
 
 // ======================
 // УТИЛИТЫ ВАЛИДАЦИИ
@@ -50,33 +49,6 @@ export const validateOfferField = (fieldPath: string, value: any, workInfo?: Wor
     }
 };
 
-// Валидация формы предложения
-export const validateOfferForm = (data: CreateOfferData, workInfo?: WorkInfo): ValidationResult => {
-    const errors: ValidationErrors = {};
-
-    // Валидация обязательных полей
-    const requiredFields = ['transportId', 'price', 'weight'];
-    
-    for (const field of requiredFields) {
-        const error = validateOfferField(field, data[field], workInfo);
-        if (error) {
-            errors[field] = error;
-        }
-    }
-
-    // Валидация комментария
-    if (data.comment) {
-        const commentError = validateOfferField('comment', data.comment);
-        if (commentError) {
-            errors.comment = commentError;
-        }
-    }
-
-    return {
-        isValid: Object.keys(errors).length === 0,
-        errors
-    };
-};
 
 // ======================
 // УТИЛИТЫ ФОРМАТИРОВАНИЯ  
@@ -276,10 +248,14 @@ export const workDataUtils = {
     // Группировка работ по статусу
     groupByStatus: (works: WorkInfo[]): Record<WorkStatus, WorkInfo[]> => {
         const groups: Record<WorkStatus, WorkInfo[]> = {
-            [WorkStatus.NEW]: [],
-            [WorkStatus.OFFERED]: [],
-            [WorkStatus.IN_WORK]: [],
-            [WorkStatus.COMPLETED]: []
+            [WorkStatus.NEW]:           [],
+            [WorkStatus.OFFERED]:       [],
+            [WorkStatus.TO_LOAD]:       [],
+            [WorkStatus.ON_LOAD]:       [],
+            [WorkStatus.IN_WORK]:       [], 
+            [WorkStatus.TO_UNLOAD]:     [], 
+            [WorkStatus.ON_UNLOAD]:     [],
+            [WorkStatus.COMPLETED]:     []    
         };
 
         works.forEach(work => {
@@ -298,10 +274,6 @@ export const workDataUtils = {
 // ======================
 
 export default {
-    validate: {
-        field: validateOfferField,
-        form: validateOfferForm
-    },
     format: workFormatters,
     status: workStatusUtils,
     offer: offerStatusUtils,

@@ -40,11 +40,8 @@ export const Cargos: React.FC = () => {
         if (currentPage.type === 'create') {
             navigateTo({ type: 'list' });
         } else {
-
             const cargo = cargoGetters.getCargo( currentPage.cargo?.guid as string )
-
             navigateTo({ type: 'view', cargo: cargo });
-
         }
             
     };
@@ -102,6 +99,7 @@ export const Cargos: React.FC = () => {
                     <CargoInvoiceSections
                         cargo           = { currentPage.cargo! }
                         onBack          = { handleBack }
+                        onList          = { ()=>{  navigateTo({ type: 'list' }); } }
                     />
                 );
 
