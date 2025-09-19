@@ -1,8 +1,8 @@
-import React from 'react'
+import React            from 'react'
 import { IonRefresher, IonRefresherContent, IonSearchbar } from '@ionic/react'
-import { useHistory } from 'react-router'
-import { useChatList } from './useChatList'
-import styles from './ChatList.module.css'
+import { useHistory }   from 'react-router'
+import styles           from './ChatList.module.css'
+import { useChats } from '../../Store/useChats'
 
 // Инициалы из имени
 const getInitials = (name: string): string => {
@@ -28,7 +28,7 @@ const ChatItem = React.memo(({ chat, onClick }: {
         <div className={styles.avatar}>
           {getInitials(chat.rec_name)}
         </div>
-        {chat.unread_count > 0 && (
+        {chat.unread_count && chat.unread_count > 0 && (
           <div className={styles.unreadBadge}>{chat.unread_count}</div>
         )}
         {chat.last_time && (
@@ -39,29 +39,49 @@ const ChatItem = React.memo(({ chat, onClick }: {
   </div>
 ))
 
-export function ChatList() {
+export function ChatsList() {
   const { 
     filteredChats, 
     isLoading, 
-    searchQuery, 
-    setSearchQuery, 
-    refresh 
-  } = useChatList()
+    searchQuery,
+    setSearchQuery,
+    loadChats,
+    setCurrentChat
+  } = useChats()
   
   const history = useHistory()
 
   const handleChatClick = (chat: any) => {
+    setCurrentChat(chat.recipient, chat.cargo)
     history.push(`/tab2/${chat.recipient}:${chat.cargo}:${chat.rec_name}`)
+  }
+
+  const handleRefresh = (event: CustomEvent) => {
+    loadChats().then(() => {
+      if (event.detail) {
+        event.detail.complete()
+      }
+    })
+  }
+
+  const handleSearchChange = (e: CustomEvent) => {
+    setSearchQuery(e.detail.value || '')
   }
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <div className='ml-05 mt-01 fs-09 a-center h-2'><b>Чаты</b></div>
+        <IonSearchbar
+          value={searchQuery}
+          onIonInput={handleSearchChange}
+          placeholder="Поиск чатов..."
+          className={styles.searchBar}
+        />
       </div>
 
       <div className={styles.content}>
-        <IonRefresher slot="fixed" onIonRefresh={refresh}>
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent />
         </IonRefresher>
 
@@ -90,6 +110,7 @@ export function ChatList() {
           </div>
         )}
       </div>
+      
     </div>
   )
 }

@@ -241,7 +241,7 @@ export const initWorkSocketHandlers = (socket: any) => {
   if (!socket) return
   
   socket.on('get_works', workSocketHandlers.onGetWorks)
-  socket.on('get_archive', workSocketHandlers.onGetArchive)
+  socket.on('get_work_archives', workSocketHandlers.onGetArchive)
   
   console.log('Work socket handlers initialized')
 }
@@ -250,7 +250,7 @@ export const destroyWorkSocketHandlers = (socket: any) => {
   if (!socket) return
   
   socket.off('get_works', workSocketHandlers.onGetWorks)
-  socket.off('get_archive', workSocketHandlers.onGetArchive)
+  socket.off('get_work_archives', workSocketHandlers.onGetArchive)
   
   console.log('Work socket handlers destroyed')
 }

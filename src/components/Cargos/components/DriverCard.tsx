@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
-import { IonIcon } from '@ionic/react';
-import { personCircleOutline } from 'ionicons/icons';
-import { CargoInfo, DriverInfo } from '../../../Store/cargoStore';
+import React, { useMemo }           from 'react';
+import { IonIcon }                  from '@ionic/react';
+import { personCircleOutline }      from 'ionicons/icons';
+import { CargoInfo, DriverInfo }    from '../../../Store/cargoStore';
 
 
 interface DriverInfoProps {
@@ -63,13 +63,6 @@ export const DriverCard: React.FC<DriverInfoProps> = ({
                  
             </div>
 
-            {/* Комментарий */}
-            {/* {info.comment && mode === 'offered' && (
-                <div className="mt-1 p-1" style={{backgroundColor: '#e6f2ff', borderRadius: '0.5em'}}>
-                    <b className="fs-08">Комментарий водителя:</b><br />
-                    <div className="fs-08 mt-05">{info.comment}</div>
-                </div>
-            )} */}
         </>
     );
 };

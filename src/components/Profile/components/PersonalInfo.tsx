@@ -1,8 +1,8 @@
 import React from 'react';
 import { PageData } from '../../DataEditor/types';
 import DataEditor from '../../DataEditor';
-import { UserData } from '../../../Store/types/auth';
 import { useToast } from '../../Toast';
+import { UserData } from '../../../Store/loginStore';
 
 interface PersonalInfoProps {
     user:   Partial<UserData>

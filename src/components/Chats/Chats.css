@@ -203,7 +203,8 @@
 
 .chat-input-container {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
+    justify-content: center;
     gap: 0.75em;
 }
 
@@ -278,6 +279,18 @@
 
 .chat-send-disabled:hover {
     transform: none !important;
+}
+
+.chat-icon-1 {
+    width: 1.5em;
+    height: 1.5em;
+    margin-left: 0.3em;
+}
+
+.chat-icon-2 {
+    width: 1.3em;
+    height: 1.3em;
+    margin-left: 0.0em;
 }
 
 /* Анимации */

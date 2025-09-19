@@ -29,6 +29,7 @@ export interface UserData {
   user_type:          number
   description:        string
   account:            string
+  password:           string
   ratings:            UserRatings
   agreements:         Agreements
 }

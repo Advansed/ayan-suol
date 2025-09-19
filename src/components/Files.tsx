@@ -20,7 +20,7 @@ export async function   takePicture() {
       quality:          80,
       allowEditing:     false,
       resultType:       CameraResultType.DataUrl,
-      source:           CameraSource.Prompt
+      source:           CameraSource.Camera
     });
     //const imageUrl = "data:image/jpeg;base64," + image.base64String;
     let arr = image.dataUrl?.split(";")

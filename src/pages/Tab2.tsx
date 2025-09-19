@@ -1,8 +1,8 @@
 import { IonContent, IonPage } from '@ionic/react';
 import './Tab2.css';
 import { useParams } from 'react-router';
-import { ChatList } from '../components/Chats/ChatList';
 import Chats from '../components/Chats/Chats';
+import { ChatsList } from '../components/Chats/ChatsList';
 
 
 
@@ -19,7 +19,7 @@ const Tab2: React.FC = () => {
 
           name === undefined
 
-            ? <ChatList />
+            ? <ChatsList />
 
             : <Chats name = { name } />
 

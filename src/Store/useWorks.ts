@@ -10,9 +10,9 @@ import { WorkInfo, WorkFilters, OfferInfo, WorkStatus }
                           from '../components/Works/types'
 
 export const useWorks = () => {
-  const token     = loginGetters.getToken()
-  const { emit }  = useSocket()
-  const toast     = useToast()
+  const token             = loginGetters.getToken()
+  const { emit }          = useSocket()
+  const toast             = useToast()
 
   // ============================================
   // СОСТОЯНИЕ
@@ -128,13 +128,13 @@ export const useWorks = () => {
     if (!isConnected) return
 
     workActions.setArchiveLoading(true)
-    emit('get_archive', { token })
+    emit('get_work_archives', { token })
   }, [token, isConnected, emit])
 
   // ============================================
   // УТИЛИТЫ
   // ============================================
-  const getWork =          useCallback((guid: string): WorkInfo | undefined => {
+  const getWork           = useCallback((guid: string): WorkInfo | undefined => {
     return workGetters.getWork(guid) || workGetters.getArchiveWork(guid)
   }, [])
 
@@ -151,41 +151,42 @@ function nextStatus( status: WorkStatus ) {
         default: return 22;
     }
     
-    // NEW             = "Новый",              // Доступна для предложения             10
-    // OFFERED         = "Торг",               // Водитель сделал предложение          11    
-    // TO_LOAD         = "На погрузку",        // Едет на погрузку                     12    
-    // ON_LOAD         = "На погрузке",        // Прибыл на погрузку                   13 
-    // LOADING         = "Загружается",        // Загружается                          14 
-    // LOADED          = "Загружено",          // Загрузился                           15 
-    // IN_WORK         = "В работе",           // Груз в работе                        16
-    // TO_UNLOAD       = "Доставлено",         // Прибыл на место выгрузки             17
-    // UNLOADING       = "Выгружается",        // Груз выгружается                     18
-    // UNLOADED        = "Выгружено",          // Груз выгружен                        19
-    // COMPLETED       = "Завершено" ,         // Работа завершена                     20
-    // REJECTED        = "Отказано"            // Отказано                             21           
+      // NEW             = "Новый",              // Доступна для предложения             10
+      // OFFERED         = "Торг",               // Водитель сделал предложение          11    
+      // TO_LOAD         = "На погрузку",        // Едет на погрузку                     12    
+      // ON_LOAD         = "На погрузке",        // Прибыл на погрузку                   13 
+      // LOADING         = "Загружается",        // Загружается                          14 
+      // LOADED          = "Загружено",          // Загрузился                           15 
+      // IN_WORK         = "В работе",           // Груз в работе                        16
+      // TO_UNLOAD       = "Доставлено",         // Прибыл на место выгрузки             17
+      // UNLOADING       = "Выгружается",        // Груз выгружается                     18
+      // UNLOADED        = "Выгружено",          // Груз выгружен                        19
+      // COMPLETED       = "Завершено" ,         // Работа завершена                     20
+      // REJECTED        = "Отказано"            // Отказано                             21     
+            
 }
 
   return {
-    // Состояние
-    works,
-    archiveWorks,
-    isLoading,
-    isArchiveLoading,
-    filters,
-    searchQuery,
+      // Состояние
+      works,
+      archiveWorks,
+      isLoading,
+      isArchiveLoading,
+      filters,
+      searchQuery,
 
-    // Фильтры
-    setFilters,
-    setSearchQuery,
+      // Фильтры
+      setFilters,
+      setSearchQuery,
 
-    // Загрузка
-    refreshWorks,
-    loadArchiveWorks,
-    setDeliver,
-    setStatus,
-    setOffer,
+      // Загрузка
+      refreshWorks,
+      loadArchiveWorks,
+      setDeliver,
+      setStatus,
+      setOffer,
 
-    // Утилиты
-    getWork
+      // Утилиты
+      getWork
   }
 }

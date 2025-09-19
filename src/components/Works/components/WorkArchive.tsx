@@ -1,15 +1,14 @@
 import React from 'react';
 import { IonRefresher, IonRefresherContent, IonSpinner } from '@ionic/react';
 import { WorkCard } from './WorkCard';
-import useWorkArchive from '../hooks/useWorkArchive';
 import styles from './WorkArchive.module.css';
+import { useWorks } from '../../../Store/useWorks';
 
 export const WorkArchive = () => {
-  const { works, loading, refreshing, refresh } = useWorkArchive();
+  const { archiveWorks, isArchiveLoading, loadArchiveWorks } = useWorks();
 
   const handleRefresh = async (event: any) => {
-    await refresh();
-    event.detail.complete();
+    await loadArchiveWorks();
   };
 
   const handleWorkClick = (work) => {
@@ -17,7 +16,7 @@ export const WorkArchive = () => {
     console.log('Clicked work:', work);
   };
 
-  if (loading) {
+  if (isArchiveLoading) {
     return (
       <div className={styles.loading}>
         <IonSpinner />
@@ -28,38 +27,30 @@ export const WorkArchive = () => {
 
   return (
     <div className={styles.container}>
-      <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-        <IonRefresherContent
-          pullingIcon="chevron-down-outline"
-          pullingText="Потяните для обновления"
-          refreshingSpinner="circles"
-          refreshingText="Обновление..."
-        />
-      </IonRefresher>
 
-      <div className={styles.header}>
+      <div className = {styles.header}>
         <div className="fs-09"><b>Архив работ</b></div>
         <button 
-          onClick={refresh} 
-          disabled={refreshing}
-          className={`${styles.refreshBtn} ${refreshing ? styles.refreshing : ''}`}
+          onClick   = { handleRefresh } 
+          disabled  = { isArchiveLoading }
+          className = {`${styles.refreshBtn} ${isArchiveLoading ? styles.refreshing : ''}`}
         >
-          {refreshing ? '⟳' : '↻'} Обновить
+          {isArchiveLoading ? '⟳' : '↻'} Обновить
         </button>
       </div>
 
       <div className={styles.stats}>
-        Выполненных работ: {works.length}
+        Выполненных работ: {archiveWorks.length}
       </div>
 
       <div className={styles.list}>
-        {works.length === 0 ? (
+        {archiveWorks.length === 0 ? (
           <div className={styles.empty}>
             <div className={styles.emptyIcon}>🚛</div>
             <div className={styles.emptyText}>Нет выполненных работ</div>
           </div>
         ) : (
-          works.map(work => (
+          archiveWorks.map(work => (
             <WorkCard
               key={work.guid}
               work={work}

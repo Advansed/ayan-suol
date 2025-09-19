@@ -8,6 +8,7 @@ import { destroyCompanySocketHandlers, initCompanySocketHandlers } from '../Stor
 import { destroyTransportSocketHandlers, initTransportSocketHandlers } from '../Store/transportStore'
 import { destroyWorkSocketHandlers, initWorkSocketHandlers } from '../Store/workStore'
 import { useSocketStore } from '../Store/socketStore'
+import { destroyChatSocketHandlers, initChatSocketHandlers } from '../Store/chatStore'
 
 // ============================================
 // SOCKET MANAGER HOOK
@@ -52,28 +53,33 @@ export const useSocketManager = () => {
 
 export function initSocketHandlers( socket: any) {
 
-  initCargoSocketHandlers( socket )
+    initCargoSocketHandlers( socket )
 
-  initPassportSocketHandlers( socket )
+    initPassportSocketHandlers( socket )
 
-  initCompanySocketHandlers( socket )
+    initCompanySocketHandlers( socket )
 
-  initTransportSocketHandlers( socket )
+    initTransportSocketHandlers( socket )
 
-  initWorkSocketHandlers( socket )
+    initWorkSocketHandlers( socket )
+
+    initChatSocketHandlers( socket )
+    
   
 }
 
 export function destroySocketHandlers( socket: any) {
 
-  destroyCargoSocketHandlers( socket )
+    destroyCargoSocketHandlers( socket )
 
-  destroyPassportSocketHandlers( socket )
+    destroyPassportSocketHandlers( socket )
 
-  destroyCompanySocketHandlers( socket )
+    destroyCompanySocketHandlers( socket )
 
-  destroyTransportSocketHandlers( socket )
-  
-  destroyWorkSocketHandlers( socket )
+    destroyTransportSocketHandlers( socket )
+    
+    destroyWorkSocketHandlers( socket )
+
+    destroyChatSocketHandlers( socket )
 
 }
