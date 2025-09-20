@@ -59,6 +59,7 @@ export interface WorkInfo {
     recipient:      string;       // ID заказчика
     client:         string;          // Имя заказчика
     name:           string;
+    transport:      string;
     description:    string;
     
     // Адреса (переиспользуем из Cargos)
@@ -69,6 +70,8 @@ export interface WorkInfo {
     weight:         number;
     volume:         number;
     price:          number;
+    advance:        number;
+    insurance:      number;
 
     pickup_date:    string;
     delivery_date:  string;

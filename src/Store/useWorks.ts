@@ -11,7 +11,7 @@ import { WorkInfo, WorkFilters, OfferInfo, WorkStatus }
 
 export const useWorks = () => {
   const token             = loginGetters.getToken()
-  const { emit }          = useSocket()
+  const { emit, once }    = useSocket()
   const toast             = useToast()
 
   // ============================================
@@ -39,56 +39,123 @@ export const useWorks = () => {
   // ============================================
   // ОПЕРАЦИИ С ПРЕДЛОЖЕНИЯМИ
   // ============================================
-  const setOffer          = useCallback(async ( data: OfferInfo ): Promise<boolean> => {
-    if (!isConnected) {
-      toast.error('Нет соединения с сервером')
-      return false
-    }
+const setOffer = useCallback(async (data: OfferInfo): Promise<boolean> => {
+  if (!isConnected) {
+    toast.error('Нет соединения с сервером');
+    return false;
+  }
 
-    workActions.setLoading(true)
+  workActions.setLoading(true);
+  
+  return new Promise((resolve) => {
     try {
       const offerData = {
         ...data,
-        createdAt:    new Date().toISOString()
-      }
+        createdAt: new Date().toISOString()
+      };
 
-      emit('set_offer', { token, ...offerData })
-      return true
+      // Обработчик однократного ответа от сервера
+      const handleOfferResponse = (response: { success: boolean; error?: string }) => {
+        if (response.success) {
+          toast.success('Предложение успешно создано');
+                  
+          emit("send_message", {
+              token:          token,
+              recipient:      data.recipient,
+              cargo:          data.guid,
+              message:        "Сделал предложение: Сумма - " + data.price.toFixed() + " рублей" ,
+              image:          "",
+          })
+
+          resolve(true);
+        } else {
+          toast.error(response.error || 'Ошибка создания предложения');
+          resolve(false);
+        }
+      };
+
+      // Подписываемся на ответ от сервера
+      once('set_offer', handleOfferResponse);
+      
+      // Отправляем запрос на сервер
+      emit('set_offer', { token, ...offerData });
+
+      // Таймаут на случай, если ответ не придет
+      setTimeout(() => {
+        toast.error('Таймаут ожидания ответа от сервера');
+        resolve(false);
+      }, 10000); // 10 секунд таймаут
+
     } catch (error) {
-      console.error('Error creating offer:', error)
-      toast.error('Ошибка создания предложения')
-      return false
+      console.error('Error creating offer:', error);
+      toast.error('Ошибка создания предложения');
+      resolve(false);
     } finally {
-      workActions.setLoading(false)
+      workActions.setLoading(false);
     }
-  }, [token, isConnected, emit, toast])
+  });
+}, [token, isConnected, emit, toast, once]);
   
-  const setStatus         = useCallback(async ( work: WorkInfo ): Promise<boolean> => {
+  const setStatus = useCallback(async (work: WorkInfo): Promise<boolean> => {
     if (!isConnected) {
-      toast.error('Нет соединения с сервером')
-      return false
+      toast.error('Нет соединения с сервером');
+      return false;
     }
 
-    workActions.setLoading(true)
-    try {
-      const offerData = {
-        guid:           work.guid,
-        recipient:      work.recipient,
-        status:         nextStatus(work.status),
-        createdAt:      new Date().toISOString()
+    workActions.setLoading(true);
+    
+    return new Promise((resolve) => {
+      try {
+        const offerData = {
+          guid: work.guid,
+          recipient: work.recipient,
+          status: nextStatus(work.status),
+          createdAt: new Date().toISOString()
+        };
+        
+        // Обработчик однократного ответа от сервера
+        const handleStatusResponse = (response: { success: boolean; error?: string }) => {
+          if (response.success) {
+            toast.success('Статус успешно обновлен');
+              
+            emit("send_message", {
+                  token:          token,
+                  recipient:      work.recipient,
+                  cargo:          work.cargo,
+                  message:        statusText( work),
+                  image:          "",
+              })
+
+            resolve(true);
+          } else {
+            toast.error(response.error || 'Ошибка обновления статуса');
+            resolve(false);
+          }
+        };
+
+        // Подписываемся на ответ от сервера
+        once('set_status', handleStatusResponse);
+        
+        // Отправляем запрос на сервер
+        toast.info("Отправка статуса...");
+        emit('set_status', { token, ...offerData });
+
+        // Таймаут на случай, если ответ не придет
+        setTimeout(() => {
+          toast.error('Таймаут ожидания ответа от сервера');
+          resolve(false);
+        }, 10000); // 10 секунд таймаут
+
+      } catch (error) {
+        console.error('Error creating offer:', error);
+        toast.error('Ошибка создания предложения');
+        resolve(false);
+      } finally {
+        workActions.setLoading(false);
       }
-      toast.info("emit status")
-      emit('set_status', { token, ...offerData })
-      return true
-    } catch (error) {
-      console.error('Error creating offer:', error)
-      toast.error('Ошибка создания предложения')
-      return false
-    } finally {
-      workActions.setLoading(false)
-    }
-  }, [token, isConnected, emit, toast])
-  
+    });
+  }, [token, isConnected, emit, toast, once]);
+    
   const setDeliver        = useCallback(async (data: Partial<OfferInfo>): Promise<boolean> => {
     if (!isConnected) {
       toast.error('Нет соединения с сервером')
@@ -148,6 +215,33 @@ function nextStatus( status: WorkStatus ) {
         case WorkStatus.IN_WORK:        return 17;
         case WorkStatus.UNLOADING:      return 19;
         case WorkStatus.REJECTED:       return 11;
+        default: return 22;
+    }
+    
+      // NEW             = "Новый",              // Доступна для предложения             10
+      // OFFERED         = "Торг",               // Водитель сделал предложение          11    
+      // TO_LOAD         = "На погрузку",        // Едет на погрузку                     12    
+      // ON_LOAD         = "На погрузке",        // Прибыл на погрузку                   13 
+      // LOADING         = "Загружается",        // Загружается                          14 
+      // LOADED          = "Загружено",          // Загрузился                           15 
+      // IN_WORK         = "В работе",           // Груз в работе                        16
+      // TO_UNLOAD       = "Доставлено",         // Прибыл на место выгрузки             17
+      // UNLOADING       = "Выгружается",        // Груз выгружается                     18
+      // UNLOADED        = "Выгружено",          // Груз выгружен                        19
+      // COMPLETED       = "Завершено" ,         // Работа завершена                     20
+      // REJECTED        = "Отказано"            // Отказано                             21     
+            
+}
+
+function statusText( work: WorkInfo ) {
+
+    switch(work.status) {
+        case WorkStatus.NEW:            return "Сделал предложение";
+        case WorkStatus.TO_LOAD:        return "Транспорт " + work.transport  + " прибыл на погрузку";
+        case WorkStatus.LOADING:        return "Транспорт " + work.transport  + " загрузился и готов выехать";
+        case WorkStatus.IN_WORK:        return "Транспорт " + work.transport  + " выехал в точку доставки";
+        case WorkStatus.UNLOADING:      return "Транспорт " + work.transport  + " разгрузился и готов сдаче груза";
+        case WorkStatus.REJECTED:       return "";
         default: return 22;
     }
     

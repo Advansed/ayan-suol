@@ -123,6 +123,40 @@
     display: inline-block;
 }
 
+.cr-status-6 {
+    background-color: #e0f2f1;
+    color:          #10da09;
+    border:         1px solid #2dd816;
+    padding:        0.3em 0.8em;
+    border-radius:  0.5em;
+    font-size:      0.8em;
+    font-weight:    bold;
+    text-align:     center;
+    display:        inline-block;
+}
+
+.circle-1 {
+    width: 1em;
+    height: 1em;
+    background-color: green;
+    border-radius: 50%;
+    display: inline-block;
+}
+.circle-2 {
+    width: 1em;
+    height: 1em;
+    background-color: orange;
+    border-radius: 50%;
+    display: inline-block;
+}
+.circle-3 {
+    width: 1em;
+    height: 1em;
+    background-color: red;
+    border-radius: 50%;
+    display: inline-block;
+}
+
 /* Утилиты */
 .flex {
     display: flex;

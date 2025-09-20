@@ -13,8 +13,8 @@ import {
   FormButtons, 
   NavigationLinks 
 } from '../SharedComponents'
-import EULA from './eula'
 import styles from './Registration.module.css'
+import EULA from './eula'
 
 interface RegistrationFormProps {
   onSwitchToLogin?: () => void
@@ -31,14 +31,14 @@ const formatPhoneDisplay = (phone: string): string => {
 // ШАГ 0: ВЫБОР РОЛИ
 // ======================
 
-const RoleSelector: React.FC<{ reg: UseRegReturn, setShowAgreement: (check:boolean)=> void }> = ({ reg, setShowAgreement }) => {
+const RoleSelector: React.FC<{ reg: UseRegReturn, setShowAgreement: (check:boolean)=> void, agree: boolean }> = ({ reg, setShowAgreement, agree }) => {
   const handleNext = useCallback(() => {
     if (reg.formData.userType) {
       reg.updateRegistrationData('userType', reg.formData.userType)
       reg.nextStep()
     }
   }, [reg])
-
+  
   return (
     <div className="login-container">
       <div className="a-center">
@@ -75,7 +75,7 @@ const RoleSelector: React.FC<{ reg: UseRegReturn, setShowAgreement: (check:boole
         <label className="flex items-start gap-2 text-sm">
           <input
             type="checkbox"
-            checked={reg.formData.agreementAccepted || false}
+            checked={ agree }
             onChange={(e) => reg.updateFormData('agreementAccepted', e.target.checked)}
             className="mt-1 flex-shrink-0"
           />
@@ -277,9 +277,10 @@ const StepVerification: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
 // ШАГ 3: УСТАНОВКА ПАРОЛЯ
 // ======================
 
-const StepSetPassword: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
+const StepSetPassword: React.FC<{ reg: UseRegReturn, toLogin: any }> = ({ reg, toLogin }) => {
   const handleSave = useCallback(() => {
     reg.submitStep()
+    toLogin()
   }, [reg])
 
   const handlePasswordBlur = useCallback(() => {
@@ -357,12 +358,14 @@ const StepSetPassword: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin, onSwitchToRecovery }) => {
   const reg = useReg()
   const [showAgreement, setShowAgreement ] = useState(false)
+  const [ check, setCheck ] = useState(false)
+
   
   const steps = [
-    <RoleSelector reg={reg} setShowAgreement = { (check: boolean) => setShowAgreement(check) } />,        // Шаг 0: Выбор роли
+    <RoleSelector     reg={reg} setShowAgreement = { (check: boolean) => setShowAgreement(check) } agree = { check } />,        // Шаг 0: Выбор роли
     <StepPersonalInfo reg={reg} />,    // Шаг 1: Личные данные  
     <StepVerification reg={reg} />,    // Шаг 2: Верификация
-    <StepSetPassword reg={reg} />      // Шаг 3: Пароль
+    <StepSetPassword  reg={reg} toLogin = { onSwitchToLogin }/>      // Шаг 3: Пароль
   ]
 
   const navigationLinks = [
@@ -398,10 +401,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin, on
         {showAgreement && (
         <div className={ styles.showAgreementOverlay }  onClick={() => setShowAgreement(false)}>
           <div className={ styles.showAgreementContent } onClick={e => e.stopPropagation()}>
-            <button className={ styles.showAgreementCloseBtn } onClick={() => setShowAgreement(false)}>
-              ×
-            </button>
-            <EULA />
+            <EULA
+              check   = { check }
+              onClose = { ()=> setShowAgreement(false)}
+              isOpen  = { showAgreement }
+              setCheck = { (check: boolean) => setCheck(check) }
+            />
           </div>
         </div>
       )}

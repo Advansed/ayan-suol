@@ -63,7 +63,8 @@ export const WorkCard: React.FC<WorkCardProps> = ({
                 {/* Статус и ID */}
                 <div className="flex fl-space">
                     <div className="flex">
-                        <div className={workStatusUtils.getClassName(work.status)}>
+                        <div className={ getCircle( work )}></div>
+                        <div className={'ml-05 ' + workStatusUtils.getClassName(work.status)}>
                             {work.status}
                         </div>
                         <div className="ml-1 fs-07 cl-black">
@@ -131,6 +132,25 @@ export const WorkCard: React.FC<WorkCardProps> = ({
                         </div>
                     </div>
                 </div>
+
+                <div className="flex fl-space mt-05">
+                    <div>
+                    { work.advance > 0 && (
+                        <div className="flex">
+                            <div className={ getCSS( work ) }>
+                                { "Спецсчет: " + ( work.advance * 100 / work.price ).toFixed(0) + '%' }
+                            </div>
+                        </div>)
+                    }</div>
+                    { work.insurance > 0 &&(
+                        <div className="flex">
+                            <div className={ "cr-status-6" }>
+                                { "Застраховано " }
+                            </div>
+                        </div>
+                    )
+                    }
+                </div> 
 
                 {/* Описание работы */}
                 {work.description && (
@@ -276,3 +296,17 @@ export const WorkCard: React.FC<WorkCardProps> = ({
         </div>
     );
 };
+
+
+
+function getCircle( work: WorkInfo) {
+   if(work.advance === work.price || work.advance > work.price) return 'circle-1'
+   if(work.advance !== 0 ) return 'circle-2'
+   return 'circle-3'
+}
+
+function getCSS( work: WorkInfo) {
+   if(work.advance === work.price || work.advance > work.price) return 'cr-status-6'
+   if(work.advance !== 0 ) return 'cr-status-2'
+   return 'cr-status-5'
+}

@@ -50,6 +50,7 @@ export const CargosList: React.FC<CargosListProps> = ({
         </div>
     );
 
+    console.log("cargoList", cargos)
     return (
         <>
             {/* Refresher */}
@@ -79,6 +80,7 @@ export const CargosList: React.FC<CargosListProps> = ({
             </div>
 
             {/* Список грузов */}
+        
             {isLoading ? (
                 renderLoadingState()
             ) : cargos.length === 0 ? (
@@ -86,10 +88,13 @@ export const CargosList: React.FC<CargosListProps> = ({
             ) : (
                 cargos.map((cargo) => (
                     <CargoCard
-                        key={cargo.guid}
-                        cargo={cargo}
-                        mode="list"
-                        onClick={() => onCargoClick(cargo)}
+                        key     = { cargo.guid }
+                        cargo   = { cargo }
+                        mode    = "list"
+                        onClick = { () => {
+                            console.log("click", cargo)
+                            onCargoClick(cargo) 
+                        }}
                     />
                 ))
             )}

@@ -1,6 +1,7 @@
 // src/services/socketService.ts
 import { io, Socket } from 'socket.io-client';
 import { socketActions } from '../Store/socketStore';
+import { loginGetters } from '../Store/loginStore';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -35,11 +36,23 @@ class SocketService {
         this.socket?.off('connect', handleConnect);
         this.socket?.off('connect_error', handleError);
 
+        socketActions.setConnected(true)
+        socketActions.setConnecting(false)
+
+        if(loginGetters.isAuthenticated()) this.socket?.emit("re_authorize", {token: loginGetters.getToken()})
+
+        resolve(true);
+      };
+      const handleDisconnect = () => {
+        console.log("socketService disconnect", true)
+        this.isConnected = false;
+        socketActions.setConnected(false)
+        this.socket?.off('disconnect', handleConnect);
+
         socketActions.setConnecting(false)
 
         resolve(true);
       };
-
       const handleError = (error: any) => {
         console.error('Ошибка подключения:', error);
         this.socket?.off('connect', handleConnect);
@@ -50,6 +63,7 @@ class SocketService {
         reject(error);
       };
 
+      this.socket.once('disconnect', handleDisconnect);
       this.socket.once('connect', handleConnect);
       this.socket.once('connect_error', handleError);
     });

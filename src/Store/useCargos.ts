@@ -73,8 +73,8 @@ export const useCargos = (): UseCargosReturn => {
         setLoading(true)
         try {
             const newCargo = { ...EMPTY_CARGO, ...data }
-            addCargo(newCargo)
-            stableEmit(SOCKET_EVENTS.SAVE_CARGO, { cargo: newCargo, token })
+
+            stableEmit(SOCKET_EVENTS.SAVE_CARGO, { token: token, ...newCargo })
             stableToast.success('Груз создан')
             return true
         } catch (error) {

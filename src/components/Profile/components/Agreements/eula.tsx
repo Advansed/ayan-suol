@@ -2,6 +2,7 @@ import React from 'react';
 import { IonButton, IonContent, IonHeader, IonIcon, IonModal, IonTitle, IonToolbar } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
 import { useLogin } from '../../../../Store/useLogin';
+import { useAgreements } from './useAgreements';
 
 interface EULAProps {
   isOpen: boolean;
@@ -9,7 +10,7 @@ interface EULAProps {
 }
 
 const EULA: React.FC<EULAProps> = ({ isOpen, onClose }) => {
-  const { notifications, toggleNotification } = useLogin()
+  const { agreements, toggleAgreement } = useAgreements()
 
   return (
     <IonModal isOpen={isOpen} onDidDismiss={onClose}>
@@ -133,16 +134,16 @@ const EULA: React.FC<EULAProps> = ({ isOpen, onClose }) => {
                 {/* Accept Button */}
                 <div className="mt-6 space-y-3">
                   <label className="flex items-center">
-                    <input type="checkbox" className="mr-3" checked = { notifications?.userAgreement }/>
+                    <input type="checkbox" className="mr-3" checked = { agreements?.userAgreement }/>
                     <span className="text-sm text-gray-700">Я прочитал(а) и согласен(на) с условиями пользовательского соглашения</span>
                   </label>
                   <IonButton 
-                      color={ notifications?.userAgreement ? "danger" : "primary" }
+                      color={ agreements?.userAgreement ? "danger" : "primary" }
                       className=""
-                      onClick={ () => toggleNotification('userAgreement') }
+                      onClick={ () => toggleAgreement('userAgreement') }
                   >
                       {
-                        notifications?.userAgreement 
+                        agreements?.userAgreement 
                           ? "Отмена принятий условий соглашения"
                           : "Принимаю условия соглашения"
                       }

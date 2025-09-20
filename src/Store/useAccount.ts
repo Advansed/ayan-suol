@@ -82,9 +82,10 @@ export const useAccount = () => {
         if (response.success) {
           toast.success('Платеж создан успешно')
           // Обновляем баланс после создания платежа
-          loadBalance()
-          loadTransactions()
+         //loadBalance()
+          //loadTransactions()
           resolve(true)
+      
         } else {
           toast.error(response.message || 'Ошибка создания платежа')
           resolve(false)

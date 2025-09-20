@@ -20,14 +20,15 @@ export const CargoCard: React.FC<CargoCardProps> = ({
             onClick();
         }
     };
-
+    console.log( cargo )
     if (mode === 'view') {
         return (
             <div className="cargo-card-view">
                 {/* Статус и ID */}
                 <div className="flex fl-space">
                     <div className="flex">
-                        <div className={ statusUtils.getClassName( cargo.status ) }>
+                        <div className={ getCircle( cargo )}></div>
+                        <div className={ 'ml-05 ' + statusUtils.getClassName( cargo.status ) }>
                             {cargo.status}
                         </div>
                         <IonText className="ml-1 fs-07 cl-black">
@@ -91,6 +92,25 @@ export const CargoCard: React.FC<CargoCardProps> = ({
                     </div>
                 </div>
 
+                <div className="flex fl-space mt-05">
+                    <div>{ cargo.advance > 0 && (
+                        <div className="flex">
+                            <div className={ getCSS( cargo ) }>
+                                { "Спецсчет: " + ( cargo.advance * 100 / cargo.price ).toFixed(0) + '%' }
+                            </div>
+                        </div>)
+                    }</div>
+                    
+                    { cargo.insurance > 0 &&(
+                        <div className="flex">
+                            <div className={ "cr-status-6" }>
+                                { "Застраховано " }
+                            </div>
+                        </div>
+                    )
+                    }
+                </div> 
+
                 {/* Описание груза */}
                 {cargo.description && (
                     <div className="fs-08 mt-1 cr-detali">
@@ -112,13 +132,15 @@ export const CargoCard: React.FC<CargoCardProps> = ({
             {/* Верхняя строка: статус, ID, цена */}
             <div className="flex fl-space">
                 <div className="flex">
-                    <div className={ statusUtils.getClassName( cargo.status ) }>
+                    <div className={ getCircle( cargo )}></div>
+                    <div className={' ml-05 ' + statusUtils.getClassName( cargo.status ) }>
                         {cargo.status}
                     </div>
                     <IonText className="ml-1 fs-07 cl-black">
-                        {"ID: " + formatters.shortId(cargo.guid)}
+                        {"IDs: " + formatters.shortId(cargo.guid)}
                     </IonText>
                 </div>
+    
                 <div className="text-right">
                     <IonText className="fs-09 cl-prim">
                         <b>{formatters.currency(cargo.price)}</b>
@@ -173,3 +195,16 @@ export const CargoCard: React.FC<CargoCardProps> = ({
         </div>
     );
 };
+
+
+function getCircle( cargo: CargoInfo) {
+   if(cargo.advance === cargo.price) return 'circle-1'
+   if(cargo.advance !== 0 ) return 'circle-2'
+   return 'circle-3'
+}
+
+function getCSS( cargo: CargoInfo) {
+   if(cargo.advance === cargo.price) return 'cr-status-6'
+   if(cargo.advance !== 0 ) return 'cr-status-2'
+   return 'cr-status-5'
+}
