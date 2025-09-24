@@ -121,7 +121,8 @@ export type WorkPageType =
     | { type: 'view'; work: WorkInfo }
     | { type: 'offer'; work: WorkInfo }
     | { type: 'archive' }
-    | { type: 'map'; work: WorkInfo };
+    | { type: 'map'; work: WorkInfo }
+    | { type: 'page1'; work: WorkInfo };
 
 // Состояние формы предложения
 export interface OfferFormState {

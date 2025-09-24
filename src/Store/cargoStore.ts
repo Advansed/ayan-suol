@@ -83,7 +83,7 @@ export enum       CargoPriority {
 }
 
 export interface  PageType {
-    type: 'list' | 'create' | 'edit' | 'view' | 'invoices' | 'prepayment' | 'insurance'
+    type: 'list' | 'create' | 'edit' | 'view' | 'invoices' | 'prepayment' | 'insurance' | 'page1'
     cargo?: CargoInfo
     subPage?: string
 }

@@ -48,6 +48,12 @@ export const CargoView: React.FC<CargoViewProps> = ({
     const [ showPublishAlert,    setShowPublishAlert ]    = useState(false);
     const [ currentCargo,        setCurrentCargo ]        = useState(cargo);
     
+    useEffect(()=>{
+
+        setCurrentCargo( cargo )
+
+    },[cargo])
+
     const handleDelete = async () => {
         setShowDeleteAlert(false);
         await onDelete( cargo.guid );

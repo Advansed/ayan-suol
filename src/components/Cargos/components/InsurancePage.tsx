@@ -80,6 +80,8 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
                 // TODO: Показать ошибку
                 console.error('Payment failed:', result.error);
             }
+
+            onBack()
         } catch (error) {
             console.error('Payment error:', error);
         } finally {

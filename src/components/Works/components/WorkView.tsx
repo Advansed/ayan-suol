@@ -45,71 +45,77 @@ export const WorkView: React.FC<WorkViewProps> = ({
 
     const renderButtons     = ( work: WorkInfo) => {
         return <>
-            <div className="flex">
-                <IonButton
-                    className   = "w-50 cr-button-2"
-                    mode        = "ios"
-                    fill        = "clear"
-                    color       = "primary"
-                    onClick     = { (e) => handleChat( work, e) }
-                >
-                    <IonLabel className="fs-08">
-                        {work.status === WorkStatus.NEW ? 'Чат' : 'Чат'}
-                    </IonLabel>
-                </IonButton>
-                
-                {( 
-                    work.status === WorkStatus.NEW 
-                  
-                    ||  work.status === WorkStatus.TO_LOAD
-                    ||  work.status === WorkStatus.LOADING
-                    ||  work.status === WorkStatus.IN_WORK
-                    ||  work.status === WorkStatus.UNLOADING
-                    ||  work.status === WorkStatus.REJECTED
+            <div>
+                <div className="flex">
+                    <IonButton
+                        className   = "w-50 cr-button-2"
+                        mode        = "ios"
+                        fill        = "clear"
+                        color       = "primary"
+                        onClick     = { (e) => handleChat( work, e) }
+                    >
+                        <IonLabel className="fs-08">
+                            {work.status === WorkStatus.NEW ? 'Чат' : 'Чат'}
+                        </IonLabel>
+                    </IonButton>
+                    
+                    <IonButton
+                        className   = "w-50 cr-button-2"
+                        mode        = "ios"
+                        color       = "tertiary"
+                        onClick     = {(e) => {
+                            e.stopPropagation();
+                            onMapClick(work);
+                        }}
+                    >
+                        <IonLabel className="fs-08">Карта</IonLabel>
+                    </IonButton>
 
-                ) &&  (<>
-                        <IonButton
-                            className   = "w-50 cr-button-2"
-                            mode        = "ios"
-                            color       = "primary"
-                            onClick     = {(e) => {
-                                e.stopPropagation();
-                                switch(work.status) {
-                                    case WorkStatus.NEW:        onOfferClick( work );   break;
-                                    case WorkStatus.TO_LOAD:     StatusClick( work );   break;
-                                    case WorkStatus.LOADING:     StatusClick( work );   break;
-                                    case WorkStatus.IN_WORK:     StatusClick( work );   break;
-                                    case WorkStatus.UNLOADING:   StatusClick( work );   break;
-                                    case WorkStatus.REJECTED:   onOfferClick( work );   break;
-                                    default: break;
-                                }
-                                
-                            }}
-                        >
-                            <IonLabel className="fs-08">{
-                                  work.status ===  WorkStatus.NEW           ? "Предложить"  
-                                : work.status ===  WorkStatus.TO_LOAD       ? "Прибыл"  
-                                : work.status ===  WorkStatus.LOADING       ? "Загружено"  
-                                : work.status ===  WorkStatus.IN_WORK       ? "Доставлено"  
-                                : work.status ===  WorkStatus.UNLOADING     ? "Разгружено"  
-                                : work.status ===  WorkStatus.REJECTED      ? "Предложить"  
-                                : ""
-                            }</IonLabel>
-                        </IonButton>
-                    </>)
-                }
-                        
-                <IonButton
-                    className   = "w-50 cr-button-2"
-                    mode        = "ios"
-                    color       = "tertiary"
-                    onClick     = {(e) => {
-                        e.stopPropagation();
-                        onMapClick(work);
-                    }}
-                >
-                    <IonLabel className="fs-08">Карта</IonLabel>
-                </IonButton>
+                </div>
+                <div className="flex">
+                    
+                    {( 
+                        work.status === WorkStatus.NEW 
+                    
+                        ||  work.status === WorkStatus.TO_LOAD
+                        ||  work.status === WorkStatus.LOADING
+                        ||  work.status === WorkStatus.IN_WORK
+                        ||  work.status === WorkStatus.UNLOADING
+                        ||  work.status === WorkStatus.REJECTED
+
+                    ) &&  (<>
+                            <IonButton
+                                className   = "w-100 "
+                                mode        = "ios"
+                                color       = "primary"
+                                onClick     = {(e) => {
+                                    e.stopPropagation();
+                                    switch(work.status) {
+                                        case WorkStatus.NEW:        onOfferClick( work );   break;
+                                        case WorkStatus.TO_LOAD:     StatusClick( work );   break;
+                                        case WorkStatus.LOADING:     StatusClick( work );   break;
+                                        case WorkStatus.IN_WORK:     StatusClick( work );   break;
+                                        case WorkStatus.UNLOADING:   StatusClick( work );   break;
+                                        case WorkStatus.REJECTED:   onOfferClick( work );   break;
+                                        default: break;
+                                    }
+                                    
+                                }}
+                            >
+                                <IonLabel className="fs-1">{
+                                    work.status ===  WorkStatus.NEW           ? "Я готов перевезти"  
+                                    : work.status ===  WorkStatus.TO_LOAD       ? "Прибыл на погрузку"  
+                                    : work.status ===  WorkStatus.LOADING       ? "Транспорт загружен"  
+                                    : work.status ===  WorkStatus.IN_WORK       ? "Прибыл на точку"  
+                                    : work.status ===  WorkStatus.UNLOADING     ? "Транспорт разгружен"  
+                                    : work.status ===  WorkStatus.REJECTED      ? "Предложить"  
+                                    : ""
+                                }</IonLabel>
+                            </IonButton>
+                        </>)
+                    }
+                            
+                </div>
             </div>
         </>                
     }

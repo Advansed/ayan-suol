@@ -3,7 +3,6 @@ import { useHistory }               from 'react-router';
 import { useSocket }                from '../../../Store/useSocket';
 import { useToken }                 from '../../../Store/loginStore';
 import { DriverInfo }               from '../../../Store/cargoStore';
-import { OfferInfo } from '../../Works';
 
 export interface TaskCompletion {
     delivered: boolean;
@@ -11,7 +10,7 @@ export interface TaskCompletion {
 }
 
 export const useInvoices = ({ info }) => {
-    const [invoices, setInvoices]       = useState(info.invoices);
+    const [invoices, setInvoices]       = useState( info && info.invoices || []);
     const [isLoading, setIsLoading]     = useState(false);
     const history                       = useHistory();
     const { emit, once }                = useSocket();
@@ -31,14 +30,6 @@ export const useInvoices = ({ info }) => {
                             : invoice
                     )
                 );
-
-                emit("send_message", {
-                    token:          token,
-                    recipient:      info.recipient,
-                    cargo:          info.cargo,
-                    message:        statusText( status, info),
-                    image:          "",
-                })
 
             } else {
 
@@ -119,25 +110,6 @@ export const useInvoices = ({ info }) => {
     };
 };
 
-
-export function statusText( status: number, inv: DriverInfo ) {
-
-    switch(status) {
-
-        case 12 :   return "Заказчик принял предложение на " + inv.price.toFixed() + " руб.";
-
-        case 14 :   return "Загрузка транспорта началась ";
-
-        case 16 :   return "Транспорт отправлен на точку разгрузки ";
-
-        case 18 :   return "Разгрузка транспорта началась ";
-
-        case 20 :   return "Груз принят и все работы завершены";
-
-        default:   return ""
-        
-    }
-}
 
 export function setStatus( status: number ) {
 

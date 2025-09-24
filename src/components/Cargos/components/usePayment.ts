@@ -32,6 +32,7 @@ export const usePayment = (): UsePaymentReturn => {
       
       // Обработчик успешного ответа
       const onSuccess = (response: any) => {
+        
         if( response.success ){
 
           const pending = pendingRequests.current.get(requestId);
@@ -47,7 +48,9 @@ export const usePayment = (): UsePaymentReturn => {
             pending.resolve({ success: false, error: response.message || 'Ошибка сервера' });
           }
         }
+
         socket.off(responseEvent, onSuccess);
+      
       };
       
       // Подписываемся на события

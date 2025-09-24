@@ -5,8 +5,7 @@ import { useToast } from '../components/Toast'
 import { 
     useCargoStore,
     CargoInfo, 
-    EMPTY_CARGO,
-    cargoGetters
+    EMPTY_CARGO
 } from './cargoStore'
 import { useToken } from './loginStore'
 import { useSocketStore } from './socketStore'
@@ -56,17 +55,10 @@ export const useCargos = (): UseCargosReturn => {
     const storePublishCargo     = useCargoStore(state => state.publishCargo)
 
 
-    // Мемоизированные стабильные функции
-    const stableEmit = useCallback(emit, [])
-    const stableToast = useMemo(() => ({
-        error: toast.error,
-        success: toast.success,
-        info: toast.info
-    }), []) // toast методы обычно стабильны
 
     const createCargo = useCallback(async (data: Partial<CargoInfo>): Promise<boolean> => {
         if (!isConnected) {
-            stableToast.error('Нет соединения с сервером')
+            toast.error('Нет соединения с сервером')
             return false
         }
 
@@ -74,60 +66,61 @@ export const useCargos = (): UseCargosReturn => {
         try {
             const newCargo = { ...EMPTY_CARGO, ...data }
 
-            stableEmit(SOCKET_EVENTS.SAVE_CARGO, { token: token, ...newCargo })
-            stableToast.success('Груз создан')
+            emit(SOCKET_EVENTS.SAVE_CARGO, { token: token, ...newCargo })
+            toast.success('Груз создан')
             return true
         } catch (error) {
-            stableToast.error('Ошибка создания груза')
+            toast.error('Ошибка создания груза')
             return false
         } finally {
             setLoading(false)
         }
-    }, [isConnected, stableEmit, token, stableToast, setLoading, addCargo])
+    }, [isConnected, token, setLoading, addCargo])
 
     const updateCargo = useCallback(async (guid: string, data: Partial<CargoInfo>): Promise<boolean> => {
         if (!isConnected) {
-            stableToast.error('Нет соединения с сервером')
+            toast.error('Нет соединения с сервером')
             return false
         }
 
         setLoading(true)
         try {
             storeUpdateCargo(guid, data)
-            stableEmit(SOCKET_EVENTS.UPDATE_CARGO, { guid, cargo: data, token })
-            stableToast.success('Груз обновлен')
+            emit(SOCKET_EVENTS.UPDATE_CARGO, { guid, cargo: data, token })
+            toast.success('Груз обновлен')
             return true
         } catch (error) {
-            stableToast.error('Ошибка обновления груза')
+            toast.error('Ошибка обновления груза')
             return false
         } finally {
             setLoading(false)
         }
-    }, [isConnected, stableEmit, token, stableToast, setLoading, storeUpdateCargo])
+    }, [isConnected, token, setLoading, storeUpdateCargo])
 
+    
     const deleteCargo = useCallback(async (guid: string): Promise<boolean> => {
         if (!isConnected) {
-            stableToast.error('Нет соединения с сервером')
+            toast.error('Нет соединения с сервером')
             return false
         }
 
         setLoading(true)
         try {
             storeDeleteCargo(guid)
-            stableEmit(SOCKET_EVENTS.DELETE_CARGO, { guid, token })
-            stableToast.success('Груз удален')
+            emit(SOCKET_EVENTS.DELETE_CARGO, { guid, token })
+            toast.success('Груз удален')
             return true
         } catch (error) {
-            stableToast.error('Ошибка удаления груза')
+            toast.error('Ошибка удаления груза')
             return false
         } finally {
             setLoading(false)
         }
-    }, [isConnected, stableEmit, token, stableToast, setLoading, storeDeleteCargo])
+    }, [isConnected, token, setLoading, storeDeleteCargo])
 
     const publishCargo = useCallback(async (guid: string): Promise<boolean> => {
         if (!isConnected) {
-            stableToast.error('Нет соединения с сервером')
+            toast.error('Нет соединения с сервером')
             return false
         }
 
@@ -135,21 +128,21 @@ export const useCargos = (): UseCargosReturn => {
         try {
             const cargo = cargos.find(c => c.guid === guid)
             if (!cargo) {
-                stableToast.error('Груз не найден')
+                toast.error('Груз не найден')
                 return false
             }
 
             storePublishCargo(guid)
-            stableEmit(SOCKET_EVENTS.PUBLISH_CARGO, { guid, token })
-            stableToast.info('Груз опубликован')
+            emit(SOCKET_EVENTS.PUBLISH_CARGO, { guid, token })
+            toast.info('Груз опубликован')
             return true
         } catch (error) {
-            stableToast.error('Ошибка публикации груза')
+            toast.error('Ошибка публикации груза')
             return false
         } finally {
             setLoading(false)
         }
-    }, [isConnected, stableEmit, token, stableToast, cargos, setLoading, storePublishCargo])
+    }, [isConnected, token, cargos, setLoading, storePublishCargo])
 
     const getCargo = useCallback((guid: string): CargoInfo | undefined => {
         return cargos.find(cargo => cargo.guid === guid)
@@ -157,19 +150,19 @@ export const useCargos = (): UseCargosReturn => {
 
     const refreshCargos = useCallback(async (): Promise<void> => {
         if (!isConnected) {
-            stableToast.error('Нет соединения с сервером')
+            toast.error('Нет соединения с сервером')
             return
         }
 
         setLoading(true)
         try {
-            stableEmit(SOCKET_EVENTS.GET_CARGOS, { token })
+            emit(SOCKET_EVENTS.GET_CARGOS, { token })
         } catch (error) {
-            stableToast.error('Ошибка обновления данных')
+            toast.error('Ошибка обновления данных')
         } finally {
             setLoading(false)
         }
-    }, [isConnected, stableEmit, token, stableToast, setLoading])
+    }, [isConnected, token, setLoading])
 
     // Мемоизируем возвращаемый объект
     return useMemo(() => ({

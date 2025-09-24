@@ -61,7 +61,35 @@
   border-bottom: 2px solid var(--main-color, #086ca2);
 }
 
+/* Стили для большой кнопки Сохранить */
+.save-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  padding: 1rem;
+}
 
+.big-save-button {
+  background: var(--main-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.big-save-button:hover {
+  background: var(--main-color);
+  transform: scale(1.05);
+}
+
+.big-save-button:active {
+  transform: scale(0.95);
+}
 /* Мобильная адаптация */
 @media (max-width: 480px) {
   .wizard-content {

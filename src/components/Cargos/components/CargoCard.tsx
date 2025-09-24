@@ -20,7 +20,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({
             onClick();
         }
     };
-    console.log( cargo )
+
     if (mode === 'view') {
         return (
             <div className="cargo-card-view">

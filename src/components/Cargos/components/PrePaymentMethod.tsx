@@ -40,11 +40,11 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
     onPaymentComplete,
     onCancel
 }) => {
-    const [selectedMethod, setSelectedMethod] = useState<string>('card');
-    const [isLoading, setIsLoading] = useState(false);
-    const [showConfirmAlert, setShowConfirmAlert] = useState(false);
-    const [showCancelAlert, setShowCancelAlert] = useState(false);
-    const [paymentAmount, setPaymentAmount] = useState<number>(cargo.advance || 0);
+    const [ selectedMethod,      setSelectedMethod ]      = useState<string>( 'card' );
+    const [ isLoading,           setIsLoading ]           = useState( false );
+    const [ showConfirmAlert,    setShowConfirmAlert ]    = useState( false );
+    const [ showCancelAlert,     setShowCancelAlert ]     = useState( false );
+    const [ paymentAmount,       setPaymentAmount ]       = useState<number>( cargo.advance || 0 );
     
     const { saveAdvance, loading: paymentLoading, error: paymentError } = usePayment();
 
@@ -55,11 +55,13 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
             const result = await saveAdvance(cargo.guid, paymentAmount);
             if (result.success) {
                 if(onPaymentComplete)
-                    onPaymentComplete();
+                    await onPaymentComplete();
             } else {
                 // TODO: Показать ошибку
                 console.error('Payment failed:', result.error);
             }
+
+
         } catch (error) {
             console.error('Payment error:', error);
         } finally {
@@ -67,9 +69,10 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
         }
     };
 
-    const handleConfirmPayment = () => {
+    const handleConfirmPayment = async() => {
         setShowConfirmAlert(false);
-        handlePayment();
+        await handlePayment();
+        onBack()
     };
 
     const handleCancel = () => {
@@ -203,7 +206,9 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
                     {
                         text: 'Отмена',
                         role: 'cancel',
-                        handler: () => setShowConfirmAlert(false)
+                        handler: () => {
+                            setShowConfirmAlert(false)
+                        }
                     },
                     {
                         text: 'Оплатить',

@@ -83,43 +83,11 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack, onOffer }) =
                     onClick={onBack}
                 />
                 <div className="ml-2 cl-prim"><b>Создание предложения</b></div>
-
             </div>
-            
+            <div className="ml-2 cl-prim fs-09 a-center">{ work.name }</div>
+
             <div className="content">
                 
-                {/* Информация о работе */}
-                <div className="work-info-section">
-                    <div className="work-info-item">
-                        <span className="work-info-label">Точка отправки:</span>
-                        <span className="work-info-value fs-08">
-                            {work.address?.city.city} → {work.address?.address}
-                        </span>
-                    </div>
-                    <div className="work-info-item">
-                        <span className="work-info-label">Точка прибытия:</span>
-                        <span className="work-info-value fs-08">
-                            {work.address?.city.city} → {work.destiny?.address}
-                        </span>
-                    </div>
-                    <div className="work-info-item">
-                        <span className="work-info-label">Груз:</span>
-                        <span className="work-info-value fs-08">{work.name}</span>
-                    </div>
-                    <div className="work-info-item">
-                        <span className="work-info-label">Вес/Объем:</span>
-                        <span className="work-info-value fs-08">
-                            {workFormatters.weight(work.weight)} / {workFormatters.volume(work.volume)}
-                        </span>
-                    </div>
-                    <div className="work-info-item">
-                        <span className="work-info-label">Цена заказчика:</span>
-                        <span className="work-info-value fs-08">
-                            {workFormatters.currency(work.price)}
-                        </span>
-                    </div>
-                </div>
-
                 {/* Форма предложения */}
                 <div className="field flex fl-space">
                     <div className="label fs-09">Транспорт</div>

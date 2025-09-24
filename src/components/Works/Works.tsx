@@ -3,14 +3,19 @@
  */
 
 import React from 'react';
-import { WorkInfo, OfferInfo } from './types';
+import { WorkInfo, OfferInfo, WorkStatus } from './types';
 import { WorksList, WorkView, WorkOffer } from './components';
 import { WorkMap } from './components/WorkMap';
 import { useWorks } from '../../Store/useWorks';
 import { useWorkNavigation } from './hooks/useNavigation';
+import { SaveData, WorkPage1 } from './components/WorkPage1';
+import { useSocket } from '../../Store/useSocket';
+import { useToken } from '../../Store/loginStore';
 
 export const Works: React.FC = () => {
     const { works, isLoading, setOffer, setStatus, refreshWorks } = useWorks();
+    const { emit }  = useSocket()
+    const token     = useToken()
 
     const { currentPage, navigateTo,goBack } = useWorkNavigation()
 
@@ -29,6 +34,27 @@ export const Works: React.FC = () => {
 
     const handleStatusClick = (work: WorkInfo ) => {
 
+        if( work.status === WorkStatus.TO_LOAD ) { 
+            navigateTo({ type: "page1", work }) 
+        } else
+        if( work.status === WorkStatus.IN_WORK ) { 
+            setStatus( work )
+            emit("send_message", {
+                token:          token,
+                recipient:      work.recipient,
+                cargo:          work.cargo,
+                message:        "Транспорт прибыл на точку разгрузки"
+            })                
+        } else 
+        if( work.status === WorkStatus.UNLOADING ) { 
+            setStatus( work )
+            emit("send_message", {
+                token:          token,
+                recipient:      work.recipient,
+                cargo:          work.cargo,
+                message:        "Транспорт разгружен"
+            })                
+        } else 
         setStatus( work )
 
     };
@@ -42,8 +68,43 @@ export const Works: React.FC = () => {
 
     const handleOfferSubmit = async (offer: OfferInfo ) => {
 
-       return await setOffer( offer ) 
+       const res = await setOffer( offer ) 
+                  
+        emit("send_message", {
+              token:          token,
+              recipient:      offer.recipient,
+              cargo:          offer.guid,
+              message:        "Сделал предложение: Сумма - " + offer.price.toFixed() + " рублей" ,
+              image:          "",
+          })
 
+       return res 
+
+    };
+
+    const handleSavePage1 = async ( data:SaveData ) => {
+
+        if( currentPage.type === "page1"){
+            setStatus( currentPage.work )
+            data.bodyPhotos.forEach( elem => {
+                emit("send_message", {
+                    token:          token,
+                    recipient:      currentPage.work.recipient,
+                    cargo:          currentPage.work.cargo,
+                    image:          elem,
+                })                
+            });
+            emit("send_message", {
+                token:          token,
+                recipient:      currentPage.work.recipient,
+                cargo:          currentPage.work.cargo,
+                message:        "Транспорт осмотрен, документы проверены, фото кузова приложено, транспорт готов к погрузке"  ,
+                image:          "",
+            })
+        }
+            
+        return true
+    
     };
 
 
@@ -86,6 +147,14 @@ export const Works: React.FC = () => {
                     <WorkMap
                         work            = { currentPage.work }
                         onBack          = { goBack }
+                    />
+                );
+            case 'page1':
+                return (
+                    <WorkPage1
+                        work            = { currentPage.work }
+                        onBack          = { goBack }
+                        onSave          = { handleSavePage1 }   
                     />
                 );
             default:

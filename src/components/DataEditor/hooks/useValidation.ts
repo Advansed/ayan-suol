@@ -36,6 +36,22 @@ export const useValidation = () => {
       case 'date':
         if (!value) return 'Выберите дату';
         break;
+
+      case 'check':
+        if (!value) return 'Установите галочку';
+        break;
+      
+      case 'image':
+        if (!value) return 'Надо добавить фото';
+        break;
+
+      case 'images':
+        if (value.length === 0) return 'Надо добавить фото';
+        break;
+      
+      case 'rate':
+        if (value === 0) return 'Поставьте оценку работы';
+        break;
       
       case 'select':
         if (!value) return 'Выберите значение';

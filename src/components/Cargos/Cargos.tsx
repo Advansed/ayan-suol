@@ -1,4 +1,4 @@
-import React                                    from 'react';
+import React, { useEffect }                                    from 'react';
 import { useCargos }                            from '../../Store/useCargos';
 import { CargosList }                           from './components/CargosList';
 import { CargoView }                            from './components/CargoView';
@@ -8,7 +8,7 @@ import { InsurancePage }                        from './components/InsurancePage
 import { cargoGetters, CargoInfo, EMPTY_CARGO } from '../../Store/cargoStore';
 import { CargoForm }                            from './components';
 import { IonLoading }                           from '@ionic/react';
-import { useCargoNavigation } from './hooks/useNavigation';
+import { useCargoNavigation }                   from './hooks/useNavigation';
 
 export const Cargos: React.FC = () => {
     
@@ -31,6 +31,13 @@ export const Cargos: React.FC = () => {
     } = useCargoNavigation()
 
     // Обработчики для списка
+
+    useEffect(()=>{
+        if(currentPage.cargo){
+            const cargo = cargoGetters.getCargo( currentPage.cargo?.guid as string )
+            navigateTo({ type: currentPage.type, cargo: cargo })
+        }
+    },[cargos])
     
 
     const handleBack = () => {
@@ -49,79 +56,102 @@ export const Cargos: React.FC = () => {
 
     const renderContent = () => {
 
-        switch (currentPage.type) {
-            case 'list':
-                return (
-                    <CargosList
-                        cargos          = { cargos }
-                        onCargoClick    = { handleCargoClick }
-                        onCreateNew     = { handleCreateNew }
-                        onRefresh       = { refreshCargos }
-                    />
-                );
+        if( currentPage.cargo ){
+            switch (currentPage.type) {
 
-            case 'create':
-                return(
-                    <CargoForm 
-                         cargo           = { EMPTY_CARGO }
-                         onUpdate        = { updateCargo }
-                         onCreate        = { createCargo }
-                         onBack          = { handleBack }
-                    />   
-                )
+                case 'edit':
+                    return (
+                        <CargoForm
+                            cargo           = { currentPage.cargo as CargoInfo }
+                            onUpdate        = { updateCargo }
+                            onCreate        = { createCargo }
+                            onBack          = { handleBack }
+                        />
+                    );
 
-            case 'edit':
-                return (
-                    <CargoForm
-                        cargo           = { currentPage.cargo as CargoInfo }
-                        onUpdate        = { updateCargo }
-                        onCreate        = { createCargo }
-                        onBack          = { handleBack }
-                    />
-                );
+                case 'view':
+                    return (
+                        <CargoView
+                            cargo           = { currentPage.cargo! }
+                            onEdit          = { (cargo) => navigateTo({ type: 'edit', cargo }) }
+                            onDelete        = { deleteCargo }
+                            onPublish       = { publishCargo }
+                            onInvoices      = { (cargo) => navigateTo({ type: 'invoices', cargo }) }
+                            onPayment       = { (cargo) => navigateTo({ type: 'prepayment', cargo }) }
+                            onInsurance     = { (cargo) => navigateTo({ type: 'insurance', cargo }) }
+                            onBack          = { handleBack }
+                        />
+                    );
 
-            case 'view':
-                return (
-                    <CargoView
-                        cargo           = { currentPage.cargo! }
-                        onEdit          = { (cargo) => navigateTo({ type: 'edit', cargo }) }
-                        onDelete        = { deleteCargo }
-                        onPublish       = { publishCargo }
-                        onInvoices      = { (cargo) => navigateTo({ type: 'invoices', cargo }) }
-                        onPayment       = { (cargo) => navigateTo({ type: 'prepayment', cargo }) }
-                        onInsurance     = { (cargo) => navigateTo({ type: 'insurance', cargo }) }
-                        onBack          = { handleBack }
-                    />
-                );
+                case 'invoices':
+                    return (
+                        <CargoInvoiceSections
+                            cargo           = { currentPage.cargo! }
+                            onBack          = { handleBack }
+                            onList          = { ()=>{  navigateTo({ type: 'list' }); } }
+                        />
+                    );
 
-            case 'invoices':
-                return (
-                    <CargoInvoiceSections
-                        cargo           = { currentPage.cargo! }
-                        onBack          = { handleBack }
-                        onList          = { ()=>{  navigateTo({ type: 'list' }); } }
-                    />
-                );
+                case 'prepayment':
+                    return (
+                        <PrepaymentPage
+                            cargo           = { currentPage.cargo! }
+                            onBack          = { handleBack }
+                        />
+                    );
 
-            case 'prepayment':
-                return (
-                    <PrepaymentPage
-                        cargo           = { currentPage.cargo! }
-                        onBack          = { handleBack }
-                    />
-                );
+                case 'insurance':
+                    return (
+                        <InsurancePage
+                            cargo           = { currentPage.cargo! }
+                            onBack          = { handleBack }
+                        />
+                    );
 
-            case 'insurance':
-                return (
-                    <InsurancePage
-                        cargo           = { currentPage.cargo! }
-                        onBack          = { handleBack }
-                    />
-                );
+                default:
+                    return (
+                        <CargosList
+                            cargos          = { cargos }
+                            onCargoClick    = { handleCargoClick }
+                            onCreateNew     = { handleCreateNew }
+                            onRefresh       = { refreshCargos }
+                        />
+                    );
+            }            
+        } else {
+            switch (currentPage.type) {
+                case 'list':
+                    return (
+                        <CargosList
+                            cargos          = { cargos }
+                            onCargoClick    = { handleCargoClick }
+                            onCreateNew     = { handleCreateNew }
+                            onRefresh       = { refreshCargos }
+                        />
+                    );
 
-            default:
-                return <div>Неизвестная страница</div>;
+                case 'create':
+                    return(
+                        <CargoForm 
+                            cargo           = { EMPTY_CARGO }
+                            onUpdate        = { updateCargo }
+                            onCreate        = { createCargo }
+                            onBack          = { handleBack }
+                        />   
+                    )
+
+                default:
+                    return (
+                        <CargosList
+                            cargos          = { cargos }
+                            onCargoClick    = { handleCargoClick }
+                            onCreateNew     = { handleCreateNew }
+                            onRefresh       = { refreshCargos }
+                        />
+                    );
+            }            
         }
+
         
     };
 

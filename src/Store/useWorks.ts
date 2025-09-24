@@ -59,14 +59,6 @@ const setOffer = useCallback(async (data: OfferInfo): Promise<boolean> => {
         if (response.success) {
           toast.success('Предложение успешно создано');
                   
-          emit("send_message", {
-              token:          token,
-              recipient:      data.recipient,
-              cargo:          data.guid,
-              message:        "Сделал предложение: Сумма - " + data.price.toFixed() + " рублей" ,
-              image:          "",
-          })
-
           resolve(true);
         } else {
           toast.error(response.error || 'Ошибка создания предложения');
@@ -118,14 +110,6 @@ const setOffer = useCallback(async (data: OfferInfo): Promise<boolean> => {
           if (response.success) {
             toast.success('Статус успешно обновлен');
               
-            emit("send_message", {
-                  token:          token,
-                  recipient:      work.recipient,
-                  cargo:          work.cargo,
-                  message:        statusText( work),
-                  image:          "",
-              })
-
             resolve(true);
           } else {
             toast.error(response.error || 'Ошибка обновления статуса');

@@ -98,23 +98,23 @@ export const validateRegistrationForm = (formType: string, data: any): Record<st
   
   switch (formType) {
     case 'register':
-      const phoneError = validateRegistrationField('phone', data.phone)
-      const nameError = validateRegistrationField('name', data.name)
-      const emailError = validateRegistrationField('email', data.email)
-      const userTypeError = validateRegistrationField('userType', data.userType)
-      if (phoneError) errors.phone = phoneError
-      if (nameError) errors.name = nameError
-      if (emailError) errors.email = emailError
-      if (userTypeError) errors.userType = userTypeError
+      const phoneError                    = validateRegistrationField('phone', data.phone)
+      const nameError                     = validateRegistrationField('name', data.name)
+      const emailError                    = validateRegistrationField('email', data.email)
+      const userTypeError                 = validateRegistrationField('userType', data.userType)
+      if (phoneError) errors.phone        = phoneError
+      if (nameError) errors.name          = nameError
+      if (emailError) errors.email        = emailError
+      if (userTypeError) errors.userType  = userTypeError
       break
       
     case 'password':
-      const pwd1Error = validateRegistrationField('password', data.password)
-      const pwd2Error = validateRegistrationField('password1', data.password1)
-      if (pwd1Error) errors.password = pwd1Error
-      if (pwd2Error) errors.password1 = pwd2Error
+      const pwd1Error                     = validateRegistrationField('password', data.password)
+      const pwd2Error                     = validateRegistrationField('password1', data.password1)
+      if (pwd1Error) errors.password      = pwd1Error
+      if (pwd2Error) errors.password1     = pwd2Error
       if (data.password && data.password1 && data.password !== data.password1) {
-        errors.password1 = 'Пароли не совпадают'
+        errors.password1                  = 'Пароли не совпадают'
       }
       break
   }

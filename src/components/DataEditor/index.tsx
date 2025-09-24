@@ -15,6 +15,8 @@ import { ViewField }                            from './fields/ViewField';
 import { ImagesField }                          from './fields/ImagesField';
 import './styles.css';
 import { ImageField } from './fields/ImageField';
+import { CheckField } from './fields/CheckField';
+import { RateField } from './fields/RateField';
 
 const DataEditor: React.FC<DataEditorProps> = ({ 
     data, 
@@ -68,7 +70,6 @@ const DataEditor: React.FC<DataEditorProps> = ({
   };
 
   const handleSave                = () => {
-
       const currentSection = data[navigation.currentPage];
       let hasErrors = false;
       
@@ -87,9 +88,12 @@ const DataEditor: React.FC<DataEditorProps> = ({
       if (!hasErrors) {
         clearAll();
         onSave?.(formState.data)
-
       }
-      
+  }
+
+  const handleClose = () => {
+    // Закрытие с отменой - просто возвращаемся назад
+    onBack();
   }
 
   const getPageTitle = () => {
@@ -125,6 +129,8 @@ const DataEditor: React.FC<DataEditorProps> = ({
         case 'party':       return <PartyField      { ...props } cityFias = { fias } />;
         case 'image':       return <ImageField      { ...props } />;
         case 'images':      return <ImagesField     { ...props } />;
+        case 'check':       return <CheckField      { ...props } />;
+        case 'rate':        return <RateField       { ...props } />;
 
         default:            return null;
     }
@@ -132,6 +138,8 @@ const DataEditor: React.FC<DataEditorProps> = ({
 
   const currentSection = formState.data[navigation.currentPage];
   if (!currentSection) return null;
+
+  const isLastPage = navigation.currentPage === navigation.totalPages - 1;
 
   return (
     <div className="data-editor-wizard">
@@ -141,8 +149,8 @@ const DataEditor: React.FC<DataEditorProps> = ({
           pages         = { getPageTitle() }
           onBack        = { handleBackNavigation }
           onForward     = { handleForwardNavigation }
-          onSave        = { handleSave } //{ () => onSave?.(formState.data) }
-          isLastStep    = { navigation.currentPage === navigation.totalPages - 1 }
+          onClose       = { handleClose } // Изменили onSave на onClose
+          isLastStep    = { isLastPage }
           canGoBack     = { true }
           canGoForward  = { navigation.canGoNext }
         />
@@ -154,6 +162,18 @@ const DataEditor: React.FC<DataEditorProps> = ({
                 {renderField(field, navigation.currentPage, idx)}
               </div>
             ))}
+            
+            {/* Большая кнопка Сохранить на последней странице */}
+            {isLastPage && (
+              <div className="save-button-container">
+                <button 
+                  className="big-save-button" 
+                  onClick={handleSave}
+                >
+                  Сохранить
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

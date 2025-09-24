@@ -5,6 +5,11 @@ import { IonButton, IonCard, IonIcon }  from '@ionic/react';
 import { DriverCard }                   from './DriverCard';
 import { useInvoices }                  from '../hooks/useInvoices';
 import { chatboxEllipsesOutline }       from 'ionicons/icons';
+import { CargoPage1, SaveData } from './CargoPage1';
+import { CargoPage2 } from './CargoPage2';
+import { useSocket } from '../../../Store/useSocket';
+import { useToken } from '../../../Store/loginStore';
+import { CargoPage3, SaveData3 } from './CargoPage3';
 
 interface CargoInvoiceSectionsProps {
     cargo:      CargoInfo;
@@ -12,15 +17,79 @@ interface CargoInvoiceSectionsProps {
     onList:     ()=>void;
 }
 
+interface Route1 {
+    type:   string;
+    info:   DriverInfo | undefined;
+}
+
 export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ cargo, onBack, onList }) => {
     const { invoices, isLoading,  handleAccept,  handleReject, handleChat } = useInvoices({ info: cargo })
+    const [ page, setPage ] = useState<Route1>({ type: 'main', info: undefined })
+    const { emit } = useSocket()
+    const token = useToken()
+
+    const AcceptClick = async(invoice: DriverInfo, data: any, status: number) => {   
+
+        await handleAccept( invoice, status )
+    
+        if( status === 16 ){
+            data.sealPhotos.forEach(elem => {
+                emit("send_message", {
+                    token:          token,
+                    recipient:      invoice.recipient,
+                    cargo:          invoice.cargo,
+                    image:          elem,
+                })                        
+            });
+
+            emit("send_message", {
+                token:          token,
+                recipient:      invoice.recipient,
+                cargo:          invoice.cargo,
+                message:        "Груз осмотрен и опломбирован, документы на груз переданы",
+            })                
+            emit("send_message", {
+                token:          token,
+                recipient:      invoice.recipient,
+                cargo:          invoice.cargo,
+                message:        "Транспорт отправлен в точку разгрузки",
+            })                
+        } else 
+        if( status === 18 ){
+            data.sealPhotos.forEach(elem => {
+                emit("send_message", {
+                    token:          token,
+                    recipient:      invoice.recipient,
+                    cargo:          invoice.cargo,
+                    image:          elem,
+                })                        
+            });
+
+            emit("send_message", {
+                token:          token,
+                recipient:      invoice.recipient,
+                cargo:          invoice.cargo,
+                message:        "Пломба цела, груз доставлен",
+            })                
+            emit("send_message", {
+                token:          token,
+                recipient:      invoice.recipient,
+                cargo:          invoice.cargo,
+                message:        "Разгрузка начата",
+            })                
+        } else 
+
+        if( status === 20 ){
+            emit("send_message", {
+                token:          token,
+                recipient:      invoice.recipient,
+                cargo:          invoice.cargo,
+                message:        "Все работы выполнены",
+            })                
+       } 
 
 
-    const CompleteClick = (invoice: DriverInfo) => {   
-
-        handleAccept( invoice, 20 )
-
-        onList()
+        return true
 
     }
 
@@ -57,40 +126,48 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
 
     const renderButtons = (invoice:DriverInfo) => {
         switch (invoice.status) {
+
             case 'Заказано':
                 return (
-                    <div className='flex mt-1'>
-                        <IonButton
-                            className   = "w-50 cr-button-2"
-                            mode        = "ios"
-                            fill        = "clear"
-                            color       = "primary"
-                            onClick     = { () => handleChat( invoice ) }
-                            disabled    = { isLoading }
-                        >
-                            <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
-                            <span className="ml-1 fs-08">Чат</span>
-                        </IonButton>
+                    <div>
+                        <div className='flex mt-1'>
+                            <IonButton
+                                className   = "w-50 cr-button-2"
+                                mode        = "ios"
+                                fill        = "clear"
+                                color       = "primary"
+                                onClick     = { () => handleChat( invoice ) }
+                                disabled    = { isLoading }
+                            >
+                                <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
+                                <span className="ml-1 fs-08">Чат</span>
+                            </IonButton>
 
-                        <IonButton
-                            className   = "w-50 cr-button-1"
-                            mode        = "ios"
-                            color       = "primary"
-                            onClick     = { () => handleAccept( invoice, 12 ) }
-                            disabled    = { isLoading }
-                        >
-                            <span className="ml-1 fs-08">Выбрать</span>
-                        </IonButton>
+                            <IonButton
+                                className   = "w-50 cr-button-1"
+                                mode        = "ios"
+                                color       = "warning"
+                                onClick     = { () => handleReject( invoice ) }
+                                disabled    = { isLoading }
+                            >
+                                <span className="ml-1 fs-08">Отказать</span>
+                            </IonButton>
+                        </div>
+                        <div className='flex mt-1'>
 
-                        <IonButton
-                            className   = "w-50 cr-button-1"
-                            mode        = "ios"
-                            color       = "warning"
-                            onClick     = { () => handleReject( invoice ) }
-                            disabled    = { isLoading }
-                        >
-                            <span className="ml-1 fs-08">Отказать</span>
-                        </IonButton>
+                            <IonButton
+                                className   = "w-100 cr-button-1"
+                                mode        = "ios"
+                                color       = "primary"
+                                onClick     = { () => handleAccept( invoice, 12 ) }
+                                disabled    = { isLoading }
+                            >
+                                <span className="ml-1 fs-1">Принять предложение
+
+                                </span>
+                            </IonButton>
+
+                        </div>
                     </div>
                 );
 
@@ -123,109 +200,133 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
             
             case 'На погрузке':
                 return (
-                    <div className='flex mt-1'>
-                        <IonButton
-                            className   = "w-50 cr-button-2"
-                            mode        = "ios"
-                            fill        = "clear"
-                            color       = "primary"
-                            onClick     = { () => handleChat( invoice) }
-                            disabled    = { isLoading }
-                        >
-                            <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
-                            <span className="ml-1 fs-08">Чат</span>
-                        </IonButton>
+                    <div>
+                        <div className='flex mt-1'>
+                            <IonButton
+                                className   = "w-50 cr-button-2"
+                                mode        = "ios"
+                                fill        = "clear"
+                                color       = "primary"
+                                onClick     = { () => handleChat( invoice) }
+                                disabled    = { isLoading }
+                            >
+                                <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
+                                <span className="ml-1 fs-08">Чат</span>
+                            </IonButton>
 
-                        <IonButton
-                            className   = "w-50 cr-button-2"
-                            mode        = "ios"
-                            color       = "primary"
-                            onClick     = { () => handleAccept( invoice, 14 ) }
-                            disabled    = { isLoading }
-                        >
-                            <span className="ml-1 fs-08">Начать</span>
-                        </IonButton>
+                        </div>
+                        <div className='flex mt-1'>
+
+                            <IonButton
+                                className   = "w-100"
+                                mode        = "ios"
+                                color       = "primary"
+                                onClick     = { () => handleAccept( invoice, 14 ) }
+                                disabled    = { isLoading }
+                            >
+                                <span className="ml-1 fs-1">Начать погрузку
+
+                                </span>
+                            </IonButton>
+
+                        </div>
                     </div>
+
                 );
 
             case 'Загружено':
                 return (
-                    <div className='flex mt-1'>
-                        <IonButton
-                            className   = "w-50 cr-button-2"
-                            mode        = "ios"
-                            fill        = "clear"
-                            color       = "primary"
-                            onClick     = { () => handleChat( invoice) }
-                            disabled    = { isLoading }
-                        >
-                            <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
-                            <span className="ml-1 fs-08">Чат</span>
-                        </IonButton>
+                    <div>
+                        <div className='flex mt-1'>
+                            <IonButton
+                                className   = "w-50 cr-button-2"
+                                mode        = "ios"
+                                fill        = "clear"
+                                color       = "primary"
+                                onClick     = { () => handleChat( invoice) }
+                                disabled    = { isLoading }
+                            >
+                                <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
+                                <span className="ml-1 fs-08">Чат</span>
+                            </IonButton>
 
-                        <IonButton
-                            className   = "w-50 cr-button-2"
-                            mode        = "ios"
-                            color       = "primary"
-                            onClick     = { () => handleAccept( invoice, 16 ) }
-                            disabled    = { isLoading }
-                        >
-                            <span className="ml-1 fs-08">Отправить</span>
-                        </IonButton>
+                        </div>
+
+                        <div>
+                            <IonButton
+                                className   = "w-100"
+                                mode        = "ios"
+                                color       = "primary"
+                                onClick     = { () => setPage({ type: "page1", info: invoice }) }
+                                disabled    = { isLoading }
+                            >
+                                <span className="ml-1 fs-1">Отправить транспорт</span>
+                            </IonButton>
+                        </div>
                     </div>
                 );
 
             case 'Доставлено':
                 return (
-                    <div className='flex mt-1'>
-                        <IonButton
-                            className   = "w-50 cr-button-2"
-                            mode        = "ios"
-                            fill        = "clear"
-                            color       = "primary"
-                            onClick     = { () => handleChat( invoice) }
-                            disabled    = { isLoading }
-                        >
-                            <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
-                            <span className="ml-1 fs-08">Чат</span>
-                        </IonButton>
+                    <div>
+                        <div className='flex mt-1'>
+                            <IonButton
+                                className   = "w-50 cr-button-2"
+                                mode        = "ios"
+                                fill        = "clear"
+                                color       = "primary"
+                                onClick     = { () => handleChat( invoice) }
+                                disabled    = { isLoading }
+                            >
+                                <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
+                                <span className="ml-1 fs-08">Чат</span>
+                            </IonButton>
 
-                        <IonButton
-                            className   = "w-50 cr-button-2"
-                            mode        = "ios"
-                            color       = "primary"
-                            onClick     = { () => handleAccept( invoice, 18 ) }
-                            disabled    = { isLoading }
-                        >
-                            <span className="ml-1 fs-08">Разгрузить</span>
-                        </IonButton>
+                        </div>
+                        <div className='flex mt-1'>
+
+                            <IonButton
+                                className   = "w-100"
+                                mode        = "ios"
+                                color       = "primary"
+                                onClick     = { () => setPage({ type: "page2", info: invoice }) }
+                                disabled    = { isLoading }
+                            >
+                                <span className="ml-1">Начать разгрузку</span>
+                            </IonButton>
+                        </div>
                     </div>
                 );
 
             case 'Разгружено':
                 return (
-                    <div className='flex mt-1'>
-                        <IonButton
-                            className   = "w-50 cr-button-2"
-                            mode        = "ios"
-                            fill        = "clear"
-                            color       = "primary"
-                            onClick     = { () => handleChat( invoice) }
-                            disabled    = { isLoading }
-                        >
-                            <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
-                            <span className="ml-1 fs-08">Чат</span>
-                        </IonButton>
+                    <div>
+                        <div className='flex mt-1'>
+                            <IonButton
+                                className   = "w-50 cr-button-2"
+                                mode        = "ios"
+                                fill        = "clear"
+                                color       = "primary"
+                                onClick     = { () => handleChat( invoice) }
+                                disabled    = { isLoading }
+                            >
+                                <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06"/>
+                                <span className="ml-1 fs-08">Чат</span>
+                            </IonButton>
 
-                        <IonButton
-                            className   = "w-50 cr-button-2"
-                            mode        = "ios"
-                            color       = "primary"
-                            onClick     = { () => CompleteClick( invoice ) }
-                            disabled    = { isLoading }
-                        >
-                            <span className="ml-1 fs-08">Завершить</span>
-                        </IonButton>
+           
+                        </div>
+                        <div>
+                            <IonButton
+                                className   = "w-100 mt-1"
+                                mode        = "ios"
+                                color       = "primary"
+                                onClick     = { () => setPage({ type: "page3", info: invoice }) }
+                                disabled    = { isLoading }
+                            >
+                                <span className="ml-1 fs-08">Завершить</span>
+                            </IonButton>
+                        </div>
                     </div>
                 );
 
@@ -233,6 +334,59 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
                 return null;
         }
     };
+
+    const render = () =>{
+        return (
+            <>
+                <div className='ml-1 mr-1 mt-1'>
+                    <WizardHeader 
+                        title   = "Заявки "
+                        pages   = { cargo && cargo.name || '' }
+                        onBack  = { onBack }
+                    />
+
+                </div>
+
+                {renderInvoiceSection(
+                    groupedInvoices.invoices
+                )}
+            </>
+        )
+    }
+
+    const renderPage1 = ( invoice: DriverInfo ) => {
+        return (
+            <>
+                <CargoPage1 
+                    info    = { invoice }
+                    onBack  = { () => { setPage({type: "main", info: undefined})}}
+                    onSave  = { (data: SaveData) => { return AcceptClick( invoice, data, 16 ) }}
+                />
+            </> 
+        )
+    }
+    const renderPage2 = ( invoice: DriverInfo ) => {
+        return (
+            <>
+                <CargoPage2
+                    info    = { invoice }
+                    onBack  = { () => { setPage({type: "main", info: undefined})}}
+                    onSave  = { (data: SaveData) => { return AcceptClick( invoice, data, 18 ) }}
+                />
+            </> 
+        )
+    }
+    const renderPage3 = ( invoice: DriverInfo ) => {
+        return (
+            <>
+                <CargoPage3
+                    info    = { invoice }
+                    onBack  = { () => { setPage({type: "main", info: undefined})}}
+                    onSave  = { (data: SaveData3) => { return AcceptClick( invoice, data, 20 ) }}
+                />
+            </> 
+        )
+    }
     // Группировка инвойсов по статусам
     const groupedInvoices = {
         invoices:    invoices || [],
@@ -240,19 +394,17 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
 
     return (
         <>
-            <div className='ml-1 mr-1 mt-1'>
-                <WizardHeader 
-                    title   = "Заявки "
-                    pages   = { cargo.name  }
-                    onBack  = { onBack }
-                />
-
-            </div>
-
-            {/* Предложения от водителей */}
-            {renderInvoiceSection(
-                groupedInvoices.invoices
-            )}
+        {
+            page.type === 'main'
+                ? render()
+            : page.type === 'page1' 
+                ? page.info && renderPage1( page.info )
+            : page.type === 'page2' 
+                ? page.info && renderPage2( page.info )
+            : page.type === 'page3' 
+                ? page.info && renderPage3( page.info )
+            : <></>
+        }
       </>
     );
 };

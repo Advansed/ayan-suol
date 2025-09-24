@@ -1,6 +1,6 @@
 import React from 'react';
 import { IonIcon } from '@ionic/react';
-import { chevronBackOutline, chevronForwardOutline, saveOutline } from 'ionicons/icons';
+import { chevronBackOutline, chevronForwardOutline, closeOutline } from 'ionicons/icons';
 import styles from './WizardHeader.module.css';
 
 interface WizardHeaderProps {
@@ -8,7 +8,7 @@ interface WizardHeaderProps {
   pages:          string;
   onBack:         () => void;
   onForward:      () => void;
-  onSave:         () => void;
+  onClose:        () => void; // Изменили onSave на onClose
   isLastStep?:    boolean;
   canGoBack?:     boolean;
   canGoForward?:  boolean;
@@ -19,7 +19,7 @@ export const WizardHeader: React.FC<WizardHeaderProps> = ({
   pages,
   onBack,
   onForward,
-  onSave,
+  onClose, // Изменили onSave на onClose
   isLastStep = false,
   canGoBack = true,
   canGoForward = true
@@ -43,9 +43,9 @@ export const WizardHeader: React.FC<WizardHeaderProps> = ({
       {isLastStep ? (
         <button 
           className={`${styles.navButton} ${styles.navButtonRight}`} 
-          onClick={onSave}
+          onClick={onClose} // Изменили onSave на onClose
         >
-          <IonIcon icon={saveOutline} />
+          <IonIcon icon={closeOutline} /> {/* Изменили иконку */}
         </button>
       ) : (
         <button 
