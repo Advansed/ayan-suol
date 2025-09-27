@@ -8,7 +8,7 @@ const Tab4: React.FC = () => {
   const user_type = useUserType()
 
   return (
-    <IonPage>
+    <IonPage className='mt-2'>
       <IonHeader>
         <IonToolbar>
           <div className='a-center fs-09'><b>{user_type == 2 ? 'Архив работ' : 'Архив заказов'}</b></div>

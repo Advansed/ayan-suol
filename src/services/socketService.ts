@@ -26,7 +26,8 @@ class SocketService {
         transports: ['polling', 'websocket'],
         autoConnect: true,
         reconnection: true,
-        timeout: 20000
+        timeout: 60000,
+        forceNew: true
       });
 
       // Только критичные обработчики для Promise

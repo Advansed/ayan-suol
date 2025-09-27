@@ -9,7 +9,7 @@ const Tab1: React.FC = () => {
   
   
   return (
-    <IonPage>
+    <IonPage className='mt-2'>
 
       <IonContent className='bg-2'>
         {

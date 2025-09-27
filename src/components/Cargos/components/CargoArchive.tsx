@@ -1,11 +1,11 @@
 import React from 'react';
-import { IonRefresher, IonRefresherContent, IonSpinner } from '@ionic/react';
+import { IonRefresher, IonRefresherContent } from '@ionic/react';
 import { CargoCard } from '../components/CargoCard';
 import useCargoArchive from '../hooks/useCargoArchive';
 import './CargoArchive.css'
 
 const CargoArchive = () => {
-  const { cargos, refreshing, refresh } = useCargoArchive();
+  const { cargos, refresh } = useCargoArchive();
 
   const handleRefresh = async (event: any) => {
     await refresh();
@@ -17,17 +17,10 @@ const CargoArchive = () => {
     console.log('Clicked cargo:', cargo);
   };
 
-  if (refreshing) {
-    return (
-      <div className="cr-loading">
-        <IonSpinner />
-        <div>Загрузка архива...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="cr-container">
+      
       <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
         <IonRefresherContent
           pullingIcon="chevron-down-outline"
@@ -36,17 +29,6 @@ const CargoArchive = () => {
           refreshingText="Обновление..."
         />
       </IonRefresher>
-
-      <div className="cr-header">
-        <div className="fs-09"><b>Архив заказов</b></div>
-        <button 
-          onClick={refresh} 
-          disabled={refreshing}
-          className={`cr-refresh-btn ${refreshing ? 'refreshing' : ''}`}
-        >
-          {refreshing ? '⟳' : '↻'} Обновить
-        </button>
-      </div>
 
       <div className="cr-stats">
         Завершенных заказов: {cargos.length}
@@ -68,6 +50,7 @@ const CargoArchive = () => {
           ))
         )}
       </div>
+
     </div>
   );
 };

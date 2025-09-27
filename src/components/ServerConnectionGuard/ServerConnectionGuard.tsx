@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useSocket } from '../../Store/useSocket';
 import { ReconnectToServerForm } from '../ReconnectToServerForm/ReconnectToServerForm';
 import { useSocketStore } from '../../Store/socketStore';
+import { SignJWT } from 'jose';
+import { v4 as uuidv4 } from 'uuid';
 
 interface ServerConnectionGuardProps {
   children: React.ReactNode;
@@ -22,7 +24,15 @@ export const ServerConnectionGuard: React.FC<ServerConnectionGuardProps> = ({ ch
     try {
       if (isConnected) {
       } else {
-        await connect('');
+        let token = localStorage.getItem("gvr.io.token") as string || ''
+        if(!token){ 
+            token = await generateToken() || ''
+            localStorage.setItem("gvr.io.token", token)
+        }
+
+        console.log(token)
+
+        await connect( token );
         // Устанавливаем обработчики ПОСЛЕ успешного подключения
       }
     } catch (err: any) {
@@ -48,3 +58,12 @@ export const ServerConnectionGuard: React.FC<ServerConnectionGuardProps> = ({ ch
     />
   );
 };
+
+async function generateToken() {
+  const uniqueId = uuidv4(); // генерируем уникальный UUID
+  console.log( uniqueId )
+  const token = await new SignJWT({ uid: uniqueId })
+    .setProtectedHeader({ alg: 'HS256' })
+    .sign(new TextEncoder().encode('секретный_ключ'));
+  return token;
+}

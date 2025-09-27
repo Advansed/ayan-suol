@@ -10,11 +10,8 @@ interface CargoCardProps {
     onClick?: () => void;
 }
 
-export const CargoCard: React.FC<CargoCardProps> = ({ 
-    cargo, 
-    mode = 'list',
-    onClick 
-}) => {
+export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', onClick }) => {
+    
     const handleClick = () => {
         if (onClick) {
             onClick();

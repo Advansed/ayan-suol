@@ -632,3 +632,26 @@ ion-refresher {
   --background: #086CA2; /* Прямое указание цвета */
   --color: white;
 }
+
+/* Убедитесь, что контент не заходит под статус-бар */
+ion-content {
+  --padding-top: env(safe-area-inset-top);
+  --padding-start: env(safe-area-inset-left);
+  --padding-end: env(safe-area-inset-right);
+  --padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Для iOS и Android безопасных зон */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Глобальные стили для статус-бара */
+ion-app {
+  padding-top: constant(safe-area-inset-top); /* iOS 11.0 */
+  padding-top: env(safe-area-inset-top); /* iOS 11.2+ */
+}

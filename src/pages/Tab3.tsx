@@ -4,7 +4,7 @@ import { Profile } from '../components/Profile'
 
 const Tab3: React.FC = () => {
   return (
-    <IonPage>
+    <IonPage className='mt-2'>
       <Profile />
     </IonPage>
   )

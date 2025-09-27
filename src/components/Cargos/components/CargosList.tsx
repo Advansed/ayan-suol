@@ -1,5 +1,4 @@
-import React, { useState } 
-                        from 'react';
+import React            from 'react';
 import { IonRefresher, IonRefresherContent, IonSpinner
 }                       from '@ionic/react';
 import { CargoCard }    from './CargoCard';
@@ -21,7 +20,6 @@ export const CargosList: React.FC<CargosListProps> = ({
     onCargoClick,
     onRefresh
 }) => {
-    const [showFilters, setShowFilters] = useState(false);
 
     const handleRefresh = async (event: any) => {
         if (onRefresh) {
@@ -50,7 +48,6 @@ export const CargosList: React.FC<CargosListProps> = ({
         </div>
     );
 
-    console.log("cargoList", cargos)
     return (
         <>
             {/* Refresher */}
@@ -71,8 +68,8 @@ export const CargosList: React.FC<CargosListProps> = ({
             {/* Кнопка создания нового груза */}
             <div className="mb-4 ml-1 mr-1 mt-1">
                 <div 
-                    className="gradient-button"
-                    onClick={onCreateNew}
+                    className   = "gradient-button"
+                    onClick     = { onCreateNew }
                 >
                     <Package className="w-6 h-6" />
                 <span className="ml-3 font-semibold">Создать новый груз</span>
@@ -81,18 +78,17 @@ export const CargosList: React.FC<CargosListProps> = ({
 
             {/* Список грузов */}
         
-            {isLoading ? (
+            { isLoading ? (
                 renderLoadingState()
             ) : cargos.length === 0 ? (
                 renderEmptyState()
             ) : (
-                cargos.map((cargo) => (
+                cargos.map((cargo, index) => (
                     <CargoCard
-                        key     = { cargo.guid }
+                        key     = { index }
                         cargo   = { cargo }
                         mode    = "list"
                         onClick = { () => {
-                            console.log("click", cargo)
                             onCargoClick(cargo) 
                         }}
                     />

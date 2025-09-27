@@ -5,16 +5,15 @@ import { IonButton, IonCard, IonIcon }  from '@ionic/react';
 import { DriverCard }                   from './DriverCard';
 import { useInvoices }                  from '../hooks/useInvoices';
 import { chatboxEllipsesOutline }       from 'ionicons/icons';
-import { CargoPage1, SaveData } from './CargoPage1';
-import { CargoPage2 } from './CargoPage2';
-import { useSocket } from '../../../Store/useSocket';
-import { useToken } from '../../../Store/loginStore';
-import { CargoPage3, SaveData3 } from './CargoPage3';
+import { CargoPage1, SaveData }         from './CargoPage1';
+import { CargoPage2 }                   from './CargoPage2';
+import { useSocket }                    from '../../../Store/useSocket';
+import { useToken }                     from '../../../Store/loginStore';
+import { CargoPage3, SaveData3 }        from './CargoPage3';
 
 interface CargoInvoiceSectionsProps {
     cargo:      CargoInfo;
     onBack:     ()=>void;
-    onList:     ()=>void;
 }
 
 interface Route1 {
@@ -22,13 +21,13 @@ interface Route1 {
     info:   DriverInfo | undefined;
 }
 
-export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ cargo, onBack, onList }) => {
+export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ cargo, onBack }) => {
     const { invoices, isLoading,  handleAccept,  handleReject, handleChat } = useInvoices({ info: cargo })
     const [ page, setPage ] = useState<Route1>({ type: 'main', info: undefined })
     const { emit } = useSocket()
     const token = useToken()
 
-    const AcceptClick = async(invoice: DriverInfo, data: any, status: number) => {   
+    const AcceptClick           = async(invoice: DriverInfo, data: any, status: number) => {   
 
         await handleAccept( invoice, status )
     
@@ -94,7 +93,7 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
     }
 
     // Рендер секции инвойсов
-    const renderInvoiceSection = (
+    const renderInvoiceSection  = (
             invoices: DriverInfo[]
     ) => {
 
@@ -124,7 +123,7 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
         );
     };
 
-    const renderButtons = (invoice:DriverInfo) => {
+    const renderButtons         = (invoice:DriverInfo) => {
         switch (invoice.status) {
 
             case 'Заказано':
@@ -335,7 +334,7 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
         }
     };
 
-    const render = () =>{
+    const render                = () =>{
         return (
             <>
                 <div className='ml-1 mr-1 mt-1'>
@@ -347,14 +346,13 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
 
                 </div>
 
-                {renderInvoiceSection(
-                    groupedInvoices.invoices
-                )}
+                { renderInvoiceSection( invoices) }
+
             </>
         )
     }
 
-    const renderPage1 = ( invoice: DriverInfo ) => {
+    const renderPage1           = ( invoice: DriverInfo ) => {
         return (
             <>
                 <CargoPage1 
@@ -365,7 +363,8 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
             </> 
         )
     }
-    const renderPage2 = ( invoice: DriverInfo ) => {
+
+    const renderPage2           = ( invoice: DriverInfo ) => {
         return (
             <>
                 <CargoPage2
@@ -376,7 +375,8 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
             </> 
         )
     }
-    const renderPage3 = ( invoice: DriverInfo ) => {
+
+    const renderPage3           = ( invoice: DriverInfo ) => {
         return (
             <>
                 <CargoPage3
@@ -387,10 +387,6 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
             </> 
         )
     }
-    // Группировка инвойсов по статусам
-    const groupedInvoices = {
-        invoices:    invoices || [],
-    };
 
     return (
         <>

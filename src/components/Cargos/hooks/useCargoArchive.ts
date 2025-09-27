@@ -1,45 +1,34 @@
 // src/hooks/useCargoArchive.ts
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { CargoInfo, CargoStatus, useCargoStore } from '../../../Store/cargoStore';
+import { useState, useEffect, useCallback }   from 'react';
+import { CargoInfo, useCargoStore }           from '../../../Store/cargoStore';
+import { useSocket }                          from '../../../Store/useSocket';
+import { useToast }                           from '../../Toast';
+import { useToken }                           from '../../../Store/loginStore';
 
 interface UseCargoArchiveReturn {
-  cargos: CargoInfo[];
-  refreshing: boolean;
-  refresh: () => Promise<void>;
-  isLoading: boolean;
-  error: string | null;
+  cargos:             CargoInfo[];
+  refresh:            () => Promise<void>;
 }
 
 export const useCargoArchive = (): UseCargoArchiveReturn => {
-  const { archives, isLoading, setLoading } = useCargoStore();
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { archives }   = useCargoStore();
+  const { emit }                        = useSocket()
+  const token                                 = useToken()
+  const toast                                 = useToast()
 
-  // Фильтруем только завершенные заказы
-
-  const refresh = useCallback(async () => {
+  const refresh                               = useCallback(async () => {
     try {
 
-      setRefreshing(true);
-      setError(null);
-      setLoading(true);
-
-      // Эмуляция запроса к серверу через socket
-      // В реальном приложении здесь будет вызов socket.emit('get_cargo_archives')
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Данные уже будут обновлены через socket handlers в store
+      emit("get_cargo_archives", { token: token })
       
     } catch (err) {
-      console.error('Error refreshing cargo archive:', err);
-      setError('Не удалось загрузить архив заказов');
+      console.log('Error refreshing cargo archive:', err);
+      toast.error('Не удалось загрузить архив заказов');
     } finally {
-      setRefreshing(false);
-      setLoading(false);
+      console.log("finally")
     }
-  }, [setLoading]);
+  }, []);
 
-  // Первоначальная загрузка при монтировании
   useEffect(() => {
     if (archives.length === 0) {
       refresh();
@@ -47,11 +36,8 @@ export const useCargoArchive = (): UseCargoArchiveReturn => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
-    cargos:     archives,
-    refreshing: refreshing || isLoading,
-    refresh,
-    isLoading,
-    error
+      cargos:     archives, // Все архивные cargo
+      refresh
   };
 };
 
