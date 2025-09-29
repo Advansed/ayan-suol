@@ -279,7 +279,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
 
     return (
         <>
-            { renderView( workInfo ) }
+            { workInfo && renderView( workInfo ) }
         </>
     );
 };

@@ -1,26 +1,31 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
-import { useIonViewDidEnter, useIonViewDidLeave } from "@ionic/react";
+import { IonButton, IonModal, useIonViewDidEnter, useIonViewDidLeave } from "@ionic/react";
 import { IonIcon, IonRefresher, IonRefresherContent, useIonRouter } from "@ionic/react";
-import { arrowBackOutline, cameraSharp, sendSharp } from "ionicons/icons";
+import { arrowBackOutline, cameraSharp, closeOutline, sendSharp } from "ionicons/icons";
 import "./Chats.css";
 import { useChats } from "../../Store/useChats";
 import { loginGetters } from "../../Store/loginStore";
 import { takePicture } from "../Files";
+import { setMode } from "ionicons/dist/types/stencil-public-runtime";
+import { PhotoPreview } from "./PhotoPreview";
 
 interface ChatsProps {
     name: string;
 }
 
 // Мемоизированный компонент сообщения
-const MessageComponent = React.memo(({ message, isSent, userInitials }: { 
+const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessage }: { 
     message: any; 
     isSent: boolean; 
     userInitials: string; 
+    clickMessage: (url: string) => void
 }) => {
     const renderContent = () => {
         if (message.image) {
             return (
-                <div className="chat-image-container">
+                <div className="chat-image-container"
+                    onClick = { () => { clickMessage( message.image ) } }
+                >
                     <img 
                         src={message.image} 
                         alt="Изображение" 
@@ -31,7 +36,7 @@ const MessageComponent = React.memo(({ message, isSent, userInitials }: {
                     />
                     {message.message && (
                         <div className="chat-message-text">
-                            {message.message}
+                            { message.message }
                         </div>
                     )}
                 </div>
@@ -103,9 +108,10 @@ const ImageUploadButton = React.memo(({ onImageSelect }: {
 });
 
 // Мемоизированный список сообщений  
-const MessagesList = React.memo(({ messages, userInitials }: { 
+const MessagesList = React.memo(({ messages, userInitials, clickMessage }: { 
     messages: any[]; 
     userInitials: string; 
+    clickMessage: (url: string) => void
 }) => {
     // Преобразуем плоский список сообщений в сгруппированный по датам
     const groupedMessages = useMemo(() => {
@@ -159,6 +165,7 @@ const MessagesList = React.memo(({ messages, userInitials }: {
                             message         = { msg }
                             isSent          = { msg.sent }
                             userInitials    = { userInitials }
+                            clickMessage    = { clickMessage }
                         />
                     ))}
                 </div>
@@ -235,7 +242,7 @@ const ChatFooter = React.memo(({
     return (
         <div className="chat-footer">
             <div className="chat-input-container">
-                <ImageUploadButton onImageSelect={onImageSelect} />
+                {/* <ImageUploadButton onImageSelect={onImageSelect} /> */}
                 
                 <div className="chat-input-wrapper">
                     <textarea
@@ -265,6 +272,7 @@ export function Chats(props: ChatsProps) {
     const [value, setValue]                 = useState("");
     const [isVisible, setIsVisible]         = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);  
+    const [ isOpen, setOpen ]               = useState<string>("")
     const hist                              = useIonRouter();
     const messagesEndRef                    = useRef<HTMLDivElement>(null);
 
@@ -435,7 +443,7 @@ export function Chats(props: ChatsProps) {
                 {(!currentMessages || currentMessages.length === 0) && !selectedImage ? ( 
                     <EmptyState /> 
                 ) : ( 
-                    <MessagesList messages={currentMessages || []} userInitials={userInitials} /> 
+                    <MessagesList messages={currentMessages || []} userInitials={userInitials} clickMessage = { (url: string) => setOpen( url )} /> 
                 )}
                 
                 <div ref={messagesEndRef} />
@@ -449,6 +457,10 @@ export function Chats(props: ChatsProps) {
                 onKeyPress      = { handleKeyPress }
                 onImageSelect   = { handleImageSelect }
             />
+           <PhotoPreview
+                imageUrl = { isOpen }
+                closeModal = { () => setOpen( "" ) }
+           />
         </div>
     );
 }
