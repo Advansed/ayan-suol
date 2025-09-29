@@ -270,6 +270,7 @@ export function Chats(props: ChatsProps) {
 
     const { 
         currentMessages,
+        sendImage, 
         sendMessage, 
         loadMessages, 
         markAsRead,
@@ -364,7 +365,7 @@ export function Chats(props: ChatsProps) {
         
         console.log( selectedImage )
         
-        const success = await sendMessage( recipient, cargo, value, selectedImage || '' );
+        const success = await sendImage( recipient, cargo, selectedImage || '');
 
         if (success) {
             setValue("");

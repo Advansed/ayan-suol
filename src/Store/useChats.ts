@@ -30,6 +30,7 @@ export interface UseChatsReturn {
   loadChats:            ( ) => Promise<void>
   loadMessages:         ( recipient: string, cargo: string, loadMore?: boolean ) => Promise<void>
   sendMessage:          ( recipient: string, cargo: string, message: string, image: string ) => Promise<boolean>
+  sendImage:            ( recipient: string, cargo: string, imageFile: string ) => Promise<boolean>
   markAsRead:           ( recipient: string, cargo: string, guids: {guid:string}[] ) => Promise<void>
   setCurrentChat:       ( recipient: string, cargo: string ) => void
   clearCurrentChat:     ( ) => void
@@ -64,13 +65,7 @@ export const useChats = (): UseChatsReturn => {
   const searchQuery     = useChatStore(state => state.searchQuery)
   const currentChat     = useChatStore(state => state.currentChat)
 
-  // Стабильные функции
-  const stableEmit      = useCallback(emit, [])
-  const stableToast     = useMemo(() => ({
-    error:    toast.error,
-    success:  toast.success,
-    info:     toast.info
-  }), [])
+
 
   useEffect(()=>{
   },[currentChat])
@@ -78,24 +73,24 @@ export const useChats = (): UseChatsReturn => {
   // Загрузка списка чатов
   const loadChats = useCallback(async (): Promise<void> => {
     if (!isConnected) {
-      stableToast.error('Нет соединения с сервером')
+      toast.error('Нет соединения с сервером')
       return
     }
 
     if (!token) {
-      stableToast.error('Нет токена авторизации')
+      toast.error('Нет токена авторизации')
       return
     }
 
     chatActions.setLoading(true)
 
     try {
-      stableEmit(SOCKET_EVENTS.GET_CHATS, { token })
+      emit(SOCKET_EVENTS.GET_CHATS, { token })
     } catch (error) {
-      stableToast.error('Ошибка загрузки чатов')
+      toast.error('Ошибка загрузки чатов')
       chatActions.setLoading(false)
     }
-  }, [isConnected, token, stableEmit, stableToast])
+  }, [isConnected, token, emit, toast])
 
   // Загрузка сообщений
   const loadMessages = useCallback(async (
@@ -113,7 +108,7 @@ export const useChats = (): UseChatsReturn => {
     }
 
     try {
-      stableEmit(SOCKET_EVENTS.GET_MESSAGES, {
+      emit(SOCKET_EVENTS.GET_MESSAGES, {
         token,
         recipient,
         cargo,
@@ -121,10 +116,10 @@ export const useChats = (): UseChatsReturn => {
         offset
       })
     } catch (error) {
-      stableToast.error('Ошибка загрузки сообщений')
+      toast.error('Ошибка загрузки сообщений')
       chatActions.setMessagesLoading(recipient, cargo, false)
     }
-  }, [isConnected, token, stableEmit, stableToast])
+  }, [isConnected, token, emit, toast])
 
   // Отправка сообщения
   const sendMessage = useCallback(async (
@@ -134,22 +129,22 @@ export const useChats = (): UseChatsReturn => {
     image:      string
   ): Promise<boolean> => {
     if (!isConnected) {
-      stableToast.error('Нет соединения с сервером')
+      toast.error('Нет соединения с сервером')
       return false
     }
 
     if (!token) {
-      stableToast.error('Нет токена авторизации')
+      toast.error('Нет токена авторизации')
       return false
     }
 
     if (!message.trim() && !image) {
-      stableToast.error('Сообщение не может быть пустым')
+      toast.error('Сообщение не может быть пустым')
       return false
     }
 
     try {
-      stableEmit(SOCKET_EVENTS.SEND_MESSAGE, {
+      emit(SOCKET_EVENTS.SEND_MESSAGE, {
           token,
           recipient,
           cargo,
@@ -158,22 +153,66 @@ export const useChats = (): UseChatsReturn => {
       })
       return true
     } catch (error) {
-      stableToast.error('Ошибка отправки сообщения')
+      toast.error('Ошибка отправки сообщения')
       return false
     }
-  }, [isConnected, token, stableEmit, stableToast])
+  }, [isConnected, token, emit, toast])
+
+  // Отправка изображения через HTTP
+  const sendImage = useCallback(async (
+    recipient: string,
+    cargo: string,
+    imageFile: string
+  ): Promise<boolean> => {
+    if (!token) {
+      toast.error('Нет токена авторизации')
+      return false
+    }
+
+    const formData = new FormData()
+    formData.append('recipient', recipient)
+    formData.append('cargo', cargo)
+    formData.append('image', imageFile)
+    formData.append('token', token)
+
+    try {
+      const response = await fetch('/api/sendImage', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      if (result.success) {
+        emit("get_chats", {token: token})
+        emit("get_messages", {token: token, cargo: cargo, recipient: recipient})
+        return true
+      } else {
+        toast.error(result.message || 'Ошибка отправки')
+        return false
+      }
+    } catch (error) {
+      toast.error('Ошибка отправки изображения')
+      return false
+    }
+  }, [token, toast])
+
 
   // Пометить как прочитанное
   const markAsRead = useCallback(async (recipient: string, cargo: string, guids:{ guid: string }[]): Promise<void> => {
     if (!isConnected || !token) return
 
     try {
-      stableEmit(SOCKET_EVENTS.MARK_AS_READ, { token, guids })
+      emit(SOCKET_EVENTS.MARK_AS_READ, { token, guids })
       chatActions.markAsRead(recipient, cargo)
     } catch (error) {
       console.error('Ошибка отметки как прочитанного:', error)
     }
-  }, [isConnected, token, stableEmit])
+  }, [isConnected, token, emit])
 
   // Установить текущий чат
   const setCurrentChat = useCallback((recipient: string, cargo: string) => {
@@ -227,6 +266,7 @@ export const useChats = (): UseChatsReturn => {
     loadChats,
     loadMessages,
     sendMessage,
+    sendImage,
     markAsRead,
     setCurrentChat,
     clearCurrentChat,
