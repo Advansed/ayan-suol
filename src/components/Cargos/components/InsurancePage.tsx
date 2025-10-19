@@ -1,19 +1,16 @@
-/**
- * Страница страхования груза
- */
-
-import React, { useState, useEffect } from 'react';
-import { IonIcon, IonAlert, IonLoading } from '@ionic/react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { IonIcon, IonAlert, IonLoading, useIonRouter } from '@ionic/react';
 import { arrowBackOutline, shieldCheckmarkOutline, documentTextOutline, businessOutline } from 'ionicons/icons';
 import { formatters } from '../utils';
-import { usePayment } from './usePayment';
-import { CargoInfo } from '../../../Store/cargoStore';
+import { CargoInfo, useCargoStore } from '../../../Store/cargoStore';
+import { useLoginStore, useToken } from '../../../Store/loginStore';
+import { useAccountStore } from '../../../Store/accountStore';
+import { useSocket } from '../../../Store/useSocket';
+import { useToast } from '../../Toast';
 
 interface InsurancePageProps {
     cargo: CargoInfo;
     onBack: () => void;
-    onInsuranceComplete?: () => void;
-    onCancel?: () => void;
 }
 
 // Типы страхового покрытия
@@ -23,7 +20,7 @@ const INSURANCE_TYPES = [
         name: 'Базовое покрытие',
         icon: shieldCheckmarkOutline,
         description: 'Покрытие от утраты и повреждения',
-        rate: 0.5, // 0.5% от стоимости груза
+        rate: 1.0, // 0.5% от стоимости груза
         coverage: ['Полная утрата груза', 'Повреждение при перевозке', 'Кража груза']
     },
     {
@@ -31,7 +28,7 @@ const INSURANCE_TYPES = [
         name: 'Расширенное покрытие', 
         icon: documentTextOutline,
         description: 'Полное покрытие всех рисков',
-        rate: 1.2, // 1.2% от стоимости груза
+        rate: 2.0, // 1.2% от стоимости груза
         coverage: ['Все риски базового покрытия', 'Стихийные бедствия', 'Задержка в доставке', 'Порча груза']
     },
     {
@@ -39,7 +36,7 @@ const INSURANCE_TYPES = [
         name: 'Премиум покрытие',
         icon: businessOutline, 
         description: 'Максимальная защита + сервис',
-        rate: 2.0, // 2.0% от стоимости груза
+        rate: 3.0, // 2.0% от стоимости груза
         coverage: ['Все риски расширенного покрытия', '24/7 поддержка', 'Экспресс выплаты', 'Юридическое сопровождение']
     }
 ];
@@ -47,18 +44,18 @@ const INSURANCE_TYPES = [
 export const InsurancePage: React.FC<InsurancePageProps> = ({
     cargo,
     onBack,
-    onInsuranceComplete,
-    onCancel
 }) => {
     const [selectedType, setSelectedType] = useState<string>('basic');
-    const [isLoading, setIsLoading] = useState(false);
     const [showConfirmAlert, setShowConfirmAlert] = useState(false);
     const [showCancelAlert, setShowCancelAlert] = useState(false);
     const [insuranceCost, setInsuranceCost] = useState(0);
-    const { saveInsurance } = usePayment()
+
+    const { accountData, id, isLoading, set_insurance, set_payment } = useData( cargo, onBack )
 
     // Получаем выбранный тип страхования
     const selectedInsurance = INSURANCE_TYPES.find(type => type.id === selectedType);
+
+    const hist = useIonRouter() 
 
     // Рассчитываем стоимость страхования
     useEffect(() => {
@@ -70,22 +67,20 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
 
     // Обработчик оформления страховки
     const handleInsurance = async () => {
-         setIsLoading(true);
         try {
-            const result = await saveInsurance(cargo.guid, insuranceCost);
-            if (result.success) {
-                if(onInsuranceComplete)
-                    onInsuranceComplete();
-            } else {
-                // TODO: Показать ошибку
-                console.error('Payment failed:', result.error);
-            }
 
-            onBack()
+            set_insurance({ 
+                cargo_id:           cargo.guid, 
+                prepayment:         insuranceCost, 
+                description:        "Страхование " + INSURANCE_TYPES[selectedType].name + ' груза ' + cargo.name,
+                currency:           accountData?.currency,
+                type:               2
+            })
+
         } catch (error) {
             console.error('Payment error:', error);
         } finally {
-            setIsLoading(false);
+            console.log("finally")
         }
     };
 
@@ -96,7 +91,7 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
 
     const handleCancel = () => {
         setShowCancelAlert(false);
-        if( onCancel ) onCancel();
+        if( onBack ) onBack();
     };
 
     return (
@@ -127,17 +122,13 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
                             {cargo.address?.city.city} → {cargo.destiny?.city.city}
                         </div>
                     </div>
-                    <div>
+                    <div className='mt-05'>
                         <div className="fs-07 cl-gray">Вес/Объем</div>
                         <div className="fs-08">
                             {cargo.weight}т / {cargo.volume}м³
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Стоимость груза */}
-            <div className="cr-card mt-1">
                 <div className="flex fl-space">
                     <div>
                         <div className="fs-09 cl-black"><b>Стоимость груза</b></div>
@@ -257,17 +248,37 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
                 >
                     Отказаться
                 </button>
-                <button 
-                    className="cr-button-1 flex-1  pt-1 pb-1"
-                    style={{ 
-                        background: 'var(--ion-color-primary)',
-                        color: 'white'
-                    }}
-                    onClick={() => setShowConfirmAlert(true)}
-                    disabled={!selectedType || !insuranceCost}
-                >
-                    Оформить за {formatters.currency(insuranceCost)}
-                </button>
+                {
+                    (accountData?.balance || 0) > insuranceCost
+                        ? <>
+                            <button 
+                                className="cr-button-1 flex-1  pt-1 pb-1"
+                                style={{ 
+                                    background: 'var(--ion-color-primary)',
+                                    color: 'white'
+                                }}
+                                onClick={() => setShowConfirmAlert(true)}
+                                disabled={!selectedType || !insuranceCost}
+                            >
+                                Оформить за {formatters.currency(insuranceCost)}
+                            </button>
+                        </>
+                        : <>
+                            <button 
+                                className="cr-button-1 flex-1  pt-1 pb-1"
+                                style={{ 
+                                    background: 'var(--ion-color-primary)',
+                                    color: 'white'
+                                }}
+                                onClick={async () => {
+                                    hist.push("/tab3/account" )
+                                }}
+                                disabled={!selectedType || !insuranceCost}
+                            >
+                                Доплатите {formatters.currency(insuranceCost - (accountData?.balance || 0 ))}
+                            </button>
+                        </>
+                }
             </div>
 
             {/* Alert для подтверждения страхования */}
@@ -340,3 +351,130 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
         </>
     );
 };
+
+
+export const useData = ( cargo: CargoInfo, onBack ) => {
+  const token                               = useToken()
+  const id                                  = useLoginStore( state => state.id )
+  // Используем ху  zки из accountStore
+  const accountData                         = useAccountStore( state => state.accountData )
+  const isLoading                           = useAccountStore( state => state.isLoading )
+  const setLoading                          = useAccountStore( state => state.setLoading )
+  const { socket }                          = useSocket()
+  const pendingRequests                     = useRef<Map<string, { resolve: Function, reject: Function }>>(new Map());
+
+  const updateCargo                         = useCargoStore( state => state.updateCargo )
+
+  const toast                               = useToast()
+
+  useEffect(()=>{
+    console.log("useeEffect", accountData)
+  },[accountData])
+  
+    // Универсальная функция для socket запросов с ответом
+    const socketRequest                     = useCallback((event: string, data: any, responseEvent: string): Promise<any> => {
+      return new Promise((resolve, reject) => {
+        const requestId = `${event}_${Date.now()}`;
+        if(!socket) return
+        
+        // Сохраняем промис для данного запроса
+        pendingRequests.current.set(requestId, { resolve, reject });
+        
+        // Обработчик успешного ответа
+        const onSuccess = (response: any) => {
+          console.log(event + " on:",  response)
+          if( response.success ){
+  
+            const pending = pendingRequests.current.get( requestId );
+            if (pending) {
+              pendingRequests.current.delete(requestId);
+              pending.resolve({ success: true, data: response.data });
+            }
+  
+          } else {
+            const pending = pendingRequests.current.get( requestId );
+            if (pending) {
+              pendingRequests.current.delete(requestId);
+              pending.resolve({ success: false, error: response.message || 'Ошибка сервера' });
+            }
+          }
+  
+          socket.off(responseEvent, onSuccess);
+        
+        };
+        
+        // Подписываемся на события
+        socket.on(responseEvent, onSuccess);
+        
+        // Таймаут
+        setTimeout(() => {
+          const pending = pendingRequests.current.get(requestId);
+          if (pending) {
+            pendingRequests.current.delete(requestId);
+            socket.off(responseEvent, onSuccess);
+            pending.resolve({ success: false, error: 'Время ожидания истекло' });
+          }
+        }, 10000); // 10 сек таймаут
+        
+        // Отправляем запрос
+        console.log(event + " emit...")
+        socket.emit(event, { ...data, requestId });
+      });
+    }, []);
+  
+
+    const set_insurance                     = async (data: any): Promise<any> => {
+      setLoading( true )
+  
+      try {
+        
+        const result = await socketRequest(
+          'set_document', 
+          { token, ...data },
+          'set_document'
+        );
+              
+        if(result.success) {
+            cargo.insurance = data.insuranceCost; 
+            updateCargo( cargo.guid, cargo)
+            onBack()
+        } else toast.error("Ошибка сохранения страховки")
+        
+        
+      } catch (err: any) {
+        toast.error('Неизвестная ошибка:' + err.message )
+      } finally {
+        setLoading( false );
+      }
+    };
+
+    const set_payment                       = async (data: any): Promise<any> => {
+      setLoading( true )
+  
+      try {
+        
+        const result = await socketRequest(
+          'create_payment_sbp', 
+          { token, ...data },
+          'create_payment_sbp'
+        );
+              
+        return result;
+        
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Неизвестная ошибка';
+        return { success: false, data: null, message: errorMsg };
+      } finally {
+        setLoading( false );
+      }
+    };
+
+
+  return {
+    id,
+    accountData,
+    isLoading,
+    set_insurance,
+    set_payment
+  }
+}

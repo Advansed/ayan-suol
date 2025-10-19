@@ -8,7 +8,7 @@ class SocketService {
   private isConnected = false;
 
   private readonly SERVER_URL = 'https://gruzreis.ru';
-  private readonly SOCKET_PATH = '/node/socket.io/';
+  private readonly SOCKET_PATH = '/socket.io/';
 
   connect(token: string): Promise<boolean> {
 
@@ -21,13 +21,9 @@ class SocketService {
       }
 
       this.socket = io(this.SERVER_URL, {
-        path: this.SOCKET_PATH,
-        auth: { token },
-        transports: ['polling', 'websocket'],
-        autoConnect: true,
-        reconnection: true,
-        timeout: 60000,
-        forceNew: true
+        auth:                   { token },
+        transports:             ['polling', 'websocket'],
+        withCredentials:        true
       });
 
       // Только критичные обработчики для Promise

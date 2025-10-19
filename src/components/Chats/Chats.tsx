@@ -1,12 +1,11 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
-import { IonButton, IonModal, useIonViewDidEnter, useIonViewDidLeave } from "@ionic/react";
+import { useIonViewDidEnter, useIonViewDidLeave } from "@ionic/react";
 import { IonIcon, IonRefresher, IonRefresherContent, useIonRouter } from "@ionic/react";
-import { arrowBackOutline, cameraSharp, closeOutline, sendSharp } from "ionicons/icons";
+import { arrowBackOutline, cameraSharp, sendSharp } from "ionicons/icons";
 import "./Chats.css";
 import { useChats } from "../../Store/useChats";
 import { loginGetters } from "../../Store/loginStore";
 import { takePicture } from "../Files";
-import { setMode } from "ionicons/dist/types/stencil-public-runtime";
 import { PhotoPreview } from "./PhotoPreview";
 
 interface ChatsProps {
@@ -14,7 +13,7 @@ interface ChatsProps {
 }
 
 // Мемоизированный компонент сообщения
-const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessage }: { 
+const MessageComponent      = React.memo(({ message, isSent, userInitials, clickMessage }: { 
     message: any; 
     isSent: boolean; 
     userInitials: string; 
@@ -80,14 +79,15 @@ const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessa
 });
 
 // Компонент для создания фотографий с камеры
-const ImageUploadButton = React.memo(({ onImageSelect }: { 
+const ImageUploadButton     = React.memo(({ onImageSelect }: { 
     onImageSelect: (image: any) => void; 
 }) => {
     const handleTakePicture = useCallback(async () => {
         try {
             const image = await takePicture();
             
-            onImageSelect( image.dataUrl );
+            if( image)
+                onImageSelect( image.dataUrl );
             
         } catch (error) {
             console.error('Ошибка при создании фотографии:', error);
@@ -108,7 +108,7 @@ const ImageUploadButton = React.memo(({ onImageSelect }: {
 });
 
 // Мемоизированный список сообщений  
-const MessagesList = React.memo(({ messages, userInitials, clickMessage }: { 
+const MessagesList          = React.memo(({ messages, userInitials, clickMessage }: { 
     messages: any[]; 
     userInitials: string; 
     clickMessage: (url: string) => void
@@ -175,7 +175,7 @@ const MessagesList = React.memo(({ messages, userInitials, clickMessage }: {
 });
 
 // Компонент пустого состояния
-const EmptyState = React.memo(() => {
+const EmptyState            = React.memo(() => {
     return (
         <div className="chat-empty-state">
             <div className="chat-empty-icon">💬</div>
@@ -185,7 +185,7 @@ const EmptyState = React.memo(() => {
 });
 
 // Мемоизированный заголовок чата
-const ChatHeader = React.memo(({ onBack, userName, userInitials }: {
+const ChatHeader            = React.memo(({ onBack, userName, userInitials }: {
     onBack: () => void;
     userName: string;
     userInitials: string;
@@ -206,7 +206,7 @@ const ChatHeader = React.memo(({ onBack, userName, userInitials }: {
 });
 
 // Мемоизированный футер с полем ввода
-const ChatFooter = React.memo(({ 
+const ChatFooter            = React.memo(({ 
     value, 
     selectedImage, 
     onChange, 
@@ -373,7 +373,7 @@ export function Chats(props: ChatsProps) {
         
         console.log( selectedImage )
         
-        const success = await sendImage( recipient, cargo, selectedImage || '');
+        const success = await sendMessage( recipient, cargo, value.trim() || '', '');
 
         if (success) {
             setValue("");

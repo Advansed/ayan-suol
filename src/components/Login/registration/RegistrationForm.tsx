@@ -32,6 +32,7 @@ const formatPhoneDisplay = (phone: string): string => {
 // ======================
 
 const RoleSelector: React.FC<{ reg: UseRegReturn, setShowAgreement: (check:boolean)=> void, agree: boolean }> = ({ reg, setShowAgreement, agree }) => {
+  
   const handleNext = useCallback(() => {
     if (reg.formData.userType) {
       reg.updateRegistrationData('userType', reg.formData.userType)
@@ -94,10 +95,10 @@ const RoleSelector: React.FC<{ reg: UseRegReturn, setShowAgreement: (check:boole
       </div>
 
       <FormButtons
-        onNext={handleNext}
-        nextText="Далее"
-        disabled={!reg.formData.userType}
-        loading={reg.isLoading}
+        onNext    = { handleNext }
+        nextText  = "Далее"
+        disabled  = { !reg.formData.userType }
+        loading   = { reg.isLoading }
       />
 
     </div>
@@ -109,6 +110,7 @@ const RoleSelector: React.FC<{ reg: UseRegReturn, setShowAgreement: (check:boole
 // ======================
 
 const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
+  
   const handleNext = useCallback(() => {
     reg.submitStep()
   }, [reg])
@@ -128,12 +130,6 @@ const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
   const handleEmailBlur = useCallback(() => {
     if (reg.formData.email) {
       reg.validateField('email', reg.formData.email)
-    }
-  }, [reg])
-
-  const handlePartnerBlur = useCallback(() => {
-    if (reg.formData.partner) {
-      reg.validateField('partner', reg.formData.partner)
     }
   }, [reg])
 

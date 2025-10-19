@@ -15,20 +15,27 @@ import UTIF from 'utif';
 defineCustomElements(window)
 
 export async function   takePicture() {
-    const image = await Camera.getPhoto({
+    return Camera.getPhoto({
 
-      quality:          80,
-      allowEditing:     false,
-      resultType:       CameraResultType.DataUrl,
-      source:           CameraSource.Camera
-    });
+        quality:        80,
+        allowEditing:   false,
+        resultType:     CameraResultType.DataUrl,
+        source:         CameraSource.Camera,
+        width:          800,
+        height:         1200
+    }).then((image) =>{
+        let arr = image.dataUrl?.split(";")
+        if(arr !== undefined) {
+            arr = arr[0].split("/")
+            image.format = arr[1]
+        }
+        console.log('image size', image.dataUrl?.length)
+        return image
+    }).catch((error) => {
+        console.log("Camera error:", error )
+        return null
+    })
     //const imageUrl = "data:image/jpeg;base64," + image.base64String;
-    let arr = image.dataUrl?.split(";")
-    if(arr !== undefined) {
-        arr = arr[0].split("/")
-        image.format = arr[1]
-    }
-    return image
   
 }
 
@@ -255,10 +262,12 @@ export function         Files(props: { info, name, check, title }) {
         try {
             const imageUrl = await takePicture();
 
-            if(imageUrl.format === "pdf") props.info.length = 0
-            else if( props.info.length > 0 && props.info[0].format === "pdf" ) props.info.length = 0
+            if(imageUrl) {
+                if(imageUrl.format === "pdf") props.info.length = 0
+                else if( props.info.length > 0 && props.info[0].format === "pdf" ) props.info.length = 0
 
-            props.info.push( imageUrl )
+                props.info.push( imageUrl )
+            }
                 
         } catch (error) {
             console.log( error )

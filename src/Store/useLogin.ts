@@ -60,9 +60,13 @@ export function useLogin() {
 
         const handleAuthResponse = (response: { success: boolean; data?: AuthResponse; message?: string }) => {
           setLoading(false)
+
+          localStorage.setItem("gvrs.login", phoneNumber )
+          localStorage.setItem("gvrs.password", password )
           
           if (response.success && response.data) {
             setUser(response.data)
+            setAuth( true )
             toast.success('Вход выполнен успешно')
             resolve(true)
           } else {

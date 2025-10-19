@@ -3,12 +3,12 @@ import { useCargos }                                    from '../../Store/useCar
 import { CargosList }                                   from './components/CargosList';
 import { CargoView }                                    from './components/CargoView';
 import { CargoInvoiceSections }                         from './components/CargoInvoices';
-import { PrepaymentPage }                               from './components/PrePaymentMethod';
 import { InsurancePage }                                from './components/InsurancePage';
 import { cargoGetters, CargoInfo, EMPTY_CARGO }         from '../../Store/cargoStore';
 import { CargoForm }                                    from './components';
 import { IonLoading }                                   from '@ionic/react';
 import { useCargoNavigation }                           from './hooks/useNavigation';
+import { PrepaymentPage }                               from './components/PrePayment';
 
 export const Cargos: React.FC = () => {
     
@@ -42,8 +42,10 @@ export const Cargos: React.FC = () => {
         } else if (currentPage.cargo?.guid) {
             const cargo = cargoGetters.getCargo(currentPage.cargo.guid);
             navigateTo({ type: 'view', cargo: cargo });
+            console.log("back", 'view', cargo )
         }
     }, [currentPage.type, currentPage.cargo?.guid, navigateTo]);
+
 
     const memoizedCargosList        = useMemo(() => (
         <CargosList
@@ -84,9 +86,9 @@ export const Cargos: React.FC = () => {
     ), [currentPage.cargo, handleBack, navigateTo]);
 
     const memoizedPrepaymentPage    = useMemo(() => (
-        <PrepaymentPage
-            cargo={currentPage.cargo!}
-            onBack={handleBack}
+       <PrepaymentPage 
+            cargo = { currentPage.cargo } 
+            onBack = { handleBack }
         />
     ), [currentPage.cargo, handleBack]);
 
@@ -94,6 +96,13 @@ export const Cargos: React.FC = () => {
         <InsurancePage
             cargo       = { currentPage.cargo! }
             onBack      = { handleBack }
+        />
+    ), [currentPage.cargo, handleBack]);
+
+    const memoizedPaymentPage       = useMemo(() => (
+       <PrepaymentPage 
+            cargo = { currentPage.cargo } 
+            onBack = { handleBack }
         />
     ), [currentPage.cargo, handleBack]);
 
@@ -108,7 +117,9 @@ export const Cargos: React.FC = () => {
 
     // Мемоизированная функция рендеринга
     const renderContent             = useMemo(() => {
+        console.log( currentPage )
         if (currentPage.cargo) {
+            
             switch (currentPage.type) {
 
                 case 'edit':        return memoizedCargoForm;
@@ -121,17 +132,23 @@ export const Cargos: React.FC = () => {
 
                 case 'insurance':   return memoizedInsurancePage;
 
+                case 'payment':     return memoizedPaymentPage;
+
                 default:            return memoizedCargosList;
 
-            }            
+            }      
+
         } else {
+
             switch (currentPage.type) {
+
                 case 'list':        return memoizedCargosList;
 
                 case 'create':      return memoizedCreateForm;
 
                 default:            return memoizedCargosList;
             }            
+
         }
     }, [
         currentPage.cargo,
@@ -141,6 +158,7 @@ export const Cargos: React.FC = () => {
         memoizedCargoInvoices,
         memoizedPrepaymentPage,
         memoizedInsurancePage,
+        memoizedPaymentPage,
         memoizedCargosList,
         memoizedCreateForm
     ]);
@@ -148,7 +166,9 @@ export const Cargos: React.FC = () => {
     return (
         <div className="cargos-module">
             <IonLoading isOpen={isLoading} message="Подождите" />
-            {renderContent}
+
+            { renderContent }
+
         </div>
     );
     

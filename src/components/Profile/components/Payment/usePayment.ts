@@ -1,25 +1,22 @@
 import { useState, useCallback, useRef } from 'react';
-import { useSocket } from '../../../Store/useSocket';
-import { loginGetters } from '../../../Store/loginStore';
+import { useSocket } from '../../../../Store/useSocket';
+import { useToken } from '../../../../Store/loginStore';
 
 interface PaymentResult {
   success: boolean;
-  error?: string;
+  message: string;
 }
 
 interface UsePaymentReturn {
-  saveAdvance: (cargoId: string, amount: number) => Promise<PaymentResult>;
-  saveInsurance: (cargoId: string, amount: number) => Promise<PaymentResult>;
-  loading: boolean;
-  error: string | null;
+  set_payment:    ( data: any ) => Promise<any>;
+  loading:        boolean;
 }
 
 export const usePayment = (): UsePaymentReturn => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const pendingRequests = useRef<Map<string, { resolve: Function, reject: Function }>>(new Map());
-  const { socket } = useSocket()
-  const token = loginGetters.getToken()
+  const [loading, setLoading]   = useState(false);
+  const pendingRequests         = useRef<Map<string, { resolve: Function, reject: Function }>>(new Map());
+  const { socket }              = useSocket()
+  const token                   = useToken()
 
   // Универсальная функция для socket запросов с ответом
   const socketRequest = useCallback((event: string, data: any, responseEvent: string): Promise<PaymentResult> => {
@@ -32,17 +29,16 @@ export const usePayment = (): UsePaymentReturn => {
       
       // Обработчик успешного ответа
       const onSuccess = (response: any) => {
-        
         if( response.success ){
 
-          const pending = pendingRequests.current.get(requestId);
+          const pending = pendingRequests.current.get( requestId );
           if (pending) {
             pendingRequests.current.delete(requestId);
-            pending.resolve({ success: true });
+            pending.resolve({ success: true, data: response.data });
           }
 
         } else {
-          const pending = pendingRequests.current.get(requestId);
+          const pending = pendingRequests.current.get( requestId );
           if (pending) {
             pendingRequests.current.delete(requestId);
             pending.resolve({ success: false, error: response.message || 'Ошибка сервера' });
@@ -71,59 +67,48 @@ export const usePayment = (): UsePaymentReturn => {
     });
   }, []);
 
-  const saveAdvance = async (cargoId: string, amount: number): Promise<PaymentResult> => {
+  const set_payment = async (data: any): Promise<PaymentResult> => {
     setLoading(true);
-    setError(null);
 
     try {
       
       const result = await socketRequest(
-        'set_advance', 
-        { token, cargo_id: cargoId, advance: amount },
-        'set_advance'
+        'create_payment_sbp', 
+        { token, ...data },
+        'create_payment_sbp'
       );
-      
-      if (!result.success) {
-        setError(result.error || 'Ошибка сохранения аванса');
-      }
-      
+            
       return result;
       
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Неизвестная ошибка';
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
+      return { success: false, message: errorMsg };
     } finally {
       setLoading(false);
     }
   };
 
-  const saveInsurance = async (cargoId: string, amount: number): Promise<PaymentResult> => {
+  const get_sbp = async (): Promise<PaymentResult> => {
     setLoading(true);
-    setError(null);
 
     try {
       
       const result = await socketRequest(
-        'set_insurance',
-        { token, cargo_id: cargoId, insurance: amount },
-        'set_insurance'
+        'get_sbp_banks', 
+        { token },
+        'get_sbp_banks'
       );
-      
-      if (!result.success) {
-        setError(result.error || 'Ошибка сохранения страховки');
-      }
-      
+            
       return result;
       
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Неизвестная ошибка';
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
+      return { success: false, message: errorMsg };
     } finally {
       setLoading(false);
     }
   };
 
-  return { saveAdvance, saveInsurance, loading, error };
+
+  return { set_payment,  loading };
 };

@@ -72,32 +72,31 @@ export const useLoginStore = create<LoginStore>()(
   devtools(
     (set) => ({
       // STATE
-      auth:           false,
-      isLoading:      false,
-      id:             '',
-      name:           '',
-      phone:          '',
-      email:          '',
-      image:          '',
-      token:          '',
-      user_type:      0,
-      description:    '',
-      account:        '',
-      ratings:        { orders: 0, rate: 0, invoices: 0, payd: 0 },
-      agreements:     { personalData: false, userAgreement: false, marketing: false },
+      auth:             false,
+      isLoading:        false,
+      id:               '',
+      name:             '',
+      phone:            '',
+      email:            '',
+      image:            '',
+      token:            '',
+      user_type:        0,
+      description:      '',
+      account:          '',
+      ratings:          { orders: 0, rate: 0, invoices: 0, payd: 0 },
+      agreements:       { personalData: false, userAgreement: false, marketing: false },
 
       // ACTIONS
-      setAuth: (auth) => set({ auth }),
-      setLoading: (isLoading) => set({ isLoading }),
-      setUser: (userData) => set({ 
-        ...userData, 
-        auth: true, 
-        isLoading: false 
+      setAuth:          (auth) => set({ auth }),
+      setLoading:       (isLoading) => set({ isLoading }),
+      setUser:          (userData) => set({ 
+                        ...userData, 
+                        isLoading: false 
       }),
-      updateUser: (updates) => set(updates),
-      clearAuth: () => set({
-        auth: false,
-        isLoading: false,
+      updateUser:       (updates) => set(updates),
+      clearAuth:        () => set({
+        auth:           false,
+        isLoading:      false,
         id:             '',
         name:           '',
         phone:          '',
@@ -205,3 +204,4 @@ export const withToken = (callback: (token: string) => void) => {
     console.warn('No token available')
   }
 }
+

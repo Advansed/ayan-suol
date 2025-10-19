@@ -19,10 +19,10 @@ export const WizardHeader: React.FC<WizardHeaderProps> = ({
   pages,
   onBack,
   onForward,
-  onClose, // Изменили onSave на onClose
-  isLastStep = false,
-  canGoBack = true,
-  canGoForward = true
+  onClose,      // Изменили onSave на onClose
+  isLastStep    = false,
+  canGoBack     = true,
+  canGoForward  = true
 }) => {
   return (
     <div className={styles.stepHeader}>

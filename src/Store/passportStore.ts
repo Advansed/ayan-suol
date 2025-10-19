@@ -174,7 +174,6 @@ export const initPassportSocketHandlers = (socket: any) => {
   if (!socket) return
   
   socket.on('get_passport', passportSocketHandlers.onGetPassport)
-  socket.on('set_passport', passportSocketHandlers.onSavePassport)
   
   console.log('Passport socket handlers initialized')
 }
@@ -183,7 +182,6 @@ export const destroyPassportSocketHandlers = (socket: any) => {
   if (!socket) return
   
   socket.off('get_passport', passportSocketHandlers.onGetPassport)
-  socket.off('set_passport', passportSocketHandlers.onSavePassport)
 
   console.log('Passport socket handlers destroyed')
 }

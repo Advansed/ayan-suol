@@ -3,12 +3,13 @@
 import { useEffect, useRef } from 'react'
 import { useSocket } from '../Store/useSocket'
 import { destroyCargoSocketHandlers, initCargoSocketHandlers } from '../Store/cargoStore'
-import { destroyPassportSocketHandlers, initPassportSocketHandlers } from '../Store/passportStore'
 import { destroyCompanySocketHandlers, initCompanySocketHandlers } from '../Store/companyStore'
 import { destroyTransportSocketHandlers, initTransportSocketHandlers } from '../Store/transportStore'
 import { destroyWorkSocketHandlers, initWorkSocketHandlers } from '../Store/workStore'
 import { useSocketStore } from '../Store/socketStore'
 import { destroyChatSocketHandlers, initChatSocketHandlers } from '../Store/chatStore'
+import { destroyAccountSocketHandlers, initAccountSocketHandlers } from '../Store/accountStore'
+import { destroyPassportSocketHandlers, initPassportSocketHandlers } from '../Store/passportStore'
 
 // ============================================
 // SOCKET MANAGER HOOK
@@ -55,8 +56,6 @@ export function initSocketHandlers( socket: any) {
 
     initCargoSocketHandlers( socket )
 
-    initPassportSocketHandlers( socket )
-
     initCompanySocketHandlers( socket )
 
     initTransportSocketHandlers( socket )
@@ -65,14 +64,15 @@ export function initSocketHandlers( socket: any) {
 
     initChatSocketHandlers( socket )
     
+    initAccountSocketHandlers( socket )
+
+    initPassportSocketHandlers( socket )
   
 }
 
 export function destroySocketHandlers( socket: any) {
 
     destroyCargoSocketHandlers( socket )
-
-    destroyPassportSocketHandlers( socket )
 
     destroyCompanySocketHandlers( socket )
 
@@ -82,4 +82,8 @@ export function destroySocketHandlers( socket: any) {
 
     destroyChatSocketHandlers( socket )
 
+    destroyAccountSocketHandlers( socket )
+
+    destroyPassportSocketHandlers( socket )
+    
 }

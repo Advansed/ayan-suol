@@ -5,11 +5,11 @@ import { formatters } from '../utils';
 import { usePayment } from './usePayment';
 import { CargoInfo } from '../../../Store/cargoStore';
 
-interface PrepaymentPageProps {
-    cargo: CargoInfo;
-    onBack: () => void;
-    onPaymentComplete?: () => void;
-    onCancel?: () => void;
+interface PaymentPageProps {
+    cargo:          CargoInfo;
+    onBack:         ( ) => void;
+    onPayment?:     ( order:any) => any;
+    onCancel?:      ( ) => void;
 }
 
 // Способы оплаты
@@ -19,25 +19,25 @@ const PAYMENT_METHODS = [
         name: 'Банковская карта', 
         icon: cardOutline,
         description: 'Visa, MasterCard, МИР' 
-    },
-    { 
+    }
+    ,{ 
         id: 'sbp', 
         name: 'СБП', 
         icon: phonePortraitOutline,
         description: 'Система быстрых платежей' 
-    },
-    { 
-        id: 'wallet', 
-        name: 'Электронный кошелек', 
-        icon: walletOutline,
-        description: 'ЮMoney, WebMoney' 
     }
+    //,{ 
+    //     id: 'wallet', 
+    //     name: 'Электронный кошелек', 
+    //     icon: walletOutline,
+    //     description: 'ЮMoney, WebMoney' 
+    // }
 ];
 
-export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
+export const PaymentPage: React.FC<PaymentPageProps> = ({
     cargo,
     onBack,
-    onPaymentComplete,
+    onPayment,
     onCancel
 }) => {
     const [ selectedMethod,      setSelectedMethod ]      = useState<string>( 'card' );
@@ -46,21 +46,33 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
     const [ showCancelAlert,     setShowCancelAlert ]     = useState( false );
     const [ paymentAmount,       setPaymentAmount ]       = useState<number>( cargo.advance || 0 );
     
-    const { saveAdvance, loading: paymentLoading, error: paymentError } = usePayment();
+    const { saveAdvance, get_sbp, loading: paymentLoading } = usePayment();
 
     // Обработчик оплаты
     const handlePayment = async () => {
         setIsLoading(true);
         try {
-            const result = await saveAdvance(cargo.guid, paymentAmount);
-            if (result.success) {
-                if(onPaymentComplete)
-                    await onPaymentComplete();
-            } else {
-                // TODO: Показать ошибку
-                console.error('Payment failed:', result.error);
-            }
+            
+            const res = await saveAdvance({
+                type:           1, 
+                amount:         paymentAmount, 
+                description:    "Предоплата за " + cargo.name + " по маршруту " + cargo.address?.city.city + ' → ' + cargo.destiny?.city.city,
+                cargo:          cargo.guid
+            })
+                    
+             console.log( res )
 
+            res.data.type = selectedMethod
+
+            if( selectedMethod === 'card'){
+                
+                window.open( res.data.payment_url )
+                
+            } else {
+
+                window.open( res.data.sbp_payload )
+
+            }
 
         } catch (error) {
             console.error('Payment error:', error);
@@ -72,7 +84,6 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
     const handleConfirmPayment = async() => {
         setShowConfirmAlert(false);
         await handlePayment();
-        onBack()
     };
 
     const handleCancel = () => {
@@ -98,25 +109,6 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({
                 </div>
             </div>
 
-            {/* Информация о грузе */}
-            <div className="cr-card mt-1">
-                <div className="fs-09 mb-05"><b>Груз</b></div>
-                <div className="fs-08 cl-gray mb-05">{cargo.name}</div>
-                <div className="flex">
-                    <div className="flex-1">
-                        <div className="fs-07 cl-gray">Маршрут</div>
-                        <div className="fs-08">
-                            {cargo.address?.city.city} → {cargo.destiny?.city.city}
-                        </div>
-                    </div>
-                    <div>
-                        <div className="fs-07 cl-gray">Стоимость</div>
-                        <div className="fs-08">
-                            {formatters.currency(cargo.price)}
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {/* Сумма оплаты */}
             <div className="cr-card mt-1">

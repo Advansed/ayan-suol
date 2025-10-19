@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { useSocket } from '../../Store/useSocket';
 import { ReconnectToServerForm } from '../ReconnectToServerForm/ReconnectToServerForm';
 import { useSocketStore } from '../../Store/socketStore';
-import { SignJWT } from 'jose';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ServerConnectionGuardProps {
@@ -36,6 +35,7 @@ export const ServerConnectionGuard: React.FC<ServerConnectionGuardProps> = ({ ch
         // Устанавливаем обработчики ПОСЛЕ успешного подключения
       }
     } catch (err: any) {
+      console.log(err)
       setError(err.message || 'Сервер недоступен');
     }
   };
@@ -62,8 +62,5 @@ export const ServerConnectionGuard: React.FC<ServerConnectionGuardProps> = ({ ch
 async function generateToken() {
   const uniqueId = uuidv4(); // генерируем уникальный UUID
   console.log( uniqueId )
-  const token = await new SignJWT({ uid: uniqueId })
-    .setProtectedHeader({ alg: 'HS256' })
-    .sign(new TextEncoder().encode('секретный_ключ'));
-  return token;
+  return uniqueId;
 }

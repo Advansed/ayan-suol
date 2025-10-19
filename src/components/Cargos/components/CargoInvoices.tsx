@@ -10,6 +10,7 @@ import { CargoPage2 }                   from './CargoPage2';
 import { useSocket }                    from '../../../Store/useSocket';
 import { useToken }                     from '../../../Store/loginStore';
 import { CargoPage3, SaveData3 }        from './CargoPage3';
+import { api } from '../../../Store/api';
 
 interface CargoInvoiceSectionsProps {
     cargo:      CargoInfo;
@@ -33,12 +34,18 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
     
         if( status === 16 ){
             data.sealPhotos.forEach(elem => {
-                emit("send_message", {
+                // emit("send_message", {
+                //     token:          token,
+                //     recipient:      invoice.recipient,
+                //     cargo:          invoice.cargo,
+                //     image:          elem,
+                // })                    
+                api("api/sendimage", {
                     token:          token,
                     recipient:      invoice.recipient,
                     cargo:          invoice.cargo,
                     image:          elem,
-                })                        
+                })    
             });
 
             emit("send_message", {
@@ -56,12 +63,18 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
         } else 
         if( status === 18 ){
             data.sealPhotos.forEach(elem => {
-                emit("send_message", {
+                api("api/sendimage", {
                     token:          token,
                     recipient:      invoice.recipient,
                     cargo:          invoice.cargo,
                     image:          elem,
-                })                        
+                })    
+                // emit("send_message", {
+                //     token:          token,
+                //     recipient:      invoice.recipient,
+                //     cargo:          invoice.cargo,
+                //     image:          elem,
+                // })                        
             });
 
             emit("send_message", {

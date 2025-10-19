@@ -140,7 +140,10 @@ const EULA: React.FC<EULAProps> = ({ check, isOpen, onClose, setCheck }) => {
                   <IonButton 
                       color={ agree ? "danger" : "primary" }
                       className=""
-                      onClick={ () => {setCheck( !agree);setAgree(!agree); } }
+                      onClick={ () => {
+                        setCheck( !agree);setAgree(!agree); 
+                        onClose()
+                      }}
                   >
                       {
                         agree

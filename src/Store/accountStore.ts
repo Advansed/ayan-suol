@@ -2,6 +2,47 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
+export const TRANSACTION_ICONS = {
+  TOPUP:                  '💰',
+  EXPENSE:                '📤', 
+  PAYMENT:                '💳'
+} as const
+
+// src/components/Profile/components/Account/types.ts
+
+export interface AccountData {
+  balance: number
+  currency: string
+  lastUpdated?: string
+}
+
+export interface PaymentData {
+  type: number
+  summ: number
+  date?: string
+  orderId?: string
+  description?: string
+}
+
+export interface AccountProps {
+  onBack: () => void
+}
+
+export interface UseAccountReturn {
+  balance: number | null
+  transactions: Transaction[]
+  loading: boolean
+  error: string | null
+  topUpAccount: (amount: number, method: string) => Promise<void>
+  loadBalance: () => Promise<void>
+  loadTransactions: () => Promise<void>
+}
+
+export type PaymentMethod = 'card' | 'sbp' | 'bank'
+export type TransactionType = 'income' | 'expense'
+export type TransactionStatus = 'completed' | 'pending' | 'failed'
+
+
 // ============================================
 // ТИПЫ
 // ============================================
@@ -9,11 +50,9 @@ import { devtools } from 'zustand/middleware'
 export interface Transaction {
   id: string
   date: string
-  type: 'topup' | 'expense' | 'payment'
+  type: 'income' | 'expense' | 'new'
   amount: number
-  description: string
-  status: 'completed' | 'pending' | 'failed'
-  orderId?: string
+  title: string
 }
 
 export interface PaymentData {
@@ -59,9 +98,9 @@ type AccountStore = AccountState & AccountActions
 // ============================================
 
 export const EMPTY_ACCOUNT: AccountData = {
-  balance: 0,
-  currency: 'RUB',
-  lastUpdated: ''
+  balance:        0,
+  currency:       'RUB',
+  lastUpdated:    ''
 }
 
 // ============================================
@@ -72,15 +111,18 @@ export const useAccountStore = create<AccountStore>()(
   devtools(
     (set) => ({
       // STATE
-      accountData: null,
-      transactions: [],
-      isLoading: false,
-      isSaving: false,
-      isLoadingTransactions: false,
-      error: null,
+      accountData:            EMPTY_ACCOUNT,
+      transactions:           [],
+      isLoading:              false,
+      isSaving:               false,
+      isLoadingTransactions:  false,
+      error:                  null,
 
       // ACTIONS
-      setAccountData: (accountData) => set({ accountData }),
+      setAccountData: (accountData) =>{ 
+        console.log("set accountData", accountData)
+        set({ accountData })
+      },
       setTransactions: (transactions) => set({ transactions }),
       setLoading: (isLoading) => set({ isLoading }),
       setSaving: (isSaving) => set({ isSaving }),
@@ -98,7 +140,7 @@ export const useAccountStore = create<AccountStore>()(
         set((state) => ({
           transactions: [transaction, ...state.transactions]
         })),
-      
+            
       clearError: () => set({ error: null }),
       
       reset: () => set({
@@ -120,6 +162,7 @@ export const useAccountStore = create<AccountStore>()(
 
 export const useAccountData = () => useAccountStore(state => state.accountData)
 export const useTransactions = () => useAccountStore(state => state.transactions)
+export const setTransactions = () => useAccountStore(state => state.setTransactions)
 export const useAccountLoading = () => useAccountStore(state => state.isLoading)
 export const useAccountSaving = () => useAccountStore(state => state.isSaving)
 export const useAccountLoadingTransactions = () => useAccountStore(state => state.isLoadingTransactions)
@@ -225,20 +268,14 @@ export const accountSocketHandlers = {
 
 export const initAccountSocketHandlers = (socket: any) => {
   if (!socket) return
-  
-  socket.on('get_balance', accountSocketHandlers.onGetBalance)
-  socket.on('get_transactions', accountSocketHandlers.onGetTransactions)
-  socket.on('set_payment', accountSocketHandlers.onSetPayment)
-  
-  console.log('Account socket handlers initialized')
+
+  socket.on("get_balance", accountSocketHandlers.onGetBalance )
+    
 }
 
 export const destroyAccountSocketHandlers = (socket: any) => {
   if (!socket) return
-  
-  socket.off('get_balance', accountSocketHandlers.onGetBalance)
-  socket.off('get_transactions', accountSocketHandlers.onGetTransactions)
-  socket.off('set_payment', accountSocketHandlers.onSetPayment)
 
-  console.log('Account socket handlers destroyed')
+  socket.off("get_balance", accountSocketHandlers.onGetBalance )
+  
 }

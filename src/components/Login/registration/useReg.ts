@@ -65,12 +65,11 @@ export const validateRegistrationField = (field: string, value: any): string | n
     case 'phone':
       if (!value || value.trim() === '') return 'Заполните телефон'
       const phoneRegex = /^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$/
-      return phoneRegex.test(value) ? null : 'Некорректный формат номера телефона'
-      
+      return null;
     case 'name':
       if (!value || value.trim() === '') return 'Заполните ФИО'
       return value.length < 2 ? 'Имя должно содержать минимум 2 символа' : null
-      
+
     case 'email':
       if (!value || value.trim() === '') return null // email необязательный
       const emailRegex = /\S+@\S+\.\S+/

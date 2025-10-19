@@ -1,4 +1,4 @@
-package io.ionic.starter;
+package gruzvreis.app;
 
 import com.getcapacitor.BridgeActivity;
 

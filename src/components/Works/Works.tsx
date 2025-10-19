@@ -11,6 +11,7 @@ import { useWorkNavigation } from './hooks/useNavigation';
 import { SaveData, WorkPage1 } from './components/WorkPage1';
 import { useSocket } from '../../Store/useSocket';
 import { useToken } from '../../Store/loginStore';
+import { api } from '../../Store/api';
 
 export const Works: React.FC = () => {
     const { works, isLoading, setOffer, setStatus, refreshWorks } = useWorks();
@@ -87,10 +88,17 @@ export const Works: React.FC = () => {
         if( currentPage.type === "page1"){
             setStatus( currentPage.work )
             data.bodyPhotos.forEach( elem => {
+                // api('api/sendimage', {
+                //     token:          token,
+                //     recipient:      currentPage.work.recipient,
+                //     cargo:          currentPage.work.cargo,
+                //     image:          elem,
+                // })                
                 emit("send_message", {
                     token:          token,
                     recipient:      currentPage.work.recipient,
                     cargo:          currentPage.work.cargo,
+                    message:        "",
                     image:          elem,
                 })                
             });
