@@ -1,63 +1,135 @@
-import React, { useEffect, useState }   from 'react';
-import styles                           from './Account.module.css';
-import { WizardHeader }                 from '../../../DataEditor/components/WizardHeader';
-import { AccountProps}                  from '../../../../Store/accountStore';
+import React, { useEffect, useState } from 'react';
+import styles from './Account.module.css';
+import { WizardHeader } from '../../../DataEditor/components/WizardHeader';
+import { AccountProps } from '../../../../Store/accountStore';
 import { 
     addOutline, 
     walletOutline, 
     closeOutline, 
     arrowDown,
     arrowUp,
-    arrowForward}                            from 'ionicons/icons';
-import { IonIcon, IonSpinner }                      from '@ionic/react';
-import { useAccount }                   from './useAccount';
-import { useLoginStore }                from '../../../../Store/loginStore';
-import { formatters }                   from '../../../Cargos';
-
+    printOutline
+} from 'ionicons/icons';
+import { IonIcon, IonSpinner } from '@ionic/react';
+import { useAccount } from './useAccount';
+import { useLoginStore } from '../../../../Store/loginStore';
+import { formatters } from '../../../Cargos';
+import Invoice from './Invoice'; // Импортируем компонент счета
+import { useToast } from '../../../Toast';
+import { useCompanyStore } from '../../../../Store/companyStore';
 
 export const Account: React.FC<AccountProps> = ({ onBack }) => {
-  const { transactions, accountData, isLoading, set_payment, get_transactions, get_balanse } = useAccount();
-  const [amount, setAmount] = useState('');
-  const [showTopUpForm, setShowTopUpForm] = useState(false);
+  const { 
+    transactions, 
+    accountData, 
+    isLoading, 
+    set_payment, 
+    get_transactions, 
+    get_balanse,
+    get_seller,
+    set_invoice,
+    get_invoice
+  } = useAccount();
+  
+  const [amount,          setAmount]                = useState('');
+  const [showTopUpForm,   setShowTopUpForm]         = useState(false);
+  const [showInvoiceForm, setShowInvoiceForm]       = useState<any>();
+  const [invoiceData,     setInvoiceData]           = useState<any>();
+  const [sellerData, setSellerData] = useState<any>(null);
 
-  const id = useLoginStore(state => state.id )
+  const toast             = useToast()
+  const seller_id         = useLoginStore(state     => state.seller )
+  const companyData       = useCompanyStore(state   => state.data)
 
-  useEffect(()=>{
-      get_balanse()
 
-      get_transactions()
-  },[])
+  const id = useLoginStore(state => state.id)
 
-  useEffect(()=>{
+  useEffect(() => {
+    get_balanse()
+    get_transactions()
+  }, [])
+
+  useEffect(() => {
     console.log(accountData?.balance)
     console.log(accountData?.currency)
-  },[accountData])
+  }, [accountData])
+
+  // Загрузка данных продавца
+  useEffect(() => {
+    const loadSellerData = async () => {
+      const result = await get_seller();
+      if (result.success) {
+        setSellerData(result.data);
+      }
+    };
+    
+    if (showInvoiceForm) {
+      loadSellerData();
+    }
+  }, [showInvoiceForm]);
 
   const handlePayment1 = async () => {
-    
-      const res = await set_payment({
-          type:         1,
-          amount:       parseFloat( amount ),
-          description:  "Пополнение лицевого счета " + id
-      })
-      console.log( res )
-      if( res.success ){
-        window.open( res.data.payment_url );
-      }
+    const res = await set_payment({
+      type: 1,
+      amount: parseFloat(amount),
+      description: "Пополнение лицевого счета " + id
+    })
+    console.log(res)
+    if(res.success){
+      window.open(res.data.payment_url);
+    }
   }
 
   const handlePayment2 = async () => {
-    
-      const res = await set_payment({
-          type:         1,
-          amount:       parseFloat( amount ),
-          description:  "Пополнение лицевого счета " + id
-      })
-      console.log(res)
+    const res = await set_payment({
+      type: 1,
+      amount: parseFloat(amount),
+      description: "Пополнение лицевого счета " + id
+    })
+    console.log(res)
 
-      if( res.success ){
-        window.open( res.data.sbp_payload );
-      }
+    if(res.success){
+      window.open(res.data.sbp_payload);
+    }
+  }
+
+  // Создание счета
+  const handleCreateInvoice = async () => {
+    const invoiceData = {
+      invoice_date:     new Date().toISOString().split('T')[0],
+      seller_id:        seller_id,
+      payment_due:      "10 дней",
+      payment_purpose:  `Пополнение счета от ${new Date().toLocaleDateString()}`,
+      signer:           "Егоров Д.Н.",
+      total_amount:     parseFloat(amount),
+      vat_amount: 0,
+      items: [
+        { 
+          item_name: "Пополнение баланса", 
+          qty: 1, 
+          unit: "шт.", 
+          price: parseFloat(amount), 
+          total: parseFloat(amount) 
+        }
+      ]
+    };
+
+    const result = await set_invoice( invoiceData );
+    console.log( result )
+
+    setShowInvoiceForm( result.data )
+
+  };
+
+  const handleOpenInvoice = async(id: string) => {
+    
+    console.log("get_invoice", id)
+    
+    const res = await get_invoice( id ); 
+
+    console.log(res)
+
+    if(res.success) setShowInvoiceForm(res.data)
   }
 
   if (isLoading && !accountData?.balance) {
@@ -65,7 +137,7 @@ export const Account: React.FC<AccountProps> = ({ onBack }) => {
       <div className={styles.container}>
         <div className={styles.loadingSpinner}>
           <div className={styles.spinner}></div>
-          <p>{ "Загрузка данных..."}</p>
+          <p>{"Загрузка данных..."}</p>
         </div>
       </div>
     );
@@ -73,16 +145,15 @@ export const Account: React.FC<AccountProps> = ({ onBack }) => {
 
   return (
     <div className={styles.container}>
-      {/* WizardHeader от DataEditor */}
       <WizardHeader
-        title         = { "Финансовый счет" }
-        pages         = ""
-        onBack        = { onBack }
-        onClose       = { onBack }
-        onForward     = { () => {} } // Не используется
-        isLastStep    = { true }
-        canGoBack     = { true }
-        canGoForward  = { false }
+        title="Финансовый счет"
+        pages=""
+        onBack={onBack}
+        onClose={onBack}
+        onForward={() => {}}
+        isLastStep={true}
+        canGoBack={true}
+        canGoForward={false}
       />
 
       <div className={styles.content}>
@@ -104,13 +175,15 @@ export const Account: React.FC<AccountProps> = ({ onBack }) => {
                 </div>
               </div>
             </div>
-            <button 
-              className={styles.topUpButton}
-              onClick={() => setShowTopUpForm(!showTopUpForm)}
-            >
-              <IonIcon icon={addOutline} className={styles.topUpIcon} />
-              {showTopUpForm ? "Отмена" : "Пополнить"}
-            </button>
+            <div className={styles.buttonGroup}>
+              <button 
+                className={styles.topUpButton}
+                onClick={() => setShowTopUpForm(!showTopUpForm)}
+              >
+                <IonIcon icon={addOutline} className={styles.topUpIcon} />
+                {showTopUpForm ? "Отмена" : "Пополнить"}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -119,7 +192,7 @@ export const Account: React.FC<AccountProps> = ({ onBack }) => {
           <div className={styles.topUpBalanceCard}>
             <div className={styles.topUpBalanceHeader}>
               <h2 className={styles.topUpBalanceTitle}>
-                { "Пополнение счета " + (amount !== '' ? "на " + formatters.currency( parseFloat(amount) ) : "") }
+                {"Пополнение счета " + (amount !== '' ? "на " + formatters.currency(parseFloat(amount)) : "")}
               </h2>
               <button 
                 className={styles.closeButton}
@@ -144,66 +217,76 @@ export const Account: React.FC<AccountProps> = ({ onBack }) => {
                 </div>
               </div>
 
-              <div className='flex '>
+              <div className='flex'>
                 <button 
-                  type="submit" 
-                  className ={`${styles.topUpSubmitBtn} ${isLoading ? styles.loading : ''}`}
-                  disabled  ={!amount || parseFloat(amount) <= 0 || isLoading}
-                  onClick   ={ handlePayment1 }
+                  type="button" 
+                  className={`${styles.topUpSubmitBtn} ${isLoading ? styles.loading : ''}`}
+                  disabled={!amount || parseFloat(amount) <= 0 || isLoading}
+                  onClick={handlePayment1}
                 >
                   {isLoading ? "Обработка..." : "Карта"}
                 </button>
                 <button 
-                  type="submit" 
-                  className ={"ml-1 " + `${styles.topUpSubmitBtn} ${isLoading ? styles.loading : ''}`}
-                  disabled  ={!amount || parseFloat(amount) <= 0 || isLoading}
-                  onClick   ={ handlePayment2 }
+                  type="button" 
+                  className={"ml-1 " + `${styles.topUpSubmitBtn} ${isLoading ? styles.loading : ''}`}
+                  disabled={!amount || parseFloat(amount) <= 0 || isLoading}
+                  onClick={handlePayment2}
                 >
                   {isLoading ? "Обработка..." : "СБП"}
                 </button>
-
               </div>
+                <button 
+                  type="button" 
+                  className={ `${styles.topUpSubmitBtn} ${isLoading ? styles.loading : ''}`}
+                  disabled={!amount || parseFloat(amount) <= 0 || isLoading}
+                  onClick = { handleCreateInvoice }
+                >
+                  {isLoading ? "Обработка..." : "Оплата по счету"}
+                </button>
             </form>
           </div>
         )}
 
+        {/* Форма создания счета */}
+
+        {
+          showInvoiceForm !== undefined && (
+            <Invoice
+                isOpen            = { showInvoiceForm !== undefined }
+                onClose           = { () => setShowInvoiceForm( undefined ) }
+                inv               = { showInvoiceForm }
+            />
+          )
+        }
+
         {/* История транзакций */}
         <div className={styles.transactionsCard}>
-          <h2 className={styles.cardTitle}>{ "История операций" }</h2>
+          <h2 className={styles.cardTitle}>{"История операций"}</h2>
           <div className={styles.transactionsList}>
             {transactions.length > 0 ? (
               transactions.map((transaction) => (
-                <div key={transaction.id} className={styles.transaction}>
+                <div key={transaction.id} className={styles.transaction}
+                  onClick = { () => handleOpenInvoice( transaction.id ) }
+                >
                   <div className={styles.transactionIcon}>
                     {
-                      transaction.type === 'new' && (
-                        <IonSpinner name="dots" />
-                      )
-                    }
-                    {
-                      transaction.type !== 'new' && (
-                        <IonIcon 
-                          icon={
-                              transaction.type === "income" ? arrowDown 
-                              : arrowUp
-                          } 
-                          className={
-                            transaction.type === "income" ? styles.incomeIcon 
-                            : styles.expenseIcon
-                          }
-                        />
-                      )
+                          isLoading ? <IonSpinner name="bubbles"/>
+                        : transaction.type === 'inv' ? <IonIcon icon        = { printOutline } className   = { styles.transactionIcon }/>
+                        : transaction.type === 'new' ? <IonSpinner name="dots"/>
+                        : transaction.type === 'income' ? <IonIcon icon        = { arrowDown } className   = { styles.incomeIcon }/>
+                        : <IonIcon icon = { arrowUp } className   = { styles.expenseIcon }/>
                     }
                   </div>
                   <div className={styles.transactionDetails}>
                     <div className={styles.transactionTitle}>{transaction.title}</div>
                     <div className={styles.transactionDate}>
-                      { transaction.date }
+                      {transaction.date}
                     </div>
                   </div>
                   <div className={`${styles.transactionAmount} ${
-                    transaction.type === "income" ? styles.positive 
-                    : transaction.type === "new" ? styles.newIcon 
+                    transaction.type    === "income" ?  styles.positive 
+                    : transaction.type  === "new" ?     styles.transactionIcon 
+                    : transaction.type  === "inv" ?     styles.transactionIcon 
                     : styles.negative
                   }`}>
                     {transaction.amount > 0 ? '+' : ''}{transaction.amount.toLocaleString('ru-RU', {

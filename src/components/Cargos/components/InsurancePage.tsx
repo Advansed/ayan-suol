@@ -45,12 +45,12 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
     cargo,
     onBack,
 }) => {
-    const [selectedType, setSelectedType] = useState<string>('basic');
-    const [showConfirmAlert, setShowConfirmAlert] = useState(false);
-    const [showCancelAlert, setShowCancelAlert] = useState(false);
-    const [insuranceCost, setInsuranceCost] = useState(0);
+    const [selectedType,        setSelectedType]        = useState<string>('basic');
+    const [showConfirmAlert,    setShowConfirmAlert]    = useState(false);
+    const [showCancelAlert,     setShowCancelAlert]     = useState(false);
+    const [insuranceCost,       setInsuranceCost]       = useState(0);
 
-    const { accountData, id, isLoading, set_insurance, set_payment } = useData( cargo, onBack )
+    const { accountData, id, isLoading, set_insurance, del_insurance } = useData( cargo, onBack )
 
     // Получаем выбранный тип страхования
     const selectedInsurance = INSURANCE_TYPES.find(type => type.id === selectedType);
@@ -72,16 +72,15 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
             set_insurance({ 
                 cargo_id:           cargo.guid, 
                 prepayment:         insuranceCost, 
-                description:        "Страхование " + INSURANCE_TYPES[selectedType].name + ' груза ' + cargo.name,
+                description:        "Страхование " + (selectedInsurance?.name || 'basic') + ' груза ' + cargo.name,
                 currency:           accountData?.currency,
                 type:               2
             })
 
+
         } catch (error) {
             console.error('Payment error:', error);
-        } finally {
-            console.log("finally")
-        }
+        } 
     };
 
     const handleConfirmInsurance = () => {
@@ -89,8 +88,11 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
         handleInsurance();
     };
 
-    const handleCancel = () => {
+    const handleCancel = async() => {
         setShowCancelAlert(false);
+
+        await del_insurance({ cargo_id: cargo.guid, type: 2 })
+
         if( onBack ) onBack();
     };
 
@@ -435,7 +437,8 @@ export const useData = ( cargo: CargoInfo, onBack ) => {
         );
               
         if(result.success) {
-            cargo.insurance = data.insuranceCost; 
+            console.log('insurance', data )
+            cargo.insurance = data.prepayment; 
             updateCargo( cargo.guid, cargo)
             onBack()
         } else toast.error("Ошибка сохранения страховки")
@@ -469,12 +472,34 @@ export const useData = ( cargo: CargoInfo, onBack ) => {
       }
     };
 
+    const del_insurance                     = async (data: any): Promise<any> => {
+      setLoading( true )
+  
+      try {
+        
+        const result = await socketRequest(
+          'del_insurance', 
+          { token, ...data },
+          'del_insurance'
+        );
+              
+        return result;
+        
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Неизвестная ошибка';
+        return { success: false, data: null, message: errorMsg };
+      } finally {
+        setLoading( false );
+      }
+    };
+
 
   return {
     id,
     accountData,
     isLoading,
     set_insurance,
+    del_insurance,
     set_payment
   }
 }

@@ -30,6 +30,7 @@ export interface UserData {
   description:        string
   account:            string
   password:           string
+  seller:             string
   ratings:            UserRatings
   agreements:         Agreements
 }
@@ -50,6 +51,7 @@ interface LoginState {
   user_type:          number
   description:        string
   account:            string
+  seller:             string
   ratings:            UserRatings
   agreements:         Agreements
 }
@@ -83,6 +85,7 @@ export const useLoginStore = create<LoginStore>()(
       user_type:        0,
       description:      '',
       account:          '',
+      seller:           '',
       ratings:          { orders: 0, rate: 0, invoices: 0, payd: 0 },
       agreements:       { personalData: false, userAgreement: false, marketing: false },
 
@@ -106,6 +109,7 @@ export const useLoginStore = create<LoginStore>()(
         user_type:      0,
         description:    '',
         account:        '',
+        seller:         '',
         ratings:        { orders: 0, rate: 0, invoices: 0, payd: 0 },
         agreements:     { personalData: false, userAgreement: false, marketing: false }
       }),

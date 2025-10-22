@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { IonButton, IonIcon, IonLabel } from '@ionic/react';
+import { IonButton, IonIcon, IonLabel, useIonRouter } from '@ionic/react';
 import { arrowBackOutline, callOutline, locationOutline } from 'ionicons/icons';
 import { WorkInfo, WorkStatus } from '../types';
 import { workFormatters, workStatusUtils } from '../utils';
-import { useHistory } from 'react-router-dom';
 import { useWorkStore } from '../../../Store/workStore';
+import { passportGetters } from '../../../Store/passportStore';
+import { companyGetters } from '../../../Store/companyStore';
+import { transportGetters } from '../../../Store/transportStore';
+import { useToast } from '../../Toast';
 
 interface WorkViewProps {
     work:           WorkInfo;
@@ -25,12 +28,41 @@ export const WorkView: React.FC<WorkViewProps> = ({
     
     const works             = useWorkStore(state => state.works)
 
+    const passportCompletion        = passportGetters.getCompletionPercentage()
+    const companyCompletion         = companyGetters.getCompletionPercentage()
+    const transportCompletion       = transportGetters.getCompletionPercentage()
+
+    const hist                      = useIonRouter()
+    const toast                     = useToast()
+
+
+    useEffect(()=>{
+        console.log("work info ")
+        console.log("CREATE", passportCompletion, companyCompletion)
+        if((passportCompletion < 80 ))
+        {
+            onBack()
+            toast.info("Надо сперва заполнить паспортные данные")
+            hist.push("/tab3")
+        } else
+        if((companyCompletion < 80 ))
+        {
+            onBack()
+            toast.info("Надо сперва заполнить данные организации")
+            hist.push("/tab3")
+        } else
+        if((transportCompletion < 80 ))
+        {
+            onBack()
+            toast.info("Надо заполнить данные по транспорту")
+            hist.push("/tab3")
+        }
+    },[])
+
     useEffect(()=>{
         const w = works.find( w => w.guid === workInfo.guid )
         setWorkInfo( w as WorkInfo )
     },[ works ])
-
-    const hist = useHistory()
 
     const handleChat        = (work: WorkInfo, e: React.MouseEvent) => {
         e.stopPropagation();

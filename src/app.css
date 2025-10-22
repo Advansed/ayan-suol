@@ -655,3 +655,31 @@ ion-app {
   padding-top: constant(safe-area-inset-top); /* iOS 11.0 */
   padding-top: env(safe-area-inset-top); /* iOS 11.2+ */
 }
+
+/* invoice-modal.css */
+.invoice-modal {
+  --width: 90%;
+  --max-width: 900px;
+  --height: 90%;
+  --border-radius: 12px;
+}
+
+@media print {
+  .invoice-modal ion-header,
+  .invoice-modal ion-toolbar {
+    display: none !important;
+  }
+  
+  .invoice-modal {
+    --width: 100%;
+    --height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+  
+  .invoice-content {
+    margin: 20px !important;
+    max-width: none !important;
+  }
+}

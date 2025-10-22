@@ -4,7 +4,7 @@ import { CargoInfo, useCargoStore } from '../../../Store/cargoStore';
 import './PrePayment.css'
 import { formatters } from '../utils';
 import { useAccountStore } from '../../../Store/accountStore';
-import { IonButton } from '@ionic/react';
+import { IonButton, useIonRouter } from '@ionic/react';
 import { useLoginStore, useToken } from '../../../Store/loginStore';
 import { useSocket } from '../../../Store/useSocket';
 
@@ -17,6 +17,8 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack })
   const [amount, setAmount]                 = useState<string>(cargo.advance === 0 ? '' : cargo.advance.toString());  
   const { accountData, set_payment, id,
     isLoading, set_prepayment }             = useData( cargo, onBack )
+
+  const hist = useIonRouter()
 
   const handleSubmit                        = async () => {
     if (parseFloat(amount) <= 0) {
@@ -42,17 +44,10 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack })
 
   const handlePayment                       = async () => {
 
-    const res = await set_payment({
-        type:         1,
-        amount:       -((accountData?.balance || 0) - (parseFloat(amount) || 0)),
-        description:  "Пополнение лицевого счета " + id
-    })
-
-    if(res.success) window.open( res.data.payment_url )
+      hist.push("/tab3/account" )
 
   }
 
-  console.log( cargo )
   return (
     <div className="prepayment-page">
       <div className="page-header">
@@ -69,18 +64,6 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack })
             <p><strong>Баланс:</strong> { formatters.currency(accountData?.balance || 0) } </p>
             <p><strong>Аванс:</strong> {formatters.currency( (parseFloat(amount) || 0)) + ' - (' + ((parseFloat(amount) || 0) * 100 / cargo.price ).toFixed(2) + '%)' }</p>
             <p><strong>Остаток:</strong> {formatters.currency((accountData?.balance || 0) - (parseFloat(amount) || 0))  }</p>
-            { ((accountData?.balance || 0) - (parseFloat(amount) || 0)) < 0 && (
-                <IonButton
-                    expand='block'
-                    onClick={()=>{
-
-                       handlePayment()
-
-                    }}
-                >
-                    { "К оплате " + formatters.currency(-((accountData?.balance || 0) - (parseFloat(amount) || 0))) }
-                </IonButton>
-            )}
           </div>
         </div>
 
@@ -103,16 +86,32 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack })
         </div>
 
         <div className="actions">
-          <button 
-            onClick={handleSubmit} 
-            disabled={isLoading || (parseFloat(amount) || 0 ) <= 0 || (accountData?.balance || 0) < parseFloat(amount) }
-            className="submit-button"
-          >
-            {isLoading ? 'Создание...' : 'Создать предоплату'}
-          </button>
+            { ((accountData?.balance || 0) - (parseFloat(amount) || 0)) < 0 && (
+                <IonButton
+                    expand='block'
+                    onClick={()=>{
+
+                       handlePayment()
+
+                    }}
+                >
+                    { "К оплате " + formatters.currency(-((accountData?.balance || 0) - (parseFloat(amount) || 0))) }
+                </IonButton>
+            )}
+          { ((accountData?.balance || 0) - (parseFloat(amount) || 0)) > 0 && (
+              <button 
+                onClick={handleSubmit} 
+                disabled={isLoading || (parseFloat(amount) || 0 ) <= 0 || (accountData?.balance || 0) < parseFloat(amount) }
+                className="submit-button"
+              >
+                {isLoading ? 'Создание...' : 'Создать предоплату'}
+              </button>
+          )}
+          
           <button onClick={onBack} className="cancel-button">
-            Отмена
+              Отмена
           </button>
+
         </div>
       </div>
     </div>

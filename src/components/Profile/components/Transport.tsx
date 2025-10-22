@@ -3,6 +3,8 @@ import { useTransport } from '../../../Store/useTransport';
 import { PageData } from '../../DataEditor/types';
 import DataEditor from '../../DataEditor';
 import { TransportData } from '../../../Store/transportStore';
+import { useLoginStore } from '../../../Store/loginStore';
+import { useToast } from '../../Toast';
 
 interface TransportProps {
   onBack: () => void;
@@ -11,8 +13,15 @@ interface TransportProps {
 export const Transport: React.FC<TransportProps> = ({ onBack }) => {
   const { transportData, isLoading, loadData, saveData } = useTransport();
 
+  const agreements  = useLoginStore(state => state.agreements)
+  
+  const toast       = useToast()
+
   useEffect(() => {
-    loadData();
+    if(!agreements.userAgreement){
+      onBack()
+      toast.info("Сперва надо принять пользовательское соглашение")
+    } else loadData();
   }, []);
 
   const getFormData = (transport?: TransportData | null): PageData => [

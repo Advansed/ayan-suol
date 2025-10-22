@@ -217,6 +217,7 @@ export const useReg = (): UseRegReturn => {
         return
       }
 
+      console.log("userData", userData)
       const success = emit('check_registration', {
         code: phone,
         name: userData.name.trim(),
@@ -277,7 +278,7 @@ export const useReg = (): UseRegReturn => {
   }, [state.registrationStep, updateState])
 
   const submitStep = useCallback(async () => {
-    console.log(state.formData)
+    console.log("regData",state.registrationData)
     switch (state.registrationStep) {
       case 0:
         // Шаг выбора роли - просто переходим дальше

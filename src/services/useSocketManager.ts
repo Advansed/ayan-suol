@@ -67,6 +67,8 @@ export function initSocketHandlers( socket: any) {
     initAccountSocketHandlers( socket )
 
     initPassportSocketHandlers( socket )
+
+    initAccountSocketHandlers( socket )
   
 }
 
@@ -85,5 +87,7 @@ export function destroySocketHandlers( socket: any) {
     destroyAccountSocketHandlers( socket )
 
     destroyPassportSocketHandlers( socket )
+ 
+    destroyAccountSocketHandlers( socket )
     
 }

@@ -39,7 +39,7 @@ export interface UseAccountReturn {
 }
 
 export type PaymentMethod = 'card' | 'sbp' | 'bank'
-export type TransactionType = 'income' | 'expense'
+export type TransactionType = 'income' | 'expense' | 'new' | 'inv'
 export type TransactionStatus = 'completed' | 'pending' | 'failed'
 
 
@@ -50,7 +50,7 @@ export type TransactionStatus = 'completed' | 'pending' | 'failed'
 export interface Transaction {
   id: string
   date: string
-  type: 'income' | 'expense' | 'new'
+  type: 'income' | 'expense' | 'new' | 'inv'
   amount: number
   title: string
 }
@@ -204,7 +204,8 @@ export const accountActions = {
 // ============================================
 
 export const accountSocketHandlers = {
-  onGetBalance: (response: any) => {
+
+  onGetBalance:       (response: any) => {
     console.log('onGetBalance response:', response)
     
     accountActions.setLoading(false)
@@ -222,7 +223,7 @@ export const accountSocketHandlers = {
     }
   },
 
-  onGetTransactions: (response: any) => {
+  onGetTransactions:  (response: any) => {
     console.log('onGetTransactions response:', response)
     
     accountActions.setLoadingTransactions(false)
@@ -245,7 +246,7 @@ export const accountSocketHandlers = {
     }
   },
 
-  onSetPayment: (response: any) => {
+  onSetPayment:       (response: any) => {
     console.log('onSetPayment response:', response)
     
     accountActions.setSaving(false)
@@ -260,6 +261,7 @@ export const accountSocketHandlers = {
       accountActions.setError(response.message || 'Failed to process payment')
     }
   }
+
 }
 
 // ============================================

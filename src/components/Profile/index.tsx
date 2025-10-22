@@ -24,11 +24,6 @@ export const Profile: React.FC<ProfileProps> = ({ name }) => {
   const { user, isLoading, updateProfile } = useLogin()
   const [currentPage, setCurrentPage] = useState<number>(PROFILE_PAGES.MAIN)
 
-  useEffect(()=>{
-    console.log( name )
-    if(name === "account")  setCurrentPage( PROFILE_PAGES.ACCOUNT )
-  },[name])
-  
   // Получаем данные из Store
   const transportData = useTransportData()
   const companyData   = useCompanyData() 

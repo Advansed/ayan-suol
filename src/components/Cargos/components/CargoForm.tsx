@@ -3,6 +3,9 @@ import DataEditor from '../../DataEditor';
 import { AddressData, CityData, FieldData, PageData } from '../../DataEditor/types';
 import { CargoInfo, EMPTY_CARGO } from '../../../Store/cargoStore';
 import { useToast } from '../../Toast';
+import { passportGetters } from '../../../Store/passportStore';
+import { companyGetters } from '../../../Store/companyStore';
+import { useIonRouter } from '@ionic/react';
 
 interface CargoFormProps {
   cargo:      CargoInfo;
@@ -213,8 +216,13 @@ export const CargoForm: React.FC<CargoFormProps> = ({
   onUpdate, 
   onCreate 
 }) => {
-  const toast = useToast();
+    const toast = useToast();
   
+    const passportCompletion        = passportGetters.getCompletionPercentage()
+    const companyCompletion         = companyGetters.getCompletionPercentage()
+
+    const hist                      = useIonRouter()
+
   // Инициализация данных формы
   const [formData, setFormData] = useState<PageData>(() => 
     cargoToPages(cargo || EMPTY_CARGO)
@@ -250,7 +258,21 @@ export const CargoForm: React.FC<CargoFormProps> = ({
     }
   };
   
-  
+  useEffect(()=>{
+    console.log("CREATE", passportCompletion, companyCompletion)
+    if((passportCompletion < 80 ))
+    {
+      onBack()
+      toast.info("Надо сперва заполнить паспортные данные")
+      hist.push("/tab3")
+    } else
+    if((companyCompletion < 80 ))
+    {
+      onBack()
+      toast.info("Надо сперва заполнить данные организации")
+      hist.push("/tab3")
+    }
+  },[])
   
   return (
     <DataEditor

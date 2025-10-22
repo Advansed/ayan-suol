@@ -4,6 +4,8 @@ import { CompanyData } from '../../../Store/companyStore';
 import { useCompany } from '../../../Store/useCompany';
 import { PageData } from '../../DataEditor/types';
 import DataEditor from '../../DataEditor';
+import { useLoginStore } from '../../../Store/loginStore';
+import { useToast } from '../../Toast';
 
 interface CompanyProps {
   onBack:     () => void;
@@ -12,8 +14,15 @@ interface CompanyProps {
 export const Company: React.FC<CompanyProps> = ({onBack}) => {
   const { companyData, isLoading, loadData, saveData } = useCompany();
 
+  const agreements  = useLoginStore(state => state.agreements)
+  
+  const toast       = useToast()
+
   useEffect(() => {
-    loadData();
+    if(!agreements.userAgreement){
+      onBack()
+      toast.info("Сперва надо принять пользовательское соглашение")
+    } else loadData();
   }, []);
 
   const jur = (id : number) => {

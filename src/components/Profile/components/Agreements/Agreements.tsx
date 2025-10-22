@@ -6,6 +6,7 @@ import { EscrowAgreement } from './Escrow'
 import Signs from './Signs'
 import Oferta from './Oferta'
 import { useAgreements } from './useAgreements'
+import { passportGetters } from '../../../../Store/passportStore'
 
 export const UI_TEXT = {
   AGREEMENTS_TITLE: 'Согласия',
@@ -26,6 +27,17 @@ export const Agreements: React.FC = () => {
     setIsEulaOpen(true)
   }
 
+  const passportCompletion        = passportGetters.getCompletionPercentage()
+
+
+  const handlePersonalData = () => { 
+    console.log( "pass", passportCompletion )
+    if( passportCompletion > 0){
+      if(!agreements.personalData) toggleAgreement('personalData')
+    } else toggleAgreement('personalData')
+    
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -36,7 +48,7 @@ export const Agreements: React.FC = () => {
         
         <div 
           className={`${styles.agreementItem} ${isLoading ? styles.disabled : ''}`}
-            onClick={() => !isLoading && toggleAgreement('personalData')}
+            onClick={() => !isLoading && handlePersonalData()}
         >
           <div className={`${styles.checkbox} ${agreements.personalData ? styles.checked : styles.unchecked}`}>
             <div className={styles.checkIcon}>✓</div>

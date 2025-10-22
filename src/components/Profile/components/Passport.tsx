@@ -3,7 +3,7 @@ import { PageData } from '../../DataEditor/types'
 import { PassportData, usePassportStore } from '../../../Store/passportStore'
 import DataEditor from '../../DataEditor'
 import { useToast } from '../../Toast'
-import { useToken } from '../../../Store/loginStore'
+import { useLoginStore, useToken } from '../../../Store/loginStore'
 import { useSocket } from '../../../Store/useSocket'
 
 interface Props {
@@ -13,10 +13,21 @@ interface Props {
 export const Passport: React.FC<Props> = ({ onBack }) => {
   const { passportData, save, load, isLoading } = useData()
 
+  const agreements  = useLoginStore(state => state.agreements)
+  
+  const toast       = useToast()
+
   useEffect(() => {
     if(!passportData)
       load()
   }, [load])
+
+  useEffect(()=>{
+    if(!agreements.personalData){
+      onBack()
+      toast.info("Сперва надо принять согласие на обработку персональных данных")
+    }
+  },[])
 
   const getFormData = (passport?: PassportData | null): PageData => [
     {
