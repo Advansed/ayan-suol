@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSocket } from '../../../Store/useSocket'
+import { useToast } from '../../Toast'
 
 // ======================
 // ТИПЫ РЕГИСТРАЦИИ  
@@ -157,6 +158,8 @@ export const useReg = (): UseRegReturn => {
   const [state, setState] = useState<RegistrationState>(INITIAL_REG_STATE)
   const isMountedRef = useRef(true)
   const { socket, emit } = useSocket()
+
+  const toast = useToast()
 
   // ======================
   // УТИЛИТЫ СОСТОЯНИЯ
@@ -329,6 +332,8 @@ export const useReg = (): UseRegReturn => {
 
       updateState({ isLoading: false })
 
+      console.log('check_registration on...', response)
+
       if (response.success) {
         updateRegistrationData('token', response.data.token)
         updateRegistrationData('status', response.data.status)
@@ -337,6 +342,7 @@ export const useReg = (): UseRegReturn => {
         nextStep()
       } else {
         updateState({ error: response.message || 'Ошибка регистрации' })
+        toast.error( response.message || "Ошибка регистрации")
       }
     }
 

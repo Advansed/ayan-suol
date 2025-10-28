@@ -478,12 +478,17 @@ export const useData = ( cargo: CargoInfo, onBack ) => {
       try {
         
         const result = await socketRequest(
-          'del_insurance', 
+          'del_document', 
           { token, ...data },
-          'del_insurance'
+          'del_document'
         );
               
-        return result;
+        if(result.success) {
+            console.log('insurance', data )
+            cargo.insurance = 0; 
+            updateCargo( cargo.guid, cargo)
+            onBack()
+        } else toast.error("Ошибка сохранения страховки")
         
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Неизвестная ошибка';

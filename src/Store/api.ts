@@ -19,7 +19,7 @@ export const api = async (endpoint: string, data: any) => {
 };
 
 export const getVersion = async() => {
-    const res = await fetch('getVersion', {
+    const res = await fetch(`${URL}/api/getVersion`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
     });

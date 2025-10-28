@@ -107,9 +107,9 @@ export const useAccount = () => {
     setLoading(true)
     try {
       const result = await socketRequest(
-        'get_invoices', 
+        'get_invoice', 
         { token, invoice_id },
-        'get_invoices'
+        'get_invoice'
       );
             
       return result;

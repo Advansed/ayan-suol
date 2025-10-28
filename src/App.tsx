@@ -47,6 +47,8 @@ import { useLogin } from './Store/useLogin';
 import { ServerConnectionGuard } from './components/ServerConnectionGuard';
 import { Login } from './components/Login';
 import { useSocketManager } from './services/useSocketManager';
+import { useEffect } from 'react';
+import { getVersion } from './Store/api';
 
 setupIonicReact({
   mode: 'ios', // или 'md' для Material Design
@@ -58,6 +60,16 @@ const AppContent: React.FC = () => {
   const { auth, user } = useLogin();
 
   useSocketManager()
+
+  const get_Version = async () => {
+    const res = await getVersion()
+    console.log(res)
+  }
+
+  useEffect(()=>{
+    console.log("useeffect")
+     get_Version()
+  },[])
 
   return (
     <ServerConnectionGuard>

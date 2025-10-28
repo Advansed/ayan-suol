@@ -16,7 +16,7 @@ interface PrepaymentPageProps {
 export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack }) => {
   const [amount, setAmount]                 = useState<string>(cargo.advance === 0 ? '' : cargo.advance.toString());  
   const { accountData, set_payment, id,
-    isLoading, set_prepayment }             = useData( cargo, onBack )
+    isLoading, set_prepayment, del_prepayment }             = useData( cargo, onBack )
 
   const hist = useIonRouter()
 
@@ -40,6 +40,15 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack })
     })
 
     
+  };
+
+  const handleDelSubmit                     = async () => {
+
+      del_prepayment({ 
+          cargo_id:       cargo.guid, 
+          type:           1
+      })
+
   };
 
   const handlePayment                       = async () => {
@@ -106,6 +115,15 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack })
               >
                 {isLoading ? 'Создание...' : 'Создать предоплату'}
               </button>
+          )}
+          { cargo.advance !== 0 && (
+              <IonButton 
+                onClick   = { handleDelSubmit } 
+                disabled  = { isLoading || (parseFloat(amount) || 0 ) <= 0 || (accountData?.balance || 0) < parseFloat(amount) }
+                color     = { "danger" }
+              >
+                {isLoading ? 'Удаление...' : 'Удалить предоплату'}
+              </IonButton>
           )}
           
           <button onClick={onBack} className="cancel-button">
@@ -233,11 +251,38 @@ export const useData = ( cargo: CargoInfo, onBack ) => {
       }
     };
 
+    const del_prepayment                    = async (data: any): Promise<any> => {
+      setLoading( true )
+  
+      try {
+        
+        const result = await socketRequest(
+          'del_document', 
+          { token, ...data },
+          'del_document'
+        );
+              
+        if(result.success) {
+            cargo.advance = 0; 
+            updateCargo( cargo.guid, cargo)
+        }
+        
+        onBack()
+        
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Неизвестная ошибка';
+        return { success: false, data: null, message: errorMsg };
+      } finally {
+        setLoading( false );
+      }
+    };
+
   return {
     id,
     accountData,
     isLoading,
     set_payment,
+    del_prepayment,
     set_prepayment
   }
 }

@@ -1,11 +1,15 @@
-import React from "react";
-import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonIcon } from "@ionic/react";
-import { closeOutline, downloadOutline, printOutline } from "ionicons/icons";
+import React, { useState } from "react";
+import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonIcon, IonLoading } from "@ionic/react";
+import { closeOutline, downloadOutline, printOutline, sendOutline } from "ionicons/icons";
 import { formatters } from "../../../Cargos";
 import styles from './styles.module.css';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { Filesystem, Directory } from "@capacitor/filesystem";
+import { useCompanyStore } from "../../../../Store/companyStore";
+import { api } from "../../../../Store/api";
+import { useToken } from "../../../../Store/loginStore";
+import { useToast } from "../../../Toast";
 
 // Типы для данных из companyStore
 interface SellerData {
@@ -61,44 +65,193 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
   inv
 }) => {
   // Проверяем, есть ли данные продавца
+  const [ load, setLoad ] = useState(false)
   const hasSellerData = inv.seller && inv.seller.name;
+
+  const email       = useCompanyStore(state => state.data?.email )
+  const token       = useToken()
+  const toast       = useToast()
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleDownload = async() => {
-    // Логика для скачивания PDF
- try {
+  const handleEmail = async () => {
+    try {
       const invoiceEl = document.querySelector(`.${styles.invoiceContainer}`) as HTMLElement;
       if (!invoiceEl) {
         console.warn("Invoice element not found");
         return;
       }
 
-      // Рендерим HTML в Canvas
+      // Сохраняем оригинальные стили
+      const originalStyles = {
+        width: invoiceEl.style.width,
+        height: invoiceEl.style.height,
+        margin: invoiceEl.style.margin,
+      };
+
+      // Устанавливаем оптимальный размер для A4 (меньше полной страницы)
+      invoiceEl.style.width = '700px'; // Ширина меньше A4 для отступов
+      invoiceEl.style.height = 'auto'; // Автоматическая высота
+      invoiceEl.style.margin = '0 auto'; // Центрирование
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
       const canvas = await html2canvas(invoiceEl, {
-        useCORS: true, // Важно, если есть картинки или шрифты
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        width: 700,
+        height: invoiceEl.scrollHeight,
+        scale: 2 // Увеличиваем качество
       });
 
+      // Восстанавливаем оригинальные стили
+      invoiceEl.style.width = originalStyles.width;
+      invoiceEl.style.height = originalStyles.height;
+      invoiceEl.style.margin = originalStyles.margin;
+
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
+      
+      // Рассчитываем размеры для центрирования
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      // Масштабируем изображение чтобы поместилось на странице
+      const ratio = Math.min(pageWidth / (imgWidth / 2.83), pageHeight / (imgHeight / 2.83)); // 2.83 - коэффициент для px to mm
+      const finalWidth = (imgWidth / 2.83) * ratio;
+      const finalHeight = (imgHeight / 2.83) * ratio;
+      
+      // Центрируем на странице
+      const x = (pageWidth - finalWidth) / 2;
+      const y = (pageHeight - finalHeight) / 2;
 
-      // Пропорционально подгоняем размер изображения под ширину страницы
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      console.log( "koord", x + 20, y, finalWidth, finalHeight)
+      pdf.addImage(imgData, "PNG", x + 20, y, finalWidth, finalHeight);
 
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-
-      // Конвертируем PDF в base64
+      const fileName = `invoice_${inv.invoiceNumber}.pdf`;
       const pdfBase64 = pdf.output("datauristring").split(",")[1];
 
-      // Сохраняем файл на устройстве
+      send_email({ token, email, pdf: pdfBase64 })
+
+    } catch (err) {
+      console.error("Ошибка при сохранении PDF:", err);
+      // Восстанавливаем стили в случае ошибки
+      const invoiceEl = document.querySelector(`.${styles.invoiceContainer}`) as HTMLElement;
+      if (invoiceEl) {
+        invoiceEl.style.width = '';
+        invoiceEl.style.height = '';
+        invoiceEl.style.margin = '';
+      }
+    }
+  };
+
+  // const handleDownload = async() => {
+  //   // Логика для скачивания PDF
+  //   try {
+  //     const invoiceEl = document.querySelector(`.${styles.invoiceContainer}`) as HTMLElement;
+  //     if (!invoiceEl) {
+  //       console.warn("Invoice element not found");
+  //       return;
+  //     }
+
+  //     // Рендерим HTML в Canvas
+  //     const canvas = await html2canvas(invoiceEl, {
+  //       useCORS: true, // Важно, если есть картинки или шрифты
+  //     });
+
+  //     const imgData = canvas.toDataURL("image/png");
+  //     const pdf = new jsPDF("p", "mm", "a4");
+
+  //     // Пропорционально подгоняем размер изображения под ширину страницы
+  //     const pdfWidth = pdf.internal.pageSize.getWidth();
+  //     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+  //     pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+
+  //     // Конвертируем PDF в base64
+  //     const pdfBase64 = pdf.output("datauristring").split(",")[1];
+
+  //     // Сохраняем файл на устройстве
+  //     const fileName = `invoice_${inv.invoiceNumber}.pdf`;
+  //     const result = await Filesystem.writeFile({
+  //       path:       fileName,
+  //       data:       pdfBase64,
+  //       directory:  Directory.Library,
+  //     });
+
+  //     console.log("PDF сохранён:", result.uri);
+  //     alert(`Счёт сохранён как ${fileName}`);
+
+  //   } catch (err) {
+  //     console.error("Ошибка при сохранении PDF:", err);
+  //   } 
+  // };
+
+
+  const handleDownload = async () => {
+    try {
+      const invoiceEl = document.querySelector(`.${styles.invoiceContainer}`) as HTMLElement;
+      if (!invoiceEl) {
+        console.warn("Invoice element not found");
+        return;
+      }
+
+      // Сохраняем оригинальные стили
+      const originalStyles = {
+        width: invoiceEl.style.width,
+        height: invoiceEl.style.height,
+        margin: invoiceEl.style.margin,
+      };
+
+      // Устанавливаем оптимальный размер для A4 (меньше полной страницы)
+      invoiceEl.style.width = '700px'; // Ширина меньше A4 для отступов
+      invoiceEl.style.height = 'auto'; // Автоматическая высота
+      invoiceEl.style.margin = '0 auto'; // Центрирование
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const canvas = await html2canvas(invoiceEl, {
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        width: 700,
+        height: invoiceEl.scrollHeight,
+        scale: 2 // Увеличиваем качество
+      });
+
+      // Восстанавливаем оригинальные стили
+      invoiceEl.style.width = originalStyles.width;
+      invoiceEl.style.height = originalStyles.height;
+      invoiceEl.style.margin = originalStyles.margin;
+
+      const imgData = canvas.toDataURL("image/png");
+      
+      // Рассчитываем размеры для центрирования
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      // Масштабируем изображение чтобы поместилось на странице
+      const ratio = Math.min(pageWidth / (imgWidth / 2.83), pageHeight / (imgHeight / 2.83)); // 2.83 - коэффициент для px to mm
+      const finalWidth = (imgWidth / 2.83) * ratio;
+      const finalHeight = (imgHeight / 2.83) * ratio;
+      
+      // Центрируем на странице
+      const x = (pageWidth - finalWidth) / 2;
+      const y = (pageHeight - finalHeight) / 2;
+
+      pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
+
       const fileName = `invoice_${inv.invoiceNumber}.pdf`;
+      const pdfBase64 = pdf.output("datauristring").split(",")[1];
+
       const result = await Filesystem.writeFile({
-        path:       fileName,
-        data:       pdfBase64,
-        directory:  Directory.Library,
+        path: fileName,
+        data: pdfBase64,
+        directory: Directory.Library,
       });
 
       console.log("PDF сохранён:", result.uri);
@@ -106,14 +259,33 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
     } catch (err) {
       console.error("Ошибка при сохранении PDF:", err);
-    } 
+      // Восстанавливаем стили в случае ошибки
+      const invoiceEl = document.querySelector(`.${styles.invoiceContainer}`) as HTMLElement;
+      if (invoiceEl) {
+        invoiceEl.style.width = '';
+        invoiceEl.style.height = '';
+        invoiceEl.style.margin = '';
+      }
+    }
   };
+
+  const send_email = async(data: any) => {
+    setLoad( true )
+    const res = await api("api/sendEmail", data)  
+    console.log("sendEmail", res)
+    if(res.success) toast.success("Счет отправлен на почту ")
+    else toast.error("Ошибка отправки почты")
+    setLoad( false )
+  }
 
   return (
     <IonModal isOpen={isOpen} onDidDismiss={onClose} className={styles.modal}>
       <IonHeader>
         <IonToolbar className={styles.toolbar}>
           <IonButtons slot="end">
+            <IonButton onClick={handleEmail}>
+              <IonIcon icon={ sendOutline } slot="icon-only" />
+            </IonButton>
             <IonButton onClick={handleDownload}>
               <IonIcon icon={downloadOutline} slot="icon-only" />
             </IonButton>
@@ -126,6 +298,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
           </IonButtons>
         </IonToolbar>
       </IonHeader>
+      <IonLoading isOpen = { load } message = { "Подождите..." } />
       <IonContent className={styles.content}>
         <div className={styles.invoiceContainer}>
           <div className={styles.header}>
