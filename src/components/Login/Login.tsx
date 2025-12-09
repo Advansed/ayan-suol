@@ -6,6 +6,7 @@ import { LoginForm } from './LoginForm'
 import { LoadingSpinner } from './SharedComponents'
 import { RegistrationForm } from './registration'
 import './Login.css'
+import RecoveryForm from './recovery/RecoveryForm'
 
 // ============================================
 // ТИПЫ
@@ -69,14 +70,12 @@ const Login: React.FC = () => {
         />
       )}
       
-      {/* Форма восстановления - пока закомментирована
       {currentForm === 'recovery' && (
-        <RecoveryForm 
+        <RecoveryForm
           onSwitchToLogin={handleSwitchToLogin}
           onSwitchToRegister={handleSwitchToRegister}
         />
-      )}
-      */}
+      )} 
     </>
   )
 }

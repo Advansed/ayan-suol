@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import styles from './Agreements.module.css'
 import EULA from './eula'
-import CargoAgree from './CargoAgree'
 import { EscrowAgreement } from './Escrow'
 import Signs from './Signs'
 import Oferta from './Oferta'
 import { useAgreements } from './useAgreements'
 import { passportGetters } from '../../../../Store/passportStore'
+import ContractPage from '../../../CargoAgree'
 
 export const UI_TEXT = {
   AGREEMENTS_TITLE: 'Согласия',
@@ -99,7 +99,8 @@ export const Agreements: React.FC = () => {
       </div>
 
       <EULA             isOpen = { isEulaOpen }   onClose = { () => setIsEulaOpen(false) } />
-      <CargoAgree       isOpen = { isCargoOpen }  onClose = { () => setIsCargoOpen(false) } />
+      {/* <CargoAgree       isOpen = { isCargoOpen }  onClose = { () => setIsCargoOpen(false) } /> */}
+      <ContractPage     isOpen = { isCargoOpen }  onClose = { () => setIsCargoOpen(false) } />
       <EscrowAgreement  isOpen = { isEscrowOpen } onClose = { () => setIsEscrowOpen(false) } />
       <Signs            isOpen = { isSignOpen }   onClose = { () => setIsSignOpen(false) } />
       <Oferta           isOpen = { isOferta }     onClose = { () => setIsOferta(false) } />

@@ -1,112 +1,84 @@
-/* Существующие стили для модального окна ошибок */
-.error-modal {
-  --width: 90%;
-  --max-width: 400px;
-  --height: auto;
-  --border-radius: 12px;
-}
+/* Удаляем все предыдущие стили и добавляем новые правила */
 
-.error-modal-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 20px;
-}
-
-.error-modal-content {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  text-align: center;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+/* Глобальные правила для предотвращения выхода за границы экрана */
+* {
   max-width: 100%;
+  box-sizing: border-box;
 }
 
-.error-modal-title {
-  font-size: 1.2em;
-  font-weight: bold;
-  color: #e74c3c;
-  margin-bottom: 16px;
+/* Основное правило для всех контейнеров */
+.container-limit {
+  overflow: hidden;
 }
 
-.error-modal-message {
-  font-size: 0.95em;
-  color: #666;
-  margin-bottom: 24px;
-  line-height: 1.4;
+/* Правила для всех элементов, которые могут выйти за границы */
+img, video, iframe, canvas, svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 
-.error-modal-button {
-  --border-radius: 8px;
-  --background: #3498db;
-  --background-activated: #2980b9;
-  font-weight: 500;
+/* Особые случаи для таблиц и длинного текста */
+table {
+  width: 100%;
+  overflow-x: auto;
+  display: block;
 }
 
-/* Стили для рефрешера */
-ion-refresher {
-  z-index: 999;
+/* Для контента с возможностью прокрутки */
+.scrollable-content {
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
-ion-refresher-content {
-  --background: var(--ion-background-color, #fff);
-  --color: var(--ion-color-primary, #3880ff);
+/* Универсальный класс для любых элементов */
+.contain-content {
+  contain: content;
+  overflow: hidden;
 }
 
-/* Анимация для иконки рефрешера */
-ion-refresher-content .refresher-pulling-icon {
-  transition: transform 0.2s ease-in-out;
+/* Защита от горизонтального скролла на уровне страницы */
+body, html {
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
-/* Стили для текста рефрешера */
-ion-refresher-content .refresher-pulling-text,
-ion-refresher-content .refresher-refreshing-text {
-  font-size: 0.9em;
-  font-weight: 500;
-  color: var(--ion-color-medium, #666);
+/* Для фиксированных и абсолютно позиционированных элементов */
+.fixed-element,
+.absolute-element {
+  left: 0;
+  right: 0;
+  max-width: 100vw;
 }
 
-/* Кастомные стили для разных состояний рефрешера */
-ion-refresher.refresher-active ion-refresher-content .refresher-pulling-icon {
-  transform: rotate(180deg);
+/* Для текстовых элементов, которые могут быть слишком длинными */
+.text-overflow-protection {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
-/* Улучшенный индикатор загрузки */
-ion-refresher-content .refresher-refreshing-spinner {
-  color: var(--ion-color-primary, #3880ff);
+/* Для flex и grid контейнеров */
+.flex-container,
+.grid-container {
+  flex-wrap: wrap;
 }
 
-/* Адаптивные стили */
-@media (max-width: 768px) {
-  .error-modal {
-    --width: 95%;
-    --max-width: none;
+/* Медиа-запрос для очень маленьких экранов */
+@media (max-width: 320px) {
+  * {
+    min-width: 0;
   }
   
-  .error-modal-content {
-    padding: 20px;
-  }
-  
-  ion-refresher-content .refresher-pulling-text,
-  ion-refresher-content .refresher-refreshing-text {
-    font-size: 0.85em;
+  .text-overflow-protection {
+    font-size: 0.9em;
   }
 }
 
-/* Темная тема */
-@media (prefers-color-scheme: dark) {
-  .error-modal-content {
-    background: var(--ion-color-step-100, #1e1e1e);
-    color: var(--ion-color-primary-contrast, #fff);
-  }
-  
-  .error-modal-message {
-    color: var(--ion-color-step-600, #999);
-  }
-  
-  ion-refresher-content {
-    --background: var(--ion-background-color, #121212);
-    --color: var(--ion-color-primary, #4d8dff);
-  }
+/* Дополнительная защита для модальных окон и всплывающих элементов */
+.modal,
+.popup,
+.tooltip {
+  max-width: 90vw;
+  left: 50%;
+  transform: translateX(-50%);
 }

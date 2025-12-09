@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonIcon, IonLoading } from "@ionic/react";
+import { IonModal, IonHeader, IonToolbar, IonButtons, IonButton, IonContent, IonIcon, IonLoading } from "@ionic/react";
 import { closeOutline, downloadOutline, printOutline, sendOutline } from "ionicons/icons";
 import { formatters } from "../../../Cargos";
 import styles from './styles.module.css';
@@ -13,17 +13,17 @@ import { useToast } from "../../../Toast";
 
 // Типы для данных из companyStore
 interface SellerData {
-    name:           "",
-    address:        "",
-    inn:            "",
-    kpp:          "",
-    ogrn:         "",
-    account:      "",
-    bank:           "",
-    bankInn:        "",
-    bik:            "",
-    korAccount:     "",
-    bankAddress:    ""
+    name:           "";
+    address:        "";
+    inn:            "";
+    kpp:          "";
+    ogrn:         "";
+    account:      "";
+    bank:           "";
+    bankInn:        "";
+    bik:            "";
+    korAccount:     "";
+    bankAddress:    "";
 }
 
 interface InvoiceItem {
@@ -47,30 +47,26 @@ interface InvoiceModalProps {
 }
 
 interface InvoiceData   {
-  invoiceNumber:    string,
-  invoiceDate:      string,
-  customer:         CustomerData,
-  items:            InvoiceItem[],
-  total:            number,
-  vat:              number,
-  paymentPurpose:   string,
-  paymentDue:       string,
-  seller:           SellerData,
-  signer:           string,
+  invoiceNumber:    string;
+  invoiceDate:      string;
+  customer:         CustomerData;
+  items:            InvoiceItem[];
+  total:            number;
+  vat:              number;
+  paymentPurpose:   string;
+  paymentDue:       string;
+  seller:           SellerData;
+  signer:           string;
 }
 
 const InvoiceModal: React.FC<InvoiceModalProps> = ({
-  isOpen,
-  onClose,
-  inv
+  isOpen, onClose, inv
 }) => {
-  // Проверяем, есть ли данные продавца
-  const [ load, setLoad ] = useState(false)
+  const [load, setLoad] = useState(false);
   const hasSellerData = inv.seller && inv.seller.name;
-
-  const email       = useCompanyStore(state => state.data?.email )
-  const token       = useToken()
-  const toast       = useToast()
+  const email = useCompanyStore(state => state.data?.email);
+  const token = useToken();
+  const toast = useToast();
 
   const handlePrint = () => {
     window.print();
@@ -84,112 +80,48 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         return;
       }
 
-      // Сохраняем оригинальные стили
-      const originalStyles = {
-        width: invoiceEl.style.width,
-        height: invoiceEl.style.height,
-        margin: invoiceEl.style.margin,
-      };
+      // Для мобильных увеличиваем ширину для PDF
+      const originalWidth = invoiceEl.style.width;
+      const originalHeight = invoiceEl.style.height;
+      const originalMargin = invoiceEl.style.margin;
+      const originalFontSize = invoiceEl.style.fontSize;
 
-      // Устанавливаем оптимальный размер для A4 (меньше полной страницы)
-      invoiceEl.style.width = '700px'; // Ширина меньше A4 для отступов
-      invoiceEl.style.height = 'auto'; // Автоматическая высота
-      invoiceEl.style.margin = '0 auto'; // Центрирование
+      // Устанавливаем стили для PDF
+      invoiceEl.style.width = '800px'; // Фиксированная ширина для мобильных
+      invoiceEl.style.height = 'auto';
+      invoiceEl.style.margin = '0 auto';
+      invoiceEl.style.fontSize = '14px';
 
       const pdf = new jsPDF("p", "mm", "a4");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
 
       const canvas = await html2canvas(invoiceEl, {
         useCORS: true,
         backgroundColor: '#ffffff',
-        width: 700,
+        width: 800,
         height: invoiceEl.scrollHeight,
-        scale: 2 // Увеличиваем качество
+        scale: 2
       });
 
-      // Восстанавливаем оригинальные стили
-      invoiceEl.style.width = originalStyles.width;
-      invoiceEl.style.height = originalStyles.height;
-      invoiceEl.style.margin = originalStyles.margin;
+      // Восстанавливаем стили
+      invoiceEl.style.width = originalWidth;
+      invoiceEl.style.height = originalHeight;
+      invoiceEl.style.margin = originalMargin;
+      invoiceEl.style.fontSize = originalFontSize;
 
       const imgData = canvas.toDataURL("image/png");
-      
-      // Рассчитываем размеры для центрирования
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      
-      // Масштабируем изображение чтобы поместилось на странице
-      const ratio = Math.min(pageWidth / (imgWidth / 2.83), pageHeight / (imgHeight / 2.83)); // 2.83 - коэффициент для px to mm
-      const finalWidth = (imgWidth / 2.83) * ratio;
-      const finalHeight = (imgHeight / 2.83) * ratio;
-      
-      // Центрируем на странице
-      const x = (pageWidth - finalWidth) / 2;
-      const y = (pageHeight - finalHeight) / 2;
+      const imgWidth = 210; // Ширина A4 в мм
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      console.log( "koord", x + 20, y, finalWidth, finalHeight)
-      pdf.addImage(imgData, "PNG", x + 20, y, finalWidth, finalHeight);
-
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
       const fileName = `invoice_${inv.invoiceNumber}.pdf`;
       const pdfBase64 = pdf.output("datauristring").split(",")[1];
 
-      send_email({ token, email, pdf: pdfBase64 })
+      send_email({ token, email, pdf: pdfBase64 });
 
     } catch (err) {
       console.error("Ошибка при сохранении PDF:", err);
-      // Восстанавливаем стили в случае ошибки
-      const invoiceEl = document.querySelector(`.${styles.invoiceContainer}`) as HTMLElement;
-      if (invoiceEl) {
-        invoiceEl.style.width = '';
-        invoiceEl.style.height = '';
-        invoiceEl.style.margin = '';
-      }
     }
   };
-
-  // const handleDownload = async() => {
-  //   // Логика для скачивания PDF
-  //   try {
-  //     const invoiceEl = document.querySelector(`.${styles.invoiceContainer}`) as HTMLElement;
-  //     if (!invoiceEl) {
-  //       console.warn("Invoice element not found");
-  //       return;
-  //     }
-
-  //     // Рендерим HTML в Canvas
-  //     const canvas = await html2canvas(invoiceEl, {
-  //       useCORS: true, // Важно, если есть картинки или шрифты
-  //     });
-
-  //     const imgData = canvas.toDataURL("image/png");
-  //     const pdf = new jsPDF("p", "mm", "a4");
-
-  //     // Пропорционально подгоняем размер изображения под ширину страницы
-  //     const pdfWidth = pdf.internal.pageSize.getWidth();
-  //     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-  //     pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-
-  //     // Конвертируем PDF в base64
-  //     const pdfBase64 = pdf.output("datauristring").split(",")[1];
-
-  //     // Сохраняем файл на устройстве
-  //     const fileName = `invoice_${inv.invoiceNumber}.pdf`;
-  //     const result = await Filesystem.writeFile({
-  //       path:       fileName,
-  //       data:       pdfBase64,
-  //       directory:  Directory.Library,
-  //     });
-
-  //     console.log("PDF сохранён:", result.uri);
-  //     alert(`Счёт сохранён как ${fileName}`);
-
-  //   } catch (err) {
-  //     console.error("Ошибка при сохранении PDF:", err);
-  //   } 
-  // };
-
 
   const handleDownload = async () => {
     try {
@@ -199,52 +131,39 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         return;
       }
 
-      // Сохраняем оригинальные стили
-      const originalStyles = {
-        width: invoiceEl.style.width,
-        height: invoiceEl.style.height,
-        margin: invoiceEl.style.margin,
-      };
+      // Для мобильных увеличиваем ширину для PDF
+      const originalWidth = invoiceEl.style.width;
+      const originalHeight = invoiceEl.style.height;
+      const originalMargin = invoiceEl.style.margin;
+      const originalFontSize = invoiceEl.style.fontSize;
 
-      // Устанавливаем оптимальный размер для A4 (меньше полной страницы)
-      invoiceEl.style.width = '700px'; // Ширина меньше A4 для отступов
-      invoiceEl.style.height = 'auto'; // Автоматическая высота
-      invoiceEl.style.margin = '0 auto'; // Центрирование
+      // Устанавливаем стили для PDF
+      invoiceEl.style.width = '800px';
+      invoiceEl.style.height = 'auto';
+      invoiceEl.style.margin = '0 auto';
+      invoiceEl.style.fontSize = '14px';
 
       const pdf = new jsPDF("p", "mm", "a4");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
 
       const canvas = await html2canvas(invoiceEl, {
         useCORS: true,
         backgroundColor: '#ffffff',
-        width: 700,
+        width: 800,
         height: invoiceEl.scrollHeight,
-        scale: 2 // Увеличиваем качество
+        scale: 2
       });
 
-      // Восстанавливаем оригинальные стили
-      invoiceEl.style.width = originalStyles.width;
-      invoiceEl.style.height = originalStyles.height;
-      invoiceEl.style.margin = originalStyles.margin;
+      // Восстанавливаем стили
+      invoiceEl.style.width = originalWidth;
+      invoiceEl.style.height = originalHeight;
+      invoiceEl.style.margin = originalMargin;
+      invoiceEl.style.fontSize = originalFontSize;
 
       const imgData = canvas.toDataURL("image/png");
-      
-      // Рассчитываем размеры для центрирования
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      
-      // Масштабируем изображение чтобы поместилось на странице
-      const ratio = Math.min(pageWidth / (imgWidth / 2.83), pageHeight / (imgHeight / 2.83)); // 2.83 - коэффициент для px to mm
-      const finalWidth = (imgWidth / 2.83) * ratio;
-      const finalHeight = (imgHeight / 2.83) * ratio;
-      
-      // Центрируем на странице
-      const x = (pageWidth - finalWidth) / 2;
-      const y = (pageHeight - finalHeight) / 2;
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
-
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
       const fileName = `invoice_${inv.invoiceNumber}.pdf`;
       const pdfBase64 = pdf.output("datauristring").split(",")[1];
 
@@ -259,23 +178,16 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
     } catch (err) {
       console.error("Ошибка при сохранении PDF:", err);
-      // Восстанавливаем стили в случае ошибки
-      const invoiceEl = document.querySelector(`.${styles.invoiceContainer}`) as HTMLElement;
-      if (invoiceEl) {
-        invoiceEl.style.width = '';
-        invoiceEl.style.height = '';
-        invoiceEl.style.margin = '';
-      }
     }
   };
 
   const send_email = async(data: any) => {
-    setLoad( true )
-    const res = await api("api/sendEmail", data)  
-    console.log("sendEmail", res)
-    if(res.success) toast.success("Счет отправлен на почту ")
-    else toast.error("Ошибка отправки почты")
-    setLoad( false )
+    setLoad(true);
+    const res = await api("api/sendEmail", data);
+    console.log("sendEmail", res);
+    if(res.success) toast.success("Счет отправлен на почту ");
+    else toast.error("Ошибка отправки почты");
+    setLoad(false);
   }
 
   return (
@@ -283,81 +195,74 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
       <IonHeader>
         <IonToolbar className={styles.toolbar}>
           <IonButtons slot="end">
-            <IonButton onClick={handleEmail}>
-              <IonIcon icon={ sendOutline } slot="icon-only" />
+            <IonButton onClick={handleEmail} size="small">
+              <IonIcon icon={sendOutline} slot="icon-only" />
             </IonButton>
-            <IonButton onClick={handleDownload}>
+            <IonButton onClick={handleDownload} size="small">
               <IonIcon icon={downloadOutline} slot="icon-only" />
             </IonButton>
-            <IonButton onClick={handlePrint}>
+            <IonButton onClick={handlePrint} size="small">
               <IonIcon icon={printOutline} slot="icon-only" />
             </IonButton>
-            <IonButton onClick={onClose}>
+            <IonButton onClick={onClose} size="small">
               <IonIcon icon={closeOutline} slot="icon-only" />
             </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
-      <IonLoading isOpen = { load } message = { "Подождите..." } />
+      <IonLoading isOpen={load} message={"Подождите..."} />
       <IonContent className={styles.content}>
         <div className={styles.invoiceContainer}>
+          {/* Заголовок */}
           <div className={styles.header}>
-            Счет на оплату № {inv.invoiceNumber} от {inv.invoiceDate}
+            <div className={styles.headerTitle}>Счет на оплату</div>
+            <div className={styles.headerDetails}>
+              <div>№ {inv.invoiceNumber}</div>
+              <div>от {inv.invoiceDate}</div>
+            </div>
           </div>
 
-          {/* Поставщик - данные из companyStore */}
+          {/* Поставщик */}
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Поставщик:</div>
             <div className={styles.sectionContent}>
-              {hasSellerData ? inv.seller.name : <span className={styles.emptyData}>________________________</span>}
+              <div className={styles.dataRow}>
+                <span className={styles.dataLabel}>Название:</span>
+                <span className={styles.dataValue}>
+                  {hasSellerData ? inv.seller.name : <span className={styles.emptyData}>________________________</span>}
+                </span>
+              </div>
               
               {hasSellerData && inv.seller.address && (
-                <div className={styles.flexRow}>
-                  <strong>Юридический адрес:</strong>
-                  <div style={{marginLeft: 8}}>{inv.seller.address}</div>
+                <div className={styles.dataRow}>
+                  <span className={styles.dataLabel}>Адрес:</span>
+                  <span className={styles.dataValue}>{inv.seller.address}</span>
                 </div>
               )}
               
               {hasSellerData && inv.seller.inn && (
-                <div className={styles.flexRow}>
-                  <strong>ИНН:</strong> 
-                  <div style={{marginLeft: 8}}>
+                <div className={styles.dataRow}>
+                  <span className={styles.dataLabel}>ИНН:</span>
+                  <span className={styles.dataValue}>
                     {inv.seller.inn}{inv.seller.kpp ? ` КПП: ${inv.seller.kpp}` : ''}
-                  </div>
-                </div>
-              )}
-              
-              {hasSellerData && inv.seller.ogrn && (
-                <div className={styles.flexRow}>
-                  <strong>ОГРН:</strong>
-                  <div style={{marginLeft: 8}}>{inv.seller.ogrn}</div>
+                  </span>
                 </div>
               )}
               
               {hasSellerData && inv.seller.account && inv.seller.bank && (
-                <div className={styles.flexRow}>
-                  <strong>р/с:</strong>
-                  <div style={{marginLeft: 8}}>{inv.seller.account} в {inv.seller.bank}</div>
+                <div className={styles.dataRow}>
+                  <span className={styles.dataLabel}>Банковские реквизиты:</span>
+                  <span className={styles.dataValue}>
+                    р/с {inv.seller.account} в {inv.seller.bank}
+                    {inv.seller.bik && <><br />БИК: {inv.seller.bik}</>}
+                    {inv.seller.korAccount && <><br />к/с: {inv.seller.korAccount}</>}
+                  </span>
                 </div>
               )}
               
-              {hasSellerData && inv.seller.bik && (
-                <div className={styles.flexRow}>
-                  <strong>БИК:</strong>
-                  <div style={{marginLeft: 8}}>
-                    {inv.seller.bik}{inv.seller.korAccount ? ` к/с: ${inv.seller.korAccount}` : ''}
-                  </div>
-                </div>
+              {!hasSellerData && (
+                <div className={styles.emptyData}>Данные поставщика не заполнены</div>
               )}
-              
-              {hasSellerData && inv.seller.bankAddress && (
-                <div className={styles.flexRow}>
-                  <strong>Адрес банка:</strong>
-                  <div style={{marginLeft: 8}}>{inv.seller.bankAddress}</div>
-                </div>
-              )}
-              
-              {!hasSellerData && <span className={styles.emptyData}>Данные поставщика не заполнены</span>}
             </div>
           </div>
 
@@ -365,117 +270,132 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Покупатель:</div>
             <div className={styles.sectionContent}>
-              {inv.customer.name || <span className={styles.emptyData}>________________________</span>}
+              <div className={styles.dataRow}>
+                <span className={styles.dataLabel}>Название:</span>
+                <span className={styles.dataValue}>
+                  {inv.customer.name || <span className={styles.emptyData}>________________________</span>}
+                </span>
+              </div>
               
               {inv.customer.inn && (
-                <div className={styles.flexRow}>
-                  <strong>ИНН:</strong>
-                  <div style={{marginLeft: 8}}>{inv.customer.inn}</div>
+                <div className={styles.dataRow}>
+                  <span className={styles.dataLabel}>ИНН:</span>
+                  <span className={styles.dataValue}>{inv.customer.inn}</span>
                 </div>
               )}
               
               {inv.customer.address && (
-                <div className={styles.flexRow}>
-                  <strong>Адрес:</strong>
-                  <div style={{marginLeft: 8}}>{inv.customer.address}</div>
+                <div className={styles.dataRow}>
+                  <span className={styles.dataLabel}>Адрес:</span>
+                  <span className={styles.dataValue}>{inv.customer.address}</span>
                 </div>
               )}
-              
-              {!inv.customer.name && !inv.customer.inn && !inv.customer.address && 
-                <span className={styles.emptyData}>Данные покупателя не указаны</span>
-              }
             </div>
           </div>
 
-          {/* Таблица товаров/услуг */}
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.tableHeader}>№</th>
-                <th className={styles.tableHeader}>Наименование</th>
-                <th className={styles.tableHeader}>Кол-во</th>
-                <th className={styles.tableHeader}>Ед.</th>
-                <th className={styles.tableHeader}>Цена</th>
-                <th className={styles.tableHeader}>Сумма</th>
-              </tr>
-            </thead>
-            <tbody>
-              {inv.items.length > 0 ? inv.items.map((item, idx) => (
-                <tr key={idx}>
-                  <td className={styles.tableCell}>{idx + 1}</td>
-                  <td className={styles.tableCellLeft}>{item.item_name}</td>
-                  <td className={styles.tableCell}>{item.qty}</td>
-                  <td className={styles.tableCell}>{item.unit}</td>
-                  <td className={styles.tableCellRight}>
-                    {item.price.toLocaleString('ru-RU')} руб.
-                  </td>
-                  <td className={styles.tableCellRight}>
-                    {item.total.toLocaleString('ru-RU')} руб.
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td className={styles.tableCell}>1</td>
-                  <td className={styles.tableCellLeft}>
-                    <span className={styles.emptyData}>___________</span>
-                  </td>
-                  <td className={styles.tableCell}>
-                    <span className={styles.emptyData}>___</span>
-                  </td>
-                  <td className={styles.tableCell}>
-                    <span className={styles.emptyData}>___</span>
-                  </td>
-                  <td className={styles.tableCellRight}>
-                    <span className={styles.emptyData}>___</span>
-                  </td>
-                  <td className={styles.tableCellRight}>
-                    <span className={styles.emptyData}>___</span>
-                  </td>
-                </tr>
-              )}
-              
-              {/* Итого */}
-              <tr className={styles.totalRow}>
-                <td colSpan={5} className={styles.tableCellRight}>
-                  Итого:
-                </td>
-                <td className={styles.tableCellRight}>
-                  {formatters.currency(inv.total)}
-                </td>
-              </tr>
-              
-              {/* НДС */}
-              {inv.vat > 0 && (
-                <tr>
-                  <td colSpan={5} className={styles.tableCellRight}>
-                    В том числе НДС
-                  </td>
-                  <td className={styles.tableCellRight}>
-                    {formatters.currency(inv.vat)}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-
-          {/* Условия оплаты */}
-          <div className={styles.paymentInfo}>
-            {inv.paymentDue && (
-              <div style={{marginBottom: "8px"}}>
-                <strong>Срок оплаты:</strong> {inv.paymentDue}
+          {/* Товары/услуги - вертикальный список для мобильных */}
+          <div className={styles.itemsSection}>
+            <div className={styles.itemsTitle}>Товары/услуги:</div>
+            
+            {inv.items?.length > 0 ? inv.items.map((item, idx) => (
+              <div key={idx} className={styles.itemCard}>
+                <div className={styles.itemHeader}>
+                  <span className={styles.itemNumber}>{idx + 1}.</span>
+                  <span className={styles.itemName}>{item.item_name}</span>
+                </div>
+                
+                <div className={styles.itemDetails}>
+                  <div className={styles.itemDetailRow}>
+                    <span className={styles.itemDetailLabel}>Количество:</span>
+                    <span className={styles.itemDetailValue}>{item.qty} {item.unit}</span>
+                  </div>
+                  
+                  <div className={styles.itemDetailRow}>
+                    <span className={styles.itemDetailLabel}>Цена:</span>
+                    <span className={styles.itemDetailValue}>{formatters.currency(item.price)}</span>
+                  </div>
+                  
+                  <div className={styles.itemDetailRow}>
+                    <span className={styles.itemDetailLabel}>Сумма:</span>
+                    <span className={styles.itemDetailValue}>{formatters.currency(item.total)}</span>
+                  </div>
+                </div>
+              </div>
+            )) : (
+              <div className={styles.itemCard}>
+                <div className={styles.itemHeader}>
+                  <span className={styles.itemNumber}>1.</span>
+                  <span className={styles.itemName}>
+                    <span className={styles.emptyData}>________________________</span>
+                  </span>
+                </div>
+                
+                <div className={styles.itemDetails}>
+                  <div className={styles.itemDetailRow}>
+                    <span className={styles.itemDetailLabel}>Количество:</span>
+                    <span className={styles.itemDetailValue}>
+                      <span className={styles.emptyData}>___</span>
+                    </span>
+                  </div>
+                  
+                  <div className={styles.itemDetailRow}>
+                    <span className={styles.itemDetailLabel}>Цена:</span>
+                    <span className={styles.itemDetailValue}>
+                      <span className={styles.emptyData}>___</span>
+                    </span>
+                  </div>
+                  
+                  <div className={styles.itemDetailRow}>
+                    <span className={styles.itemDetailLabel}>Сумма:</span>
+                    <span className={styles.itemDetailValue}>
+                      <span className={styles.emptyData}>___</span>
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
-            <div>
-              <strong>Назначение платежа:</strong> {inv.paymentPurpose || `Оплата по счету №${inv.invoiceNumber} от ${inv.invoiceDate}`}
+          </div>
+
+          {/* Итого */}
+          <div className={styles.totalSection}>
+            <div className={styles.totalRow}>
+              <span className={styles.totalLabel}>Итого:</span>
+              <span className={styles.totalValue}>{formatters.currency(inv.total)}</span>
+            </div>
+            
+            {inv.vat > 0 && (
+              <div className={styles.totalRow}>
+                <span className={styles.totalLabel}>В том числе НДС:</span>
+                <span className={styles.totalValue}>{formatters.currency(inv.vat)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Условия оплаты */}
+          <div className={styles.paymentSection}>
+            <div className={styles.paymentTitle}>Условия оплаты:</div>
+            
+            {inv.paymentDue && (
+              <div className={styles.paymentRow}>
+                <span className={styles.paymentLabel}>Срок оплаты:</span>
+                <span className={styles.paymentValue}>{inv.paymentDue}</span>
+              </div>
+            )}
+            
+            <div className={styles.paymentRow}>
+              <span className={styles.paymentLabel}>Назначение платежа:</span>
+              <span className={styles.paymentValue}>
+                {inv.paymentPurpose || `Оплата по счету №${inv.invoiceNumber} от ${inv.invoiceDate}`}
+              </span>
             </div>
           </div>
 
           {/* Подпись */}
-          <div className={styles.signature}>
+          <div className={styles.signatureSection}>
             <div className={styles.signatureLine}>
               ________________________ 
             </div>
-            <div className={styles.signatureText}>
+            <div className={styles.signatureName}>
               {inv.signer || (hasSellerData ? "Генеральный директор" : "ФИО, должность")}
             </div>
             <div className={styles.signatureNote}>

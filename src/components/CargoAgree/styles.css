@@ -1,0 +1,142 @@
+/* ContractPage.css */
+.contract-container {
+  font-family: 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 16px;
+  color: #000;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.document-title {
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.section {
+  margin-bottom: 16px;
+}
+
+.clause {
+  margin-bottom: 12px;
+  text-align: justify;
+}
+
+.clause-number {
+  font-weight: bold;
+}
+
+.signature-block {
+  margin-top: 40px;
+}
+
+.signature-line {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.signature-item {
+  width: 48%;
+  min-width: 200px;
+  margin-bottom: 16px;
+}
+
+.signature-name {
+  border-bottom: 1px solid #000;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  min-height: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 13px;
+}
+
+th, td {
+  border: 1px solid #000;
+  padding: 6px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  width: 30%;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.error-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .contract-container {
+    font-size: 13px;
+    padding: 12px;
+  }
+  
+  table {
+    font-size: 12px;
+  }
+  
+  th, td {
+    padding: 4px;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  th {
+    background-color: #f8f9fa;
+    border-bottom: none;
+  }
+  
+  td {
+    border-top: none;
+  }
+  
+  .signature-item {
+    width: 100%;
+  }
+  
+  .signature-line {
+    flex-direction: column;
+  }
+}
+
+/* Стили для печати */
+@media print {
+  .toolbar-actions {
+    display: none;
+  }
+  
+  ion-header {
+    display: none;
+  }
+  
+  .contract-container {
+    padding: 0;
+    max-width: none;
+  }
+}

@@ -3,6 +3,7 @@ import { useHistory }               from 'react-router';
 import { useSocket }                from '../../../Store/useSocket';
 import { useToken }                 from '../../../Store/loginStore';
 import { DriverInfo }               from '../../../Store/cargoStore';
+import { useToast } from '../../Toast';
 
 export interface TaskCompletion {
     delivered: boolean;
@@ -11,10 +12,13 @@ export interface TaskCompletion {
 
 export const useInvoices = ({ info }) => {
     const [invoices, setInvoices]       = useState( info && info.invoices || []);
+    const [ contract, setContract ]     = useState<any>()
     const [isLoading, setIsLoading]     = useState(false);
     const history                       = useHistory();
     const { emit, once }                = useSocket();
     const token                         = useToken();
+    const toast                         = useToast();
+
 
     const handleAccept = useCallback(async (info: DriverInfo, status: number ) => {
         
@@ -48,6 +52,62 @@ export const useInvoices = ({ info }) => {
         
     }, [once, emit, token]);
 
+
+    const get_contract = useCallback(async (info: DriverInfo ) => {
+        
+        setIsLoading(true);
+                
+        once('get_pdf1', (data: { success: boolean; message?: string; data:any }) => {
+            console.log("get_pdf1", data)
+            if (data.success) {
+                
+               setContract( 'data:application/pdf;base64,' + data.data) 
+
+            } else {
+
+                console.error("Ошибка при принятии заявки:", data.message);
+
+            }
+            setIsLoading(false);
+        });
+
+        emit('get_pdf1', {
+            token:      token,
+            id:         info.guid,
+        });
+        
+    }, [once, emit, token]);
+
+
+    const create_contract = useCallback(async (info: DriverInfo, sign: string ) => {
+        
+        setIsLoading(true);
+                
+        once('create_contract', (data: { success: boolean; message?: string; data:any }) => {
+            console.log("create_contract", data)
+            if (data.success) {
+                
+               toast.success(" Договор создан и подписан" )
+
+            } else {
+
+                console.error("Ошибка при принятии заявки:", data.message);
+
+            }
+            setIsLoading(false);
+        });
+
+        emit('create_contract', {
+            token:          token,
+            id:             info.guid,
+            cargo_id:       info.cargo,
+            driver_id:      info.recipient,
+            sign:           sign
+        });
+        
+    }, [once, emit, token]);
+
+
     const handleReject = useCallback(async (info: DriverInfo) => {
         setIsLoading(true);
         try {
@@ -69,6 +129,7 @@ export const useInvoices = ({ info }) => {
             setIsLoading(false);
         }
     }, [emit, token]);
+
 
     const handleComplete = useCallback(async (info: DriverInfo, rating: number, tasks: TaskCompletion) => {
         setIsLoading(true);
@@ -96,6 +157,7 @@ export const useInvoices = ({ info }) => {
         }
     }, [emit, token]);
 
+    
     const handleChat = useCallback((info: DriverInfo) => {
         history.push(`/tab2/${info.recipient}:${info.cargo}:${info.client}`);
     }, [history]);
@@ -103,6 +165,10 @@ export const useInvoices = ({ info }) => {
     return {
         invoices,
         isLoading,
+        contract,
+        setContract,
+        get_contract,
+        create_contract,
         handleAccept,
         handleReject,
         handleComplete,

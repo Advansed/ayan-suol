@@ -226,3 +226,145 @@
   33% { content: '..'; }
   66% { content: '...'; }
 }
+
+
+
+.cargo-cost-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.cargo-cost-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.cargo-cost-info {
+  flex: 1;
+}
+
+.cost-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+
+.cost-subtitle {
+  display: block;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.cargo-cost-input-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 140px;
+}
+
+.input-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.cost-input {
+  width: 100%;
+  text-align: right;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  --padding-end: 32px;
+  --padding-start: 16px;
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  border: 2px solid #e8e8e8;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: all 0.2s ease;
+}
+
+.cost-input:focus-within {
+  border-color: #007aff;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.input-currency {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  font-weight: 600;
+  color: #666;
+  pointer-events: none;
+}
+
+.cost-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cost-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #007aff;
+  line-height: 1;
+}
+
+.cost-hint {
+  font-size: 12px;
+  color: #999;
+  padding: 2px 8px;
+  background: #f0f0f0;
+  border-radius: 10px;
+}
+
+.cost-hint-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  background: #f8f9ff;
+  border-radius: 8px;
+  border-left: 3px solid #007aff;
+}
+
+.hint-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.hint-text {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .cargo-cost-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .cargo-cost-input-section {
+    width: 100%;
+    align-items: stretch;
+  }
+  
+  .cost-input {
+    font-size: 18px;
+  }
+}

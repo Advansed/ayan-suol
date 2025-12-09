@@ -1,9 +1,10 @@
 import React            from 'react';
-import { IonRefresher, IonRefresherContent, IonSpinner
+import { IonButton, IonFab, IonFabButton, IonRefresher, IonRefresherContent, IonSpinner
 }                       from '@ionic/react';
 import { CargoCard }    from './CargoCard';
 import { Package }      from "lucide-react";
 import { CargoInfo }    from '../../../Store/cargoStore';
+import { WizardHeader } from '../../Header/WizardHeader';
 
 interface CargosListProps {
     cargos:         CargoInfo[];
@@ -20,13 +21,6 @@ export const CargosList: React.FC<CargosListProps> = ({
     onCargoClick,
     onRefresh
 }) => {
-
-    const handleRefresh = async (event: any) => {
-        if (onRefresh) {
-            await onRefresh();
-        }
-        event.detail.complete();
-    };
 
     const renderEmptyState = () => (
         <div className="cr-card mt-1 text-center">
@@ -50,31 +44,26 @@ export const CargosList: React.FC<CargosListProps> = ({
 
     return (
         <>
-            {/* Refresher */}
-            {onRefresh && (
-                <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-                    <IonRefresherContent></IonRefresherContent>
-                </IonRefresher>
-            )}
-
             {/* Header */}
-            <div className="ml-05 mt-1 a-center fs-09">
-                <b>Мои заказы</b>
-                {cargos.length > 0 && (
-                    <span className="ml-1 fs-08 cl-gray">({cargos.length})</span>
-                )}
+            <div className='ml-1 mr-1'>
+                <WizardHeader 
+                    title       = { 'Мои заказы (' + cargos.length.toString() + ')' }
+                    onRefresh   = { onRefresh }
+                />
             </div>
 
             {/* Кнопка создания нового груза */}
-            <div className="mb-4 ml-1 mr-1 mt-1">
-                <div 
-                    className   = "gradient-button"
+
+            <IonFab vertical="bottom" horizontal="end" slot="fixed">
+                <IonButton
+                    color = "primary"
                     onClick     = { onCreateNew }
                 >
-                    <Package className="w-6 h-6" />
-                <span className="ml-3 font-semibold">Создать новый груз</span>
-                </div>
-            </div>
+                    <Package className="w-6 h-6 mr-1" />
+                    <span> Новый груз </span>
+                    
+                </IonButton>
+            </IonFab>
 
             {/* Список грузов */}
         

@@ -190,6 +190,7 @@
 .w-3 { width: 3em }
 .w-35 { width: 3.5em }
 .w-4 { width: 4em }
+.w-auto { width: auto }
 
 .h-10 { height: 10% }
 .h-20 { height: 20% }
@@ -213,6 +214,8 @@
 .h-3 { height: 3em }
 .h-35 { height: 3.5em }
 .h-4 { height: 4em }
+.h-auto { height: auto }
+
 .hs-10 { height: 10em }
 
 .flex { display: flex; align-items: center; }

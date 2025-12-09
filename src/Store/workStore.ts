@@ -6,7 +6,8 @@ import {
     WorkStatus, 
     WorkPageType, 
     WorkFilters, 
-    OfferInfo 
+    OfferInfo, 
+    WorkPriority
 } from '../components/Works/types'
 
 // ============================================
@@ -46,13 +47,16 @@ type WorkStore = WorkState & WorkActions
 // ============================================
 // КОНСТАНТЫ
 // ============================================
+
 export const EMPTY_WORK: WorkInfo = {
-  guid: '',
-  cargo: '',
-  recipient: '',
-  client: '',
-  name: '',
-  description: '',
+  guid:           '',
+  cargo:          '',
+  recipient:      '',
+  client:         '',
+  name:           '',
+  transport:      '',
+  description:    '',
+
   address: {
     city: { city: '', fias: '' },
     address: '',
@@ -67,14 +71,20 @@ export const EMPTY_WORK: WorkInfo = {
     lat: 0,
     lon: 0
   },
-  pickup_date: '',
-  delivery_date: '',
-  weight: 0,
-  volume: 0,
-  price: 0,
-  phone: '',
-  face: '',
-  status: WorkStatus.NEW
+  weight:         0,
+  volume:         0,
+  price:          0,
+  advance:        0,
+  insurance:      0,
+
+  pickup_date:    '',
+  delivery_date:  '',
+
+  phone:          '',
+  face:           '',
+
+  status:         WorkStatus.NEW
+
 }
 
 // ============================================

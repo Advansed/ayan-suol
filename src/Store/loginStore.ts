@@ -31,6 +31,7 @@ export interface UserData {
   account:            string
   password:           string
   seller:             string
+  gender:             boolean
   ratings:            UserRatings
   agreements:         Agreements
 }
@@ -43,6 +44,7 @@ interface LoginState {
   auth:               boolean
   isLoading:          boolean
   id:                 string
+  logo:               boolean
   name:               string
   phone:              string
   email:              string
@@ -52,12 +54,16 @@ interface LoginState {
   description:        string
   account:            string
   seller:             string
+  gender:             boolean
   ratings:            UserRatings
   agreements:         Agreements
 }
 
 interface LoginActions {
+  setType:            ( user_type: number ) => void
+  setLogo:            ( logo: boolean ) => void
   setAuth:            ( auth: boolean ) => void
+  setToken:           ( token: string ) => void
   setLoading:         ( loading: boolean ) => void
   setUser:            ( userData: AuthResponse ) => void
   updateUser:         ( updates: Partial<UserData> ) => void
@@ -76,6 +82,7 @@ export const useLoginStore = create<LoginStore>()(
       // STATE
       auth:             false,
       isLoading:        false,
+      logo:             true,
       id:               '',
       name:             '',
       phone:            '',
@@ -86,11 +93,15 @@ export const useLoginStore = create<LoginStore>()(
       description:      '',
       account:          '',
       seller:           '',
+      gender:           true,
       ratings:          { orders: 0, rate: 0, invoices: 0, payd: 0 },
       agreements:       { personalData: false, userAgreement: false, marketing: false },
 
       // ACTIONS
+      setType:          (user_type) => set({ user_type }),
+      setLogo:          (logo) => set({ logo }),
       setAuth:          (auth) => set({ auth }),
+      setToken:         (token) => set({ token }),
       setLoading:       (isLoading) => set({ isLoading }),
       setUser:          (userData) => set({ 
                         ...userData, 
@@ -110,6 +121,7 @@ export const useLoginStore = create<LoginStore>()(
         description:    '',
         account:        '',
         seller:         '',
+        gender:         true,
         ratings:        { orders: 0, rate: 0, invoices: 0, payd: 0 },
         agreements:     { personalData: false, userAgreement: false, marketing: false }
       }),
@@ -129,8 +141,6 @@ export const useLoginStore = create<LoginStore>()(
 // СЕЛЕКТИВНЫЕ ХУКИ
 // ============================================
 export const useToken = () => useLoginStore(state => state.token)
-
-export const useUserType = () => useLoginStore(state => state.user_type)
 
 export const useAuth = () => useLoginStore(state => ({
   token: state.token,
@@ -158,6 +168,13 @@ export const useUserProfile = () => useLoginStore(state => ({
 }))
 
 export const useAgreements = () => useLoginStore(state => state.agreements)
+
+export const useUserType = () => {
+  const user_type = useLoginStore(state => state.user_type )
+  const setType   = useLoginStore(state => state.setType )
+
+  return  { user_type, setType }
+}
 
 // ============================================
 // ГЕТТЕРЫ (совместимость)
@@ -191,6 +208,7 @@ export const loginGetters = {
 export const loginActions = {
   
   setAuth:            ( auth: boolean ) => useLoginStore.getState().setAuth(auth),
+  setToken:           ( token: string ) => useLoginStore.getState().setToken( token ),
   setUser:            ( userData: AuthResponse ) => useLoginStore.getState().setUser(userData),
   clearAuth:          ( ) => useLoginStore.getState().clearAuth(),
   updateUser:         ( updates: Partial<UserData> ) => useLoginStore.getState().updateUser(updates),

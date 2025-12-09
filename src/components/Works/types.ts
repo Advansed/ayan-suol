@@ -3,7 +3,6 @@
  */
 
 import { CargoAddress }         from "../../Store/cargoStore";
-import { ValidationErrors }     from "../Cargos";
 
 
 // Статусы работ с точки зрения водителя
@@ -122,12 +121,12 @@ export type WorkPageType =
     | { type: 'offer'; work: WorkInfo }
     | { type: 'archive' }
     | { type: 'map'; work: WorkInfo }
-    | { type: 'page1'; work: WorkInfo };
+    | { type: 'page1'; work: WorkInfo }
+    | { type: 'page2'; work: WorkInfo };
 
 // Состояние формы предложения
 export interface OfferFormState {
     data:           CreateOfferData;
-    errors:         ValidationErrors;
     isValid:        boolean;
     isSubmitting:   boolean;
     isDirty:        boolean;

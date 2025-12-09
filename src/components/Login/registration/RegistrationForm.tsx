@@ -4,7 +4,6 @@
 
 import React, { useCallback, useState } from 'react'
 import { IonCard } from '@ionic/react'
-import { useReg, UseRegReturn } from './useReg'
 import { 
   MaskedInput, 
   TextInput, 
@@ -15,6 +14,8 @@ import {
 } from '../SharedComponents'
 import styles from './Registration.module.css'
 import EULA from './eula'
+import { useReg, UseRegReturn } from './hooks/useReg'
+import { useEULA, UseEULAReturn } from './hooks/useEULA'
 
 interface RegistrationFormProps {
   onSwitchToLogin?: () => void
@@ -31,14 +32,25 @@ const formatPhoneDisplay = (phone: string): string => {
 // ШАГ 0: ВЫБОР РОЛИ
 // ======================
 
-const RoleSelector: React.FC<{ reg: UseRegReturn, setShowAgreement: (check:boolean)=> void, agree: boolean }> = ({ reg, setShowAgreement, agree }) => {
+const RoleSelector: React.FC<{ 
+  reg: UseRegReturn, 
+  eula: UseEULAReturn 
+}> = ({ reg, eula }) => {
   
-  const handleNext = useCallback(() => {
+  const handleNext = () => {
+    // Проверяем соглашение перед переходом
+    const eulaError = eula.validateEULA()
+    if (eulaError) {
+      reg.updateFormData('agreementError', eulaError)
+      return
+    }
+    
     if (reg.formData.userType) {
       reg.updateRegistrationData('userType', reg.formData.userType)
+      reg.updateFormData('agreementAccepted', eula.isEULAAccepted)
       reg.nextStep()
     }
-  }, [reg])
+  }
   
   return (
     <div className="login-container">
@@ -71,36 +83,41 @@ const RoleSelector: React.FC<{ reg: UseRegReturn, setShowAgreement: (check:boole
         </div>
       </div>
 
-{/* Чекбокс согласия с пользовательским соглашением */}
+      {/* Чекбокс согласия с пользовательским соглашением */}
       <div className="mt-3">
         <label className="flex items-start gap-2 text-sm">
           <input
             type="checkbox"
-            checked={ agree }
-            onChange={(e) => reg.updateFormData('agreementAccepted', e.target.checked)}
+            checked={eula.isEULAAccepted}
+            onChange={(e) => {
+              eula.setEULAAccepted(e.target.checked)
+              reg.updateFormData('agreementAccepted', e.target.checked)
+              reg.updateFormData('agreementError', '')
+            }}
             className="mt-1 flex-shrink-0"
           />
           <span>
             Я принимаю условия{' '}
-            <div className='ml-05 t-underline'
-              onClick={() => setShowAgreement(true)}
+            <button
+              type="button"
+              className="ml-05 t-underline text-blue-600 hover:text-blue-800"
+              onClick={eula.openEULA}
             >
               Пользовательского соглашения
-            </div>
+            </button>
           </span>
         </label>
-        {reg.formErrors.agreementAccepted && (
-          <div className="text-red-500 text-xs mt-1">{reg.formErrors.agreementAccepted}</div>
+        {reg.formData.agreementError && (
+          <div className="text-red-500 text-xs mt-1">{reg.formData.agreementError}</div>
         )}
       </div>
 
       <FormButtons
-        onNext    = { handleNext }
-        nextText  = "Далее"
-        disabled  = { !reg.formData.userType }
-        loading   = { reg.isLoading }
+        onNext={handleNext}
+        nextText="Далее"
+        disabled={!reg.formData.userType || !eula.isEULAAccepted}
+        loading={reg.isLoading}
       />
-
     </div>
   )
 }
@@ -353,12 +370,11 @@ const StepSetPassword: React.FC<{ reg: UseRegReturn, toLogin: any }> = ({ reg, t
 
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin, onSwitchToRecovery }) => {
   const reg = useReg()
-  const [showAgreement, setShowAgreement ] = useState(false)
-  const [ check, setCheck ] = useState(false)
+  const eula = useEULA(false) // Изначально не принято
 
   
   const steps = [
-    <RoleSelector     reg={reg} setShowAgreement = { (check: boolean) => setShowAgreement(check) } agree = { check } />,        // Шаг 0: Выбор роли
+    <RoleSelector     reg={reg} eula={ eula } />,        // Шаг 0: Выбор роли
     <StepPersonalInfo reg={reg} />,    // Шаг 1: Личные данные  
     <StepVerification reg={reg} />,    // Шаг 2: Верификация
     <StepSetPassword  reg={reg} toLogin = { onSwitchToLogin }/>      // Шаг 3: Пароль
@@ -394,18 +410,14 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin, on
           onClick={ onSwitchToLogin }
         >Есть аккаунт? Авторизироваться</div>
       </IonCard>
-        {showAgreement && (
-        <div className={ styles.showAgreementOverlay }  onClick={() => setShowAgreement(false)}>
-          <div className={ styles.showAgreementContent } onClick={e => e.stopPropagation()}>
-            <EULA
-              check   = { check }
-              onClose = { ()=> setShowAgreement(false)}
-              isOpen  = { showAgreement }
-              setCheck = { (check: boolean) => setCheck(check) }
-            />
-          </div>
-        </div>
-      )}
+       
+       {/* Модальное окно EULA */}
+      <EULA
+        check     = { eula.isEULAAccepted }
+        onClose   = { eula.closeEULA }
+        isOpen    = { eula.isEULAOpen }
+        setCheck  = { eula.setEULAAccepted }
+      />
 
     </div>
   )

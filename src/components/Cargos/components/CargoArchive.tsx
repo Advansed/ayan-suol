@@ -3,6 +3,7 @@ import { IonRefresher, IonRefresherContent } from '@ionic/react';
 import { CargoCard } from '../components/CargoCard';
 import useCargoArchive from '../hooks/useCargoArchive';
 import './CargoArchive.css'
+import { WizardHeader } from '../../Header/WizardHeader';
 
 const CargoArchive = () => {
   const { cargos, refresh } = useCargoArchive();
@@ -20,16 +21,11 @@ const CargoArchive = () => {
 
   return (
     <div className="cr-container">
+      <WizardHeader
+          title       = { 'Архив' }
+          onRefresh   = { refresh }
+      />
       
-      <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-        <IonRefresherContent
-          pullingIcon="chevron-down-outline"
-          pullingText="Потяните для обновления"
-          refreshingSpinner="circles"
-          refreshingText="Обновление..."
-        />
-      </IonRefresher>
-
       <div className="cr-stats">
         Завершенных заказов: {cargos.length}
       </div>

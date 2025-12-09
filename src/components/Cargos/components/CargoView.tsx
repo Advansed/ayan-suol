@@ -18,6 +18,7 @@ import {
 import { CargoCard } from './CargoCard';
 import { statusUtils, formatters } from '../utils';
 import { cargoGetters, CargoInfo, CargoStatus } from '../../../Store/cargoStore';
+import { WizardHeader } from '../../Header/WizardHeader';
 
 
 interface CargoViewProps {
@@ -114,16 +115,11 @@ export const CargoView: React.FC<CargoViewProps> = ({
             <IonLoading isOpen={isLoading} message="Подождите..." />
             
             {/* Header */}
-            <div className="flex ml-05 mt-05">
-                <IonIcon 
-                    icon={arrowBackOutline} 
-                    className="w-15 h-15"
-                    onClick={onBack}
-                    style={{ cursor: 'pointer' }}
+            <div className='ml-1 mr-1'>
+                <WizardHeader
+                    title       = { currentCargo.status + ' #' + formatters.shortId(cargo.guid) }
+                    onBack      = { onBack }
                 />
-                <div className="a-center w-90 fs-09">
-                    <b>{currentCargo.status} #{formatters.shortId(cargo.guid)}</b>
-                </div>
             </div>
 
             {/* Карточка груза */}
@@ -172,7 +168,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
                             onClick={ ()=>onPayment( cargo ) }
                         >
                             <IonIcon icon={cardOutline} slot="start" />
-                            <IonLabel className="fs-08">{ hasAdvance ? 'Доплатить' : 'Предоплата'}</IonLabel>
+                            <IonLabel className="fs-08">{ hasAdvance ? 'Доплатить' : 'Спецсчет'}</IonLabel>
                         </IonButton>
                                 
                         <IonButton

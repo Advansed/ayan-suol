@@ -8,6 +8,7 @@ import { passportGetters } from '../../../Store/passportStore';
 import { companyGetters } from '../../../Store/companyStore';
 import { transportGetters } from '../../../Store/transportStore';
 import { useToast } from '../../Toast';
+import { WizardHeader } from '../../Header/WizardHeader';
 
 interface WorkViewProps {
     work:           WorkInfo;
@@ -155,15 +156,11 @@ export const WorkView: React.FC<WorkViewProps> = ({
     const renderView        = ( work: WorkInfo) => {
         return <>
             {/* Header */}
-            <div className="flex ml-05 mt-05">
-                <IonIcon 
-                    icon={arrowBackOutline} 
-                    className="w-15 h-15"
-                    onClick={onBack}
+            <div className='ml-1 mr-1'>
+                <WizardHeader 
+                    title   = { "Заказ ID " + workInfo.guid.substr(0, 8) }
+                    onBack  = { onBack }
                 />
-                <div className="a-center w-90 fs-09">
-                    <b>{"Заказ ID " + workInfo.guid.substr(0, 8)}</b>
-                </div>
             </div>
 
             <div className='cr-card mt-1'>

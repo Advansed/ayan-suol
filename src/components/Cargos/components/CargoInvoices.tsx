@@ -1,4 +1,4 @@
-import React, { useState }              from 'react';
+import React, { useEffect, useState }              from 'react';
 import { CargoInfo, DriverInfo }        from '../../../Store/cargoStore';
 import { WizardHeader }                 from '../../Header/WizardHeader';
 import { IonButton, IonCard, IonIcon }  from '@ionic/react';
@@ -10,7 +10,8 @@ import { CargoPage2 }                   from './CargoPage2';
 import { useSocket }                    from '../../../Store/useSocket';
 import { useToken }                     from '../../../Store/loginStore';
 import { CargoPage3, SaveData3 }        from './CargoPage3';
-import { api } from '../../../Store/api';
+import { api }                          from '../../../Store/api';
+import { CargoPage4, SaveData4 }        from './CargoPage4';
 
 interface CargoInvoiceSectionsProps {
     cargo:      CargoInfo;
@@ -23,16 +24,18 @@ interface Route1 {
 }
 
 export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ cargo, onBack }) => {
-    const { invoices, isLoading,  handleAccept,  handleReject, handleChat } = useInvoices({ info: cargo })
+    const { invoices, isLoading, contract, handleAccept,  handleReject, handleChat, get_contract, setContract, create_contract } = useInvoices({ info: cargo })
     const [ page, setPage ] = useState<Route1>({ type: 'main', info: undefined })
     const { emit } = useSocket()
     const token = useToken()
 
-    const AcceptClick           = async(invoice: DriverInfo, data: any, status: number) => {   
+    useEffect(()=>{ console.log(contract)},[contract])
 
+    const AcceptClick           = async(invoice: DriverInfo, data: any, status: number) => {   
+        
         await handleAccept( invoice, status )
     
-        if( status === 16 ){
+        if( status === 16 ) {
             data.sealPhotos.forEach(elem => {
                 // emit("send_message", {
                 //     token:          token,
@@ -61,7 +64,7 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
                 message:        "Транспорт отправлен в точку разгрузки",
             })                
         } else 
-        if( status === 18 ){
+        if( status === 18 ) {
             data.sealPhotos.forEach(elem => {
                 api("api/sendimage", {
                     token:          token,
@@ -90,19 +93,28 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
                 message:        "Разгрузка начата",
             })                
         } else 
-
-        if( status === 20 ){
+        if( status === 20 ) {
             emit("send_message", {
                 token:          token,
                 recipient:      invoice.recipient,
                 cargo:          invoice.cargo,
                 message:        "Все работы выполнены",
             })                
-       } 
+        } 
 
 
         return true
 
+    }
+
+    const handleClick            = async( invoice:DriverInfo ) => {
+
+        await get_contract( invoice )
+        setPage({ type: "page4", info: invoice })
+    }
+
+    const handleClose           = async () => {
+        setContract( undefined )
     }
 
     // Рендер секции инвойсов
@@ -168,10 +180,10 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
                         <div className='flex mt-1'>
 
                             <IonButton
-                                className   = "w-100 cr-button-1"
+                                className   = "w-100"
                                 mode        = "ios"
                                 color       = "primary"
-                                onClick     = { () => handleAccept( invoice, 12 ) }
+                                onClick     = { () => handleClick( invoice ) }
                                 disabled    = { isLoading }
                             >
                                 <span className="ml-1 fs-1">Принять предложение
@@ -350,7 +362,7 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
     const render                = () =>{
         return (
             <>
-                <div className='ml-1 mr-1 mt-1'>
+                <div className='ml-1 mr-1'>
                     <WizardHeader 
                         title   = "Заявки "
                         pages   = { cargo && cargo.name || '' }
@@ -401,6 +413,23 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
         )
     }
 
+    const renderPage4           = ( invoice: DriverInfo ) => {
+        return (
+            <>
+                <CargoPage4
+                    info    = { invoice }
+                    pdf     = { contract }
+                    onBack  = { () => { setPage({type: "main", info: undefined})}}
+                    onSave  = { (data: SaveData4) => { 
+                        console.log('sign', data)
+                        create_contract( invoice, data.sign )
+                        return AcceptClick( invoice, data, 12 ) 
+                    }}
+                />
+            </> 
+        )
+    }
+
     return (
         <>
         {
@@ -412,8 +441,11 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
                 ? page.info && renderPage2( page.info )
             : page.type === 'page3' 
                 ? page.info && renderPage3( page.info )
+            : page.type === 'page4' 
+                ? page.info && renderPage4( page.info )
             : <></>
         }
+         
       </>
     );
 };

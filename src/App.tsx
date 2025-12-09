@@ -1,4 +1,4 @@
-import { Redirect, Route, useHistory } from 'react-router-dom';
+import { Redirect, Route, Switch, useHistory } from 'react-router-dom';
 import {
   IonApp,
   IonIcon,
@@ -59,17 +59,17 @@ setupIonicReact({
 const AppContent: React.FC = () => {
   const { auth, user } = useLogin();
 
-  useSocketManager()
+  useSocketManager();
 
   const get_Version = async () => {
-    const res = await getVersion()
-    console.log(res)
-  }
+    const res = await getVersion();
+    console.log(res);
+  };
 
-  useEffect(()=>{
-    console.log("useeffect")
-     get_Version()
-  },[])
+  useEffect(() => {
+    console.log("useeffect");
+    get_Version();
+  }, []);
 
   return (
     <ServerConnectionGuard>
@@ -77,55 +77,68 @@ const AppContent: React.FC = () => {
         <IonReactRouter>
           <IonTabs>
             <IonRouterOutlet>
+              <Switch>
+                <Route exact path="/tab1">
+                  <Tab1 />
+                </Route>
 
-              <Route exact path="/tab1"> <Tab1 /> </Route>
+                <Route exact path="/tab2">
+                  <Tab2 />
+                </Route>
 
-              <Route exact path="/tab2"> <Tab2 /> </Route>
+                <Route exact path="/tab2/:name">
+                  <Tab2 />
+                </Route>
 
-              <Route exact path="/tab2/:name"> <Tab2 /> </Route>
+                <Route exact path="/tab3">
+                  <Tab3 />
+                </Route>
 
-              <Route path="/tab3"> <Tab3 /> </Route>
+                <Route exact path="/tab3/:name">
+                  <Tab3 />
+                </Route>
 
-              <Route path="/tab3/:name"> <Tab3 /> </Route>
+                <Route exact path="/tab4">
+                  <Tab4 />
+                </Route>
 
-              <Route path="/tab4"> <Tab4 /> </Route>
+                <Route exact path="/">
+                  <Redirect to="/tab1" />
+                </Route>
 
-              <Route exact path="/"> <Redirect to="/tab1" /> </Route>
-
+                {/* Fallback route для несуществующих путей */}
+                <Route>
+                  <Redirect to="/tab1" />
+                </Route>
+              </Switch>
             </IonRouterOutlet>
+            
             <IonTabBar slot="bottom">
-
               <IonTabButton tab="tab1" href="/tab1">
-                <IonIcon aria-hidden="true" icon={ contractOutline } />
+                <IonIcon aria-hidden="true" icon={contractOutline} />
                 <IonLabel>{user.user_type === 2 ? "Работы" : "Заказы"}</IonLabel>
               </IonTabButton>
 
               <IonTabButton tab="tab4" href="/tab4">
-                <IonIcon aria-hidden="true" icon={ archiveOutline } />
+                <IonIcon aria-hidden="true" icon={archiveOutline} />
                 <IonLabel>Архив</IonLabel>
               </IonTabButton>
 
-              <IonTabButton tab="tab2" href="/tab2"
-                onClick={()=>{
-                  console.log("/tab2")
-                }}
-              >
-                <IonIcon aria-hidden="true" icon={ chatboxEllipsesOutline } />
-                <IonLabel>{user.user_type === 2 ? "Чат" : "Чат"}</IonLabel>
+              <IonTabButton tab="tab2" href="/tab2">
+                <IonIcon aria-hidden="true" icon={chatboxEllipsesOutline} />
+                <IonLabel>Чат</IonLabel>
               </IonTabButton>
 
               <IonTabButton tab="tab3" href="/tab3">
                 <IonIcon aria-hidden="true" icon={personOutline} />
                 <IonLabel>Профиль</IonLabel>
               </IonTabButton>
-
             </IonTabBar>
           </IonTabs>
         </IonReactRouter>
       ) : (
         <Login />
       )}
-      {/* <ConnectionStatus /> */}
     </ServerConnectionGuard>
   );
 };

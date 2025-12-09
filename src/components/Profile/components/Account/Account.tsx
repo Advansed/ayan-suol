@@ -266,7 +266,10 @@ export const Account: React.FC<AccountProps> = ({ onBack }) => {
             {transactions.length > 0 ? (
               transactions.map((transaction) => (
                 <div key={transaction.id} className={styles.transaction}
-                  onClick = { () => handleOpenInvoice( transaction.id ) }
+                  onClick = { () => {
+                    if( transaction.type === 'inv' )
+                      handleOpenInvoice( transaction.id ) }
+                  }
                 >
                   <div className={styles.transactionIcon}>
                     {

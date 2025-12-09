@@ -16,6 +16,7 @@ export interface CompanyData {
   address?: string
   postal_address?: string
   phone?: string
+  basis?: string
   email?: string
   description?: string
   bank_name?: string
@@ -60,6 +61,7 @@ export const EMPTY_COMPANY: CompanyData = {
   kpp: '',
   ogrn: '',
   name: '',
+  basis: '',
   short_name: '',
   address: '',
   postal_address: '',

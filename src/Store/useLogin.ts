@@ -25,7 +25,7 @@ export function Phone(phone: string): string {
 export function useLogin() {
   // State subscriptions
   const {
-    auth, id, name, phone, email, image, token, user_type,
+    auth, id, name, phone, email, gender, image, token, user_type,
     description, account, ratings, agreements, isLoading,
     setAuth, setLoading, setUser, updateUser, clearAuth
   } = useLoginStore()
@@ -37,7 +37,7 @@ export function useLogin() {
 
   // User object
   const user = {
-    id, name, phone, email, image, token, 
+    id, name, phone, email, gender, image, token, 
     user_type, description, account, ratings, agreements
   }
 
@@ -65,6 +65,7 @@ export function useLogin() {
           localStorage.setItem("gvrs.password", password )
           
           if (response.success && response.data) {
+            console.log("authorization", response)
             setUser(response.data)
             setAuth( true )
             toast.success('Вход выполнен успешно')

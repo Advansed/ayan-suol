@@ -14,18 +14,20 @@ import { useValidation }                        from './hooks/useValidation';
 import { ViewField }                            from './fields/ViewField';
 import { ImagesField }                          from './fields/ImagesField';
 import './styles.css';
-import { ImageField } from './fields/ImageField';
-import { CheckField } from './fields/CheckField';
-import { RateField } from './fields/RateField';
+import { ImageField }                           from './fields/ImageField';
+import { CheckField }                           from './fields/CheckField';
+import { RateField }                            from './fields/RateField';
+import { SignField }                            from './fields/SignField';
+import { PdfField }                             from './fields/PDFField';
 
 const DataEditor: React.FC<DataEditorProps> = ({ 
     data, 
     onSave, 
     onBack
 }) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const navigation = useNavigation(data.length);
-  const formState = useFormState(data);
+  const scrollRef   = useRef<HTMLDivElement>(null);
+  const navigation  = useNavigation(data.length);
+  const formState   = useFormState(data);
   const { errors, validateField, setError, clearAll } = useValidation();
  
 
@@ -120,6 +122,7 @@ const DataEditor: React.FC<DataEditorProps> = ({
 
         case 'view':        return <ViewField       { ...props } />;
         case 'string':      return <TextField       { ...props } />;
+        case 'label':       return <TextField       { ...props } disabled = { true } />;
         case 'password':    return <TextField       { ...props } type = { "password" }/>;
         case 'number':      return <NumberField     { ...props } />;
         case 'select':      return <SelectField     { ...props } options={field.values || []} />;
@@ -129,7 +132,9 @@ const DataEditor: React.FC<DataEditorProps> = ({
         case 'party':       return <PartyField      { ...props } cityFias = { fias } />;
         case 'image':       return <ImageField      { ...props } />;
         case 'images':      return <ImagesField     { ...props } />;
+        case 'sign':        return <SignField       { ...props } />;
         case 'check':       return <CheckField      { ...props } />;
+        case 'pdf':         return <PdfField        { ...props } />;
         case 'rate':        return <RateField       { ...props } />;
 
         default:            return null;
@@ -143,7 +148,7 @@ const DataEditor: React.FC<DataEditorProps> = ({
 
   return (
     <div className="data-editor-wizard">
-      <div className="wizard-content" ref={scrollRef}>
+      <div className="ml-1 mr-1" ref={scrollRef}>
         <WizardHeader
           title         = { currentSection.title }
           pages         = { getPageTitle() }

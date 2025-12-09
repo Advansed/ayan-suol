@@ -322,7 +322,7 @@ export const initCargoSocketHandlers = (socket: any) => {
     
     socket.on('get_cargos',           cargoSocketHandlers.onGetCargos)
     socket.on('get_cargo_archives',   cargoSocketHandlers.onGetCargoArchives)
-    socket.on('save_cargo',           cargoSocketHandlers.onSaveCargo)  
+    socket.on('set_cargo',            cargoSocketHandlers.onSaveCargo)  
     socket.on('delete_cargo',         cargoSocketHandlers.onDeleteCargo)
     socket.on('publish_cargo',        cargoSocketHandlers.onPublishCargo)
     
@@ -334,7 +334,7 @@ export const destroyCargoSocketHandlers = (socket: any) => {
     
     socket.off('get_cargos',          cargoSocketHandlers.onGetCargos)
     socket.off('get_cargo_archives',  cargoSocketHandlers.onGetCargoArchives)
-    socket.off('save_cargo',          cargoSocketHandlers.onSaveCargo)
+    socket.off('set_cargo',          cargoSocketHandlers.onSaveCargo)
     socket.off('delete_cargo',        cargoSocketHandlers.onDeleteCargo)
     socket.off('publish_cargo',       cargoSocketHandlers.onPublishCargo)
     

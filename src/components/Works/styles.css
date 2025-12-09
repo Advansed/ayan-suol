@@ -133,7 +133,7 @@
 .scroll {
     overflow-y: auto;
     overflow-x: hidden;
-    height: calc(100vh - 56px);
+    height:         auto;
 }
 
 /* Адаптивные размеры для разных экранов */

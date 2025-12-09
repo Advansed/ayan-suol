@@ -3,6 +3,7 @@ import { IonRefresher, IonRefresherContent, IonSearchbar } from '@ionic/react'
 import { useHistory }   from 'react-router'
 import styles           from './ChatList.module.css'
 import { useChats } from '../../Store/useChats'
+import { WizardHeader } from '../Header/WizardHeader'
 
 // Инициалы из имени
 const getInitials = (name: string): string => {
@@ -56,61 +57,50 @@ export function ChatsList() {
     history.push(`/tab2/${chat.recipient}:${chat.cargo}:${chat.rec_name}`)
   }
 
-  const handleRefresh = (event: CustomEvent) => {
-    loadChats().then(() => {
-      if (event.detail) {
-        event.detail.complete()
-      }
-    })
+  const handleRefresh = () => {
+    loadChats()
   }
 
-  const handleSearchChange = (e: CustomEvent) => {
-    setSearchQuery(e.detail.value || '')
-  }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <div className='ml-05 mt-01 fs-09 a-center h-2'><b>Чаты</b></div>
-        <IonSearchbar
-          value={searchQuery}
-          onIonInput={handleSearchChange}
-          placeholder="Поиск чатов..."
-          className={styles.searchBar}
+    <div className='ml-1 mr-1'>
+        <WizardHeader
+            title       = { 'Чаты' }
+            onRefresh   = { handleRefresh }
         />
-      </div>
+      <div className={ "" }>
 
-      <div className={styles.content}>
-        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-          <IonRefresherContent />
-        </IonRefresher>
-
-        {isLoading ? (
-          <div className={styles.skeleton}>
-            {/* Skeleton элементы */}
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className={styles.skeletonItem} />
-            ))}
-          </div>
-        ) : (
-          <div className={styles.chatList}>
-            {filteredChats.map((chat, index) => (
-              <ChatItem
-                key={`${chat.recipient}-${chat.cargo}`}
-                chat={chat}
-                onClick={() => handleChatClick(chat)}
-              />
-            ))}
-            {filteredChats.length === 0 && (
-              <div className={styles.emptyState}>
-                <div className="cr-empty-icon">💬</div>
-                <div>Нет активных чатов</div>
+        { isLoading 
+          ? (
+              <div className={styles.skeleton}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className={styles.skeletonItem} />
+                ))}
               </div>
-            )}
-          </div>
-        )}
+            ) 
+          : (
+              <div className={styles.chatList}>
+                
+                {filteredChats.map((chat, index) => (
+                  <ChatItem
+                      key={`${chat.recipient}-${chat.cargo}`}
+                      chat={chat}
+                      onClick={() => handleChatClick(chat)}
+                  />
+                ))}
+
+                {filteredChats.length === 0 && (
+                  <div className={styles.emptyState}>
+                      <div className="cr-empty-icon">💬</div>
+                      <div>Нет активных чатов</div>
+                  </div>
+                )}
+              </div>
+            )
+        }
+
       </div>
-      
-    </div>
+
+   </div>
   )
 }

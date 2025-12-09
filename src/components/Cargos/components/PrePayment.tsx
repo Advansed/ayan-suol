@@ -7,6 +7,7 @@ import { useAccountStore } from '../../../Store/accountStore';
 import { IonButton, useIonRouter } from '@ionic/react';
 import { useLoginStore, useToken } from '../../../Store/loginStore';
 import { useSocket } from '../../../Store/useSocket';
+import { WizardHeader } from '../../Header/WizardHeader';
 
 interface PrepaymentPageProps {
   cargo: CargoInfo;
@@ -57,22 +58,76 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack })
 
   }
 
+  const percent  = () => {
+    return (parseFloat(amount) || 0) * 100 / cargo.price 
+  }
+
   return (
     <div className="prepayment-page">
-      <div className="page-header">
-        <button onClick={onBack} className="back-button">← Назад</button>
-        {/* <h2>Создание предоплаты</h2> */}
+      
+      <div>
+        <WizardHeader 
+            title   = "Спецсчет"
+            onBack  = { onBack }
+        />
       </div>
 
       <div className="prepayment-form">
         <div className="cargo-info">
-          <h3>Информация о грузе:</h3>
-          <p><strong>Груз:</strong> {cargo.name}</p>
-          <p><strong>Стоимость:</strong> {formatters.currency(cargo.price)} </p>
+          <h3>Информация о перевозке: </h3>
+          <p className='flex fl-space'>
+            <strong>Груз:</strong> 
+            <div>{cargo.name}</div>
+          </p>
+          <p className='flex fl-space'>
+            <strong>Стоимость:</strong> 
+            <div>{formatters.currency(cargo.price)} </div>
+          </p>
           <div className='mt-1'>
-            <p><strong>Баланс:</strong> { formatters.currency(accountData?.balance || 0) } </p>
-            <p><strong>Аванс:</strong> {formatters.currency( (parseFloat(amount) || 0)) + ' - (' + ((parseFloat(amount) || 0) * 100 / cargo.price ).toFixed(2) + '%)' }</p>
-            <p><strong>Остаток:</strong> {formatters.currency((accountData?.balance || 0) - (parseFloat(amount) || 0))  }</p>
+            <p className='flex fl-space'>
+              <strong>Баланс:</strong> 
+              <div>{ formatters.currency(accountData?.balance || 0) }</div> 
+            </p>
+            <p className='flex fl-space'>
+              <strong>Аванс:</strong> 
+              <div>{formatters.currency( (parseFloat(amount) || 0)) + ' - (' + ( percent() ).toFixed(2) + '%)' }</div>
+            </p>
+            { ((accountData?.balance || 0) - (parseFloat(amount) || 0)) < 0 && (
+              <>
+                <p className='flex fl-space'>
+                  <strong>К доплате:</strong> 
+                  <div>{ formatters.currency((parseFloat(amount) || 0) - (accountData?.balance || 0))  }</div>
+                </p>
+              </>
+            )}
+            { ((accountData?.balance || 0) - (parseFloat(amount) || 0)) >= 0 && (
+              <>
+                <p className='flex fl-space'>
+                  <strong>Остаток баланса:</strong> 
+                  <div>{ formatters.currency(((accountData?.balance || 0) - parseFloat(amount) || 0))  }</div>
+                </p>
+              </>
+            )}
+            <p className='flex fl-space'>
+              { percent() === 0 &&(
+                <>
+                  <div className="circle-3"></div>
+                  <div> { ' ' + ( percent() ).toFixed(2) + '% (Не серьезно)' } </div>
+                </>
+              )}
+              { percent() > 0 && percent() <  100 && (
+                <>
+                  <div className="circle-2"></div>
+                  <div> { ' ' + ( percent() ).toFixed(2) + '% (Сомнительно)' } </div>
+                </>
+              )}
+              { percent() === 100 && (
+                <>
+                  <div className="circle-1"></div>
+                  <div> { ' ' + ( percent() ).toFixed(2) + '% (Конкретно)' } </div>
+                </>
+              )}
+            </p>
           </div>
         </div>
 

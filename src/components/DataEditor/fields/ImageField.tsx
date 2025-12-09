@@ -1,9 +1,9 @@
 // src/components/DataEditor/fields/ImageField.tsx
 import React, { useState } from "react";
 import { IonButton, IonIcon, IonModal } from "@ionic/react";
-import { cameraOutline, trashOutline, closeOutline } from "ionicons/icons";
-import { takePicture } from "../../Files";
+import { cameraOutline, trashOutline, closeOutline, cameraReverseOutline, apertureOutline } from "ionicons/icons";
 import styles from './ImageField.module.css';
+import { takePicture } from "../../Files";
 
 // TODO: Добавить функцию toTIFF позже
 
@@ -16,6 +16,7 @@ interface ImageFieldProps {
   error?: string;
   validate?: boolean;
 }
+
 
 export const ImageField: React.FC<ImageFieldProps> = ({
   label,

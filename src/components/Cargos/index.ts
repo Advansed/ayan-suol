@@ -16,12 +16,9 @@ export type {
     CargoStatus, 
     CargoPriority,
     CargoAddress,
-    CargoInvoice,
     PageType,
-    CargoFilters,
-    FormState,
-    ValidationErrors
-} from './types';
+    CargoFilters
+} from '../../Store/cargoStore';
 
 
 // Компоненты для внешнего использования

@@ -15,6 +15,8 @@ import { companyGetters,  useCompanyData }              from '../../Store/compan
 import { passportGetters, usePassportData }             from '../../Store/passportStore'
 import { transportGetters,  useTransportData}           from '../../Store/transportStore'
 import { Transport } from './components/Transport'
+import { useAccountStore } from '../../Store/accountStore'
+import UserToggle from './components/UserToggle/UserToggle'
 
 interface ProfileProps {
   name?: string; // необязательный параметр
@@ -28,6 +30,8 @@ export const Profile: React.FC<ProfileProps> = ({ name }) => {
   const transportData = useTransportData()
   const companyData   = useCompanyData() 
   const passportData  = usePassportData()
+
+  const balance       = useAccountStore(state => state.accountData?.balance )
 
   useEffect(() => {
     const loadings = document.querySelectorAll('ion-loading')
@@ -111,13 +115,13 @@ export const Profile: React.FC<ProfileProps> = ({ name }) => {
   // Главная страница
   return (
     <div>
-      <div className="h-3 bg-2 flex fl-center fs-14">
-        <div>{UI_TEXT.MY_PROFILE}</div>
-      </div>
 
-      <ProfileHeader name ={ user.name as string } userType={ user.user_type as number }  onClick={ handleClick }/>
+      <ProfileHeader balance = { balance as number } name ={ user.name as string } userType={ user.user_type as number }  onClick={ handleClick }/>
 
-      <ProfileStats ratings = { user.ratings as UserRatings } userType = { user.user_type as number } />
+      {/* <ProfileStats ratings = { user.ratings as UserRatings } userType = { user.user_type as number } /> */}
+
+
+      <UserToggle />
       
       <ProfileMenu items = { menuItems } />
 

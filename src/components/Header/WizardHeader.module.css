@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5em;
-  padding: 1em;
+  padding: 0.5em;
   background: var(--main-color);
   border-radius: 10px 10px 0 0;
   color: white;
@@ -11,7 +11,7 @@
 
 .stepTitle {
   margin: 0;
-  font-size: 1.1em;
+  font-size: 0.9em;
   font-weight: 600;
   text-align: center;
   flex: 1;
@@ -68,16 +68,16 @@
 
 @media (max-width: 480px) {
   .stepHeader {
-    padding: 0.8em;
+    padding: 0.5em;
   }
   
   .stepTitle {
-    font-size: 1em;
+    font-size: 0.9em;
   }
   
   .navButton {
-    width: 2.2em;
-    height: 2.2em;
+    width: 1.8em;
+    height: 1.8em;
     font-size: 1.1em;
   }
 }

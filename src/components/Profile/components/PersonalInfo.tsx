@@ -15,6 +15,7 @@ interface PersonalInfoProps {
 export const PersonalInfo: React.FC<PersonalInfoProps> = ({ user, onBack, onSave }) => {
   const { loading, updUser } = useData( onBack )
 
+  console.log("personalinfo", user)
   const getFormData = (): PageData => [
     {
       title: 'Основная информация',
@@ -24,6 +25,12 @@ export const PersonalInfo: React.FC<PersonalInfoProps> = ({ user, onBack, onSave
           type: 'string', 
           data: user?.name || '', 
           validate: true 
+        },
+        { 
+          label: 'Муж', 
+          type: 'check', 
+          data: user?.gender, 
+          validate: false 
         },
         { 
           label: 'Email', 
@@ -79,6 +86,7 @@ const useData = ( onBack )=> {
   const updateUser              = useLoginStore(state => state.updateUser )
   const name                    = useLoginStore(state => state.name )
   const email                   = useLoginStore(state => state.email )
+  const gender                  = useLoginStore(state => state.gender )
   const image                   = useLoginStore(state => state.image )
   const socket                  = useSocket()
   const token                   = useToken()
@@ -148,8 +156,9 @@ const useData = ( onBack )=> {
 
         const updateData: Partial<UserData> = {
           name:     data[0].data[0].data,
-          email:    data[0].data[1].data,
-          image:    data[0].data[2].data
+          gender:   data[0].data[1].data,
+          email:    data[0].data[2].data,
+          image:    data[0].data[3].data
         };
 
         // Добавляем пароль только если он указан
@@ -158,7 +167,8 @@ const useData = ( onBack )=> {
         }
 
         console.log( updateData )
-            
+         
+        console.log("set_user emit...")
         const result = await socketRequest(
           'set_user', 
           { token, ...updateData },

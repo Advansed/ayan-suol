@@ -4,6 +4,7 @@
   margin: 0 auto;
   padding: 20px;
   line-height: 1.4;
+  font-size: 0.8em;
 }
 
 .header {
@@ -36,6 +37,13 @@
   min-width: 100px;
 }
 
+.filled {
+  display: inline-block;
+  border-bottom: 1px solid #000;
+  min-width: 100px;
+  font-weight: bold;
+}
+
 .specification {
   page-break-before: always;
   margin-top: 50px;
@@ -57,4 +65,8 @@
   background-color: #f5f5f5;
   font-weight: bold;
   width: 40%;
+}
+
+.filledData {
+  font-weight: bold;
 }

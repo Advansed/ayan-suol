@@ -14,6 +14,8 @@ interface CompanyProps {
 export const Company: React.FC<CompanyProps> = ({onBack}) => {
   const { companyData, isLoading, loadData, saveData } = useCompany();
 
+  const user_name = useLoginStore(state => state.name )
+
   const agreements  = useLoginStore(state => state.agreements)
   
   const toast       = useToast()
@@ -49,7 +51,9 @@ export const Company: React.FC<CompanyProps> = ({onBack}) => {
         { label: 'Тип компании',      type: 'select', values: ['Самозанятый', 'ИП', 'Компания'], data: jur(company?.company_type || 3), validate: true },
         { label: 'Введите ИНН или наименование',               type: 'party'
           ,  data: { name: company?.name, short_name: company?.short_name, address: company?.address, inn: company?.inn, kpp: company?.kpp, ogrn: company?.ogrn }, validate: true },
-      ]
+        { label: 'Представитель',     type: 'label', values: [], data: user_name || '', validate: false },
+        { label: 'Действует на основании',     type: 'string', values: [], data: company?.basis || '', validate: true },
+     ]
     },
     {
       title: 'Контактная информация',
@@ -72,9 +76,11 @@ export const Company: React.FC<CompanyProps> = ({onBack}) => {
   const handleSave = (data: PageData) => {
     const formData: CompanyData = {
       guid:                 companyData?.guid,
+      company_type:         fromJur( data[0].data[0].data ),
       name:                 data[0].data[1].data.name,
       short_name:           data[0].data[1].data.short_name,
-      company_type:         fromJur( data[0].data[0].data ),
+      basis:                data[0].data[3].data,
+
       inn:                  data[0].data[1].data.inn,
       kpp:                  data[0].data[1].data.kpp,
       ogrn:                 data[0].data[1].data.ogrn,

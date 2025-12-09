@@ -24,7 +24,7 @@ export interface UseCargosReturn {
 // КОНСТАНТЫ
 // ============================================
 const SOCKET_EVENTS = {
-    SAVE_CARGO:                     'save_cargo',
+    SAVE_CARGO:                     'set_cargo',
     UPDATE_CARGO:                   'update_cargo', 
     DELETE_CARGO:                   'delete_cargo',
     PUBLISH_CARGO:                  'publish_cargo',

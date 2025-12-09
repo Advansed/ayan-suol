@@ -41,6 +41,7 @@
     "react-dadata": "^2.27.4",
     "react-dom": "^18.2.0",
     "react-router-dom": "^5.3.4",
+    "react-signature-canvas": "^1.1.0-alpha.2",
     "react-tailwindcss-select": "^1.8.5",
     "redux": "^5.0.1",
     "socket.io-client": "^4.8.1",

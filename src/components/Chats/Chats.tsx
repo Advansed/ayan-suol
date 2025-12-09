@@ -1,19 +1,20 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { useIonViewDidEnter, useIonViewDidLeave } from "@ionic/react";
-import { IonIcon, IonRefresher, IonRefresherContent, useIonRouter } from "@ionic/react";
+import { IonIcon, useIonRouter } from "@ionic/react";
 import { arrowBackOutline, cameraSharp, sendSharp } from "ionicons/icons";
 import "./Chats.css";
 import { useChats } from "../../Store/useChats";
 import { loginGetters } from "../../Store/loginStore";
 import { takePicture } from "../Files";
 import { PhotoPreview } from "./PhotoPreview";
+import { WizardHeader } from "../Header/WizardHeader";
 
 interface ChatsProps {
     name: string;
 }
 
 // Мемоизированный компонент сообщения
-const MessageComponent      = React.memo(({ message, isSent, userInitials, clickMessage }: { 
+const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessage }: { 
     message: any; 
     isSent: boolean; 
     userInitials: string; 
@@ -79,7 +80,7 @@ const MessageComponent      = React.memo(({ message, isSent, userInitials, click
 });
 
 // Компонент для создания фотографий с камеры
-const ImageUploadButton     = React.memo(({ onImageSelect }: { 
+const ImageUploadButton = React.memo(({ onImageSelect }: { 
     onImageSelect: (image: any) => void; 
 }) => {
     const handleTakePicture = useCallback(async () => {
@@ -108,7 +109,7 @@ const ImageUploadButton     = React.memo(({ onImageSelect }: {
 });
 
 // Мемоизированный список сообщений  
-const MessagesList          = React.memo(({ messages, userInitials, clickMessage }: { 
+const MessagesList = React.memo(({ messages, userInitials, clickMessage }: { 
     messages: any[]; 
     userInitials: string; 
     clickMessage: (url: string) => void
@@ -156,7 +157,7 @@ const MessagesList          = React.memo(({ messages, userInitials, clickMessage
         <>
             {groupedMessages.map((messageGroup: any, index: number) => (
                 <div key={`group-${index}`} className="ml-1 mt-1">
-                    <div className="chat-date-separator">
+                    <div className="chat-date-separator" data-date={messageGroup.date}>
                         {messageGroup.date}
                     </div>
                     {(messageGroup.messages || []).map((msg: any, msgIndex: number) => (
@@ -175,7 +176,7 @@ const MessagesList          = React.memo(({ messages, userInitials, clickMessage
 });
 
 // Компонент пустого состояния
-const EmptyState            = React.memo(() => {
+const EmptyState = React.memo(() => {
     return (
         <div className="chat-empty-state">
             <div className="chat-empty-icon">💬</div>
@@ -185,7 +186,7 @@ const EmptyState            = React.memo(() => {
 });
 
 // Мемоизированный заголовок чата
-const ChatHeader            = React.memo(({ onBack, userName, userInitials }: {
+const ChatHeader = React.memo(({ onBack, userName, userInitials }: {
     onBack: () => void;
     userName: string;
     userInitials: string;
@@ -206,7 +207,7 @@ const ChatHeader            = React.memo(({ onBack, userName, userInitials }: {
 });
 
 // Мемоизированный футер с полем ввода
-const ChatFooter            = React.memo(({ 
+const ChatFooter = React.memo(({ 
     value, 
     selectedImage, 
     onChange, 
@@ -235,10 +236,6 @@ const ChatFooter            = React.memo(({
         adjustHeight();
     }, [value, adjustHeight]);
 
-
-    console.log('image', !selectedImage )
-
-    console.log('value', !value.trim() )
     return (
         <div className="chat-footer">
             <div className="chat-input-container">
@@ -272,7 +269,7 @@ export function Chats(props: ChatsProps) {
     const [value, setValue]                 = useState("");
     const [isVisible, setIsVisible]         = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);  
-    const [ isOpen, setOpen ]               = useState<string>("")
+    const [isOpen, setOpen]                 = useState<string>("")
     const hist                              = useIonRouter();
     const messagesEndRef                    = useRef<HTMLDivElement>(null);
 
@@ -331,8 +328,6 @@ export function Chats(props: ChatsProps) {
         setSelectedImage( image );
     }, []);
 
-
-
     // Компонент предпросмотра изображения
     const ImagePreview = useMemo(() => {
         if (!selectedImage) return null;
@@ -360,18 +355,9 @@ export function Chats(props: ChatsProps) {
         loadMessages(recipient, cargo);
     }, [recipient, cargo, loadMessages]);
 
-    // Функция refresh
-    const refresh = useCallback((event: CustomEvent) => {
-        loadChatMessages();
-        event.detail.complete();
-    }, [loadChatMessages]);
-
     // Отправка сообщения
     const handleSendMessage = useCallback(async () => {
-        
         if (!value.trim() && !selectedImage) return;
-        
-        console.log( selectedImage )
         
         const success = await sendMessage( recipient, cargo, value.trim() || '', '');
 
@@ -380,7 +366,6 @@ export function Chats(props: ChatsProps) {
             setSelectedImage(null);
             setTimeout(scrollToBottom, 100);
         }
-
     }, [value, selectedImage, recipient, cargo, sendMessage, scrollToBottom]);
 
     // Обработчик нажатия клавиш
@@ -397,13 +382,11 @@ export function Chats(props: ChatsProps) {
     }, []);
 
     // Обработчик возврата
-    
     const handleBack = useCallback(() => {
         hist.push("/tab2");
     }, [hist]);
 
     // Прокрутка при изменении сообщений
-    
     useEffect(() => {
         if (currentMessages && currentMessages.length > 0) {
             setTimeout(scrollToBottom, 100);
@@ -427,17 +410,16 @@ export function Chats(props: ChatsProps) {
 
     return (
         <div className="chat-container">
-            <ChatHeader 
-                onBack          = { handleBack }
-                userName        = { userName }
-                userInitials    = { userInitials }
-            />
+            {/* Используем либо WizardHeader, либо ChatHeader - но не оба одновременно */}
+            <div className="ml-1 mr-1">
+                <WizardHeader 
+                    title           = { userName }
+                    onBack          = { handleBack }
+                    onRefresh       = { loadChatMessages }
+                />
+            </div>
             
             <div className="chat-body">
-                <IonRefresher slot="fixed" onIonRefresh={refresh}>
-                    <IonRefresherContent />
-                </IonRefresher>
-                
                 {ImagePreview}
                 
                 {(!currentMessages || currentMessages.length === 0) && !selectedImage ? ( 
@@ -457,10 +439,11 @@ export function Chats(props: ChatsProps) {
                 onKeyPress      = { handleKeyPress }
                 onImageSelect   = { handleImageSelect }
             />
-           <PhotoPreview
+            
+            <PhotoPreview
                 imageUrl = { isOpen }
                 closeModal = { () => setOpen( "" ) }
-           />
+            />
         </div>
     );
 }

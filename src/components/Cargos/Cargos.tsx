@@ -9,9 +9,6 @@ import { CargoForm }                                    from './components';
 import { IonLoading }                                   from '@ionic/react';
 import { useCargoNavigation }                           from './hooks/useNavigation';
 import { PrepaymentPage }                               from './components/PrePayment';
-import { passportGetters }                              from '../../Store/passportStore';
-import { transportGetters }                             from '../../Store/transportStore';
-import { companyGetters }                               from '../../Store/companyStore';
 
 export const Cargos: React.FC = () => {
     

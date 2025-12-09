@@ -5,6 +5,7 @@ import { WorkInfo, CreateOfferData, OfferInfo, WorkStatus } from '../types';
 import { workFormatters } from '../utils';
 import './WorkOffer.css';
 import { transportGetters } from '../../../Store/transportStore';
+import { WizardHeader } from '../../Header/WizardHeader';
 
 
 interface WorkOfferProps {
@@ -75,15 +76,10 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack, onOffer }) =
 
     return (
         <div className="work-offer-info">
-            <div className='flex'>
-                <IonIcon 
-                    icon={arrowBackOutline} 
-                    className='w-15 h-15'
-                    color='primary'
-                    onClick={onBack}
-                />
-                <div className="ml-2 cl-prim"><b>Создание предложения</b></div>
-            </div>
+            <WizardHeader 
+                title   = 'Создание предложения'
+                onBack  = { onBack }
+            />
             <div className="ml-2 cl-prim fs-09 a-center">{ work.name }</div>
 
             <div className="content">

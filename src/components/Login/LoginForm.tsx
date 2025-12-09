@@ -33,7 +33,7 @@ const validateField = (field: string, value: string): string | null => {
     case 'phone':
       if (!value || value.trim() === '') return 'Заполните телефон'
       const phoneRegex = /^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$/
-      return phoneRegex.test(value) ? null : 'Некорректный формат номера телефона'
+      return  null //phoneRegex.test(value) ? null : 'Некорректный формат номера телефона'
       
     case 'password':
       if (!value || value.trim() === '') return 'Заполните пароль'

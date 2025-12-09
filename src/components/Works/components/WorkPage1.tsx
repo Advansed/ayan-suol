@@ -1,40 +1,67 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PageData } from '../../DataEditor/types';
 import DataEditor from '../../DataEditor';
 import { useToast } from '../../Toast';
 import { WorkInfo } from '../types';
+import { useSocket } from '../../../Store/useSocket';
 
 interface VehicleInspectionProps {
-    work:           WorkInfo;
-    onSave:         (data: SaveData) => Promise<boolean>;
-    onBack:         () => void;
-    initialData?:   SaveData;
+    work:             WorkInfo;
+    pdf:              string;
+    onSave:           (data: SaveData) => Promise<boolean>;
+    onBack:           () => void;
+    initialData?:     SaveData;
 }
 
 export interface SaveData {
-  inspectVehicle:   boolean;
-  checkDocuments:   boolean;
-  bodyPhotos:       string[]; // Массив URL или base64 изображений
-  notes?:           string;
+  inspectVehicle:     boolean;
+  checkDocuments:     boolean;
+  bodyPhotos:         string[]; // Массив URL или base64 изображений
+  notes?:             string;
+  sign:               string;
 }
 
 const EMPTY_INSPECTION: SaveData = {
-  inspectVehicle: false,
-  checkDocuments: false,
-  bodyPhotos:     [],
-  notes:          ''
+  inspectVehicle:     false,
+  checkDocuments:     false,
+  bodyPhotos:         [],
+  notes:              '',
+  sign:               ''
 };
 
 export const WorkPage1: React.FC<VehicleInspectionProps> = ({ 
-    work,
+    work, pdf,
     onSave, 
     onBack, 
     initialData = EMPTY_INSPECTION 
 }) => {
   const toast = useToast();
 
+
   // Преобразование данных в формат для DataEditor
   const inspectionToPages = (data: SaveData): PageData => [
+    {
+      title: "Договор",
+      data: [
+        {
+          label:    "Договор",
+          type:     "pdf",
+          data:     pdf,
+          validate: true
+        }
+      ]
+    },
+    {
+      title: "Подписать догоовор",
+      data: [
+        {
+          label:    "Подпись",
+          type:     "sign",
+          data:     data.sign,
+          validate: true
+        }
+      ]
+    },
     {
       title: "Проверка транспортного средства",
       data: [
@@ -73,12 +100,13 @@ export const WorkPage1: React.FC<VehicleInspectionProps> = ({
 
   // Преобразование данных из DataEditor обратно в VehicleInspectionData
   const pagesToInspection = ( data: PageData ): SaveData => {
-    
+    console.log("pageData", data)
     return {
-        inspectVehicle:   data[0].data[0].data, 
-        bodyPhotos:       data[0].data[1].data, 
-        checkDocuments:   data[1].data[0].data, 
-        notes:            data[1].data[1].data, 
+        sign:             data[1].data[0].data, 
+        inspectVehicle:   data[2].data[0].data, 
+        bodyPhotos:       data[2].data[1].data, 
+        checkDocuments:   data[3].data[0].data, 
+        notes:            data[3].data[1].data, 
     } 
 
   };

@@ -3,6 +3,7 @@ import { IonRefresher, IonRefresherContent, IonSpinner } from '@ionic/react';
 import { WorkCard } from './WorkCard';
 import styles from './WorkArchive.module.css';
 import { useWorks } from '../../../Store/useWorks';
+import { WizardHeader } from '../../Header/WizardHeader';
 
 export const WorkArchive = () => {
   const { archiveWorks, isArchiveLoading, loadArchiveWorks } = useWorks();
@@ -27,17 +28,10 @@ export const WorkArchive = () => {
 
   return (
     <div className={styles.container}>
-
-      <div className = {styles.header}>
-        <div className="fs-09"><b>Архив работ</b></div>
-        <button 
-          onClick   = { handleRefresh } 
-          disabled  = { isArchiveLoading }
-          className = {`${styles.refreshBtn} ${isArchiveLoading ? styles.refreshing : ''}`}
-        >
-          {isArchiveLoading ? '⟳' : '↻'} Обновить
-        </button>
-      </div>
+      <WizardHeader 
+          title     = 'Архив'
+          onRefresh = { loadArchiveWorks }
+      />
 
       <div className={styles.stats}>
         Выполненных работ: {archiveWorks.length}

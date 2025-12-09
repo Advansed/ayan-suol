@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { cameraOutline, sendOutline } from "ionicons/icons";
+import { cameraOutline, closeOutline, sendOutline } from "ionicons/icons";
 import { jsPDF } from "jspdf";
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { IonButton, IonChip, IonIcon, IonLoading, IonModal } from "@ionic/react";
@@ -10,33 +10,204 @@ import { RenderCurrentScaleProps, RenderZoomInProps, RenderZoomOutProps, zoomPlu
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/zoom/lib/styles/index.css';
+import styles from './DataEditor/fields/ImageField.module.css';
 import UTIF from 'utif';
 
 defineCustomElements(window)
 
-export async function   takePicture() {
-    return Camera.getPhoto({
+export async function takePicture_() {
+    try {
+        const image = await Camera.getPhoto({
+            quality: 80,
+            allowEditing: false,
+            resultType: CameraResultType.Base64, // Используем Base64 вместо DataUrl
+            source: CameraSource.Camera,
+            width: 600,
+            height: 800
+        });
 
-        quality:        80,
-        allowEditing:   false,
-        resultType:     CameraResultType.DataUrl,
-        source:         CameraSource.Camera,
-        width:          800,
-        height:         1200
-    }).then((image) =>{
-        let arr = image.dataUrl?.split(";")
-        if(arr !== undefined) {
-            arr = arr[0].split("/")
-            image.format = arr[1]
+        if (!image || !image.base64String) {
+            console.log('Camera returned null or empty data');
+            return null;
         }
-        console.log('image size', image.dataUrl?.length)
-        return image
-    }).catch((error) => {
-        console.log("Camera error:", error )
-        return null
-    })
-    //const imageUrl = "data:image/jpeg;base64," + image.base64String;
+
+        console.log('image size', image.base64String.length);
+        
+        // Возвращаем в формате, который не требует немедленной записи на диск
+        return {
+            base64: image.base64String,
+            format: image.format || 'jpeg',
+            dataUrl: `data:image/${image.format || 'jpeg'};base64,${image.base64String}`
+        };
+    } catch (error) {
+        console.log("Camera error:", error);
+        return null;
+    }
+}
+
+
+export async function takePicture(): Promise<{ format: string; dataUrl: string } | null> {
+  return new Promise((resolve) => {
+    // Создаем модальное окно для камеры
+    const cameraModal = document.createElement('div');
+    cameraModal.className = styles.cameraPreview;
+    
+    let currentStream: MediaStream | null = null;
+    let facingMode: 'user' | 'environment' = 'environment';
+
+    const startCamera = async () => {
+      try {
+        // Останавливаем предыдущий поток
+        if (currentStream) {
+          currentStream.getTracks().forEach(track => track.stop());
+        }
+
+        const constraints = {
+          video: { 
+            facingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        currentStream = stream;
+        
+        const video = cameraModal.querySelector('video');
+        if (video) {
+          video.srcObject = stream;
+          await video.play();
+        }
+      } catch (error) {
+        console.error("Camera error:", error);
+        // Пробуем переключиться на другую камеру при ошибке
+        if (facingMode === 'environment') {
+          facingMode = 'user';
+          startCamera();
+        } else {
+          removeCameraModal();
+          resolve(null);
+        }
+      }
+    };
+
+    const capturePhoto = () => {
+      const video = cameraModal.querySelector('video');
+      if (!video) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        // Для фронтальной камеры зеркалим изображение
+        if (facingMode === 'user') {
+          ctx.translate(canvas.width, 0);
+          ctx.scale(-1, 1);
+        }
+        
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        
+        removeCameraModal();
+        resolve({
+          format: 'jpeg',
+          dataUrl
+        });
+      } else {
+        removeCameraModal();
+        resolve(null);
+      }
+    };
+
+    const switchCamera = () => {
+      facingMode = facingMode === 'user' ? 'environment' : 'user';
+      updateCameraButtonText();
+      startCamera();
+    };
+
+    const removeCameraModal = () => {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+      if (document.body.contains(cameraModal)) {
+        document.body.removeChild(cameraModal);
+      }
+    };
+
+    const updateCameraButtonText = () => {
+      const switchButton = cameraModal.querySelector('#switchCamera span');
+      if (switchButton) {
+        switchButton.textContent = facingMode === 'user' ? 'Задняя' : 'Передняя';
+      }
+    };
+
+    // Создаем интерфейс камеры
+    cameraModal.innerHTML = `
+      <div class="${styles.cameraHeader}">
+        <div class="${styles.cameraControls}">
+          <div class="${styles.cameraLeftControls}">
+            <button class="${styles.cameraButton}" id="closeCamera">
+              <ion-icon name="close-outline"></ion-icon>
+              <span>Отмена</span>
+            </button>
+          </div>
+          
+          <div class="${styles.cameraTitle}">Камера</div>
+          
+          <div class="${styles.cameraRightControls}">
+            <button class="${styles.cameraButton}" id="switchCamera">
+              <ion-icon name="camera-reverse-outline"></ion-icon>
+              <span>Передняя</span>
+            </button>
+            <button class="${styles.captureButton}" id="capturePhoto" title="Сделать фото">
+              <ion-icon name="aperture-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="${styles.cameraBody}">
+        <video class="${styles.cameraVideo}" autoplay playsinline muted></video>
+      </div>
+    `;
+
+    document.body.appendChild(cameraModal);
+
+    // Инициализируем Ionic icons
+    const icons = cameraModal.querySelectorAll('ion-icon');
+    icons.forEach(icon => {
+      const iconName = icon.getAttribute('name');
+      if (iconName) {
+        const svgIcon = document.createElement('div');
+        svgIcon.innerHTML = getIconSvg(iconName);
+        icon.parentNode?.replaceChild(svgIcon.firstChild!, icon);
+      }
+    });
+
+    // Добавляем обработчики событий
+    cameraModal.querySelector('#capturePhoto')?.addEventListener('click', capturePhoto);
+    cameraModal.querySelector('#switchCamera')?.addEventListener('click', switchCamera);
+    cameraModal.querySelector('#closeCamera')?.addEventListener('click', () => {
+      removeCameraModal();
+      resolve(null);
+    });
+
+    // Запускаем камеру
+    startCamera();
+    updateCameraButtonText();
+  });
+}
+
+// Функция для получения SVG иконок
+function getIconSvg(iconName: string): string {
+  const icons: { [key: string]: string } = {
+    'close-outline': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="20" height="20" fill="currentColor"><path d="M289.94,256l95-95A24,24,0,0,0,351,127l-95,95-95-95A24,24,0,0,0,127,161l95,95-95,95A24,24,0,1,0,161,385l95-95,95,95A24,24,0,0,0,385,351Z"/></svg>',
+    'camera-reverse-outline': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="20" height="20" fill="currentColor"><path d="M432,144H373.55L356,124.1A64.07,64.07,0,0,0,304,96H208a64.07,64.07,0,0,0-52,28.1L138.45,144H80a64.07,64.07,0,0,0-64,64V368a64.07,64.07,0,0,0,64,64H432a64.07,64.07,0,0,0,64-64V208A64.07,64.07,0,0,0,432,144ZM448,368a16,16,0,0,1-16,16H80a16,16,0,0,1-16-16V208A16,16,0,0,1,80,192h80a16,16,0,0,0,13-6.67L191,156.2a32.06,32.06,0,0,1,26-13.2h96a32.06,32.06,0,0,1,26,13.2l18,29.13A16,16,0,0,0,352,192h80a16,16,0,0,1,16,16Z"/><path d="M256,272a64,64,0,1,0,64,64A64.07,64.07,0,0,0,256,272Zm0,96a32,32,0,1,1,32-32A32,32,0,0,1,256,368Z"/></svg>',
+    'aperture-outline': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24" height="24" fill="currentColor"><path d="M256,64C150,64,64,150,64,256s86,192,192,192,192-86,192-192S362,64,256,64Z" style="fill:none;stroke:currentColor;stroke-miterlimit:10;stroke-width:32px"/><path d="M360,144l-84.38,84.38"/><path d="M228,112L132,204"/><path d="M264,172l116-116"/><path d="M336,328l-84.38-84.38"/><path d="M284,400l-96-92"/><path d="M248,340L132,456"/></svg>'
+  };
   
+  return icons[iconName] || '';
 }
 
 export async function   toPDF( pages, name ) {
@@ -227,16 +398,14 @@ export function         PDFDoc( props ){
                 <IonButton
                     /* eslint-disable */
                     onClick={()=>{ 
-                        async function send() {
-                            console.log("send email")
-                        }
-                        send()
+                        if(props.onClose)
+                            props.onClose()
                     }}
-                ><IonIcon icon = { sendOutline }/></IonButton>
+                ><IonIcon icon = { closeOutline }/></IonButton>
             </div>
         </div>
         <p className="m-stack fs-bold fs-2 cl-prim">{ message }</p>
-        <div className="f-scroll"> 
+        <div className="scroll"> 
             {/* <Viewer fileUrl={ url } plugins={ [ zoomPluginInstance ] } /> */}
             <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.js">
                 <div>

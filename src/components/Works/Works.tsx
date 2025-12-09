@@ -11,10 +11,11 @@ import { useWorkNavigation } from './hooks/useNavigation';
 import { SaveData, WorkPage1 } from './components/WorkPage1';
 import { useSocket } from '../../Store/useSocket';
 import { useToken } from '../../Store/loginStore';
-import { api } from '../../Store/api';
+import ContractPage from '../CargoAgree';
+import { IonLoading } from '@ionic/react';
 
 export const Works: React.FC = () => {
-    const { works, isLoading, setOffer, setStatus, refreshWorks } = useWorks();
+    const { contract, works, isLoading, setOffer, setStatus, refreshWorks, get_contract, setContract, set_contract } = useWorks();
     const { emit }  = useSocket()
     const token     = useToken()
 
@@ -35,8 +36,13 @@ export const Works: React.FC = () => {
 
     const handleStatusClick = (work: WorkInfo ) => {
 
-        if( work.status === WorkStatus.TO_LOAD ) { 
+        const load = async() => {
+            await get_contract( work )
             navigateTo({ type: "page1", work }) 
+        }
+
+        if( work.status === WorkStatus.TO_LOAD ) { 
+            load()
         } else
         if( work.status === WorkStatus.IN_WORK ) { 
             setStatus( work )
@@ -86,6 +92,7 @@ export const Works: React.FC = () => {
     const handleSavePage1 = async ( data:SaveData ) => {
 
         if( currentPage.type === "page1"){
+            set_contract( currentPage.work, data.sign)
             setStatus( currentPage.work )
             data.bodyPhotos.forEach( elem => {
                 // api('api/sendimage', {
@@ -115,6 +122,11 @@ export const Works: React.FC = () => {
     
     };
 
+
+    const handleClose       = async () => {
+        console.log(" close ")
+        setContract( undefined )
+    }
 
     // Рендер страниц
     const renderPage = () => {
@@ -161,6 +173,7 @@ export const Works: React.FC = () => {
                 return (
                     <WorkPage1
                         work            = { currentPage.work }
+                        pdf             = { contract }
                         onBack          = { goBack }
                         onSave          = { handleSavePage1 }   
                     />
@@ -177,8 +190,12 @@ export const Works: React.FC = () => {
     };
 
     return (
-        <div className="a-container">
-            {renderPage()}
+        <div className="w-100 h-100">
+            
+            <IonLoading isOpen = { isLoading } message = { "Подождите..." }/>
+
+            { renderPage() }
+
         </div>
     );
 };

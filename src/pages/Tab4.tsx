@@ -5,15 +5,10 @@ import { WorkArchive } from '../components/Works/components';
 import { useUserType } from '../Store/loginStore';
 
 const Tab4: React.FC = () => {
-  const user_type = useUserType()
+  const { user_type } = useUserType()
 
   return (
     <IonPage className='mt-2'>
-      <IonHeader>
-        <IonToolbar>
-          <div className='a-center fs-09'><b>{user_type == 2 ? 'Архив работ' : 'Архив заказов'}</b></div>
-        </IonToolbar>
-      </IonHeader>
       <IonContent fullscreen>
         {user_type == 2 ? <WorkArchive /> : <CargoArchive />}
       </IonContent>

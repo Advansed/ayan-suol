@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { IonIcon, IonAlert, IonLoading, useIonRouter } from '@ionic/react';
+import { IonIcon, IonAlert, IonLoading, useIonRouter, IonInput, IonButton } from '@ionic/react';
 import { arrowBackOutline, shieldCheckmarkOutline, documentTextOutline, businessOutline } from 'ionicons/icons';
 import { formatters } from '../utils';
 import { CargoInfo, useCargoStore } from '../../../Store/cargoStore';
@@ -7,6 +7,7 @@ import { useLoginStore, useToken } from '../../../Store/loginStore';
 import { useAccountStore } from '../../../Store/accountStore';
 import { useSocket } from '../../../Store/useSocket';
 import { useToast } from '../../Toast';
+import { WizardHeader } from '../../Header/WizardHeader';
 
 interface InsurancePageProps {
     cargo: CargoInfo;
@@ -37,7 +38,7 @@ const INSURANCE_TYPES = [
         icon: businessOutline, 
         description: 'Максимальная защита + сервис',
         rate: 3.0, // 2.0% от стоимости груза
-        coverage: ['Все риски расширенного покрытия', '24/7 поддержка', 'Экспресс выплаты', 'Юридическое сопровождение']
+        coverage: ['Все риски расширенного покрытия', 'Экспресс выплаты', 'Юридическое сопровождение']
     }
 ];
 
@@ -45,10 +46,11 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
     cargo,
     onBack,
 }) => {
-    const [selectedType,        setSelectedType]        = useState<string>('basic');
-    const [showConfirmAlert,    setShowConfirmAlert]    = useState(false);
-    const [showCancelAlert,     setShowCancelAlert]     = useState(false);
-    const [insuranceCost,       setInsuranceCost]       = useState(0);
+    const [ cost,               setCost ]               = useState( cargo.cost );
+    const [ selectedType,       setSelectedType]        = useState<string>('basic');
+    const [ showConfirmAlert,   setShowConfirmAlert]    = useState(false);
+    const [ showCancelAlert,    setShowCancelAlert]     = useState(false);
+    const [ insuranceCost,      setInsuranceCost]       = useState(0);
 
     const { accountData, id, isLoading, set_insurance, del_insurance } = useData( cargo, onBack )
 
@@ -59,11 +61,13 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
 
     // Рассчитываем стоимость страхования
     useEffect(() => {
-        if (selectedInsurance && cargo.cost) {
-            const cost = Math.round(cargo.cost * selectedInsurance.rate / 100);
-            setInsuranceCost(cost);
+        console.log("useeffect ins", selectedInsurance?.name, cost)
+        if (selectedInsurance && cost) {
+            const i_cost = Math.round(cost * selectedInsurance.rate / 100);
+            setInsuranceCost(i_cost);
+            console.log("useeffect ins", i_cost )
         }
-    }, [selectedType, selectedInsurance, cargo.cost]);
+    }, [selectedType, selectedInsurance, cost]);
 
     // Обработчик оформления страховки
     const handleInsurance = async () => {
@@ -96,116 +100,256 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
         if( onBack ) onBack();
     };
 
+    const InsuranceTypeSelectorSimple = ({ cargo }) => {
+        const [isExpanded, setIsExpanded] = useState(false);
+
+        // Если развернуто или ничего не выбрано - показываем все
+        const showAll = isExpanded || selectedType === null;
+
+        const handleSelectType = (id) => {
+            setSelectedType(id);
+            // Сворачиваем после выбора (опционально)
+            setIsExpanded(false);
+        };
+
+        return (
+            <div className="cr-card mt-1">
+                <div 
+                    className="fs-09 mb-1"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    style={{ cursor: 'pointer' }}
+                >
+                    <b>
+                        Выберите тип покрытия 
+                        <span className="ml-05 cl-gray" style={{ fontSize: '0.8em' }}>
+                            ({isExpanded ? 'свернуть ▲' : 'развернуть ▼'})
+                        </span>
+                    </b>
+                </div>
+                
+                {INSURANCE_TYPES.map(insurance => {
+                    // Показываем только если: развернуто ИЛИ это выбранный элемент ИЛИ ничего не выбрано
+                    if (!showAll && selectedType !== insurance.id) {
+                        return null;
+                    }
+
+                    const isSelected = selectedType === insurance.id;
+                    
+                    return (
+                        <div 
+                            key={insurance.id}
+                            className={`insurance-type ${isSelected ? 'selected' : ''}`}
+                            onClick={() => handleSelectType(insurance.id)}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <div className="flex a-center">
+                                <IonIcon 
+                                    icon={insurance.icon} 
+                                    className="w-15 h-15 mr-05" 
+                                    style={{ 
+                                        color: isSelected ? 'var(--ion-color-primary)' : 'gray' 
+                                    }}
+                                />
+                                <div className="flex-1">
+                                    <div className="flex fl-space a-center">
+                                        <div>
+                                            <div className="fs-08">{insurance.name}</div>
+                                            <div className="fs-07 cl-gray">{insurance.description}</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="fs-08" style={{ fontWeight: 'bold' }}>
+                                                {insurance.rate}%
+                                            </div>
+                                            <div className="fs-07 cl-gray">
+                                                {formatters.currency(Math.round((cargo?.cost || 0) * insurance.rate / 100))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Покрытие для выбранного типа */}
+                                    {isSelected && (
+                                        <div className="mt-05" style={{ paddingLeft: '0.5em', borderLeft: '2px solid var(--ion-color-primary)' }}>
+                                            <div className="fs-07 cl-gray mb-05"><b>Что покрывает:</b></div>
+                                            {insurance.coverage.map((item, index) => (
+                                                <div key={index} className="fs-07 cl-gray mb-02">
+                                                    • {item}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div 
+                                    className="insurance-radio"
+                                    style={{
+                                        width: '16px',
+                                        height: '16px',
+                                        border: '2px solid',
+                                        borderColor: isSelected ? 'var(--ion-color-primary)' : 'silver',
+                                        borderRadius: '50%',
+                                        backgroundColor: isSelected ? 'var(--ion-color-primary)' : 'transparent',
+                                        marginLeft: '0.5em'
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    );
+                })}
+
+                {/* Показываем сообщение, если ничего не выбрано и список свернут */}
+                {!isExpanded && selectedType === null && (
+                    <div className="fs-08 cl-gray text-center py-1">
+                        Нажмите "развернуть", чтобы выбрать тип покрытия
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const CargoCost: React.FC = () => {
+        const [focused, setFocused] = React.useState(false)
+        const [localCost, setLocalCost] = React.useState<number>( cost || 0)
+
+        React.useEffect(() => {
+            if (!focused) {
+            setLocalCost( cost || 0)
+            }
+        }, [ cost, focused])
+
+        const hasValue = ( cost || 0) > 0
+        const showFull = focused || !hasValue
+
+        const handleInput = (e: CustomEvent) => {
+            const raw = (e.detail as any).value as string
+            const num = parseFloat((raw || '').replace(',', '.'))
+            setLocalCost(Number.isNaN(num) ? 0 : num)
+        }
+
+        const commitCost = () => {
+            setCost(localCost)
+            setFocused(false)
+        }
+
+        const handleBlur = () => {
+            setFocused(false)
+            setCost(localCost)
+        }
+
+        return (
+            <div className="cr-card mt-1">
+            <div className="cargo-cost-card">
+                {showFull && (
+                <>
+                    <div className="cargo-cost-header">
+                    <div className="flex fl-space w-100">
+                        <div className="cargo-cost-title">
+                            <span className="cost-label">Стоимость груза</span>
+                            <span className="cost-subtitle">Сумма для страхования</span>
+                        </div>
+                        <div className="cost-display">
+                            <span className="cost-amount">
+                                {formatters.currency( localCost || 0)}
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div className="cargo-cost-input-section">
+                        <div className="input-wrapper">
+                        <IonInput
+                            type="number"
+                            value={localCost}
+                            className="cost-input"
+                            placeholder="0.00"
+                            onIonInput={handleInput}
+                            onIonFocus={() => setFocused(true)}
+                            onIonBlur={handleBlur}
+                        />
+                        <span className="input-currency">₽</span>
+                        </div>
+
+                    </div>
+                    </div>
+
+                    <div className="cost-hint-section">
+                    <span className="hint-icon">ℹ️</span>
+                    <span className="hint-text">
+                        Укажите фактическую стоимость груза для расчета страховки
+                    </span>
+                    </div>
+
+                    <div className="cost-actions mt-05">
+                    <IonButton
+                        size="small"
+                        color="primary"
+                        onClick={commitCost}
+                    >
+                        Установить стоимость
+                    </IonButton>
+                    </div>
+                </>
+                )}
+
+                {!showFull && hasValue && (
+                <div
+                    className="cargo-cost-collapsed flex fl-space"
+                    onClick={() => setFocused(true)}
+                >
+                    <span className="cost-label">Стоимость груза</span>
+                    <span className="cost-amount">
+                        { formatters.currency( cost || 0) }
+                    </span>
+                </div>
+                )}
+            </div>
+            </div>
+        )
+    }
+
+
+
+
+
+
+    // Форматтер валюты (пример)
+    const formatters = {
+        currency: (value) => {
+            return new Intl.NumberFormat('ru-RU', {
+                style: 'currency',
+                currency: 'RUB',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+    };
+
+    // Пример иконки (замените на ваш реальный компонент)
+    const IonIcon = ({ icon, className, style }) => {
+        return (
+            <span className={className} style={style}>
+                {/* Здесь будет ваша иконка */}
+                {icon === 'shield-checkmark-outline' && '🛡️'}
+                {icon === 'shield-half-outline' && '🛡️🟡'}
+                {icon === 'shield-outline' && '🛡️🔵'}
+            </span>
+        );
+    };
+
+
     return (
         <>
             <IonLoading isOpen={isLoading} message="Оформление страховки..." />
             
             {/* Header */}
-            <div className="flex ml-05 mt-05">
-                <IonIcon 
-                    icon={arrowBackOutline} 
-                    className="w-15 h-15"
-                    onClick={onBack}
-                    style={{ cursor: 'pointer' }}
+            <div className="ml-1 mr-1">
+                <WizardHeader 
+                    title   = 'Страхования груза'
+                    onBack  = { onBack }
                 />
-                <div className="a-center w-90 fs-09">
-                    <b>Страхование груза</b>
-                </div>
             </div>
 
-            {/* Информация о грузе */}
-            <div className="cr-card mt-1">
-                <div className="fs-09 mb-05"><b>Информация о грузе</b></div>
-                <div className="fs-08 cl-gray mb-05">{cargo.name}</div>
-                <div className="flex">
-                    <div className="flex-1">
-                        <div className="fs-07 cl-gray">Маршрут</div>
-                        <div className="fs-08">
-                            {cargo.address?.city.city} → {cargo.destiny?.city.city}
-                        </div>
-                    </div>
-                    <div className='mt-05'>
-                        <div className="fs-07 cl-gray">Вес/Объем</div>
-                        <div className="fs-08">
-                            {cargo.weight}т / {cargo.volume}м³
-                        </div>
-                    </div>
-                </div>
-                <div className="flex fl-space">
-                    <div>
-                        <div className="fs-09 cl-black"><b>Стоимость груза</b></div>
-                        <div className="fs-07 cl-gray">Сумма для страхования</div>
-                    </div>
-                    <div className="text-right">
-                        <div className="fs-12 cl-prim" style={{ fontWeight: 'bold' }}>
-                            {formatters.currency(cargo.cost || 0)}
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <CargoCost />
 
-            {/* Типы страхования */}
-            <div className="cr-card mt-1">
-                <div className="fs-09 mb-1"><b>Выберите тип покрытия</b></div>
-                
-                {INSURANCE_TYPES.map(insurance => (
-                    <div 
-                        key={insurance.id}
-                        className={`insurance-type ${selectedType === insurance.id ? 'selected' : ''}`}
-                        onClick={() => setSelectedType(insurance.id)}
-                    >
-                        <div className="flex a-center">
-                            <IonIcon 
-                                icon={insurance.icon} 
-                                className="w-15 h-15 mr-05" 
-                                style={{ 
-                                    color: selectedType === insurance.id ? 'var(--ion-color-primary)' : 'gray' 
-                                }}
-                            />
-                            <div className="flex-1">
-                                <div className="flex fl-space a-center">
-                                    <div>
-                                        <div className="fs-08">{insurance.name}</div>
-                                        <div className="fs-07 cl-gray">{insurance.description}</div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="fs-08" style={{ fontWeight: 'bold' }}>
-                                            {insurance.rate}%
-                                        </div>
-                                        <div className="fs-07 cl-gray">
-                                            {formatters.currency(Math.round((cargo.cost || 0) * insurance.rate / 100))}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {/* Покрытие для выбранного типа */}
-                                {selectedType === insurance.id && (
-                                    <div className="mt-05" style={{ paddingLeft: '0.5em', borderLeft: '2px solid var(--ion-color-primary)' }}>
-                                        <div className="fs-07 cl-gray mb-05"><b>Что покрывает:</b></div>
-                                        {insurance.coverage.map((item, index) => (
-                                            <div key={index} className="fs-07 cl-gray mb-02">
-                                                • {item}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            <div 
-                                className="insurance-radio"
-                                style={{
-                                    width: '16px',
-                                    height: '16px',
-                                    border: '2px solid',
-                                    borderColor: selectedType === insurance.id ? 'var(--ion-color-primary)' : 'silver',
-                                    borderRadius: '50%',
-                                    backgroundColor: selectedType === insurance.id ? 'var(--ion-color-primary)' : 'transparent',
-                                    marginLeft: '0.5em'
-                                }}
-                            />
-                        </div>
-                    </div>
-                ))}
-            </div>
+            <InsuranceTypeSelectorSimple cargo = { cargo }/>
 
             {/* Итого к оплате */}
             <div className="cr-card mt-1">

@@ -4,8 +4,9 @@ import { WorkInfo, WorkStatus } from '../types';
 import { WorkCard } from './WorkCard';
 import { useHistory } from 'react-router';
 import Lottie from 'lottie-react';
-import animationData from './data.json';
+import animationData from '../../../pages/gvr_logo.json';
 import './WorkList.css'
+import { WizardHeader } from '../../Header/WizardHeader';
 
 interface WorksListProps {
     works:          WorkInfo[];
@@ -37,9 +38,9 @@ export const WorksList: React.FC<WorksListProps> = ({
     };
 
     const EmptyState        = () => (
-        <div className="empty-state-container">
-            <div className="empty-state-content">
-                <div className="empty-state-text">
+        <div className="">
+            <div className="">
+                <div className="">
                     <h3 className="fs-12 cl-gray a-center">
                         Нет доступных заказов
                     </h3>
@@ -48,8 +49,8 @@ export const WorksList: React.FC<WorksListProps> = ({
                     </p>
                 </div>
             </div>
-            <div className="lottie-container-bottom">
-                <div className="lottie-wrapper">
+            <div className="">
+                <div className="">
                     <Lottie 
                         animationData={animationData} 
                         loop={true}
@@ -57,7 +58,7 @@ export const WorksList: React.FC<WorksListProps> = ({
                         style={{ 
                             width: '100%',
                             height: '100%',
-                            minWidth: '100vw'
+                            minWidth: '30vw'
                         }}
                     />
                 </div>
@@ -80,15 +81,16 @@ export const WorksList: React.FC<WorksListProps> = ({
 
 
     return (
-        <>
+        <div className='works-list-container'>
             {/* Refresher */}
-            {onRefresh && (
-                <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-                    <IonRefresherContent></IonRefresherContent>
-                </IonRefresher>
-            )}
             
-            <div className="bg-2 scroll">
+            <div className='ml-1 mr-1'>
+                <WizardHeader
+                    title       = 'Заказы'
+                    onRefresh   = { onRefresh }
+                />
+            </div>
+            <div className="scroll">
                 {/* Переключатель вкладок */}
                 {/* Активные работы */}
                 
@@ -133,10 +135,10 @@ export const WorksList: React.FC<WorksListProps> = ({
                         <div className="empty-state-content">
                             <div className="empty-state-text">
                                 <h3 className="fs-12 cl-gray a-center">
-                                    Нет выполненных заказов
+                                    Нет принятых заказов
                                 </h3>
                                 <p className="fs-09 cl-gray a-center mt-05">
-                                    Здесь будут отображаться завершенные заказы
+                                    Здесь будут отображаться принятые заказы
                                 </p>
                             </div>
                         </div>
@@ -144,6 +146,6 @@ export const WorksList: React.FC<WorksListProps> = ({
                 )}
             </div>
 
-        </>
+        </div>
     );
 };

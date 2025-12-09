@@ -31,7 +31,7 @@ export const TextField: React.FC<TextFieldProps> = ({
         value={value || ''} 
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        disabled={disabled}
+        readOnly={disabled}
       />
       {error && <span className={styles.errorMessage}>{error}</span>}
     </div>
