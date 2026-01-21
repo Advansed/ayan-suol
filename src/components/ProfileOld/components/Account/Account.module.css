@@ -1,0 +1,674 @@
+/* Основной контейнер */
+.container {
+  min-height: 100vh;
+  background: var(--bg-2, #f5f5f7);
+}
+
+/* Хедер */
+.backBtn {
+  background: none;
+  border: none;
+  color: var(--text-primary, #333);
+  cursor: pointer;
+  padding: 8px;
+  margin-right: 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backBtn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.title {
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+/* Контент */
+.content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Карточки */
+.balanceCard,
+.topUpCard,
+.transactionsCard {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Компактная карточка баланса */
+.balanceCard {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+  padding: 16px 10px;
+}
+
+.balanceCard::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.balanceContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+.balanceInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.balanceIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.balanceText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.balanceLabel {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.balanceAmount {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Кнопка пополнения счета */
+.topUpButton {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+
+.topUpButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.topUpIcon {
+  font-size: 16px;
+}
+
+/* Заголовки карточек */
+.cardTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  color: var(--text-primary, #333);
+}
+
+/* Форма пополнения */
+.topUpForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary, #666);
+}
+
+.inputWrapper {
+  position: relative;
+}
+
+.input,
+.select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  background: white;
+  box-sizing: border-box;
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.input[type="number"] {
+  padding-right: 40px;
+}
+
+.currency {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary, #666);
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+}
+
+.submitBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.submitBtn.loading {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* История транзакций */
+.transactionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.transaction {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.transaction:last-child {
+  border-bottom: none;
+}
+
+.transactionIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-right: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.incomeIcon {
+  color: #22c55e;
+}
+
+.newIcon {
+  color: #8a9216;
+}
+
+.expenseIcon {
+  color: #ef4444;
+}
+
+.transactionDetails {
+  flex: 1;
+  min-width: 0;
+}
+
+.transactionTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #333);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transactionDate {
+  font-size: 11px;
+  color: var(--text-secondary, #666);
+}
+
+.transactionAmount {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.transactionAmount.positive {
+  color: #22c55e;
+}
+
+.transactionAmount.negative {
+  color: #ef4444;
+}
+
+/* Пустое состояние */
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary, #666);
+}
+
+.emptyIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* Загрузка */
+.loadingSpinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+/* Карточка пополнения в стиле баланса */
+.topUpBalanceCard {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.topUpBalanceCard::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.topUpBalanceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.topUpBalanceTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.closeButton {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Стили для формы в карточке баланса */
+.topUpInput {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  text-align: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.topUpInput:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.topUpInput::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.topUpCurrency {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.topUpSubmitBtn {
+  width: 100%;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 1;
+}
+
+.topUpSubmitBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
+}
+
+.topUpSubmitBtn:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Добавьте эти стили в существующий файл */
+
+.buttonGroup {
+  font-size: 14;
+}
+
+.invoiceButton {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  width: 100%;
+  color: white;
+  margin-top: 0.5em;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size:  12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+
+.invoiceButton:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.invoiceIcon {
+  font-size: 16px;
+}
+
+.invoiceCard {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #e9ecef;
+}
+
+.invoiceHeader {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.invoiceTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.invoiceForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formLabel {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.invoiceSubmitBtn {
+  padding: 12px 24px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.invoiceSubmitBtn:hover:not(:disabled) {
+  background: #218838;
+}
+
+.invoiceSubmitBtn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.invoicePreview {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.invoiceDocument {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f8f9fa;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.invoiceActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.payInvoiceBtn {
+  padding: 12px 24px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.payInvoiceBtn:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.cancelInvoiceBtn {
+  padding: 12px 24px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cancelInvoiceBtn:hover {
+  background: #545b62;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Адаптивность */
+@media (min-width: 768px) {
+  .content {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  
+  .balanceCard,
+  .topUpCard,
+  .transactionsCard {
+    padding: 12px;
+  }
+  
+  .balanceCard {
+    padding: 20px 24px;
+  }
+  
+  .topUpForm {
+    gap: 20px;
+  }
+  
+  .formGroup {
+    gap: 10px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 20px;
+    max-width: 900px;
+  }
+  
+  .balanceCard {
+    grid-column: 1 / -1;
+  }
+  
+  .topUpCard {
+    grid-column: 1 / -1;
+  }
+  
+  .transactionsCard {
+    grid-column: 1 / -1;
+  }
+}

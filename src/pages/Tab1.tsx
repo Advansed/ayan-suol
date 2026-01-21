@@ -12,7 +12,7 @@ const Tab1: React.FC = () => {
   const {logo, setLogo } = useLogo();
   
   return (
-    <IonPage className='mt-2'>
+    <IonPage>
 
       <IonContent className='bg-2'>
         { logo && (

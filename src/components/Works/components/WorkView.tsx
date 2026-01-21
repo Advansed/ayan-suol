@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { IonButton, IonIcon, IonLabel, useIonRouter } from '@ionic/react';
 import { arrowBackOutline, callOutline, locationOutline } from 'ionicons/icons';
-import { WorkInfo, WorkStatus } from '../types';
+import { WorkInfo, WorkStatus, CreateOfferData, OfferInfo } from '../types';
 import { workFormatters, workStatusUtils } from '../utils';
 import { useWorkStore } from '../../../Store/workStore';
 import { passportGetters } from '../../../Store/passportStore';
@@ -9,6 +9,8 @@ import { companyGetters } from '../../../Store/companyStore';
 import { transportGetters } from '../../../Store/transportStore';
 import { useToast } from '../../Toast';
 import { WizardHeader } from '../../Header/WizardHeader';
+import { CounterOfferCard } from './CounterOfferCard';
+import styles from './WorkCard.module.css';
 
 interface WorkViewProps {
     work:           WorkInfo;
@@ -16,6 +18,7 @@ interface WorkViewProps {
     onOfferClick:   (work: WorkInfo ) => void;
     onStatusClick:  (work: WorkInfo ) => void;
     onMapClick:     (work: WorkInfo ) => void;
+    onCounterOffer?: (offer: OfferInfo) => Promise<boolean>;
 }
 
 export const WorkView: React.FC<WorkViewProps> = ({ 
@@ -23,6 +26,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
     onOfferClick,
     onStatusClick,
     onMapClick,
+    onCounterOffer,
 
 }) => {
     const [workInfo, setWorkInfo] = useState(work);
@@ -75,6 +79,66 @@ export const WorkView: React.FC<WorkViewProps> = ({
         onStatusClick( work )
 
     }
+
+    const handleCounterOffer = async (data: CreateOfferData, volume: number): Promise<void> => {
+        if (!onCounterOffer) {
+            // Если обработчик не передан, используем стандартную логику
+            const transport = transportGetters.getData();
+            const offerData: OfferInfo = {
+                guid: workInfo.cargo,
+                recipient: workInfo.recipient,
+                price: data.price,
+                weight: data.weight,
+                volume: volume,
+                transport: transport?.guid || '',
+                comment: data.comment || '',
+                status: 11 // WorkStatus.OFFERED
+            };
+            
+            // Здесь можно добавить логику отправки через socket или API
+            toast.info('Встречное предложение отправлено');
+            return;
+        }
+
+        const transport = transportGetters.getData();
+        const offerData: OfferInfo = {
+            guid: workInfo.cargo,
+            recipient: workInfo.recipient,
+            price: data.price,
+            weight: data.weight,
+            volume: volume,
+            transport: transport?.guid || '',
+            comment: data.comment || '',
+            status: 11 // WorkStatus.OFFERED
+        };
+
+        await onCounterOffer(offerData);
+    };
+
+    // Определяем теги для второй строки
+    const getBottomTags = () => {
+        const tags: Array<{ text: string; className: string }> = [];
+        
+        // Гарантированная оплата (если advance > 0)
+        if (workInfo.advance > 0) {
+            const isFullAdvance = workInfo.advance >= workInfo.price;
+            tags.push({
+                text: 'Гарантированная оплата',
+                className: isFullAdvance ? styles.tagGreen : styles.tagOrange
+            });
+        }
+        
+        // Застраховано (если insurance > 0)
+        if (workInfo.insurance > 0) {
+            const isFullAdvance = workInfo.advance >= workInfo.price;
+            tags.push({
+                text: 'Застраховано',
+                className: isFullAdvance ? styles.tagGreen : styles.tagOrange
+            });
+        }
+        
+        return tags;
+    };
 
     const renderButtons     = ( work: WorkInfo) => {
         return <>
@@ -156,152 +220,136 @@ export const WorkView: React.FC<WorkViewProps> = ({
     const renderView        = ( work: WorkInfo) => {
         return <>
             {/* Header */}
-            <div className='ml-1 mr-1'>
+            <div >
                 <WizardHeader 
                     title   = { "Заказ ID " + workInfo.guid.substr(0, 8) }
                     onBack  = { onBack }
                 />
             </div>
 
-            <div className='cr-card mt-1'>
+            <div className='ml-05 mr-05'>
+                {/* Карточка встречного предложения для статуса "Торг" */}
 
-                <div className="flex fl-space">
-                    <div className="flex">
-                        <div className={workStatusUtils.getClassName(work.status)}>
-                            {work.status}
+                <div className={`${styles.workCard} mt-1`}>
+                    {/* Верхняя строка: два тега "Торг", ID, цена */}
+                    <div className={styles.topRow}>
+                        <div className={styles.topRowLeft}>
+                            <span className={`${styles.statusBadge} ${styles.statusBargaining}`}>
+                                { workInfo.status }
+                            </span>
+                            <span className={'fs-08 cl-gray'}>
+                                ID: {workFormatters.shortId(workInfo.guid)}
+                            </span>
                         </div>
-                        <div className="ml-1 fs-07 cl-black">
-                            {"ID: " + workFormatters.shortId(work.guid)}
+                        <div className={styles.topRowRight}>
+                            <span className={`${styles.statusBadge} ${styles.statusBargaining}`}>
+                                Торг
+                            </span>
+                            <span className={`${styles.statusBadge} ${styles.statusWaiting}`}>
+                                ₽ {workInfo.price.toLocaleString('ru-RU').replace(/,/g, ' ')}
+                            </span>
                         </div>
                     </div>
-                    <div>
-                        <div className="fs-09 cl-prim">
-                            <b>{workFormatters.currency(work.price)}</b>
+
+                    {/* Вторая строка: теги */}
+                    {getBottomTags().length > 0 && (
+                        <div className={styles.tagsRow}>
+                            {getBottomTags().map((tag, index) => (
+                                <span key={index} className={`${styles.tag} ${tag.className}`}>
+                                    { tag.text }
+                                </span>
+                            ))}
                         </div>
-                        <div className="fs-08 cl-black">
-                            <b>{workFormatters.weight(work.weight)}</b>
-                        </div>
+                    )}
+
+                    {/* Название груза */}
+                    <div className={styles.cargoName}>
+                        <span className={styles.cargoNameText}>
+                            <b className='fs-09'>{workInfo.name}</b>
+                        </span>
                     </div>
-                </div>
 
-                {/* Название груза */}
-                <div className="fs-08 mt-05 cl-black">
-                    <b>{work.name}</b>
-                </div>
+                    {/* Маршрут в две строки, как в дизайне */}
+                    <div className={styles.routeSection + ' mt-05'}>
+                        {/* Откуда + дата загрузки */}
+                        <div className={styles.routeRow}>
+                            <div className={styles.routeLeft}>
+                                <IonIcon icon={locationOutline} className={`${styles.routeIcon} ${styles.routeIconGreen}`} />
+                                <div className={styles.routeTextGroup}>
+                                    <span className={styles.routeLabel}>Откуда:</span>
+                                    <span className={styles.routeCity}>
+                                        {workInfo.address?.city.city || 'Не указано'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className={styles.routeRight}>
+                                <span className={styles.routeDateLabel}>Дата загрузки:</span>
+                                <span className={styles.routeDateValue}>
+                                    {workFormatters.date(workInfo.pickup_date || '')}
+                                </span>
+                            </div>
+                        </div>
 
-                {/* Заказчик */}
-                <div className="fs-08 mt-05 cl-gray">
-                    Заказчик: <span className="cl-black"><b>{work.client}</b></span>
-                </div>
-
-                {/* Маршрут отправления */}
-                <div className="flex fl-space mt-05 cl-black">
-                    <div className="flex">
-                        <IonIcon icon={locationOutline} color="danger"/>
-                        <div className="fs-08 cl-prim">
-                            <div className="ml-1 fs-09 cl-gray">Откуда:</div>
-                            <div className="ml-1 fs-09">
-                                <b>{work.address?.city.city || 'Не указано'}</b>
+                        {/* Куда + дата загрузки (как в макете) */}
+                        <div className={styles.routeRow}>
+                            <div className={styles.routeLeft}>
+                                <IonIcon icon={locationOutline} className={`${styles.routeIcon} ${styles.routeIconRed}`} />
+                                <div className={styles.routeTextGroup}>
+                                    <span className={styles.routeLabel}>Куда:</span>
+                                    <span className={styles.routeCity}>
+                                        {workInfo.destiny?.city.city || 'Не указано'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className={styles.routeRight}>
+                                <span className={styles.routeDateLabel}>Дата загрузки:</span>
+                                <span className={styles.routeDateValue}>
+                                    {workFormatters.date(workInfo.pickup_date || '')}
+                                </span>
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <div className="fs-08 cl-prim">
-                            <div className="ml-1 fs-09 cl-gray mr-1">Дата загрузки:</div>
-                            <div className="ml-1 fs-09">
-                                <b>{workFormatters.date(work.pickup_date || '')}</b>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="flex fl-space mt-05">
-                    <div className="flex">
-                        <div className="fs-08 cl-prim ml-1">
-                            <div className="ml-1 fs-09 cl-gray">Точный адрес груза:</div>
-                            <div className="ml-1 fs-09">
-                                <b>{work.address?.address || 'Не указано'}</b>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
+                    {/* Детали груза */}
+                    <div className={styles.cargoDetails}>
+                        <div className={styles.cargoDetailsTitle}>Детали груза:</div>
+                        <div className={styles.cargoDetailsList}>
+                            <div className={styles.cargoDetailItem}>
+                                Вес (т): <span className={styles.cargoDetailValue}>{workInfo.weight}</span>
+                            </div>
+                            <div className={styles.cargoDetailItem}>
+                                Объем (м³): <span className={styles.cargoDetailValue}>{workInfo.volume}</span>
+                            </div>
+                        </div>
+                        {workInfo.description && (
+                            <div className={styles.cargoDescription}>
+                                {workInfo.description}
+                            </div>
+                        )}
+                    </div>
 
-                {/* Маршрут назначения */}
-                <div className="flex fl-space mt-05">
-                    <div className="flex">
-                        <IonIcon icon={locationOutline} color="success"/>
-                        <div className="fs-08 cl-prim">
-                            <div className="ml-1 fs-09 cl-gray">Куда:</div>
-                            <div className="ml-1 fs-09">
-                                <b>{work.destiny?.city.city || 'Не указано'}</b>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <div className="fs-08 cl-prim">
-                            <div className="ml-1 fs-09 cl-gray mr-1">Дата выгрузки:</div>
-                            <div className="ml-1 fs-09 mr-1">
-                                <b>{workFormatters.date(work.delivery_date || '')}</b>
-                            </div>
-                        </div>
-                    </div>
+                    {/* Кнопки действий */}
+                    {/* <div className="flex fl-space mt-05 pb-05">
+                        <IonButton
+                            className="w-100"
+                            mode="ios"
+                            color="danger"
+                        >
+                            <span className="fs-08">Обратиться в тех. поддержку</span>
+                        </IonButton>
+                    </div> */}
+
+                    {/* { renderButtons( workInfo ) } */}
+
                 </div>
 
-                <div className="flex fl-space mt-05">
-                    <div className="flex">
-                        <div className="fs-08 cl-prim ml-1">
-                            <div className="ml-1 fs-09 cl-gray">Точный адрес груза:</div>
-                            <div className="ml-1 fs-09">
-                                <b>{work.destiny?.address || 'Не указано'}</b>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex fl-space mt-05">
-                    <div className="flex">
-                        <IonIcon icon={ callOutline } color="primary"/>
-                        <div className="fs-08 cl-prim">
-                            <div className="ml-1 fs-09 cl-gray">Контактное лицо:</div>
-                            <div className="ml-1 fs-09">
-                                <b>{work.face || 'Не указано'}</b>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <div className="fs-08 cl-prim">
-                            <div className="ml-1 fs-09 cl-gray">Телефон:</div>
-                            <div className="ml-1 fs-09 mr-1">
-                                <b>{workFormatters.date(work.phone || '')}</b>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Описание работы */}
-                {work.description && (
-                    <div className="fs-08 mt-1 cr-detali">
-                        <b>Детали груза:</b>
-                        <div className="mt-05">{work.description}</div>
-                    </div>
+                {workInfo.status === WorkStatus.OFFERED && (
+                    <CounterOfferCard
+                        work={workInfo}
+                        onSubmit={handleCounterOffer}
+                    />
                 )}
 
-                
-                {/* Кнопки действий */}
-                <div className="flex fl-space mt-05 pb-05">
-                    <IonButton
-                        className="w-100"
-                        mode="ios"
-                        color="danger"
-                    >
-                        <span className="fs-08">Обратиться в тех. поддержку</span>
-                    </IonButton>
-
-                </div>
-
-                { renderButtons( work ) }
-                
             </div>
         </>
     }

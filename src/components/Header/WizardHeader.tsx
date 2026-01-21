@@ -1,11 +1,12 @@
 import React from 'react';
 import { IonIcon } from '@ionic/react';
-import { chevronBackOutline, chevronForwardOutline, closeOutline, refreshOutline, saveOutline } from 'ionicons/icons';
+import { menuOutline, refreshOutline, closeOutline, chevronBackOutline } from 'ionicons/icons';
 import styles from './WizardHeader.module.css';
 
 interface WizardHeaderProps {
   title:            string;
   pages?:           string;
+  onMenu?:          () => void;
   onBack?:          () => void;
   onClose?:         () => void;
   onRefresh?:       () => void;
@@ -14,6 +15,7 @@ interface WizardHeaderProps {
 export const WizardHeader: React.FC<WizardHeaderProps> = ({
   title,
   pages     = "",
+  onMenu,
   onBack,
   onClose,
   onRefresh   
@@ -22,24 +24,31 @@ export const WizardHeader: React.FC<WizardHeaderProps> = ({
   return (
     <div className={styles.stepHeader}>
         <button 
-            className = { `${styles.navButton} ${styles.navButtonLeft}` } 
-            onClick   = { () => { if(onBack) onBack() } }
+            className = { `${styles.navButton} ${styles.navButtonLeft} ${onMenu ? styles.menuButton : ''}` } 
+            onClick   = { () => { 
+              if(onMenu) onMenu();
+              else if(onBack) onBack();
+            } }
         >
-            { onBack !== undefined && ( <IonIcon icon={chevronBackOutline} />)}
+            { onMenu !== undefined && ( <IonIcon icon={menuOutline} />)}
+            { onMenu === undefined && onBack !== undefined && ( <IonIcon icon={chevronBackOutline} />)}
         </button>
 
-        <div className=''>
-            <div><h3 className={styles.stepTitle}>{title}</h3></div>
-            <div><h3 className={styles.pageTitle}>{pages}</h3></div>
+        <div className={styles.titleContainer}>
+            <h3 className={styles.stepTitle}>{title}</h3>
+            {pages && <h3 className={styles.pageTitle}>{pages}</h3>}
         </div>
 
         <button 
-            className={`${styles.navButton} ${styles.navButtonRight}`} 
-            onClick={ () => { if(onClose) onClose();if(onRefresh) onRefresh(); } }
+            className={`${styles.navButton} ${styles.navButtonRight} ${onRefresh ? styles.refreshButton : ''}`} 
+            onClick={ () => { 
+              if(onRefresh) onRefresh();
+              if(onClose) onClose();
+            } }
             disabled={ false }
         >
-            { onClose !== undefined && (<IonIcon icon={ closeOutline } />)  }
             { onRefresh !== undefined && (<IonIcon icon={ refreshOutline } />)  }
+            { onRefresh === undefined && onClose !== undefined && (<IonIcon icon={ closeOutline } />)  }
         </button>
     </div>
   );

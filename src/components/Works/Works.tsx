@@ -149,6 +149,7 @@ export const Works: React.FC = () => {
                         onOfferClick    = { handleOfferClick }
                         onStatusClick   = { handleStatusClick }
                         onMapClick      = { handleMapClick }
+                        onCounterOffer  = { handleOfferSubmit }
                     />
                 );
 

@@ -350,6 +350,11 @@ body {
     background-color: white !important;
     color: black !important;
     color-scheme: light !important;
+    /* Обеспечиваем отступ сверху для body на устройствах без safe area */
+    padding-top: env(safe-area-inset-top, 0px);
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 /* Отключаем темную тему для всех медиа-запросов */
@@ -407,10 +412,20 @@ meta[name="color-scheme"] {
 
 /* ДОБАВЬТЕ ЭТИ СТИЛИ В app.css */
 
+/* ============================================
+   SAFE AREA ПОДДЕРЖКА ДЛЯ ВСЕХ УСТРОЙСТВ
+   ============================================
+   Эти стили обеспечивают правильные отступы сверху для контента,
+   чтобы он не уходил под статус-бар (панель с часами, значками и батареей).
+   
+   Используется max(20px, ...) для обеспечения минимального отступа 20px
+   на старых устройствах, которые не поддерживают safe-area-inset.
+   ============================================ */
+
 /* Safe Area поддержка для всех устройств */
 :root {
-  /* Переменные для safe area */
-  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  /* Переменные для safe area с fallback для старых устройств */
+  --safe-area-inset-top: max(20px, env(safe-area-inset-top, 20px));
   --safe-area-inset-right: env(safe-area-inset-right, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
@@ -428,9 +443,9 @@ meta[name="color-scheme"] {
 
 /* Основной контейнер приложения */
 .a-container {
-    padding-top: var(--safe-area-inset-top);
-    padding-left: var(--safe-area-inset-left);
-    padding-right: var(--safe-area-inset-right);
+    /* Используем max() для обеспечения минимального отступа на старых устройствах */
+    padding-top: max(20px, var(--safe-area-inset-top));
+    /* Убраны боковые отступы */
     /* НЕ добавляем padding-bottom, так как там табы */
     min-height: 100vh;
     box-sizing: border-box;
@@ -443,33 +458,31 @@ meta[name="color-scheme"] {
 
 /* Для заголовков и хедеров */
 .page-header {
-    padding-top: calc(var(--safe-area-inset-top) + 0.5em);
-    padding-left: calc(var(--safe-area-inset-left) + 0.5em);
-    padding-right: calc(var(--safe-area-inset-right) + 0.5em);
+    /* Используем max() для обеспечения минимального отступа на старых устройствах */
+    padding-top: calc(max(20px, var(--safe-area-inset-top)) + 0.5em);
+    /* Убраны боковые отступы */
 }
 
 /* Для модальных окон и полноэкранных элементов */
 .fullscreen-modal {
     padding-top: var(--safe-area-inset-top);
-    padding-left: var(--safe-area-inset-left);
-    padding-right: var(--safe-area-inset-right);
+    /* Убраны боковые отступы */
     padding-bottom: var(--safe-area-inset-bottom);
 }
 
 /* Фикс для контейнера логина */
 .container {
-    padding-top: var(--safe-area-inset-top);
-    padding-left: var(--safe-area-inset-left);
-    padding-right: var(--safe-area-inset-right);
+    /* Используем max() для обеспечения минимального отступа на старых устройствах */
+    padding-top: max(20px, var(--safe-area-inset-top));
+    /* Убраны боковые отступы */
 }
 
 /* Фикс для пустого состояния с анимацией */
 .empty-state-container {
     /* Учитываем safe area в высоте */
-    min-height: calc(100vh - 300px - var(--safe-area-inset-top) - var(--safe-area-inset-bottom));
-    padding-top: calc(2em + var(--safe-area-inset-top));
-    padding-left: calc(1em + var(--safe-area-inset-left));
-    padding-right: calc(1em + var(--safe-area-inset-right));
+    min-height: calc(100vh - 300px - max(20px, var(--safe-area-inset-top)) - var(--safe-area-inset-bottom));
+    padding-top: calc(2em + max(20px, var(--safe-area-inset-top)));
+    /* Убраны боковые отступы */
 }
 
 /* Специальные классы для разных типов устройств */
@@ -504,7 +517,7 @@ meta[name="color-scheme"] {
 
 /* Дополнительные утилитарные классы */
 .safe-top {
-    padding-top: var(--safe-area-inset-top) !important;
+    padding-top: max(20px, var(--safe-area-inset-top)) !important;
 }
 
 .safe-bottom {
@@ -530,10 +543,11 @@ meta[name="color-scheme"] {
 /* Основные контейнеры */
 ion-app {
   /* Позволяем Ionic самому управлять safe area */
-  --ion-safe-area-top: env(safe-area-inset-top);
-  --ion-safe-area-bottom: env(safe-area-inset-bottom);
-  --ion-safe-area-left: env(safe-area-inset-left);
-  --ion-safe-area-right: env(safe-area-inset-right);
+  /* Используем max() для обеспечения минимального отступа на старых устройствах */
+  --ion-safe-area-top: max(20px, env(safe-area-inset-top, 20px));
+  --ion-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --ion-safe-area-left: env(safe-area-inset-left, 0px);
+  --ion-safe-area-right: env(safe-area-inset-right, 0px);
 }
 
 /* Вкладки снизу */
@@ -543,23 +557,30 @@ ion-tab-bar {
 
 /* Заголовки страниц */
 ion-header {
-  padding-top: var(--ion-safe-area-top);
+  padding-top: max(20px, var(--ion-safe-area-top));
+}
+
+/* Страницы Ionic */
+ion-page {
+  /* Обеспечиваем отступ сверху для контента страницы */
+  padding-top: max(20px, env(safe-area-inset-top, 20px));
 }
 
 /* Контент страниц */
 ion-content {
-  --padding-top: var(--ion-safe-area-top);
+  /* Используем max() для обеспечения минимального отступа на старых устройствах */
+  --padding-top: max(20px, var(--ion-safe-area-top));
   --padding-bottom: 0px; /* Не добавляем снизу, там табы */
-  --padding-start: var(--ion-safe-area-left);
-  --padding-end: var(--ion-safe-area-right);
+  --padding-start: env(safe-area-inset-left, 0px);
+  --padding-end: env(safe-area-inset-right, 0px);
 }
 
 /* Модальные окна */
 ion-modal {
-  --padding-top: var(--ion-safe-area-top);
+  --padding-top: max(20px, var(--ion-safe-area-top));
   --padding-bottom: var(--ion-safe-area-bottom);
-  --padding-start: var(--ion-safe-area-left);
-  --padding-end: var(--ion-safe-area-right);
+  --padding-start: env(safe-area-inset-left, 0px);
+  --padding-end: env(safe-area-inset-right, 0px);
 }
 
 /* Для полноэкранных модалей */
@@ -570,15 +591,13 @@ ion-modal.fullscreen {
 
 /* Карточки с учетом безопасной зоны */
 .cr-card {
-  margin-left: max(1em, var(--ion-safe-area-left));
-  margin-right: max(1em, var(--ion-safe-area-right));
+  /* Убраны боковые отступы */
 }
 
 /* Флекс контейнеры в заголовках */
 .flex.ml-05.mt-05 {
-  margin-top: calc(0.5em + var(--ion-safe-area-top));
-  margin-left: calc(0.5em + var(--ion-safe-area-left));
-  margin-right: calc(0.5em + var(--ion-safe-area-right));
+  margin-top: calc(0.5em + max(20px, var(--ion-safe-area-top)));
+  /* Убраны боковые отступы */
 }
 
 /* Специальные стили для разных платформ */
@@ -636,27 +655,23 @@ ion-refresher {
   --color: white;
 }
 
-/* Убедитесь, что контент не заходит под статус-бар */
-ion-content {
-  --padding-top: env(safe-area-inset-top);
-  --padding-start: env(safe-area-inset-left);
-  --padding-end: env(safe-area-inset-right);
-  --padding-bottom: env(safe-area-inset-bottom);
-}
+/* Дублирующее правило удалено - используется правило выше для ion-content */
 
 /* Для iOS и Android безопасных зон */
 .safe-area-top {
-  padding-top: env(safe-area-inset-top);
+  padding-top: max(20px, env(safe-area-inset-top, 20px));
 }
 
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Глобальные стили для статус-бара */
+/* Дополнительная поддержка для старых iOS устройств */
 ion-app {
-  padding-top: constant(safe-area-inset-top); /* iOS 11.0 */
-  padding-top: env(safe-area-inset-top); /* iOS 11.2+ */
+  /* Для iOS 11.0 */
+  padding-top: constant(safe-area-inset-top);
+  /* Для iOS 11.2+ и современных устройств */
+  padding-top: max(20px, env(safe-area-inset-top, 20px));
 }
 
 /* invoice-modal.css */

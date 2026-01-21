@@ -1,0 +1,271 @@
+/* Стили для мобильных устройств ~420px */
+
+.workCard {
+  background-color: white;
+  /* border-left: 4px solid #90EE90; */
+  border: 1px solid silver;
+  border-radius: 8px;
+  padding: 0.75em 0.5em;
+  margin-bottom: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: auto;
+  box-sizing: border-box;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6em;
+  gap: 0.4em;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.topRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  flex-wrap: nowrap;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.topRowRight {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  flex-shrink: 0;
+}
+
+/* Цена теперь использует класс statusBadge, стили удалены */
+
+.tagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-bottom: 0.6em;
+}
+
+.tag {
+  /* Делаем теги по размеру как статусы */
+  padding: 0.4em 0.9em;
+  border-radius: 1em;
+  font-size: 0.85em;
+  font-weight: 600;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.tagGreen {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+}
+
+.tagOrange {
+  background-color: #FFF3E0;
+  color: #E65100;
+}
+
+.tagPurple {
+  background-color: #F3E5F5;
+  color: #7B1FA2;
+}
+
+.tagBlue {
+  background-color: #E3F2FD;
+  color: #1976D2;
+}
+
+.tagYellow {
+  background-color: #FFF9C4;
+  color: #F57F17;
+}
+
+.cargoName {
+  margin-bottom: 0.6em;
+}
+
+.cargoNameText {
+  display: block;
+}
+
+.routeSection {
+  margin-bottom: 0.6em;
+}
+
+.routeRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.4em;
+  width: 100%;
+  margin-bottom: 0.25em;
+}
+
+.routeLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4em;
+  flex: 1;
+  min-width: 0;
+}
+
+.routeTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1em;
+}
+
+.routeLabel {
+  font-size: 0.8em;
+  color: #666;
+}
+
+.routeCity {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #333;
+}
+
+.routeIcon {
+  font-size: 2em;
+  flex-shrink: 0;
+}
+
+.routeIconGreen {
+  color: #4CAF50;
+}
+
+.routeIconRed {
+  color: #F44336;
+}
+
+.routeRight {
+  text-align: right;
+  font-size: 0.8em;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.routeDateLabel {
+  display: block;
+}
+
+.routeDateValue {
+  display: block;
+  font-weight: 600;
+  color: #333;
+}
+
+.cargoDetails {
+  margin-top: 0.6em;
+  padding-top: 0.6em;
+  border-top: 1px solid #E0E0E0;
+}
+
+.cargoDetailsTitle {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.4em;
+}
+
+.cargoDetailsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8em;
+  margin-bottom: 0.4em;
+}
+
+.cargoDetailItem {
+  font-size: 0.8em;
+  color: #666;
+}
+
+.cargoDetailValue {
+  font-weight: 600;
+  color: #333;
+}
+
+.cargoDescription {
+  font-size: 0.8em;
+  color: #666;
+  line-height: 1.4;
+  margin-top: 0.4em;
+}
+
+/* Статусы */
+.statusBadge {
+  padding: 0.4em 0.9em;
+  border-radius: 1em;
+  font-size: 0.85em;
+  font-weight: 600;
+  display: inline-block;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.statusWaiting {
+  background-color: #E3F2FD;
+  color: #1976D2;
+}
+
+.statusBargaining {
+  background-color: #FFF3E0;
+  color: #E65100;
+}
+
+.idText {
+  font-size: 0.85em;
+  color: #333;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Для очень маленьких экранов (< 360px) */
+@media (max-width: 360px) {
+  .workCard {
+    padding: 0.6em 0.5em;
+  }
+  
+  .topRow {
+    flex-wrap: wrap;
+  }
+  
+  .topRowRight {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 0.4em;
+  }
+  
+  .statusBadge {
+    font-size: 0.8em;
+    padding: 0.35em 0.75em;
+  }
+  
+  .idText {
+    font-size: 0.8em;
+  }
+  
+  .price {
+    font-size: 0.9em;
+    padding: 0.35em 0.75em;
+  }
+  
+  .tag {
+    font-size: 0.8em;
+    padding: 0.35em 0.75em;
+  }
+  
+  .routeLabel {
+    min-width: 60px;
+    font-size: 0.75em;
+  }
+  
+  .routeValue {
+    font-size: 0.8em;
+  }
+}

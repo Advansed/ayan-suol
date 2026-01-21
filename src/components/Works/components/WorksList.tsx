@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
-import { IonButton, IonLabel, IonRefresher, IonRefresherContent, IonSegment, IonSegmentButton } from '@ionic/react';
-import { WorkInfo, WorkStatus } from '../types';
+import React from 'react';
+import { WorkInfo } from '../types';
 import { WorkCard } from './WorkCard';
-import { useHistory } from 'react-router';
 import Lottie from 'lottie-react';
 import animationData from '../../../pages/gvr_logo.json';
 import './WorkList.css'
@@ -22,20 +20,6 @@ export const WorksList: React.FC<WorksListProps> = ({
     onWorkClick,
     onRefresh
 }) => {
-    const history = useHistory();
-    const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
-    
-    // Разделяем работы по статусам
-    const activeWorks = works.filter(w => w.status === WorkStatus.NEW);
-    const completedWorks = works.filter(w => w.status !== WorkStatus.NEW);
-
-
-    const handleRefresh     = async (event: any) => {
-        if (onRefresh) {
-            await onRefresh();
-        }
-        event.detail.complete();
-    };
 
     const EmptyState        = () => (
         <div className="">
@@ -70,11 +54,10 @@ export const WorksList: React.FC<WorksListProps> = ({
         return worksToRender.map((work) => (
             <div 
                 key={work.guid} 
-                className='cr-card mt-1'
+                style={{ width: '100%', boxSizing: 'border-box', padding: '0 0.6em', marginBottom: '0.5em' }}
                 onClick={() => { onWorkClick(work); }}
             >
-                <WorkCard work={work} mode="view" />
-
+                <WorkCard work={work} mode="list" onClick={() => onWorkClick(work)} />
             </div>
         ));
     };
@@ -84,65 +67,23 @@ export const WorksList: React.FC<WorksListProps> = ({
         <div className='works-list-container'>
             {/* Refresher */}
             
-            <div className='ml-1 mr-1'>
+            <div style={{ width: '100%', boxSizing: 'border-box' }}>
                 <WizardHeader
                     title       = 'Заказы'
+                    onMenu      = { () => {
+                        // TODO: Добавить функциональность меню (например, открытие бокового меню)
+                        console.log('Menu clicked');
+                    } }
                     onRefresh   = { onRefresh }
                 />
             </div>
             <div className="scroll">
-                {/* Переключатель вкладок */}
-                {/* Активные работы */}
-                
-
-                <IonSegment 
-                    value={activeTab} 
-                    onIonChange={e => setActiveTab(e.detail.value as 'active' | 'completed')}
-                    className="custom-segment sticky-top"
-                >
-                    <IonSegmentButton value="active" className="segment-button">
-                        <IonLabel className="segment-label"><b>Новые ({activeWorks.length})</b></IonLabel>
-                    </IonSegmentButton>
-                    <IonSegmentButton value="completed" className="segment-button">
-                        <IonLabel className="segment-label"><b>Активные ({completedWorks.length})</b></IonLabel>
-                    </IonSegmentButton>
-                </IonSegment>
-
-
-                {/* Активные работы */}
-                {activeTab === 'active' && (
+                {works.length > 0 ? (
                     <>
-                        {activeWorks.length > 0 ? (
-                            <>
-                                {renderWorks(activeWorks)}
-                            </>
-                        ) : (
-                            !isLoading && <EmptyState />
-                        )}
+                        {renderWorks(works)}
                     </>
-                )}
-
-                {/* Выполненные работы */}
-                {activeTab === 'completed' && completedWorks.length > 0 && (
-                    <>
-                        {renderWorks(completedWorks)}
-                    </>
-                )}
-
-                {/* Пустое состояние для выполненных */}
-                {activeTab === 'completed' && completedWorks.length === 0 && !isLoading && (
-                    <div className="empty-state-container">
-                        <div className="empty-state-content">
-                            <div className="empty-state-text">
-                                <h3 className="fs-12 cl-gray a-center">
-                                    Нет принятых заказов
-                                </h3>
-                                <p className="fs-09 cl-gray a-center mt-05">
-                                    Здесь будут отображаться принятые заказы
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                ) : (
+                    !isLoading && <EmptyState />
                 )}
             </div>
 

@@ -12,8 +12,7 @@
 }
 
 .cr-card {
-    margin-left: 1em;
-    margin-right: 1em;
+    /* Убраны боковые отступы */
     background-color: white;
     border: 1px solid silver;
     border-radius: 5px;
@@ -21,8 +20,7 @@
 }
 
 .c-card {
-    margin-left: 1em;
-    margin-right: 1em;
+    /* Убраны боковые отступы */
     background-color: white;
     border: 1px solid silver;
     border-radius: 5px;

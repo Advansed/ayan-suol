@@ -1,0 +1,228 @@
+/* Стили для мобильных устройств ~420px */
+
+.counterOfferCard {
+  width: auto;
+  margin-top: 1em;
+  margin-left: 0.5em;
+  background: linear-gradient(135deg, #27b03e 0%, #1ee91e 100%);
+  border-radius: 12px;
+  padding: 1em 0.75em;
+  box-shadow: 0 4px 16px rgba(156, 39, 176, 0.3);
+  width: calc(100% - 1em);
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: 1.2em;
+}
+
+.headerIcon {
+  font-size: 1.3em;
+  color: white;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.inputRow {
+  display: flex;
+  flex-direction: row;
+  gap: 1em;
+  margin-bottom: 1em;
+  width: 100%;
+}
+
+.inputField {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+
+.label {
+  font-size: 0.85em;
+  color: white;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  padding: 0.7em 0.9em;
+  color: #333;
+  font-size: 0.9em;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+.input::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.commentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin-bottom: 1em;
+  width: 100%;
+}
+
+.commentLabel {
+  font-size: 0.85em;
+  color: white;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  padding: 0.7em 0.9em;
+  color: #333;
+  font-size: 0.9em;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 90px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.textarea:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+.textarea::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.error {
+  color: #FFEB3B;
+  font-size: 0.8em;
+  margin-bottom: 0.6em;
+  padding: 0.5em 0.7em;
+  background: rgba(255, 235, 59, 0.2);
+  border-radius: 8px;
+  line-height: 1.3;
+}
+
+.submitButton {
+  width: 100%;
+  background: white !important;
+  color: #333 !important;
+  border-radius: 10px;
+  padding: 0.9em 1em;
+  font-weight: 600;
+  font-size: 0.9em;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  margin-top: 0.3em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+}
+
+.submitButton:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.buttonIcon {
+  font-size: 1.1em;
+  flex-shrink: 0;
+}
+
+/* Для очень маленьких экранов (< 360px) */
+@media (max-width: 360px) {
+  .counterOfferCard {
+    padding: 0.8em 0.6em;
+    margin: 0.6em 0.5em;
+    border-radius: 10px;
+  }
+
+  .header {
+    margin-bottom: 1em;
+    gap: 0.4em;
+  }
+
+  .headerIcon {
+    font-size: 1.2em;
+  }
+
+  .title {
+    font-size: 1em;
+  }
+
+  .inputRow {
+    gap: 0.8em;
+    margin-bottom: 0.8em;
+  }
+
+  .label {
+    font-size: 0.8em;
+  }
+
+  .input {
+    padding: 0.6em 0.8em;
+    font-size: 0.85em;
+    border-radius: 8px;
+  }
+
+  .commentSection {
+    margin-bottom: 0.8em;
+  }
+
+  .commentLabel {
+    font-size: 0.8em;
+  }
+
+  .textarea {
+    padding: 0.6em 0.8em;
+    font-size: 0.85em;
+    min-height: 80px;
+    border-radius: 8px;
+  }
+
+  .submitButton {
+    padding: 0.8em 0.9em;
+    font-size: 0.85em;
+    border-radius: 8px;
+  }
+
+  .buttonIcon {
+    font-size: 1em;
+  }
+}
