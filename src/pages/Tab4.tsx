@@ -8,7 +8,7 @@ const Tab4: React.FC = () => {
   const { user_type } = useUserType()
 
   return (
-    <IonPage className='mt-2'>
+    <IonPage>
       <IonContent fullscreen>
         {user_type == 2 ? <WorkArchive /> : <CargoArchive />}
       </IonContent>

@@ -12,7 +12,7 @@ const Tab2: React.FC = () => {
   
 
   return (
-    <IonPage className='mt-2'>
+    <IonPage >
       <IonContent>
 
         {

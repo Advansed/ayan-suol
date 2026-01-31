@@ -1,6 +1,6 @@
-import { IonPage } from '@ionic/react'
+import { IonContent, IonPage } from '@ionic/react'
 import './Tab3.css'
-import { Profile } from '../components/ProfileOld'
+import { Profile } from '../components/Profile'
 import { useParams } from 'react-router-dom';
 
 const Tab3: React.FC = () => {
@@ -8,8 +8,10 @@ const Tab3: React.FC = () => {
   
 
   return (
-    <IonPage className='mt-2'>
-      <Profile name = { name }/>
+    <IonPage>
+      <IonContent>
+        <Profile />
+      </IonContent>
     </IonPage>
   )
 }
