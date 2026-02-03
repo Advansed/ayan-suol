@@ -1,18 +1,31 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { IonIcon, IonToggle, IonButton } from '@ionic/react';
-import { peopleOutline, personOutline, carOutline, cameraOutline } from 'ionicons/icons';
+import { peopleOutline, personOutline, carOutline } from 'ionicons/icons';
+import { useHistory } from 'react-router-dom';
 import { WizardHeader } from '../Header/WizardHeader';
 import styles from './Profile.module.css';
-import { useUserType } from '../../Store/loginStore';
+import { useProfile } from './useProfile';
+import { GeneralInfo } from './components/GeneralInfo';
+import { CustomerInfo } from './components/CustomerInfo';
+import { DriverInfo } from './components/DriverInfo';
 
 export const Profile: React.FC = () => {
-    const [isDriverMode, setIsDriverMode] = useState(false);
-    const [profileImage, setProfileImage] = useState<string | null>(null);
-
-    const { user_type } = useUserType();
+    const history = useHistory();
+    const { 
+        user_type, 
+        image, 
+        name, 
+        phone, 
+        email, 
+        setUser,
+        companyData,
+        updateCompany,
+        transportData,
+        updateTransport
+    } = useProfile();
 
     const handleToggleChange = (e: CustomEvent) => {
-        setIsDriverMode(e.detail.checked);
+        setUser({ user_type: user_type === 1 ? 2 : 1 })
     };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,15 +45,62 @@ export const Profile: React.FC = () => {
 
             const reader = new FileReader();
             reader.onloadend = () => {
-                setProfileImage(reader.result as string);
+                const base64String = reader.result as string;
+                setUser({ image: base64String });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleGeneralInfoSave = async (data: {
+        name: string;
+        phone: string;
+        email: string;
+        additionalPhone: string;
+        phoneOnlyForRegistration: boolean;
+        displayAdditionalAsPrimary: boolean;
+    }) => {
+        await setUser({
+            name: data.name,
+            phone: data.phone,
+            email: data.email
+        });
+    };
+
+    const handleCustomerInfoSave = async (data: any) => {
+        await updateCompany(data);
+    };
+
+    const handleDriverInfoSave = async (data: any) => {
+        await updateTransport(data);
+    };
+
+    const handleTransportImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Проверка формата
+            if (!file.type.match(/^image\/(png|jpg|jpeg)$/)) {
+                alert('Формат файла должен быть PNG или JPG');
+                return;
+            }
+            
+            // Проверка размера (12 МБ)
+            if (file.size > 12 * 1024 * 1024) {
+                alert('Размер файла не должен превышать 12 МБ');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result as string;
+                updateTransport({ image: base64String });
             };
             reader.readAsDataURL(file);
         }
     };
 
     const handleMenuClick = () => {
-        // Обработка клика по меню
-        console.log('Menu clicked');
+        history.push('/settings');
     };
 
     return (
@@ -64,23 +124,23 @@ export const Profile: React.FC = () => {
 
                     <div className={styles.roleSwitcher}>
                         <div className={styles.roleContainer}>
-                            <div className={`${styles.roleItem} ${!isDriverMode ? styles.roleActive : ''}`}>
+                            <div className={`${styles.roleItem} ${user_type === 1 ? styles.roleActive : ''}`}>
                                 <IonIcon icon={personOutline} className={styles.roleIcon} />
                                 <span className={styles.roleText}>Заказчик</span>
                             </div>
                             
                             <div className={styles.roleSeparator}></div>
                             
-                            <div className={`${styles.roleItem} ${isDriverMode ? styles.roleActive : ''}`}>
+                            <div className={`${styles.roleItem} ${user_type === 2 ? styles.roleActive : ''}`}>
                                 <IonIcon icon={carOutline} className={styles.roleIcon} />
                                 <span className={styles.roleText}>Водитель</span>
                             </div>
                         </div>
                         
                         <IonToggle
-                            checked={isDriverMode}
-                            onIonChange={handleToggleChange}
-                            className={styles.toggle}
+                            checked     = { user_type === 2 }
+                            onIonChange = { handleToggleChange }
+                            className   = { styles.toggle }
                         />
                     </div>
 
@@ -90,45 +150,42 @@ export const Profile: React.FC = () => {
                 </div>
 
                 {/* Секция: Общие сведения */}
-                <div className={styles.card}>
-                    <h3 className={styles.cardTitle}>Общие сведения</h3>
+                <GeneralInfo
+                    image={image}
+                    name={name}
+                    phone={phone}
+                    email={email}
+                    onImageUpload={handleImageUpload}
+                    onSave={handleGeneralInfoSave}
+                />
 
-                    <div className={styles.photoSection}>
-                        <div className={styles.photoPlaceholder}>
-                            {profileImage ? (
-                                <img 
-                                    src={profileImage} 
-                                    alt="Profile" 
-                                    className={styles.profileImage}
-                                />
-                            ) : (
-                                <IonIcon icon={personOutline} className={styles.photoIcon} />
-                            )}
-                        </div>
+                {/* Секция: Сведения заказчика */}
+                {user_type === 1 && (
+                    <CustomerInfo
+                        companyData={companyData}
+                        onSave={handleCustomerInfoSave}
+                    />
+                )}
 
-                        <div className={styles.uploadSection}>
-                            <input
-                                type="file"
-                                accept="image/png,image/jpeg,image/jpg"
-                                onChange={handleImageUpload}
-                                id="photo-upload"
-                                className={styles.fileInput}
-                            />
-                            <IonButton
-                                color="primary"
-                                className={styles.uploadButton}
-                                onClick={() => document.getElementById('photo-upload')?.click()}
-                            >
-                                <IonIcon icon={cameraOutline} slot="start" />
-                                Загрузить фото
-                            </IonButton>
-                            
-                            <p className={styles.uploadInfo}>
-                                Формат png или jpg не более 12 Мб
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                {/* Секция: Сведения водителя */}
+                {user_type === 2 && (
+                    <DriverInfo
+                        transportData={transportData}
+                        onSave={handleDriverInfoSave}
+                        onImageUpload={handleTransportImageUpload}
+                    />
+                )}
+            </div>
+
+            {/* Кнопки действий */}
+            <div className={styles.actionButtons}>
+                <IonButton
+                    color="primary"
+                    className={styles.actionButton}
+                    onClick={() => console.log('К моим заказам')}
+                >
+                    К моим заказам
+                </IonButton>
             </div>
         </div>
     );

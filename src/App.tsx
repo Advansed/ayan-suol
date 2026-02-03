@@ -47,8 +47,11 @@ import { useLogin } from './Store/useLogin';
 import { ServerConnectionGuard } from './components/ServerConnectionGuard';
 import { Login } from './components/Login';
 import { useSocketManager } from './services/useSocketManager';
+import { useApp } from './Store/useApp';
 import { useEffect } from 'react';
 import { getVersion } from './Store/api';
+import SettingsPage from './pages/Settings';
+import CabinetPage from './pages/Cabinet';
 
 setupIonicReact({
   mode: 'ios', // или 'md' для Material Design
@@ -60,6 +63,7 @@ const AppContent: React.FC = () => {
   const { auth, user } = useLogin();
 
   useSocketManager();
+  useApp();
 
   const get_Version = async () => {
     const res = await getVersion();
@@ -100,6 +104,14 @@ const AppContent: React.FC = () => {
 
                 <Route exact path="/tab4">
                   <Tab4 />
+                </Route>
+
+                <Route exact path="/settings">
+                  <SettingsPage />
+                </Route>
+
+                <Route exact path="/cabinet">
+                  <CabinetPage />
                 </Route>
 
                 <Route exact path="/">

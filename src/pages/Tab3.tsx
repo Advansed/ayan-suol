@@ -1,6 +1,6 @@
 import { IonContent, IonPage } from '@ionic/react'
 import './Tab3.css'
-import { Profile } from '../components/Profile'
+import { Settings } from '../components/Settings'
 import { useParams } from 'react-router-dom';
 
 const Tab3: React.FC = () => {
@@ -10,7 +10,7 @@ const Tab3: React.FC = () => {
   return (
     <IonPage>
       <IonContent>
-        <Profile />
+        <Settings />
       </IonContent>
     </IonPage>
   )

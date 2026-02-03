@@ -7,7 +7,6 @@ import { devtools } from 'zustand/middleware'
 // ============================================
 export interface CompanyData {
   guid?: string
-  company_type?: number
   inn?: string
   kpp?: string
   ogrn?: string
@@ -56,7 +55,6 @@ export const COMPANY_TYPES = {
 
 export const EMPTY_COMPANY: CompanyData = {
   guid: '',
-  company_type: undefined,
   inn: '',
   kpp: '',
   ogrn: '',
