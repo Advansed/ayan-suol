@@ -1,8 +1,9 @@
 import React from 'react';
 import { IonIcon, IonText } from '@ionic/react';
-import { locationOutline, calendarOutline } from 'ionicons/icons';
+import { locationOutline } from 'ionicons/icons';
 import { formatters, statusUtils } from '../utils';
-import { CargoInfo } from '../../../Store/cargoStore';
+import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
+import styles from './CargoCard.module.css';
 
 interface CargoCardProps {
     cargo: CargoInfo;
@@ -18,177 +19,172 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', onCl
         }
     };
 
-    if (mode === 'view') {
-        return (
-            <div className="cargo-card-view">
-                {/* Статус и ID */}
-                <div className="flex fl-space">
-                    <div className="flex">
-                        <div className={ getCircle( cargo )}></div>
-                        <div className={ 'ml-05 ' + statusUtils.getClassName( cargo.status ) }>
-                            {cargo.status}
-                        </div>
-                        <IonText className="ml-1 fs-07 cl-black">
-                            {"ID: " + formatters.shortId(cargo.guid)}
-                        </IonText>
+    // Теги под статусом (используются и в view, и в list)
+    const tags: Array<{ text: string; className: string }> = [];
+
+    // Гарантированная оплата (если есть предоплата)
+    if (cargo.advance > 0) {
+        const isFullAdvance = cargo.advance >= cargo.price;
+        tags.push({
+            text: 'Гарантированная оплата',
+            className: isFullAdvance
+                ? `${styles.tag} ${styles.tagGreen}`
+                : `${styles.tag} ${styles.tagOrange}`
+        });
+    }
+
+    // Застраховано
+    if (cargo.insurance > 0) {
+        tags.push({
+            text: 'Застраховано',
+            className: `${styles.tag} ${styles.tagGreen}`
+        });
+    }
+
+    // Несколько водителей (если больше одного предложения)
+    if (cargo.invoices && cargo.invoices.length > 1) {
+        tags.push({
+            text: 'Несколько водителей',
+            className: `${styles.tag} ${styles.tagPurple}`
+        });
+    }
+
+    // Торг
+    if (cargo.status === CargoStatus.NEGOTIATION) {
+        tags.push({
+            text: 'Торг',
+            className: `${styles.tag} ${styles.tagBargain}`
+        });
+    }
+
+    const CardInner = (
+        <>
+            {/* Верхняя строка: статус, ID, цена */}
+            <div className={styles.topRow}>
+                <div className={styles.topLeft}>
+                    <div className={getCircle(cargo)}></div>
+                    <div className={'ml-05 ' + statusUtils.getClassName(cargo.status)}>
+                        {cargo.status}
                     </div>
-                    <div>
-                        <IonText className="fs-09 cl-prim">
-                            <b>{formatters.currency(cargo.price)}</b>
-                        </IonText>
+                    <IonText className="ml-1 fs-07 cl-gray">
+                        {'ID: ' + formatters.shortId(cargo.guid)}
+                    </IonText>
+                </div>
+                <div className={styles.topRight}>
+                    <IonText className="fs-09 cl-prim">
+                        <b>{formatters.currency(cargo.price)}</b>
+                    </IonText>
+                    {mode === 'view' && (
                         <div className="fs-08 cl-black">
                             <b>{formatters.weight(cargo.weight, cargo.weight1)}</b>
                         </div>
-                    </div>
+                    )}
                 </div>
+            </div>
 
-                {/* Название груза */}
-                <div className="fs-08 mt-05 cl-black">
-                    <b>{cargo.name}</b>
+            {/* Вторая строка: теги */}
+            {tags.length > 0 && (
+                <div className={styles.tagsRow}>
+                    {tags.map((tag, index) => (
+                        <span key={index} className={tag.className}>
+                            {tag.text}
+                        </span>
+                    ))}
                 </div>
+            )}
 
-                {/* Маршрут отправления */}
-                <div className="flex fl-space mt-05 cl-black">
-                    <div className="flex">
-                        <IonIcon icon={locationOutline} color="danger"/>
-                        <div className="fs-08 cl-prim">
-                            <div className="ml-1 fs-09 cl-gray">Откуда:</div>
-                            <div className="ml-1 fs-09">
-                                <b>{cargo.address?.city.city || 'Не указано'}</b>
-                            </div>
+            {/* Название груза */}
+            <div className="fs-09 mt-05 cl-black">
+                <b>{cargo.name}</b>
+            </div>
+
+            {/* Блок маршрута в две строки */}
+            <div className={styles.routeSection + ' mt-05'}>
+                {/* Откуда + дата загрузки */}
+                <div className={styles.routeRow}>
+                    <div className={styles.routeLeft}>
+                        <IonIcon icon={locationOutline} className={`${styles.routeIcon} ${styles.routeIconGreen}`} />
+                        <div className={styles.routeTextGroup}>
+                            <span className={styles.routeLabel}>Откуда:</span>
+                            <span className={styles.routeCity}>
+                                {cargo.address?.city.city || 'Не указано'}
+                            </span>
                         </div>
                     </div>
-                    <div>
-                        <div className="fs-08 cl-prim">
-                            <div className="ml-1 fs-09 cl-gray">Дата загрузки:</div>
-                            <div className="ml-1 fs-09">
-                                <b>{formatters.date(cargo.pickup_date || '')}</b>
-                            </div>
+                    <div className={styles.routeRight}>
+                        <div>
+                            <span className={styles.routeDateLabel}>Дата загрузки:</span>
                         </div>
-                    </div>
-                </div>
-
-                {/* Маршрут назначения */}
-                <div className="flex fl-space mt-05">
-                    <div className="flex">
-                        <IonIcon icon={locationOutline} color="success"/>
-                        <div className="fs-08 cl-prim">
-                            <div className="ml-1 fs-09 cl-gray">Куда:</div>
-                            <div className="ml-1 fs-09">
-                                <b>{cargo.destiny?.city.city || 'Не указано'}</b>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <div className="fs-08 cl-prim">
-                            <div className="ml-1 fs-09 cl-gray">Дата выгрузки:</div>
-                            <div className="ml-1 fs-09">
-                                <b>{formatters.date(cargo.delivery_date || '')}</b>
-                            </div>
+                        
+                        <div>
+                            <span className={styles.routeDateValue}>
+                                {formatters.date(cargo.pickup_date || '')}
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex fl-space mt-05">
-                    <div>{ cargo.advance > 0 && (
-                        <div className="flex">
-                            <div className={ getCSS( cargo ) }>
-                                { "Спецсчет: " + ( cargo.advance * 100 / cargo.price ).toFixed(0) + '%' }
-                            </div>
-                        </div>)
-                    }</div>
-                    
-                    { cargo.insurance > 0 &&(
-                        <div className="flex">
-                            <div className={ "cr-status-6" }>
-                                { "Застраховано " }
-                            </div>
+                {/* Куда + дата выгрузки */}
+                <div className={styles.routeRow}>
+                    <div className={styles.routeLeft}>
+                        <IonIcon icon={locationOutline} className={`${styles.routeIcon} ${styles.routeIconRed}`} />
+                        <div className={styles.routeTextGroup}>
+                            <span className={styles.routeLabel}>Куда:</span>
+                            <span className={styles.routeCity}>
+                                {cargo.destiny?.city.city || 'Не указано'}
+                            </span>
                         </div>
-                    )
-                    }
-                </div> 
+                    </div>
+                    <div className={styles.routeRight}>
+                        <div>
+                            <span className={styles.routeDateLabel}>Дата выгрузки:</span>
+                        </div>
+                        <div>
+                            <span className={styles.routeDateValue}>
+                                {formatters.date(cargo.delivery_date || '')}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                {/* Описание груза */}
+            {/* Детали груза */}
+            <div className={styles.cargoDetails + ' mt-05'}>
+                <div className={styles.cargoDetailsTitle}>Детали груза:</div>
+                <div className={styles.cargoDetailsList}>
+                    <div className={styles.cargoDetailItem}>
+                        Вес (т): <span className={styles.cargoDetailValue}>{cargo.weight}</span>
+                    </div>
+                    <div className={styles.cargoDetailItem}>
+                        Объем (м³): <span className={styles.cargoDetailValue}>{cargo.volume}</span>
+                    </div>
+                </div>
                 {cargo.description && (
-                    <div className="fs-08 mt-1 cr-detali">
-                        <b>Детали груза:</b>
-                        <div>{cargo.description}</div>
+                    <div className={styles.cargoDescription}>
+                        {cargo.description}
                     </div>
                 )}
+            </div>
+        </>
+    );
+
+    // Обёртка для разных режимов
+    if (mode === 'view') {
+        return (
+            <div className="cr-card cargo-card-view">
+                {CardInner}
             </div>
         );
     }
 
-    // Режим для списка (компактный)
+    // Режим для списка (новый компактный дизайн по образцу WorkCard)
     return (
-        <div 
+        <div
             className="cr-card mt-1 cargo-card-list"
             onClick={handleClick}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
         >
-            {/* Верхняя строка: статус, ID, цена */}
-            <div className="flex fl-space">
-                <div className="flex">
-                    <div className={ getCircle( cargo )}></div>
-                    <div className={' ml-05 ' + statusUtils.getClassName( cargo.status ) }>
-                        {cargo.status}
-                    </div>
-                    <IonText className="ml-1 fs-07 cl-black">
-                        {"IDs: " + formatters.shortId(cargo.guid)}
-                    </IonText>
-                </div>
-    
-                <div className="text-right">
-                    <IonText className="fs-09 cl-prim">
-                        <b>{formatters.currency(cargo.price)}</b>
-                    </IonText>
-                    <div className="fs-08 cl-black">
-                        <b>{formatters.weight(cargo.weight, cargo.weight1)}</b>
-                    </div>
-                </div>
-            </div>
-
-            {/* Название груза */}
-            <div className="fs-08 mt-05 cl-black">
-                <b>{ cargo.name }</b>
-            </div>
-
-            {/* Маршрут в одну строку */}
-            <div className="flex mt-05 cl-black">
-                <IonIcon icon={locationOutline} color="danger" className="mr-05"/>
-                <div className="fs-08 cl-prim flex-1">
-                    <b>{cargo.address?.city.city || 'Не указано'}</b>
-                </div>
-                <div className="fs-08 cl-gray mx-1">→</div>
-                <div className="fs-08 cl-prim flex-1">
-                    <b>{cargo.destiny?.city.city || 'Не указано'}</b>
-                </div>
-                <IonIcon icon={locationOutline} color="success" className="ml-05"/>
-            </div>
-
-            {/* Даты */}
-            <div className="flex mt-05 cl-gray">
-                <IonIcon icon={calendarOutline} className="mr-05"/>
-                <div className="fs-08 flex-1">
-                    {formatters.date(cargo.pickup_date || '')}
-                </div>
-                <div className="fs-08 mx-1">-</div>
-                <div className="fs-08 flex-1">
-                    {formatters.date(cargo.delivery_date || '')}
-                </div>
-            </div>
-
-            {/* Дополнительная информация */}
-            <div className="flex mt-05 cl-gray fs-08">
-                <div className="flex-1">
-                    Объем: {formatters.volume(cargo.volume)}
-                </div>
-                {cargo.invoices && cargo.invoices.length > 0 && (
-                    <div className="flex-1 text-right">
-                        Предложений: {cargo.invoices.length}
-                    </div>
-                )}
-            </div>
+            {CardInner}
         </div>
     );
 };

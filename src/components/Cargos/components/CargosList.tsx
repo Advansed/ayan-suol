@@ -45,12 +45,10 @@ export const CargosList: React.FC<CargosListProps> = ({
     return (
         <>
             {/* Header */}
-            <div className='ml-1 mr-1'>
-                <WizardHeader 
-                    title       = { 'Мои заказы (' + cargos.length.toString() + ')' }
-                    onRefresh   = { onRefresh }
-                />
-            </div>
+            <WizardHeader 
+                title       = { 'Ваши грузы (' + cargos.length.toString() + ')' }
+                onRefresh   = { onRefresh }
+            />
 
             {/* Кнопка создания нового груза */}
 
@@ -66,23 +64,24 @@ export const CargosList: React.FC<CargosListProps> = ({
             </IonFab>
 
             {/* Список грузов */}
-        
-            { isLoading ? (
-                renderLoadingState()
-            ) : cargos.length === 0 ? (
-                renderEmptyState()
-            ) : (
-                cargos.map((cargo, index) => (
-                    <CargoCard
-                        key     = { index }
-                        cargo   = { cargo }
-                        mode    = "list"
-                        onClick = { () => {
-                            onCargoClick(cargo) 
-                        }}
-                    />
-                ))
-            )}
+            <div className="ml-05 mr-05">
+                { isLoading ? (
+                    renderLoadingState()
+                ) : cargos.length === 0 ? (
+                    renderEmptyState()
+                ) : (
+                    cargos.map((cargo, index) => (
+                        <CargoCard
+                            key     = { index }
+                            cargo   = { cargo }
+                            mode    = "list"
+                            onClick = { () => {
+                                onCargoClick(cargo) 
+                            }}
+                        />
+                    ))
+                )}
+            </div>
         </>
     );
 };

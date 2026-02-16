@@ -1,171 +1,41 @@
 import React, { useState } from 'react';
-import { IonIcon, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
-import { personOutline, carOutline } from 'ionicons/icons';
-import { WizardHeader } from '../Header/WizardHeader';
-import { useProfile } from '../Profile/useProfile';
-import { GeneralInfo } from './components/GeneralInfo';
-import { CustomerInfo } from './components/CustomerInfo';
-import { DriverInfo } from './components/DriverInfo';
-import { useHistory } from 'react-router-dom';
-import styles from './Settings.module.css';
+import { SettingsPage } from './components/SettingsPage';
+import { Cabinet } from './Cabinet';
+import { useProfile } from './useProfile';
 
-// Переименовываем, чтобы избежать конфликта с SettingsMenu
+export type SettingsPageType = 'menu' | 'cabinet';
+
+/**
+ * Основной компонент Settings — точка входа.
+ * Страница 1: Настройки (меню).
+ * Страница 2: Личный кабинет заказчика или водителя.
+ */
+
 export const Settings: React.FC = () => {
-  const history = useHistory();
-  const { 
-    user_type, 
-    image, 
-    name, 
-    phone, 
-    email, 
-    setUser,
-    companyData,
-    updateCompany,
-    transportData,
-    updateTransport
-  } = useProfile();
+  const [currentPage, setCurrentPage] = useState<SettingsPageType>('menu');
+  const { user_type, setUser } = useProfile()
 
-  // Пагинация между кабинетом заказчика и водителя
-  const [activeTab, setActiveTab] = useState<'customer' | 'driver'>(user_type === 1 ? 'customer' : 'driver');
-
-  const handleToggleChange = (e: CustomEvent) => {
-    const newUserType = user_type === 1 ? 2 : 1;
-    setUser({ user_type: newUserType });
-    setActiveTab(newUserType === 1 ? 'customer' : 'driver');
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.match(/^image\/(png|jpg|jpeg)$/)) {
-        alert('Формат файла должен быть PNG или JPG');
-        return;
-      }
-      
-      if (file.size > 12 * 1024 * 1024) {
-        alert('Размер файла не должен превышать 12 МБ');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setUser({ image: base64String });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleGeneralInfoSave = async (data: {
-    name: string;
-    phone: string;
-    email: string;
-    additionalPhone: string;
-    phoneOnlyForRegistration: boolean;
-    displayAdditionalAsPrimary: boolean;
-  }) => {
-    await setUser({
-      name: data.name,
-      phone: data.phone,
-      email: data.email
-    });
-  };
-
-  const handleCustomerInfoSave = async (data: any) => {
-    await updateCompany(data);
-  };
-
-  const handleDriverInfoSave = async (data: any) => {
-    await updateTransport(data);
-  };
-
-  const handleTransportImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.match(/^image\/(png|jpg|jpeg)$/)) {
-        alert('Формат файла должен быть PNG или JPG');
-        return;
-      }
-      
-      if (file.size > 12 * 1024 * 1024) {
-        alert('Размер файла не должен превышать 12 МБ');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        updateTransport({ image: base64String });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleMenuClick = () => {
-    history.goBack();
-  };
-
+  const handleDriverClick = () => {
+    console.log( 'handleDriverClick', user_type )
+    setUser({ user_type: user_type === 1 ? 2 : 1 }) 
+  }
+  
   return (
-    <div className={styles.settingsContainer}>
-      <WizardHeader 
-        title="Настройки"
-        onMenu={handleMenuClick}
-      />
-
-      <div className={styles.content}>
-        {/* Переключатель между кабинетом заказчика и водителя */}
-        <div className={styles.tabSwitcher}>
-          <IonSegment 
-            value={activeTab}
-            onIonChange={(e) => {
-              const tab = e.detail.value as 'customer' | 'driver';
-              setActiveTab(tab);
-              if (tab === 'customer' && user_type !== 1) {
-                setUser({ user_type: 1 });
-              } else if (tab === 'driver' && user_type !== 2) {
-                setUser({ user_type: 2 });
-              }
-            }}
-            className={styles.segment}
-          >
-            <IonSegmentButton value="customer">
-              <IonIcon icon={personOutline} />
-              <IonLabel>Кабинет Заказчика</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="driver">
-              <IonIcon icon={carOutline} />
-              <IonLabel>Кабинет Водителя</IonLabel>
-            </IonSegmentButton>
-          </IonSegment>
-        </div>
-
-        {/* Общие сведения (показываются всегда) */}
-        <GeneralInfo
-          image={image}
-          name={name}
-          phone={phone}
-          email={email}
-          onImageUpload={handleImageUpload}
-          onSave={handleGeneralInfoSave}
+    <>
+      {currentPage === 'menu' && (
+        <SettingsPage
+          onToggleClick = { () => handleDriverClick() }
+          onProfileClick = { () => setCurrentPage('cabinet') }
+          onBack        = { undefined }
         />
-
-        {/* Сведения заказчика */}
-        {activeTab === 'customer' && (
-          <CustomerInfo
-            companyData={companyData}
-            onSave={handleCustomerInfoSave}
-          />
-        )}
-
-        {/* Сведения водителя */}
-        {activeTab === 'driver' && (
-          <DriverInfo
-            transportData={transportData}
-            onSave={handleDriverInfoSave}
-            onImageUpload={handleTransportImageUpload}
-          />
-        )}
-      </div>
-    </div>
+      )}
+      {currentPage === 'cabinet' && (
+        <Cabinet onBack={() => setCurrentPage('menu')} />
+      )}
+    </>
   );
 };
+
+// Реэкспорт для импорта из '../components/Settings'
+export { Cabinet } from './Cabinet';
+export { SettingsPage } from './components/SettingsPage';

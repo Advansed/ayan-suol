@@ -37,6 +37,8 @@ export const WorkView: React.FC<WorkViewProps> = ({
     const companyCompletion         = companyGetters.getCompletionPercentage()
     const transportCompletion       = transportGetters.getCompletionPercentage()
 
+    console.log( passportCompletion, companyCompletion, transportCompletion)
+
     const hist                      = useIonRouter()
     const toast                     = useToast()
 

@@ -4,8 +4,10 @@ import { AddressData, CityData, FieldData, PageData } from '../../DataEditor/typ
 import { CargoInfo, EMPTY_CARGO } from '../../../Store/cargoStore';
 import { useToast } from '../../Toast';
 import { passportGetters } from '../../../Store/passportStore';
-import { companyGetters } from '../../../Store/companyStore';
+import { companyGetters, useCompanyStore } from '../../../Store/companyStore';
+import { useLoginStore } from '../../../Store/loginStore';
 import { useIonRouter } from '@ionic/react';
+import { useCompany } from '../../../Store/useCompany';
 
 interface CargoFormProps {
   cargo:      CargoInfo;
@@ -217,11 +219,16 @@ export const CargoForm: React.FC<CargoFormProps> = ({
   onCreate 
 }) => {
     const toast = useToast();
-  
-    const passportCompletion        = passportGetters.getCompletionPercentage()
-    const companyCompletion         = companyGetters.getCompletionPercentage()
+    const hist = useIonRouter();
+    const user_type = useLoginStore((s) => s.user_type);
 
-    const hist                      = useIonRouter()
+    // Подписка на store, чтобы пересчитать процент после загрузки компании
+    const companyData = useCompanyStore((s) => s.data);
+    const companyLoading = useCompanyStore((s) => s.isLoading);
+    const { loadData: loadCompany } = useCompany();
+
+    const passportCompletion = passportGetters.getCompletionPercentage();
+    const companyCompletion = companyGetters.getCompletionPercentage();
 
   // Инициализация данных формы
   const [formData, setFormData] = useState<PageData>(() => 
@@ -258,21 +265,28 @@ export const CargoForm: React.FC<CargoFormProps> = ({
     }
   };
   
-  useEffect(()=>{
-    console.log("CREATE", passportCompletion, companyCompletion)
-    if((passportCompletion < 80 ))
-    {
-      onBack()
-      toast.info("Надо сперва заполнить паспортные данные")
-      hist.push("/tab3")
-    } else
-    if((companyCompletion < 80 ))
-    {
-      onBack()
-      toast.info("Надо сперва заполнить данные организации")
-      hist.push("/tab3")
+  // Запросить данные компании при входе в форму (заказчик), если их ещё нет
+  useEffect(() => {
+    if (user_type === 1 && !companyData && !companyLoading) {
+      loadCompany();
     }
-  },[])
+  }, [user_type, companyData, companyLoading, loadCompany]);
+
+  // Проверка паспорта и компании: не редиректить, пока компания ещё загружается
+  useEffect(() => {
+    if (passportCompletion < 80) {
+      onBack();
+      toast.info("Надо сперва заполнить паспортные данные");
+      hist.push("/tab3");
+      return;
+    }
+    if (companyLoading) return;
+    if (companyCompletion < 80) {
+      onBack();
+      toast.info("Надо сперва заполнить данные организации");
+      hist.push("/tab3");
+    }
+  }, [passportCompletion, companyCompletion, companyLoading, onBack, toast, hist]);
   
   return (
     <DataEditor

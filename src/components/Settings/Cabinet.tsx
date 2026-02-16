@@ -9,7 +9,11 @@ import { DriverInfo } from './components/DriverInfo';
 import { useHistory } from 'react-router-dom';
 import styles from './Settings.module.css';
 
-export const Cabinet: React.FC = () => {
+export interface CabinetProps {
+  onBack?: () => void;
+}
+
+export const Cabinet: React.FC<CabinetProps> = ({ onBack }) => {
   const history = useHistory();
   const { 
     user_type, 
@@ -100,43 +104,21 @@ export const Cabinet: React.FC = () => {
   };
 
   const handleMenuClick = () => {
-    history.goBack();
+    if (onBack) {
+      onBack();
+    } else {
+      history.goBack();
+    }
   };
 
   return (
     <div className={styles.settingsContainer}>
       <WizardHeader 
         title={user_type === 1 ? "Личный кабинет заказчика" : "Личный кабинет водителя"}
-        onMenu={handleMenuClick}
+        onBack  = { handleMenuClick }
       />
 
       <div className={styles.content}>
-        {/* Переключатель между кабинетом заказчика и водителя */}
-        <div className={styles.tabSwitcher}>
-          <IonSegment 
-            value={activeTab}
-            onIonChange={(e) => {
-              const tab = e.detail.value as 'customer' | 'driver';
-              setActiveTab(tab);
-              if (tab === 'customer' && user_type !== 1) {
-                setUser({ user_type: 1 });
-              } else if (tab === 'driver' && user_type !== 2) {
-                setUser({ user_type: 2 });
-              }
-            }}
-            className={styles.segment}
-          >
-            <IonSegmentButton value="customer">
-              <IonIcon icon={personOutline} />
-              <IonLabel>Кабинет Заказчика</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="driver">
-              <IonIcon icon={carOutline} />
-              <IonLabel>Кабинет Водителя</IonLabel>
-            </IonSegmentButton>
-          </IonSegment>
-        </div>
-
         {/* Общие сведения (показываются всегда) */}
         <GeneralInfo
           image={image}
@@ -148,12 +130,10 @@ export const Cabinet: React.FC = () => {
         />
 
         {/* Сведения заказчика */}
-        {activeTab === 'customer' && (
-          <CustomerInfo
-            companyData={companyData}
-            onSave={handleCustomerInfoSave}
-          />
-        )}
+        <CustomerInfo
+          companyData={companyData}
+          onSave={handleCustomerInfoSave}
+        />
 
         {/* Сведения водителя */}
         {activeTab === 'driver' && (

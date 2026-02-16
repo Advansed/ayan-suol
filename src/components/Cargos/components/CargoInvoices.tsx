@@ -362,14 +362,12 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
     const render                = () =>{
         return (
             <>
-                <div className='ml-1 mr-1'>
-                    <WizardHeader 
-                        title   = "Заявки "
-                        pages   = { cargo && cargo.name || '' }
-                        onBack  = { onBack }
-                    />
+                <WizardHeader 
+                    title   = "Заявки "
+                    pages   = { cargo && cargo.name || '' }
+                    onBack  = { onBack }
+                />
 
-                </div>
 
                 { renderInvoiceSection( invoices) }
 

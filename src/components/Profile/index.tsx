@@ -106,48 +106,11 @@ export const Profile: React.FC = () => {
     return (
         <div className={styles.profileContainer}>
             <WizardHeader 
-                title = { user_type == 1 ? "Личный кабинет заказчика" : "Личный кабинет водителя" }
+                title = { user_type == 1 ? "Лич ный кабинет заказчика" : "Лич ный кабинет водителя" }
                 onMenu={handleMenuClick}
             />
 
             <div className={styles.content}>
-                {/* Секция: Режим работы */}
-                <div className={styles.card}>
-                    <div className={styles.cardHeader}>
-                        <IonIcon icon={peopleOutline} className={styles.cardIcon} />
-                        <h3 className={styles.cardTitle}>Режим работы</h3>
-                    </div>
-                    
-                    <p className={styles.cardDescription}>
-                        Переключение между ролями заказчика и водителя
-                    </p>
-
-                    <div className={styles.roleSwitcher}>
-                        <div className={styles.roleContainer}>
-                            <div className={`${styles.roleItem} ${user_type === 1 ? styles.roleActive : ''}`}>
-                                <IonIcon icon={personOutline} className={styles.roleIcon} />
-                                <span className={styles.roleText}>Заказчик</span>
-                            </div>
-                            
-                            <div className={styles.roleSeparator}></div>
-                            
-                            <div className={`${styles.roleItem} ${user_type === 2 ? styles.roleActive : ''}`}>
-                                <IonIcon icon={carOutline} className={styles.roleIcon} />
-                                <span className={styles.roleText}>Водитель</span>
-                            </div>
-                        </div>
-                        
-                        <IonToggle
-                            checked     = { user_type === 2 }
-                            onIonChange = { handleToggleChange }
-                            className   = { styles.toggle }
-                        />
-                    </div>
-
-                    <p className={styles.instructionText}>
-                        Выберите профиль для редактирования
-                    </p>
-                </div>
 
                 {/* Секция: Общие сведения */}
                 <GeneralInfo

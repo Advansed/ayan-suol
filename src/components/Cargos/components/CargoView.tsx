@@ -115,15 +115,13 @@ export const CargoView: React.FC<CargoViewProps> = ({
             <IonLoading isOpen={isLoading} message="Подождите..." />
             
             {/* Header */}
-            <div className='ml-1 mr-1'>
-                <WizardHeader
-                    title       = { currentCargo.status + ' #' + formatters.shortId(cargo.guid) }
-                    onBack      = { onBack }
-                />
-            </div>
+            <WizardHeader
+                title       = { currentCargo.status + ' #' + formatters.shortId(cargo.guid) }
+                onBack      = { onBack }
+            />
 
             {/* Карточка груза */}
-            <div className="cr-card mt-1">
+            <div className="cr-card mt-1 ml-05 mr-05">
                 <CargoCard cargo={currentCargo} mode="view" />
                 { canPublish && renderActionButtons()}
             </div>

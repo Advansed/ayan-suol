@@ -5,7 +5,7 @@ import { CargoView }                                    from './components/Cargo
 import { CargoInvoiceSections }                         from './components/CargoInvoices';
 import { InsurancePage }                                from './components/InsurancePage';
 import { cargoGetters, CargoInfo, EMPTY_CARGO }         from '../../Store/cargoStore';
-import { CargoForm }                                    from './components';
+import { CargoNew }                                               from './components';
 import { IonLoading }                                   from '@ionic/react';
 import { useCargoNavigation }                           from './hooks/useNavigation';
 import { PrepaymentPage }                               from './components/PrePayment';
@@ -58,7 +58,7 @@ export const Cargos: React.FC = () => {
     ), [cargos, memoizedHandleCargoClick, memoizedHandleCreateNew, memoizedRefreshCargos]);
 
     const memoizedCargoForm         = useMemo(() => (
-        <CargoForm
+        <CargoNew
             cargo           = { currentPage.cargo as CargoInfo }
             onUpdate        = { memoizedUpdateCargo }
             onCreate        = { memoizedCreateCargo }
@@ -108,12 +108,12 @@ export const Cargos: React.FC = () => {
     ), [currentPage.cargo, handleBack]);
 
     const memoizedCreateForm        = useMemo(() => (
-        <CargoForm 
+        <CargoNew
             cargo       = { EMPTY_CARGO }
             onUpdate    = { memoizedUpdateCargo }
             onCreate    = { memoizedCreateCargo }
             onBack      = { handleBack }
-        />   
+        />
     ), [memoizedUpdateCargo, memoizedCreateCargo, handleBack]);
 
     // Мемоизированная функция рендеринга

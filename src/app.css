@@ -357,11 +357,54 @@ body {
     padding-right: 0;
 }
 
+#root,
+#root ion-app,
+#root .ion-page,
+#root ion-content {
+    background-color: #fff !important;
+    --background: #fff !important;
+    --ion-background-color: #fff !important;
+}
+
 /* Отключаем темную тему для всех медиа-запросов */
 @media (prefers-color-scheme: dark) {
     * {
         color-scheme: light !important;
     }
+}
+
+/* Фон белым даже при dark mode (системная или Ionic палитра) */
+@media (prefers-color-scheme: dark) {
+    html,
+    body,
+    ion-app,
+    .ion-palette-dark,
+    .cargos-module,
+    .a-container {
+        background-color: #fff !important;
+        --background: #fff !important;
+        --ion-background-color: #fff !important;
+    }
+    ion-content {
+        --background: #fff !important;
+        --ion-background-color: #fff !important;
+        background: #fff !important;
+    }
+}
+
+body.ion-palette-dark,
+html.ion-palette-dark,
+ion-app.ion-palette-dark {
+    background-color: #fff !important;
+    --background: #fff !important;
+    --ion-background-color: #fff !important;
+}
+
+body.ion-palette-dark ion-content,
+.ion-palette-dark ion-content {
+    --background: #fff !important;
+    --ion-background-color: #fff !important;
+    background: #fff !important;
 }
 
 /* Для элементов Ionic (если используется) */

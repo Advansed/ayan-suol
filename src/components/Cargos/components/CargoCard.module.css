@@ -1,0 +1,148 @@
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.topLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.topRight {
+  text-align: right;
+}
+
+.tagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-top: 0.5em;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75em;
+  border-radius: 999px;
+  padding: 0.2em 0.7em;
+  border: 1px solid transparent;
+}
+
+.tagGreen {
+  background-color: #00b050;
+  border-color: #00b050;
+  color: #fff;
+}
+
+.tagOrange {
+  background-color: #fff3e0;
+  border-color: #f57c00;
+  color: #f57c00;
+}
+
+.tagPurple {
+  background-color: #ffffff;
+  border-color: #9c27b0;
+  color: #9c27b0;
+}
+
+.tagBargain {
+  background-color: #ffffff;
+  border-color: #ff9800;
+  color: #ff9800;
+}
+
+.routeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+
+.routeRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.routeLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  flex: 1;
+}
+
+.routeRight {
+  text-align: right;
+}
+
+.routeTextGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.routeIcon {
+  font-size: 1.8em;
+}
+
+.routeIconGreen {
+  color: #4caf50;
+}
+
+.routeIconRed {
+  color: #f44336;
+}
+
+.routeLabel {
+  font-size: 0.8em;
+  color: gray;
+}
+
+.routeCity {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: black;
+}
+
+.routeDateLabel {
+  font-size: 0.8em;
+  color: gray;
+}
+
+.routeDateValue {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: black;
+}
+
+.cargoDetails {
+  margin-top: 0.3em;
+}
+
+.cargoDetailsTitle {
+  font-size: 0.9em;
+  font-weight: 600;
+  margin-bottom: 0.3em;
+}
+
+.cargoDetailsList {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85em;
+  margin-bottom: 0.3em;
+}
+
+.cargoDetailItem {
+  color: black;
+}
+
+.cargoDetailValue {
+  font-weight: 600;
+}
+
+.cargoDescription {
+  font-size: 0.8em;
+  color: gray;
+}
+

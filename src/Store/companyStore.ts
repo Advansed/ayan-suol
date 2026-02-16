@@ -130,21 +130,18 @@ export const companyGetters = {
     const data = useCompanyStore.getState().data
     if (!data) return 0
     
-    const requiredFields = ['company_type', 'inn', 'name', 'phone', 'email'] as const
+    const requiredFields = [ 'inn', 'name', 'bank_bik', 'bank_account'] as const
     const optionalFields = ['kpp', 'ogrn', 'short_name', 'address', 'postal_address', 'description', 'bank_name', 'bank_bik', 'bank_account', 'bank_corr_account'] as const
     
-    const totalFields = requiredFields.length + optionalFields.length
+    const totalFields = requiredFields.length
     let filledCount = 0
-    
     // Обязательные поля
+    console.log('requiredFields', requiredFields)
     requiredFields.forEach(field => {
+      console.log(field, data[field])
       if (data[field]) filledCount++
     })
     
-    // Опциональные поля  
-    optionalFields.forEach(field => {
-      if (data[field]) filledCount++
-    })
     
     return Math.round((filledCount / totalFields) * 100)
   }
@@ -154,13 +151,13 @@ export const companyGetters = {
 // ACTIONS (совместимость)
 // ============================================
 export const companyActions = {
-  setData: (data: CompanyData | null) => useCompanyStore.getState().setData(data),
-  setLoading: (loading: boolean) => useCompanyStore.getState().setLoading(loading),
-  setSaving: (saving: boolean) => useCompanyStore.getState().setSaving(saving),
-  setError: (error: string | null) => useCompanyStore.getState().setError(error),
-  updateData: (updates: Partial<CompanyData>) => useCompanyStore.getState().updateData(updates),
-  clearError: () => useCompanyStore.getState().clearError(),
-  reset: () => useCompanyStore.getState().reset()
+  setData:      (data: CompanyData | null) => useCompanyStore.getState().setData(data),
+  setLoading:   (loading: boolean) => useCompanyStore.getState().setLoading(loading),
+  setSaving:    (saving: boolean) => useCompanyStore.getState().setSaving(saving),
+  setError:     (error: string | null) => useCompanyStore.getState().setError(error),
+  updateData:   (updates: Partial<CompanyData>) => useCompanyStore.getState().updateData(updates),
+  clearError:   () => useCompanyStore.getState().clearError(),
+  reset:        () => useCompanyStore.getState().reset()
 }
 
 // ============================================

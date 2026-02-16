@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { IonIcon, IonToggle, IonButton } from '@ionic/react';
-import { 
-  personOutline, 
-  phonePortraitOutline, 
+import {
+  personOutline,
+  phonePortraitOutline,
   checkmarkCircleOutline,
   walletOutline,
   documentTextOutline,
@@ -18,13 +18,19 @@ import {
   chevronForwardOutline,
   personCircleOutline
 } from 'ionicons/icons';
-import { WizardHeader } from '../Header/WizardHeader';
-import { useLogin } from '../../Store/useLogin';
-import { useProfile } from '../Profile/useProfile';
+import { WizardHeader } from '../../Header/WizardHeader';
+import { useLogin } from '../../../Store/useLogin';
+import { useProfile } from '../../Profile/useProfile';
 import { useHistory } from 'react-router-dom';
-import styles from './Settings.module.css';
+import styles from '../Settings.module.css';
 
-export const Settings: React.FC = () => {
+export interface SettingsPageProps {
+  onProfileClick?: () => void;
+  onToggleClick?: () => void;
+  onBack?: () => void;
+}
+
+export const SettingsPage: React.FC<SettingsPageProps> = ({ onProfileClick, onToggleClick, onBack }) => {
   const { user, logout } = useLogin();
   const { user_type } = useProfile();
   const history = useHistory();
@@ -36,7 +42,11 @@ export const Settings: React.FC = () => {
   const [vibration, setVibration] = useState(true);
 
   const handleMenuClick = () => {
-    history.goBack();
+    if (onBack) {
+      onBack();
+    } else {
+      history.goBack();
+    }
   };
 
   const handleLogout = () => {
@@ -44,17 +54,24 @@ export const Settings: React.FC = () => {
     history.push('/');
   };
 
+  const handleToggle = () => {
+    console.log( 'handleTogglewClick', onProfileClick )
+    if (onToggleClick) {
+      onToggleClick();
+    } 
+  };
   const handleProfileClick = () => {
-    // Переход на кабинет в зависимости от типа пользователя
-    history.push('/cabinet');
+    console.log( 'handleProfileClick', onProfileClick )
+    if (onProfileClick) {
+      onProfileClick();
+    } else {
+      history.push('/cabinet');
+    }
   };
 
   return (
     <div className={styles.settingsContainer}>
-      <WizardHeader 
-        title="Настройки"
-        onMenu={handleMenuClick}
-      />
+      <WizardHeader title="Настройки" onMenu={handleMenuClick} />
 
       <div className={styles.content}>
         {/* Секция: Профиль */}
@@ -66,7 +83,7 @@ export const Settings: React.FC = () => {
 
           <div className={styles.settingsList}>
             <div className={styles.settingItem} onClick={handleProfileClick}>
-              <IonIcon icon={ personCircleOutline } className={styles.settingIcon} color='primary'/>
+              <IonIcon icon={personCircleOutline} className={styles.settingIcon} color="primary" />
               <div className={styles.settingContent}>
                 <span className={styles.settingLabel}>Профиль</span>
                 <span className={styles.settingSubtext}>{user.phone || '+123 456 789'}</span>
@@ -75,7 +92,7 @@ export const Settings: React.FC = () => {
             </div>
 
             <div className={styles.settingItem}>
-              <IonIcon icon={phonePortraitOutline} className={styles.settingIcon} color='primary' />
+              <IonIcon icon={phonePortraitOutline} className={styles.settingIcon} color="primary" />
               <div className={styles.settingContent}>
                 <span className={styles.settingLabel}>Номер телефона</span>
                 <span className={styles.settingSubtext}>{user.phone || '+123 456 789'}</span>
@@ -116,17 +133,14 @@ export const Settings: React.FC = () => {
             </div>
             <IonToggle
               checked={user_type === 2}
-              onIonChange={(e) => {
-                // Переход на кабинет при переключении
-                history.push('/cabinet');
-              }}
+              onIonChange={() => handleToggle()}
               className={styles.toggle}
             />
           </div>
           <p className={styles.instructionText}>
-            {user_type === 1 
-              ? "Вы работаете в режиме заказчика. Можете создавать заказы и выбирать водителей."
-              : "Вы работаете в режиме водителя. Можете просматривать и принимать заказы."}
+            {user_type === 1
+              ? 'Вы работаете в режиме заказчика. Можете создавать заказы и выбирать водителей.'
+              : 'Вы работаете в режиме водителя. Можете просматривать и принимать заказы.'}
           </p>
         </div>
 
@@ -136,7 +150,6 @@ export const Settings: React.FC = () => {
             <IonIcon icon={walletOutline} className={styles.sectionIcon} />
             <h3 className={styles.sectionTitle}>Мой кошелёк</h3>
           </div>
-
           <div className={styles.settingsList}>
             <div className={styles.settingItem}>
               <IonIcon icon={walletOutline} className={styles.settingIcon} />
@@ -146,7 +159,6 @@ export const Settings: React.FC = () => {
               </div>
               <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
             </div>
-
             <div className={styles.settingItem}>
               <IonIcon icon={documentTextOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
@@ -163,7 +175,6 @@ export const Settings: React.FC = () => {
             <IonIcon icon={moonOutline} className={styles.sectionIcon} />
             <h3 className={styles.sectionTitle}>Внешний вид</h3>
           </div>
-
           <div className={styles.settingsList}>
             <div className={styles.settingItem}>
               <IonIcon icon={moonOutline} className={styles.settingIcon} />
@@ -177,7 +188,6 @@ export const Settings: React.FC = () => {
                 className={styles.toggle}
               />
             </div>
-
             <div className={styles.settingItem}>
               <IonIcon icon={languageOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
@@ -185,7 +195,6 @@ export const Settings: React.FC = () => {
               </div>
               <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
             </div>
-
             <div className={styles.settingItem}>
               <IonIcon icon={powerOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
@@ -210,7 +219,6 @@ export const Settings: React.FC = () => {
           <p className={styles.sectionDescription}>
             Управление способами получения уведомлений
           </p>
-
           <div className={styles.settingsList}>
             <div className={styles.settingItem}>
               <IonIcon icon={notificationsOutline} className={styles.settingIcon} />
@@ -224,7 +232,6 @@ export const Settings: React.FC = () => {
                 className={styles.toggle}
               />
             </div>
-
             <div className={styles.settingItem}>
               <IonIcon icon={volumeHighOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
@@ -237,7 +244,6 @@ export const Settings: React.FC = () => {
                 className={styles.toggle}
               />
             </div>
-
             <div className={styles.settingItem}>
               <IonIcon icon={phonePortrait} className={styles.settingIcon} />
               <div className={styles.settingContent}>
@@ -259,7 +265,6 @@ export const Settings: React.FC = () => {
             <IonIcon icon={lockClosedOutline} className={styles.sectionIcon} />
             <h3 className={styles.sectionTitle}>Безопасность</h3>
           </div>
-
           <div className={styles.settingsList}>
             <div className={styles.settingItem}>
               <IonIcon icon={lockClosedOutline} className={styles.settingIcon} />
@@ -268,7 +273,6 @@ export const Settings: React.FC = () => {
               </div>
               <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
             </div>
-
             <div className={styles.settingItem}>
               <IonIcon icon={linkOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
@@ -281,11 +285,7 @@ export const Settings: React.FC = () => {
 
         {/* Кнопка выхода */}
         <div className={styles.logoutSection}>
-          <IonButton
-            color="danger"
-            className={styles.logoutButton}
-            onClick={handleLogout}
-          >
+          <IonButton color="danger" className={styles.logoutButton} onClick={handleLogout}>
             <IonIcon icon={logOutOutline} slot="start" />
             Выйти из аккаунта
           </IonButton>
