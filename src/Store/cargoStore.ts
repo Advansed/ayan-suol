@@ -312,6 +312,7 @@ export const cargoSocketHandlers = {
             useCargoStore.getState().updateCargo(response.data.guid, response.data)
         }
     }
+    
 }
 
 // ============================================

@@ -1,7 +1,7 @@
 import React from 'react';
 import { IonIcon, IonText } from '@ionic/react';
 import { locationOutline } from 'ionicons/icons';
-import { formatters, statusUtils } from '../utils';
+import { formatters, statusUtils } from '../../../utils/utils';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 import styles from './CargoCard.module.css';
 

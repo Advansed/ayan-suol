@@ -9,7 +9,7 @@ import { companyGetters } from '../../../Store/companyStore';
 import { transportGetters } from '../../../Store/transportStore';
 import { useToast } from '../../Toast';
 import { WizardHeader } from '../../Header/WizardHeader';
-import { CounterOfferCard } from './CounterOfferCard';
+import { CounterOfferCard } from '../../Offers/CounterOfferCard';
 import styles from './WorkCard.module.css';
 
 interface WorkViewProps {

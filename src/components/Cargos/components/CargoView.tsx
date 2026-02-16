@@ -16,7 +16,7 @@ import {
         shieldCheckmarkOutline
 } from 'ionicons/icons';
 import { CargoCard } from './CargoCard';
-import { statusUtils, formatters } from '../utils';
+import { statusUtils, formatters } from '../../../utils/utils';
 import { cargoGetters, CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 import { WizardHeader } from '../../Header/WizardHeader';
 
@@ -68,6 +68,11 @@ export const CargoView: React.FC<CargoViewProps> = ({
         
     };
 
+    const handleEdit = async () => {
+
+        await onEdit( cargo );
+        
+    };
     const renderActionButtons = () => {
         const canEdit = statusUtils.canEdit(currentCargo.status);
         const canDelete = statusUtils.canDelete(currentCargo.status);
@@ -118,6 +123,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
             <WizardHeader
                 title       = { currentCargo.status + ' #' + formatters.shortId(cargo.guid) }
                 onBack      = { onBack }
+                onSave      = { handleEdit }
             />
 
             {/* Карточка груза */}

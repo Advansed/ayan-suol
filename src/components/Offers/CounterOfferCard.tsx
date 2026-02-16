@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { IonButton, IonIcon } from '@ionic/react';
 import { mailOutline, arrowForwardOutline } from 'ionicons/icons';
-import { WorkInfo, CreateOfferData, WorkStatus } from '../types';
+import { WorkInfo, CreateOfferData, WorkStatus } from '../Works/types';
 import styles from './CounterOfferCard.module.css';
 
 interface CounterOfferCardProps {

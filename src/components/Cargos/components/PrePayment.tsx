@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CargoInfo, useCargoStore } from '../../../Store/cargoStore';
 import './PrePayment.css'
-import { formatters } from '../utils';
+import { formatters } from '../../../utils/utils';
 import { useAccountStore } from '../../../Store/accountStore';
 import { IonButton, useIonRouter } from '@ionic/react';
 import { useLoginStore, useToken } from '../../../Store/loginStore';

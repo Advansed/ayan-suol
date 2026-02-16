@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { IonModal, IonHeader, IonToolbar, IonButtons, IonButton, IonContent, IonIcon, IonLoading } from "@ionic/react";
 import { closeOutline, downloadOutline, printOutline, sendOutline } from "ionicons/icons";
-import { formatters } from "../../../Cargos";
+import { formatters } from "../../../../utils/utils";
 import styles from './styles.module.css';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";

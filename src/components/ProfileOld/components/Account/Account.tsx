@@ -13,7 +13,7 @@ import {
 import { IonIcon, IonSpinner } from '@ionic/react';
 import { useAccount } from './useAccount';
 import { useLoginStore } from '../../../../Store/loginStore';
-import { formatters } from '../../../Cargos';
+import { formatters } from '../../../../utils/utils';
 import Invoice from './Invoice'; // Импортируем компонент счета
 import { useToast } from '../../../Toast';
 import { useCompanyStore } from '../../../../Store/companyStore';

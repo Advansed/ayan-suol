@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { IonIcon, IonButton, IonCheckbox } from '@ionic/react';
+import { IonIcon, IonButton, IonCheckbox, IonInput } from '@ionic/react';
 import { locationOutline, calendarOutline } from 'ionicons/icons';
 import { WizardHeader } from '../../Header/WizardHeader';
 import { CargoInfo, EMPTY_CARGO, CargoAddress } from '../../../Store/cargoStore';
+import { useLoginStore } from '../../../Store/loginStore';
+import { CityField } from '../../DataEditor/fields/СityField';
+import { AddressField } from '../../DataEditor/fields/AddressField';
 import styles from './CargoNew.module.css';
 
 interface CargoNewProps {
@@ -12,80 +15,55 @@ interface CargoNewProps {
   onCreate: (data: CargoInfo) => Promise<boolean>;
 }
 
-const parseDateFromInput = (value: string): string => {
-  if (!value || !value.trim()) return '';
-  const parts = value.trim().split(/[.\-/]/);
-  if (parts.length !== 3) return '';
-  const [d, m, y] = parts;
-  const day = d.padStart(2, '0');
-  const month = m.padStart(2, '0');
-  const year = y.length === 2 ? `20${y}` : y;
-  return `${year}-${month}-${day}`;
+// Форматирование даты для input[type="date"] (YYYY-MM-DD)
+const formatDateForInput = (dateString: string): string => {
+  if (!dateString || dateString.length < 10) return '';
+  return dateString.slice(0, 10);
 };
 
-const formatDateToInput = (value: string): string => {
-  if (!value || value.length < 10) return '';
-  const [y, m, d] = value.slice(0, 10).split('-');
-  return `${d}.${m}.${y}`;
+// Форматирование числа с пробелами (150000 -> "150 000")
+const formatNumber = (value: number | string): string => {
+  if (!value && value !== 0) return '';
+  const numStr = String(value).replace(/\s/g, '');
+  return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+};
+
+// Удаление форматирования из числа ("150 000" -> 150000)
+const unformatNumber = (value: string): number => {
+  return Number(value.replace(/\s/g, '')) || 0;
 };
 
 export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack, onUpdate, onCreate }) => {
-  const [name, setName] = useState(initialCargo.name ?? '');
-  const [cityFrom, setCityFrom] = useState(initialCargo.address?.city?.city ?? '');
-  const [cityTo, setCityTo] = useState(initialCargo.destiny?.city?.city ?? '');
-  const [pickupDate, setPickupDate] = useState(formatDateToInput(initialCargo.pickup_date ?? ''));
-  const [pickupDays, setPickupDays] = useState('');
-  const [deliveryDate, setDeliveryDate] = useState(formatDateToInput(initialCargo.delivery_date ?? ''));
-  const [deliveryDays, setDeliveryDays] = useState('');
-  const [price, setPrice] = useState(String(initialCargo.price ?? initialCargo.cost ?? ''));
-  const [weight, setWeight] = useState(String(initialCargo.weight ?? ''));
-  const [volume, setVolume] = useState(String(initialCargo.volume ?? ''));
-  const [description, setDescription] = useState(initialCargo.description ?? '');
+  const userName = useLoginStore(state => state.name);
+  const userPhone = useLoginStore(state => state.phone);
+  const [info, setInfo] = useState<CargoInfo>(initialCargo || { ...EMPTY_CARGO });
   const [multiplePerformers, setMultiplePerformers] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEdit = Boolean(initialCargo?.guid);
 
   useEffect(() => {
-    setName(initialCargo.name ?? '');
-    setCityFrom(initialCargo.address?.city?.city ?? '');
-    setCityTo(initialCargo.destiny?.city?.city ?? '');
-    setPickupDate(formatDateToInput(initialCargo.pickup_date ?? ''));
-    setDeliveryDate(formatDateToInput(initialCargo.delivery_date ?? ''));
-    setPrice(String(initialCargo.price ?? initialCargo.cost ?? ''));
-    setWeight(String(initialCargo.weight ?? ''));
-    setVolume(String(initialCargo.volume ?? ''));
-    setDescription(initialCargo.description ?? '');
-  }, [initialCargo.guid]);
+    if (initialCargo?.guid) {
+      // При редактировании используем данные из груза
+      setInfo(initialCargo);
+    } else {
+      // При создании нового груза заполняем контактные данные текущего пользователя
+      setInfo({
+        ...EMPTY_CARGO,
+        face: userName || '',
+        phone: userPhone || ''
+      });
+    }
+  }, [initialCargo?.guid, userName, userPhone]);
 
   const buildCargo = (): CargoInfo => {
-    const address: CargoAddress = {
-      city: { city: cityFrom, fias: initialCargo.address?.city?.fias ?? '' },
-      address: initialCargo.address?.address ?? '',
-      fias: initialCargo.address?.fias ?? '',
-      lat: initialCargo.address?.lat ?? 0,
-      lon: initialCargo.address?.lon ?? 0
-    };
-    const destiny: CargoAddress = {
-      city: { city: cityTo, fias: initialCargo.destiny?.city?.fias ?? '' },
-      address: initialCargo.destiny?.address ?? '',
-      fias: initialCargo.destiny?.fias ?? '',
-      lat: initialCargo.destiny?.lat ?? 0,
-      lon: initialCargo.destiny?.lon ?? 0
-    };
     return {
-      ...(initialCargo.guid ? initialCargo : EMPTY_CARGO),
-      guid: initialCargo.guid,
-      name: name.trim() || EMPTY_CARGO.name,
-      description: description.trim() || EMPTY_CARGO.description,
-      address,
-      destiny,
-      pickup_date: parseDateFromInput(pickupDate) || initialCargo.pickup_date || EMPTY_CARGO.pickup_date,
-      delivery_date: parseDateFromInput(deliveryDate) || initialCargo.delivery_date || EMPTY_CARGO.delivery_date,
-      weight: Number(weight) || 0,
-      volume: Number(volume) || 0,
-      price: Number(price.replace(/\s/g, '')) || 0,
-      cost: Number(price.replace(/\s/g, '')) || 0
+      ...info,
+      guid: info.guid || initialCargo.guid,
+      name: info.name?.trim() || EMPTY_CARGO.name,
+      description: info.description?.trim() || EMPTY_CARGO.description,
+      price: info.price || 0,
+      cost: info.cost || info.price || 0
     };
   };
 
@@ -107,113 +85,28 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
 
   return (
     <div className={styles.container}>
-      <WizardHeader title={isEdit ? 'Редактировать груз' : 'Добавить груз'} onMenu={onBack} />
+      <WizardHeader title={isEdit ? 'Редактировать груз' : 'Добавить груз'} 
+        onBack  = { onBack }  
+        onSave  = { handleNext }
+      />
 
       <div className={styles.content}>
-        {/* Основные данные */}
-        <section className={styles.section}>
-          <div className={styles.field}>
-            <div className={styles.inputWrap}>
-              <input
-                type="text"
-                className={styles.input}
-                placeholder="Перевозка промышленного оборудования"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className={styles.field}>
-            <div className={styles.inputWrap}>
-              <IonIcon icon={locationOutline} className={`${styles.inputWrapIcon} ${styles.inputWrapIconRed}`} />
-              <input
-                type="text"
-                className={styles.input}
-                placeholder="Казань"
-                value={cityFrom}
-                onChange={(e) => setCityFrom(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className={styles.field}>
-            <div className={styles.inputWrap}>
-              <IonIcon icon={locationOutline} className={`${styles.inputWrapIcon} ${styles.inputWrapIconBlue}`} />
-              <input
-                type="text"
-                className={styles.input}
-                placeholder="Уфа"
-                value={cityTo}
-                onChange={(e) => setCityTo(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className={styles.row}>
-            <div className={styles.field}>
-              <div className={styles.inputWrap}>
-                <IonIcon icon={calendarOutline} className={`${styles.inputWrapIcon} ${styles.inputWrapIconBlue}`} />
-                <input
-                  type="text"
-                  className={styles.input + ' w-50'}
-                  placeholder="01.04.2025"
-                  value={pickupDate}
-                  onChange={(e) => setPickupDate(e.target.value)}
-                />
-              </div>
-              <div style={{ display: 'flex', marginTop: 0.25, gap: 0.25 }}>
-                <input
-                  type="text"
-                  className={styles.inputSmall + ' w-40'}
-                  placeholder="дней"
-                  value={pickupDays}
-                  onChange={(e) => setPickupDays(e.target.value)}
-                  style={{ marginLeft: 0 }}
-                />
-              </div>
-            </div>
-            <div className={styles.field}>
-              <div className={styles.inputWrap}>
-                <IonIcon icon={calendarOutline} className={`${styles.inputWrapIcon} ${styles.inputWrapIconRed}`} />
-                <input
-                  type="text"
-                  className={styles.input}
-                  placeholder="03.04.2025"
-                  value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                />
-              </div>
-              <div style={{ display: 'flex', marginTop: 0.25, gap: 0.25 }}>
-                <input
-                  type="text"
-                  className={styles.inputSmall}
-                  placeholder="дней"
-                  value={deliveryDays}
-                  onChange={(e) => setDeliveryDays(e.target.value)}
-                  style={{ marginLeft: 0 }}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.field}>
-            <div className={styles.inputWrap}>
-              <input
-                type="text"
-                inputMode="numeric"
-                className={styles.input}
-                placeholder="120000"
-                value={price}
-                onChange={(e) => setPrice(e.target.value.replace(/\D/g, ''))}
-              />
-            </div>
-          </div>
-        </section>
-
         {/* Информация о грузе */}
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>Информация о грузе</h3>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Наименование груза</label>
+            <div className={styles.inputWrap}>
+              <input
+                type="text"
+                className={styles.input}
+                placeholder="Наименование груза"
+                value={info.name || ''}
+                onChange={(e) => setInfo({ ...info, name: e.target.value })}
+              />
+            </div>
+          </div>
 
           <div className={styles.row}>
             <div className={styles.field}>
@@ -224,8 +117,8 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
                   inputMode="decimal"
                   className={styles.input}
                   placeholder="0"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
+                  value={info.weight || ''}
+                  onChange={(e) => setInfo({ ...info, weight: Number(e.target.value) || 0 })}
                 />
               </div>
             </div>
@@ -237,10 +130,44 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
                   inputMode="decimal"
                   className={styles.input}
                   placeholder="0"
-                  value={volume}
-                  onChange={(e) => setVolume(e.target.value)}
+                  value={info.volume || ''}
+                  onChange={(e) => setInfo({ ...info, volume: Number(e.target.value) || 0 })}
                 />
               </div>
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Цена</label>
+            <div className={styles.inputWrap}>
+              <input
+                type="text"
+                inputMode="numeric"
+                className={styles.input}
+                placeholder="Цена"
+                value={formatNumber(info.price || info.cost || '')}
+                onChange={(e) => {
+                  const numValue = unformatNumber(e.target.value);
+                  setInfo({ ...info, price: numValue });
+                }}
+              />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Стоимость груза</label>
+            <div className={styles.inputWrap}>
+              <input
+                type="text"
+                inputMode="numeric"
+                className={styles.input}
+                placeholder="Стоимость груза"
+                value={formatNumber(info.cost || '')}
+                onChange={(e) => {
+                  const numValue = unformatNumber(e.target.value);
+                  setInfo({ ...info, cost: numValue });
+                }}
+              />
             </div>
           </div>
 
@@ -248,38 +175,193 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
             <label className={styles.label}>Описание груза</label>
             <textarea
               className={styles.textarea}
-              placeholder="Промышленное оборудование, общий вес около 15 тонн. Требуется тягач с полуприцепом и опыт перевозки негабаритных грузов."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Описание"
+              value={info.description || ''}
+              onChange={(e) => setInfo({ ...info, description: e.target.value })}
             />
           </div>
 
-          <div className={styles.checkboxRow}>
-            <IonCheckbox
-              className={styles.checkbox}
-              checked={multiplePerformers}
-              onIonChange={(e) => setMultiplePerformers(e.detail.checked)}
-            />
-            <span className={styles.checkboxLabel}>
-              Несколько исполнителей (заказ могут взять несколько исполнителей)
-            </span>
-          </div>
         </section>
 
-        {/* Доп. поля над кнопкой */}
-        <div className={styles.extraFields}>
-          <input type="text" className={styles.extraField} placeholder="" />
-          <input type="text" className={styles.extraField} placeholder="" />
-        </div>
+        {/* Отправка */}
+        <section className={styles.section}>
+          <h3 className={styles.sectionTitle}>Отправка</h3>
+
+          <div className={styles.field}>
+            <CityField
+              label="Город отправки"
+              value={info.address?.city || EMPTY_CARGO.address.city}
+              onChange={(cityData) => setInfo({ 
+                ...info, 
+                address: { 
+                  ...(info.address || EMPTY_CARGO.address),
+                  city: cityData
+                } 
+              })}
+              onFIAS={(fias) => setInfo({ 
+                ...info, 
+                address: { 
+                  ...(info.address || EMPTY_CARGO.address),
+                  fias: fias || info.address?.fias || ''
+                } 
+              })}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <AddressField
+              label="Точный адрес"
+              value={{
+                address: info.address?.address || '',
+                fias: info.address?.fias || '',
+                lat: info.address?.lat ? String(info.address.lat) : '',
+                lon: info.address?.lon ? String(info.address.lon) : ''
+              }}
+              onChange={(addressData) => setInfo({ 
+                ...info, 
+                address: { 
+                  ...(info.address || EMPTY_CARGO.address),
+                  address: addressData.address,
+                  fias: addressData.fias || info.address?.fias || '',
+                  lat: addressData.lat ? Number(addressData.lat) : (info.address?.lat || 0),
+                  lon: addressData.lon ? Number(addressData.lon) : (info.address?.lon || 0)
+                } 
+              })}
+              cityFias={info.address?.fias}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Дата отправки</label>
+            <div className={styles.inputWrap}>
+              <IonIcon icon={calendarOutline} className={`${styles.inputWrapIcon} ${styles.inputWrapIconBlue}`} />
+              <IonInput
+                type="date"
+                className={styles.input}
+                placeholder="Дата отправки"
+                value={formatDateForInput(info.pickup_date || '')}
+                onIonInput={(e) => {
+                  const value = e.detail.value || '';
+                  setInfo({ ...info, pickup_date: value || info.pickup_date });
+                }}
+              />
+            </div>
+          </div>
+
+        </section>
+
+        {/* Прибытие */}
+        <section className={styles.section}>
+          <h3 className={styles.sectionTitle}>Прибытие</h3>
+
+          <div className={styles.field}>
+            <CityField
+              label="Город прибытия"
+              value={info.destiny?.city || EMPTY_CARGO.destiny.city}
+              onChange={(cityData) => setInfo({ 
+                ...info, 
+                destiny: { 
+                  ...(info.destiny || EMPTY_CARGO.destiny),
+                  city: cityData
+                } 
+              })}
+              onFIAS={(fias) => setInfo({ 
+                ...info, 
+                destiny: { 
+                  ...(info.destiny || EMPTY_CARGO.destiny),
+                  fias: fias || info.destiny?.fias || ''
+                } 
+              })}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <AddressField
+              label="Точный адрес"
+              value={{
+                address: info.destiny?.address || '',
+                fias: info.destiny?.fias || '',
+                lat: info.destiny?.lat ? String(info.destiny.lat) : '',
+                lon: info.destiny?.lon ? String(info.destiny.lon) : ''
+              }}
+              onChange={(addressData) => setInfo({ 
+                ...info, 
+                destiny: { 
+                  ...(info.destiny || EMPTY_CARGO.destiny),
+                  address: addressData.address,
+                  fias: addressData.fias || info.destiny?.fias || '',
+                  lat: addressData.lat ? Number(addressData.lat) : (info.destiny?.lat || 0),
+                  lon: addressData.lon ? Number(addressData.lon) : (info.destiny?.lon || 0)
+                } 
+              })}
+              cityFias={info.destiny?.fias}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Дата прибытия</label>
+            <div className={styles.inputWrap}>
+              <IonIcon icon={calendarOutline} className={`${styles.inputWrapIcon} ${styles.inputWrapIconRed}`} />
+              <IonInput
+                type="date"
+                className={styles.input}
+                placeholder="Дата прибытия"
+                value={formatDateForInput(info.delivery_date || '')}
+                onIonInput={(e) => {
+                  const value = e.detail.value || '';
+                  setInfo({ ...info, delivery_date: value || info.delivery_date });
+                }}
+              />
+            </div>
+          </div>
+
+        </section>
+
+        {/* Контактное лицо */}
+        <section className={styles.section}>
+          <h3 className={styles.sectionTitle}>Контактное лицо</h3>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Контактное лицо</label>
+            <div className={styles.inputWrap}>
+              <input
+                type="text"
+                className={styles.input}
+                placeholder="ФИО контактного лица"
+                value={info.face || ''}
+                onChange={(e) => setInfo({ ...info, face: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Номер телефона</label>
+            <div className={styles.inputWrap}>
+              <input
+                type="tel"
+                inputMode="tel"
+                className={styles.input}
+                placeholder="+7 (999) 123-45-67"
+                value={info.phone || ''}
+                onChange={(e) => {
+                  const phoneValue = e.target.value.replace(/\D/g, '');
+                  setInfo({ ...info, phone: phoneValue });
+                }}
+              />
+            </div>
+          </div>
+
+        </section>
+
 
         <IonButton
-          className={styles.nextButton}
-          expand="block"
-          color="primary"
-          onClick={handleNext}
-          disabled={isSubmitting || !name.trim()}
+          className = { styles.nextButton }
+          expand    = "block"
+          color     = "primary"
+          onClick   = { handleNext }
+          disabled  = { isSubmitting || !info.name?.trim() }
         >
-          Далее
+          Добавить
         </IonButton>
       </div>
     </div>

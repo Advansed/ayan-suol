@@ -4,7 +4,7 @@ import { cashOutline, personOutline } from 'ionicons/icons'
 import { User } from '../types'
 import { UI_TEXT } from '../constants'
 import './ProfileHeader.css'
-import { formatters } from '../../Cargos'
+import { formatters } from '../../utils/utils'
 
 interface Props {
   balance:  number,

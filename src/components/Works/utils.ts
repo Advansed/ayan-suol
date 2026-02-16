@@ -14,7 +14,7 @@ import {
 } from './constants';
 
 // Переиспользуем базовые форматтеры из Cargos
-import { formatters as cargoFormatters } from '../Cargos/utils';
+import { formatters as cargoFormatters } from '../../utils/utils';
 
 // ======================
 // УТИЛИТЫ ВАЛИДАЦИИ

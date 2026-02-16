@@ -1,13 +1,17 @@
 /* CargoNew — экран добавления груза, мобильный ~420px */
 
 .container {
-  min-height: 100vh;
   background-color: #fff;
-  padding-bottom: 2em;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .content {
-  padding: 0 0.75em 1em;
+  padding: 0 0.75em;
+  padding-bottom: 2em;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .section {

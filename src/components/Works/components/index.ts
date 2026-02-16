@@ -7,4 +7,4 @@ export { WorksList } from './WorksList';
 export { WorkView } from './WorkView';
 export { WorkOffer } from './WorkOffer';
 export { WorkArchive } from './WorkArchive';
-export { CounterOfferCard } from './CounterOfferCard';
+export { CounterOfferCard } from '../../Offers/CounterOfferCard';

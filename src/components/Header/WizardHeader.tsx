@@ -1,12 +1,13 @@
 import React from 'react';
 import { IonIcon } from '@ionic/react';
-import { menuOutline, refreshOutline, closeOutline, chevronBackOutline } from 'ionicons/icons';
+import { menuOutline, refreshOutline, closeOutline, chevronBackOutline, saveOutline } from 'ionicons/icons';
 import styles from './WizardHeader.module.css';
 
 interface WizardHeaderProps {
   title:            string;
   pages?:           string;
   onMenu?:          () => void;
+  onSave?:          () => void;
   onBack?:          () => void;
   onClose?:         () => void;
   onRefresh?:       () => void;
@@ -16,6 +17,7 @@ export const WizardHeader: React.FC<WizardHeaderProps> = ({
   title,
   pages     = "",
   onMenu,
+  onSave,
   onBack,
   onClose,
   onRefresh   
@@ -44,11 +46,13 @@ export const WizardHeader: React.FC<WizardHeaderProps> = ({
             onClick={ () => { 
               if(onRefresh) onRefresh();
               if(onClose) onClose();
+              if(onSave) onSave();
             } }
             disabled={ false }
         >
             { onRefresh !== undefined && (<IonIcon icon={ refreshOutline } />)  }
-            { onRefresh === undefined && onClose !== undefined && (<IonIcon icon={ closeOutline } />)  }
+            { onClose   !== undefined && (<IonIcon icon={ closeOutline } />)  }
+            { onSave    !== undefined && (<IonIcon icon={ saveOutline } />)  }
         </button>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { IonIcon, IonAlert, IonLoading, useIonRouter, IonInput, IonButton } from '@ionic/react';
 import { arrowBackOutline, shieldCheckmarkOutline, documentTextOutline, businessOutline } from 'ionicons/icons';
-import { formatters } from '../utils';
+import { formatters } from '../../../utils/utils';
 import { CargoInfo, useCargoStore } from '../../../Store/cargoStore';
 import { useLoginStore, useToken } from '../../../Store/loginStore';
 import { useAccountStore } from '../../../Store/accountStore';

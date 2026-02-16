@@ -146,6 +146,7 @@ export const useWorkStore = create<WorkStore>()(
 
       clearError: () => set({ error: null }),
 
+
       reset: () => set({
         works: [],
         archiveWorks: [],
@@ -157,6 +158,7 @@ export const useWorkStore = create<WorkStore>()(
         navigationHistory: [{ type: 'list' }],
         error: null
       })
+      
     }),
     { name: 'work-store' }
   )

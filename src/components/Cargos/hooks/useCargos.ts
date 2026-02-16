@@ -1,10 +1,10 @@
-// src/Store/useCargos.ts
+// src/components/Cargos/hooks/useCargos.ts
 import { useCallback, useMemo }     from 'react'
-import { useSocket }                from './useSocket'
-import { useToast }                 from '../components/Toast'
+import { useSocket }                from '../../../Store/useSocket'
+import { useToast }                 from '../../Toast'
 import { useCargoStore, CargoInfo
-    , EMPTY_CARGO }                 from './cargoStore'
-import { useToken }                 from './loginStore'
+    , EMPTY_CARGO }                 from '../../../Store/cargoStore'
+import { useToken }                 from '../../../Store/loginStore'
 
 // ============================================
 // ТИПЫ

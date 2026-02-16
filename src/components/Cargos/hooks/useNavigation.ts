@@ -20,6 +20,12 @@ export const useCargoNavigation = () => {
 
     }, [navigateTo])
 
+    const handleEdit = useCallback(( item ) => {
+
+        navigateTo({ type: 'edit', cargo: item })
+
+    }, [navigateTo])
+
     const handleCargoClick = useCallback((cargo: CargoInfo) => {
 
         navigateTo({ type: 'view', cargo })
@@ -31,6 +37,7 @@ export const useCargoNavigation = () => {
         navigateTo,
         goBack,
         handleCreateNew,
+        handleEdit,
         handleCargoClick
     }
 }

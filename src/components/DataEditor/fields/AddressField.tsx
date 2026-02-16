@@ -22,14 +22,11 @@ export const AddressField: React.FC<AddressFieldProps> = ({
   disabled = false,
   error
 }) => {
-
-  console.log("AddressField")
-
   return (
     <div className={styles.field}>
       <label className={styles.label}>{label}</label>
       <AddressSuggestions
-        token="50bfb3453a528d091723900fdae5ca5a30369832"
+        token={import.meta.env.VITE_DADATA_TOKEN || "50bfb3453a528d091723900fdae5ca5a30369832"}
         filterLocations={cityFias ? [{ city_fias_id: cityFias }] : undefined}
         filterRestrictValue={!!cityFias}
         value={{ value: value?.address || '' } as any}

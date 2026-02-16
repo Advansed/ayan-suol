@@ -13,7 +13,7 @@ import { CargoPage3, SaveData3 }        from './CargoPage3';
 import { api }                          from '../../../Store/api';
 import { CargoPage4, SaveData4 }        from './CargoPage4';
 
-interface CargoInvoiceProps {
+interface CargoInvoiceSectionsProps {
     cargo:      CargoInfo;
     onBack:     ()=>void;
 }
@@ -23,7 +23,7 @@ interface Route1 {
     info:   DriverInfo | undefined;
 }
 
-export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack }) => {
+export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ cargo, onBack }) => {
     const { invoices, isLoading, contract, handleAccept,  handleReject, handleChat, get_contract, setContract, create_contract } = useInvoices({ info: cargo })
     const [ page, setPage ] = useState<Route1>({ type: 'main', info: undefined })
     const { emit } = useSocket()
@@ -131,17 +131,15 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack }) => 
                 
                 {invoices.map((invoice, index) => (
 
-                    <IonCard className='ml-05 mr-05 mt-05 pt-05 pl-05 pr-05 pb-05'
+                    <IonCard className='ml-1 mr-1 mt-1 pt-1 pl-1 pr-1 pb-1'
                         key = { index }
                     >
                         <DriverCard
                             info                = { invoice }
-                            onReject            = { handleReject }
-                            onAccept            = { handleClick }
-                            onChat              = { handleChat  }
+                            cargo               = { cargo }    
                         />
                         
-                        {/* { renderButtons( invoice ) } */}
+                        { renderButtons( invoice ) }
 
                     </IonCard>
 
@@ -419,7 +417,6 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack }) => 
                 <CargoPage4
                     info    = { invoice }
                     pdf     = { contract }
-                    cargo   = { cargo }
                     onBack  = { () => { setPage({type: "main", info: undefined})}}
                     onSave  = { (data: SaveData4) => { 
                         console.log('sign', data)

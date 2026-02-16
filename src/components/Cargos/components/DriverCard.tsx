@@ -1,69 +1,141 @@
-import React, { useMemo }           from 'react';
-import { IonIcon }                  from '@ionic/react';
-import { personCircleOutline }      from 'ionicons/icons';
-import { CargoInfo, DriverInfo }    from '../../../Store/cargoStore';
-
+import React from 'react';
+import { IonIcon, IonButton } from '@ionic/react';
+import { personCircleOutline, chatboxEllipsesOutline } from 'ionicons/icons';
+import { DriverInfo } from '../../../Store/cargoStore';
+import { formatters } from '../../../utils/utils';
 
 interface DriverInfoProps {
-
-    info:           DriverInfo;
-    cargo:          CargoInfo;
-
+    info: DriverInfo;
+    onAccept?: (info: DriverInfo) => void;
+    onReject?: (info: DriverInfo) => void;
+    onChat?: (info: DriverInfo) => void;
+    isLoading?: boolean;
 }
 
-export const DriverCard: React.FC<DriverInfoProps> = ({ 
-    info, cargo
-}) => {
-
-    const getWeightLabel = () => {
-        switch ( info.status ) {
-            case 'Заказано'         : return "Заказано"
-            case 'Принято'          : return "Принято"
-            case 'Завершено'        : return 'Взято груза';
-            case 'Доставлено'       : return 'Доставлено';
-            default                 : return 'Грузоподъёмность';
-        }
-    };
-
-
-    const formattedCurrency = useMemo(() => 
-            new Intl.NumberFormat('ru-RU', { 
-                style: 'currency', 
-                currency: 'RUB' 
-            }).format(info.price).replace('₽', '₽ '), [info.price]);
-
-
+const offer = (
+    info: DriverInfo,
+    onAccept?: (info: DriverInfo) => void,
+    onReject?: (info: DriverInfo) => void,
+    onChat?: (info: DriverInfo) => void,
+    isLoading?: boolean
+) => {
     return (
-        <>
-            {/* Основная информация о водителе */}
-            <div className='flex fl-space'>
-                <div className='cr-status-2 fs-1'>{ info.status + "" }</div>
-                <div className="fs-09 cl-prim">
-                    <div className='cr-status-5 fs-11'><b>{ formattedCurrency }</b></div>
+        <div className="borders mt-1">
+            <div className="fs-1">
+                <b>Предложение от водителя</b>
+            </div>
+            <div className="fs-1 mt-05 flex fl-space">
+                <div>⚖️ <b>Вес:</b></div>
+                <div className="fs-12 cl-black">
+                    <b>{info.weight.toFixed(1)} тонн</b>
                 </div>
             </div>
-            <div className="flex fl-space mt-1">
-                <div className="flex">
-                    <IonIcon icon={personCircleOutline} color="primary" className="w-2 h-2"/>
-                    <div className="fs-09 ml-05">
-                        <div><b>{info.client}</b></div>
-                        <div>⭐ {info.rating}</div>
+            <div className="fs-1 mt-05 flex fl-space">
+                <div>📦 <b>Объем:</b></div>
+                <div className="fs-12 cl-black">
+                    <b>{info.volume.toFixed(1)} м³</b>
+                </div>
+            </div>
+            <div className="fs-1 mt-05 flex fl-space">
+                <div>💰 <b>Цена:</b></div>
+                <div className="fs-12 cl-black">
+                    <b>{formatters.currency(info.price)}</b>
+                </div>
+            </div>
+
+            {/* Кнопки действий */}
+            <div className="flex mt-1" style={{ gap: '0.5em' }}>
+                {onReject && (
+                    <IonButton
+                        className="w-50 cr-button-2"
+                        mode="ios"
+                        fill="clear"
+                        color="warning"
+                        onClick={() => onReject(info)}
+                        disabled={isLoading}
+                    >
+                        <span className="fs-1">Отказать</span>
+                    </IonButton>
+                )}
+                {onAccept && (
+                    <IonButton
+                        className="w-50 cr-button-1"
+                        mode="ios"
+                        fill= "outline"
+                        color="primary"
+                        onClick={() => { if(onChat) onChat(info)}}
+                        disabled={isLoading}
+                    >
+                        <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06" /> 
+                        <span className="fs-1 ml-05">Чат</span>
+                    </IonButton>
+                )}
+            </div>
+
+            {/* Кнопка чата */}
+            {onChat && (
+                <div className="">
+                    <IonButton
+                        className="w-100 cr-button-2"
+                        mode="ios"
+                        color="primary"
+                        onClick={() => { if(onAccept) onAccept(info)}}
+                        disabled={isLoading}
+                    >
+                        {/* <IonIcon icon={chatboxEllipsesOutline} className="w-06 h-06" /> */}
+                        <span className="ml-1 fs-1">Принять</span>
+                    </IonButton>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export const DriverCard: React.FC<DriverInfoProps> = ({ 
+    info, 
+    onAccept, 
+    onReject, 
+    onChat,
+    isLoading = false 
+}) => {
+    return (
+        <div>
+            <div className="borders">
+                {/* Основная информация о водителе */}
+                <div className="flex fl-space mt-1">
+                    <div className="flex">
+                        <IonIcon 
+                            icon={personCircleOutline} 
+                            color="primary" 
+                            className="w-3 h-3"
+                        />
+                        <div className="fs-1 ml-05">
+                            <div className="fs-12">
+                                <b>{info.client}</b>
+                            </div>
+                            <div className="fs-12">⭐ {info.rating}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Детали транспорта */}
+                <div className="fs-1 mt-05 flex fl-space">
+                    <div>
+                        🚚 <b>Транспорт:</b>
+                    </div>
+                    <div className="fs-12 cl-black">
+                        <b>{info.transport}</b>
                     </div>
                 </div>
             </div>
 
-            {/* Детали транспорта */}
-            <div className="fs-09 mt-05 flex fl-space">
-                <div>🚚 <b>Транспорт:</b></div>
-                <div className='fs-1 cl-black'><b>{info.transport}</b></div>
-            </div>
-            <div className="fs-09 mt-05 flex fl-space">
-                <div>⚖️ <b>{getWeightLabel()}:</b></div>
-                <div className='fs-1 cl-black'><b>{ info.weight > 0 ? '(' + info.weight + " из " + cargo.weight + ' тонн)' : " м3" }</b></div>
-                 
-            </div>
-
-        </>
+            {
+                info.status === "Заказано"
+                    ? offer(info, onAccept, onReject, onChat, isLoading)
+                    : <></>
+            }
+            
+        </div>
     );
 };
 

@@ -101,7 +101,7 @@ export const CustomerInfo: React.FC<CustomerInfoProps> = ({
                 <div className={styles.field}>
                     <label className={styles.label}>Введите ИНН или наименование</label>
                     <PartySuggestions
-                        token="50bfb3453a528d091723900fdae5ca5a30369832"
+                        token={import.meta.env.VITE_DADATA_TOKEN || "50bfb3453a528d091723900fdae5ca5a30369832"}
                         value={partyValue}
                         onChange={(suggestion) => {
                             if (suggestion) {

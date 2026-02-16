@@ -2,7 +2,7 @@
  * Константы для модуля Cargos
  */
 
-import { CargoStatus, CargoPriority, CargoInfo } from '../../Store/cargoStore';
+import { CargoStatus, CargoPriority, CargoInfo } from '../Store/cargoStore';
 
 // CSS классы для статусов
 export const STATUS_CLASSES: Record<CargoStatus, string> = {
