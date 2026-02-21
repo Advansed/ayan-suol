@@ -132,67 +132,68 @@ export const CargoView: React.FC<CargoViewProps> = ({
                 { canPublish && renderActionButtons()}
             </div>
 
-           {/* Блок дополнительных услуг */}
-           { canPublish && (
-                <div className="cr-card mt-1">
-                    <div className="fs-09 mb-1"><b>Дополнительные услуги</b></div>
-                    
-                    {
-                        hasAdvance && (
-                            <div className="flex fl-space mb-05">
-                                <div className="fs-08 h-2 ml-2">
-                                    Предоплата:
-                                </div>
-                                <div className="fs-08 h-2 mr-2">
-                                    <b>{ `${formatters.currency(currentCargo.advance)}` }</b>
-                                </div> 
-                            </div>
-                        )
-                    }
-                    {
-                        hasInsurance && (
-                            <div className="flex fl-space mb-05">
-                                <div className="fs-08 ml-2">
-                                    { `Страховка: ` }
-                                </div>
-                                <div className="fs-08 mr-2">
-                                    <b>{ `${formatters.currency(currentCargo.insurance)}` }</b>
-                                </div>
-                            </div>
-                        )
-                    }
-
-                    <div className='flex'>
+            {/* Блок дополнительных услуг */}
+            { canPublish && (
+                    <div className="cr-card mt-1">
+                        <div className="fs-09 mb-1"><b>Дополнительные услуги</b></div>
                         
-                        <IonButton
-                            className="cr-button-2 w-50"
-                            mode="ios"
-                            fill="clear"
-                            color="primary"
-                            onClick={ ()=>onPayment( cargo ) }
-                        >
-                            <IonIcon icon={cardOutline} slot="start" />
-                            <IonLabel className="fs-08">{ hasAdvance ? 'Доплатить' : 'Спецсчет'}</IonLabel>
-                        </IonButton>
-                                
-                        <IonButton
-                            className="cr-button-2 w-50"
-                            mode="ios"
-                            fill="clear"
-                            color="primary"
-                            onClick={ ()=> onInsurance( cargo ) }
-                        >
-                            <IonIcon icon={shieldCheckmarkOutline} slot="start" />
-                            <IonLabel className="fs-08">Страховка</IonLabel>
-                        </IonButton>
+                        {
+                            hasAdvance && (
+                                <div className="flex fl-space mb-05">
+                                    <div className="fs-08 h-2 ml-2">
+                                        Предоплата:
+                                    </div>
+                                    <div className="fs-08 h-2 mr-2">
+                                        <b>{ `${formatters.currency(currentCargo.advance)}` }</b>
+                                    </div> 
+                                </div>
+                            )
+                        }
+                        {
+                            hasInsurance && (
+                                <div className="flex fl-space mb-05">
+                                    <div className="fs-08 ml-2">
+                                        { `Страховка: ` }
+                                    </div>
+                                    <div className="fs-08 mr-2">
+                                        <b>{ `${formatters.currency(currentCargo.insurance)}` }</b>
+                                    </div>
+                                </div>
+                            )
+                        }
+
+                        <div className='flex'>
+                            
+                            <IonButton
+                                className="cr-button-2 w-50"
+                                mode="ios"
+                                fill="clear"
+                                color="primary"
+                                onClick={ ()=>onPayment( cargo ) }
+                            >
+                                <IonIcon icon={cardOutline} slot="start" />
+                                <IonLabel className="fs-08">{ hasAdvance ? 'Доплатить' : 'Спецсчет'}</IonLabel>
+                            </IonButton>
+                                    
+                            <IonButton
+                                className="cr-button-2 w-50"
+                                mode="ios"
+                                fill="clear"
+                                color="primary"
+                                onClick={ ()=> onInsurance( cargo ) }
+                            >
+                                <IonIcon icon={shieldCheckmarkOutline} slot="start" />
+                                <IonLabel className="fs-08">Страховка</IonLabel>
+                            </IonButton>
+
+                        </div>
 
                     </div>
+            )}
 
-                </div>
-           )}
             {/* Блок инвойсов */}
             { !canPublish && (
-                <div className="cr-card mt-1">
+                <div className="cr-card mt-1 ml-05 mr-05">
                     <div className="flex fl-space">
                         <div className="fs-09"><b>Заявки от водителей</b></div>
                         <div className="fs-08 cl-gray">
@@ -212,6 +213,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
                             <IonLabel className="fs-08">Просмотреть заявки</IonLabel>
                         </IonButton>
                     )}
+                    
                 </div>
             )}
 

@@ -1,12 +1,13 @@
-import React            from 'react';
+import React, { useState } from 'react';
 import { useToast }     from '../../Toast';
 import { DriverInfo, CargoInfo, cargoGetters }   from '../../../Store/cargoStore';
-import { Agreement, AgreementData } from '../../Offers/Agreement';
+import { Agreement, ContractData } from '../../Offers/Agreement';
 import { mockAgreementData } from '../../Offers/Agreement.mock';
+import { useInvoices } from '../hooks/useInvoices';
 
 interface CargoInspectionProps {
     info:           DriverInfo;
-    pdf:            string;
+    contract:       any;
     cargo?:         CargoInfo;
     onSave:         (data: SaveData4) => Promise<boolean>;
     onBack:         () => void;
@@ -15,44 +16,27 @@ interface CargoInspectionProps {
 
 export interface SaveData4 {
     sign:          string;
-    pdf:           string;
 }
 
 const EMPTY_INSPECTION: SaveData4 = {
     sign:               '',
-    pdf:                '',
 };
 
 export const CargoPage4: React.FC<CargoInspectionProps> = ({ 
-    info, pdf, cargo,
+    info, contract, cargo,
     onSave, 
     onBack, 
     initialData = EMPTY_INSPECTION 
 }) => {
   const toast = useToast();
+  const [signature, setSignature] = useState<string>(initialData?.sign || '');
 
-  // Преобразование данных в формат AgreementData (пока используем mock данные)
-  const getAgreementData = (): AgreementData => {
-    // Используем mock данные для отладки
-    return {
-      ...mockAgreementData,
-      // Можно переопределить некоторые поля из реальных данных, если нужно
-      orderId: info.guid || info.cargo || mockAgreementData.orderId,
-      contractId: info.guid || info.cargo || mockAgreementData.contractId,
-      performerSignature: {
-        name: mockAgreementData.performerSignature?.name || '',
-        sign: initialData?.sign || mockAgreementData.performerSignature?.sign || ''
-      }
-    };
-  };
+  console.log( contract )
 
-  const handleSign = async () => {
+  const handleSign = async(signature: string) => {
     try {
-      // Здесь можно добавить логику для получения подписи
-      // Пока используем данные из initialData
       const saveData: SaveData4 = {
-        sign: initialData?.sign || '',
-        pdf: pdf
+        sign:   signature
       };
 
       const success = await onSave(saveData);
@@ -64,26 +48,16 @@ export const CargoPage4: React.FC<CargoInspectionProps> = ({
     } catch (error) {
       console.error('Ошибка сохранения:', error);
       toast.error('Ошибка при сохранении договора');
-    }
-  };
-
-  const handleDownload = () => {
-    // Логика скачивания PDF
-    if (pdf) {
-      // Можно открыть PDF в новом окне или скачать
-      window.open(pdf, '_blank');
-    } else {
-      toast.error('PDF договора не доступен');
-    }
+    }  
   };
 
   return (
     <Agreement
-      data        = { getAgreementData() }
+      data        = { contract }
       onMenu      = { onBack }
       onCancel    = { onBack }
-      onDownload  = { handleDownload }
       onSign      = { handleSign }
+      // onDownload  = { handleDownload }
     />
   );
 };

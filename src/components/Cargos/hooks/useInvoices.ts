@@ -57,11 +57,11 @@ export const useInvoices = ({ info }) => {
         
         setIsLoading(true);
                 
-        once('get_pdf1', (data: { success: boolean; message?: string; data:any }) => {
-            console.log("get_pdf1", data)
+        once('get_contract', (data: { success: boolean; message?: string; data:any }) => {
+            console.log("get_contract", data)
             if (data.success) {
                 
-               setContract( 'data:application/pdf;base64,' + data.data) 
+               setContract( data.data ) 
 
             } else {
 
@@ -71,7 +71,7 @@ export const useInvoices = ({ info }) => {
             setIsLoading(false);
         });
 
-        emit('get_pdf1', {
+        emit('get_contract', {
             token:      token,
             id:         info.guid,
         });

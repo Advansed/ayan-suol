@@ -141,7 +141,7 @@ export const useWorks = () => {
       });
     }, [token]);
       
-    const setDeliver        = useCallback(async (data: Partial<OfferInfo>): Promise<boolean> => {
+    const setDeliver        = useCallback(async (data: OfferInfo): Promise<boolean> => {
       if (!socket) {
         toast.error('Нет соединения с сервером')
         return false
@@ -167,6 +167,41 @@ export const useWorks = () => {
     }, [token])
 
  
+    const create_contract = useCallback(async (info: WorkInfo): Promise<boolean> => {
+        if (!socket) {
+          toast.error('Нет соединения с сервером')
+          return false
+        }
+
+        workActions.setLoading(true);
+        
+        return new Promise((resolve) => {
+            socket.once('create_contract', (data: { success: boolean; message?: string; data?: any }) => {
+                console.log("create_contract", data)
+                if (data.success) {
+                    toast.success("Договор создан")
+                    resolve(true);
+                } else {
+                    toast.error("Ошибка при создании договора: " + (data.message || 'Неизвестная ошибка'));
+                    resolve(false);
+                }
+                workActions.setLoading(false);
+            });
+
+            socket.emit('create_contract', {
+                token:      token,
+                id:         info.guid,
+            });
+
+            // Таймаут на случай, если ответ не придет
+            setTimeout(() => {
+                toast.error('Таймаут ожидания ответа от сервера');
+                resolve(false);
+                workActions.setLoading(false);
+            }, 10000);
+        });
+    }, [token]);
+
     const get_contract = useCallback(async (info: WorkInfo ) => {
         
         if (!socket) {
@@ -321,6 +356,7 @@ function statusText( work: WorkInfo ) {
       // Фильтры
       setFilters,
       setSearchQuery,
+      create_contract,
       get_contract,
       setContract,
       set_contract,

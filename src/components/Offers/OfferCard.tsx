@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { IonButton, IonIcon } from '@ionic/react';
 import { mailOutline, arrowForwardOutline } from 'ionicons/icons';
-import { WorkInfo, CreateOfferData, WorkStatus } from '../Works/types';
-import styles from './CounterOfferCard.module.css';
+import { WorkInfo, WorkStatus } from '../Works/types';
+import styles from './OfferCard.module.css';
 
 interface CounterOfferCardProps {
     work: WorkInfo;
-    onSubmit: (data: CreateOfferData, volume: number) => Promise<void>;
+    onSubmit: (data: Partial<WorkInfo>, volume: number) => Promise<void>;
     onCancel?: () => void;
 }
 
@@ -15,12 +15,9 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
     onSubmit,
     onCancel 
 }) => {
-    const [formData, setFormData] = useState<CreateOfferData>({
-        workId: work.guid,
-        transportId: '',
+    const [formData, setFormData] = useState<Partial<WorkInfo>>({
         price: work.price,
-        weight: work.weight,
-        comment: ''
+        weight: work.weight
     });
 
     const [volume, setVolume] = useState<number>(work.volume);
@@ -43,11 +40,8 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
         setVolume(value);
     };
 
-    const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setFormData({ ...formData, comment: e.target.value });
-    };
-
-    const formatPrice = (price: number): string => {
+    const formatPrice = (price: number | undefined): string => {
+        if (!price) return '0';
         return price.toLocaleString('ru-RU').replace(/,/g, ' ');
     };
 
@@ -66,7 +60,13 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
 
         setIsSubmitting(true);
         try {
-            await onSubmit(formData, volume);
+            // Создаем объект с обновленными данными из формы
+            const updatedWork: Partial<WorkInfo> = {
+                ...work,
+                ...formData,
+                volume: volume
+            };
+            await onSubmit(updatedWork, volume);
         } catch (err) {
             setError('Ошибка при отправке предложения');
         } finally {
@@ -89,7 +89,7 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
             {/* Input Fields Row */}
             <div className={styles.inputRow}>
 
-                <div className={styles.inputField}>
+                <div className={`${styles.inputField} ${styles.priceField}`}>
                     <label className={styles.label}>Пред. цена (₽)</label>
                     <input
                         type="text"
@@ -100,19 +100,19 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
                     />
                 </div>
 
-                <div className={styles.inputField}>
+                <div className={`${styles.inputField} ${styles.weightField}`}>
                     <label className={styles.label}>Вес (т)</label>
                     <input
                         type="number"
                         className={styles.input}
-                        value={formData.weight}
+                        value={formData.weight || 0}
                         onChange={handleWeightChange}
                         placeholder="40 тонн"
                         step="0.1"
                     />
                 </div>
 
-                <div className={styles.inputField}>
+                <div className={`${styles.inputField} ${styles.volumeField}`}>
                     <label className={styles.label}>Объем (м³)</label>
                     <input
                         type="number"
@@ -126,20 +126,6 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
 
             </div>
 
-            {/* Comment Section */}
-            {/* <div className={styles.commentSection}>
-                <label className={styles.commentLabel}>
-                    *Комментарий к встречному предложению
-                </label>
-                <textarea
-                    className={styles.textarea}
-                    value={formData.comment}
-                    onChange={handleCommentChange}
-                    placeholder="Обьясните свое предложение заказчику ...."
-                    rows={4}
-                />
-            </div> */}
-
             {error && <div className={styles.error}>{error}</div>}
 
             {/* Submit Button */}
@@ -150,7 +136,7 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
                 disabled    = { isSubmitting }
             >
                 {/* <IonIcon icon={arrowForwardOutline} className={styles.buttonIcon} /> */}
-                <span> Отозвать предложение</span>
+                <span> Сделать предложение</span>
             </IonButton>
         </div>
     );

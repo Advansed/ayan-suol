@@ -417,11 +417,11 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack }) => 
         return (
             <>
                 <CargoPage4
-                    info    = { invoice }
-                    pdf     = { contract }
-                    cargo   = { cargo }
-                    onBack  = { () => { setPage({type: "main", info: undefined})}}
-                    onSave  = { (data: SaveData4) => { 
+                    info        = { invoice }
+                    contract    = { contract }
+                    cargo       = { cargo }
+                    onBack      = { () => { setPage({type: "main", info: undefined})}}
+                    onSave      = { (data: SaveData4) => { 
                         console.log('sign', data)
                         create_contract( invoice, data.sign )
                         return AcceptClick( invoice, data, 12 ) 
