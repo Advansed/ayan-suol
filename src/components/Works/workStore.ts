@@ -8,7 +8,7 @@ import {
     WorkFilters, 
     OfferInfo, 
     WorkPriority
-} from '../components/Works/types'
+} from './types'
 
 // ============================================
 // ТИПЫ

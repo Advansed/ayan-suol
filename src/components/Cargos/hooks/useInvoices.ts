@@ -15,7 +15,7 @@ export const useInvoices = ({ info }) => {
     const [ contract, setContract ]     = useState<any>()
     const [isLoading, setIsLoading]     = useState(false);
     const history                       = useHistory();
-    const { emit, once }                = useSocket();
+    const { emit, once, socket }        = useSocket();
     const token                         = useToken();
     const toast                         = useToast();
 
@@ -109,26 +109,66 @@ export const useInvoices = ({ info }) => {
 
 
     const handleReject = useCallback(async (info: DriverInfo) => {
-        setIsLoading(true);
-        try {
-            emit('set_inv', {
-                token:      token,
-                recipient:  info.recipient,
-                id:         info.guid,
-                status:     21
-            });
-            
-            // Также можно обновить статус при отказе, если нужно
-            setInvoices(prevInvoices => 
-                prevInvoices.filter(invoice => invoice.guid !== info.guid)
-            );
-            
-        } catch (error) {
-            console.error("Ошибка при отказе:", error);
-        } finally {
-            setIsLoading(false);
+        if (!socket) {
+            toast.error('Нет соединения с сервером');
+            return;
         }
-    }, [emit, token]);
+
+        setIsLoading(true);
+        
+        return new Promise<boolean>((resolve) => {
+            try {
+                // Формируем данные предложения для удаления (аналогично delOffer из useWorks)
+                const offerData = {
+                    guid:       info.cargo,        // ID груза
+                    recipient:  info.recipient,   // ID водителя
+                    price:      info.price,
+                    weight:     info.weight,
+                    volume:     info.volume,
+                    transport:  info.transport || '',
+                    comment:    '',
+                    status:     11 // WorkStatus.OFFERED
+                };
+
+                // Обработчик однократного ответа от сервера
+                const handleOfferResponse = (response: { success: boolean; error?: string }) => {
+                    if (response.success) {
+                        toast.success('Предложение успешно удалено');
+                        
+                        // Удаляем предложение из списка
+                        setInvoices(prevInvoices => 
+                            prevInvoices.filter(invoice => invoice.guid !== info.guid)
+                        );
+                        
+                        resolve(true);
+                    } else {
+                        toast.error(response.error || 'Ошибка удаления предложения');
+                        resolve(false);
+                    }
+                    setIsLoading(false);
+                };
+
+                // Подписываемся на ответ от сервера
+                socket.once('del_offer', handleOfferResponse);
+                
+                // Отправляем запрос на сервер
+                socket.emit('del_offer', { token, ...offerData });
+
+                // Таймаут на случай, если ответ не придет
+                setTimeout(() => {
+                    toast.error('Таймаут ожидания ответа от сервера');
+                    resolve(false);
+                    setIsLoading(false);
+                }, 10000); // 10 секунд таймаут
+
+            } catch (error) {
+                console.error('Error deleting offer:', error);
+                toast.error('Ошибка удаления предложения');
+                setIsLoading(false);
+                resolve(false);
+            }
+        });
+    }, [socket, token, toast]);
 
 
     const handleComplete = useCallback(async (info: DriverInfo, rating: number, tasks: TaskCompletion) => {

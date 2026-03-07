@@ -1,13 +1,12 @@
 // src/Store/useWorks.ts
 import { useCallback, useState }    from 'react'
-import { useToast }       from '../components/Toast'
-import { useSocket }      from './useSocket'
-import { loginGetters, useToken }   from './loginStore'
-import { useSocketStore } from './socketStore'
+import { useToast }       from '../Toast'
+import { useSocket }      from '../../Store/useSocket'
+import { useToken }   from '../../Store/loginStore'
 import { useWorkStore, workActions, workGetters } 
                           from './workStore'
 import { WorkInfo, WorkFilters, OfferInfo, WorkStatus } 
-                          from '../components/Works/types'
+                          from './types'
 
 export const useWorks = () => {
     const token             = useToken()
@@ -40,7 +39,7 @@ export const useWorks = () => {
     // ============================================
     // ОПЕРАЦИИ С ПРЕДЛОЖЕНИЯМИ
     // ============================================
-    const setOffer = useCallback(async (data: OfferInfo): Promise<boolean> => {
+    const setOffer          = useCallback(async (data: OfferInfo): Promise<boolean> => {
       if (!socket) {
         toast.error('Нет соединения с сервером');
         return false;
@@ -88,8 +87,59 @@ export const useWorks = () => {
         }
       });
     }, [ token ]);
+
+    
+    const delOffer          = useCallback(async (data: OfferInfo): Promise<boolean> => {
+      if (!socket) {
+        toast.error('Нет соединения с сервером');
+        return false;
+      }
+
+      workActions.setLoading(true);
       
-    const setStatus = useCallback(async (work: WorkInfo): Promise<boolean> => {
+      return new Promise((resolve) => {
+        try {
+          const offerData = {
+            ...data,
+            createdAt: new Date().toISOString()
+          };
+
+          // Обработчик однократного ответа от сервера
+          const handleOfferResponse = (response: { success: boolean; error?: string }) => {
+            if (response.success) {
+              toast.success('Предложение успешно удалено');
+                      
+              resolve(true);
+            } else {
+              toast.error(response.error || 'Ошибка удаления предложения');
+              resolve(false);
+            }
+          };
+
+          // Подписываемся на ответ от сервера
+          socket.once('del_offer', handleOfferResponse);
+          
+          // Отправляем запрос на сервер
+          socket.emit('del_offer', { token, ...offerData });
+
+          // Таймаут на случай, если ответ не придет
+          setTimeout(() => {
+            toast.error('Таймаут ожидания ответа от сервера');
+            resolve(false);
+          }, 10000); // 10 секунд таймаут
+
+        } catch (error) {
+          console.error('Error deleting offer:', error);
+          toast.error('Ошибка удаления предложения');
+          resolve(false);
+        } finally {
+          workActions.setLoading(false);
+        }
+      });
+    }, [ token ]);
+      
+    
+    const setStatus         = useCallback(async (work: WorkInfo): Promise<boolean> => {
       if (!socket) {
         toast.error('Нет соединения с сервером');
         return false;
@@ -141,6 +191,7 @@ export const useWorks = () => {
       });
     }, [token]);
       
+    
     const setDeliver        = useCallback(async (data: OfferInfo): Promise<boolean> => {
       if (!socket) {
         toast.error('Нет соединения с сервером')
@@ -167,7 +218,7 @@ export const useWorks = () => {
     }, [token])
 
  
-    const create_contract = useCallback(async (info: WorkInfo): Promise<boolean> => {
+    const create_contract   = useCallback(async (info: WorkInfo): Promise<boolean> => {
         if (!socket) {
           toast.error('Нет соединения с сервером')
           return false
@@ -202,7 +253,8 @@ export const useWorks = () => {
         });
     }, [token]);
 
-    const get_contract = useCallback(async (info: WorkInfo ) => {
+
+    const get_contract      = useCallback(async (info: WorkInfo ) => {
         
         if (!socket) {
           toast.error('Нет соединения с сервером')
@@ -233,7 +285,7 @@ export const useWorks = () => {
     }, [token]);
 
 
-    const set_contract = useCallback(async (info: WorkInfo, sign: string ) => {
+    const set_contract      = useCallback(async (info: WorkInfo, sign: string ) => {
         
         if (!socket) {
           toast.error('Нет соединения с сервером')
@@ -367,6 +419,7 @@ function statusText( work: WorkInfo ) {
       setDeliver,
       setStatus,
       setOffer,
+      delOffer,
 
       // Утилиты
       getWork

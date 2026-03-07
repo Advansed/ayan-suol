@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { WorkInfo, WorkStatus } from '../types';
-import { useWorks } from '../../../Store/useWorks';
+import { useWorks } from '../useWorks';
 
 const useWorkArchive = () => {
   const { isLoading, refreshWorks } = useWorks();

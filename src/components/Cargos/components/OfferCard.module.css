@@ -1,0 +1,162 @@
+/* Стили для карточки предложения от водителя */
+
+.offerCard {
+  width: auto;
+  margin-top: 1em;
+  margin-left: 0.5em;
+  border-radius: 12px;
+  padding: 1em 0.75em;
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+  width: calc(100% - 1em);
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: 1.2em;
+}
+
+.headerIcon {
+  font-size: 1.3em;
+  color: white;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.infoRow {
+  display: flex;
+  flex-direction: row;
+  gap: 1em;
+  margin-bottom: 1em;
+  width: 100%;
+}
+
+.infoField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  flex: 1;
+  min-width: 0;
+}
+
+.label {
+  font-size: 0.85em;
+  color: white;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.value {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  padding: 0.7em 0.9em;
+  color: white;
+  font-size: 1.1em;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8em;
+  width: 100%;
+}
+
+.buttonsRow {
+  display: flex;
+  flex-direction: row;
+  gap: 0.8em;
+  width: 100%;
+}
+
+.rejectButton,
+.acceptButton {
+  flex: 1;
+  border-radius: 10px;
+  padding: 0.9em 1em;
+  font-weight: 600;
+  font-size: 0.9em;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.rejectButton:active,
+.acceptButton:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.rejectButton:disabled,
+.acceptButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.buttonIcon {
+  font-size: 1.1em;
+  flex-shrink: 0;
+}
+
+/* Для очень маленьких экранов (< 360px) */
+@media (max-width: 360px) {
+  .offerCard {
+    padding: 0.8em 0.6em;
+    margin: 0.6em 0.5em;
+    border-radius: 10px;
+  }
+
+  .header {
+    margin-bottom: 1em;
+    gap: 0.4em;
+  }
+
+  .headerIcon {
+    font-size: 1.2em;
+  }
+
+  .title {
+    font-size: 1em;
+  }
+
+  .infoRow {
+    gap: 0.8em;
+    margin-bottom: 0.8em;
+  }
+
+  .label {
+    font-size: 0.8em;
+  }
+
+  .value {
+    padding: 0.6em 0.8em;
+    font-size: 1em;
+    border-radius: 8px;
+  }
+
+  .rejectButton,
+  .acceptButton {
+    padding: 0.8em 0.9em;
+    font-size: 0.85em;
+    border-radius: 8px;
+  }
+
+  .buttonIcon {
+    font-size: 1em;
+  }
+}

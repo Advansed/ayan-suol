@@ -1,6 +1,6 @@
 // src/Store/useWorkNavigation.ts
 import { useCallback } from 'react'
-import { useWorkStore } from '../../../Store/workStore'
+import { useWorkStore } from '../workStore'
 import { WorkPageType } from '../types'
 
 export const useWorkNavigation = () => {

@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IonButton, IonIcon } from '@ionic/react';
 import { mailOutline, arrowForwardOutline } from 'ionicons/icons';
-import { WorkInfo, WorkStatus } from '../Works/types';
 import styles from './OfferCard.module.css';
+import { WorkInfo, WorkStatus } from '../../types';
+import { useSocket } from '../../../../Store/useSocket';
+import { useToken } from '../../../../Store/loginStore';
+import { TransportData } from '../../../../Store/transportStore';
 
 interface CounterOfferCardProps {
     work: WorkInfo;
@@ -23,6 +26,12 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
     const [volume, setVolume] = useState<number>(work.volume);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [transports, setTransports] = useState<TransportData[]>([]);
+    const [selectedTransportGuid, setSelectedTransportGuid] = useState<string>('');
+    const [isLoadingTransports, setIsLoadingTransports] = useState(false);
+    
+    const { emit, once } = useSocket();
+    const token = useToken();
 
     const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.replace(/\s/g, '');
@@ -40,10 +49,54 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
         setVolume(value);
     };
 
+    const handleTransportChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const guid = e.target.value;
+        setSelectedTransportGuid(guid);
+        setFormData({ ...formData, transport: guid });
+    };
+
     const formatPrice = (price: number | undefined): string => {
         if (!price) return '0';
         return price.toLocaleString('ru-RU').replace(/,/g, ' ');
     };
+
+    // Загрузка списка транспортов
+    useEffect(() => {
+        if (!token) return;
+
+        setIsLoadingTransports(true);
+        
+        once('get_transport', (response: { success: boolean; data?: TransportData | TransportData[]; message?: string }) => {
+            setIsLoadingTransports(false);
+            
+            if (response.success && response.data) {
+                const transportsList = Array.isArray(response.data) ? response.data : [response.data];
+                setTransports(transportsList);
+                
+                // Выбираем транспорт: сначала проверяем work.transport, если нет - первый из списка
+                if (transportsList.length > 0) {
+                    let transportToSelect: TransportData | null = null;
+                    
+                    // Если в work уже есть выбранный транспорт, используем его
+                    if (work.transport) {
+                        transportToSelect = transportsList.find(t => t.guid === work.transport) || null;
+                    }
+                    
+                    // Если не нашли или не было выбранного, берем первый
+                    if (!transportToSelect) {
+                        transportToSelect = transportsList[0];
+                    }
+                    
+                    if (transportToSelect?.guid) {
+                        setSelectedTransportGuid(transportToSelect.guid);
+                        setFormData(prev => ({ ...prev, transport: transportToSelect.guid }));
+                    }
+                }
+            }
+        });
+
+        emit('get_transport', { token });
+    }, [token, emit, once, work.transport]);
 
     const handleSubmit = async () => {
         setError('');
@@ -58,12 +111,18 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
             return;
         }
 
+        if (!selectedTransportGuid) {
+            setError('Выберите транспорт');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             // Создаем объект с обновленными данными из формы
             const updatedWork: Partial<WorkInfo> = {
                 ...work,
                 ...formData,
+                transport: selectedTransportGuid,
                 volume: volume
             };
             await onSubmit(updatedWork, volume);
@@ -78,8 +137,10 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
         return work.status === WorkStatus.OFFERED ? 'Сделано предложение' : 'Сделать предложение';
     }
 
+    const isOffered = work.status === WorkStatus.OFFERED;
+    
     return (
-        <div className={styles.counterOfferCard}>
+        <div className={`${styles.counterOfferCard} ${isOffered ? styles.offered : styles.notOffered}`}>
             {/* Header */}
             <div className={styles.header}>
                 <IonIcon icon={mailOutline} className={styles.headerIcon} />
@@ -126,6 +187,37 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
 
             </div>
 
+            {/* Transport Selection */}
+            <div className={styles.transportField}>
+                <label className={styles.label}>Транспорт</label>
+                {isLoadingTransports ? (
+                    <div className={styles.transportLoading}>Загрузка транспортов...</div>
+                ) : transports.length === 0 ? (
+                    <div className={styles.transportEmpty}>Нет доступных транспортов</div>
+                ) : transports.length === 1 ? (
+                    <div className={styles.transportSingle}>
+                        {transports[0].name || transports[0].license_plate || 'Транспорт'}
+                        {transports[0].license_plate && (
+                            <span className={styles.transportPlate}> ({transports[0].license_plate})</span>
+                        )}
+                    </div>
+                ) : (
+                    <select
+                        className={styles.transportSelect}
+                        value={selectedTransportGuid}
+                        onChange={handleTransportChange}
+                    >
+                        <option value="">Выберите транспорт</option>
+                        {transports.map((transport) => (
+                            <option key={transport.guid} value={transport.guid || ''}>
+                                {transport.name || transport.license_plate || transport.guid}
+                                {transport.license_plate && ` (${transport.license_plate})`}
+                            </option>
+                        ))}
+                    </select>
+                )}
+            </div>
+
             {error && <div className={styles.error}>{error}</div>}
 
             {/* Submit Button */}
@@ -136,7 +228,7 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
                 disabled    = { isSubmitting }
             >
                 {/* <IonIcon icon={arrowForwardOutline} className={styles.buttonIcon} /> */}
-                <span> Сделать предложение</span>
+                <span> { work.status === WorkStatus.OFFERED ? 'Отозвать предложение' : 'Сделать предложение' }</span>
             </IonButton>
         </div>
     );

@@ -2,7 +2,7 @@ import React from 'react';
 import { IonRefresher, IonRefresherContent, IonSpinner } from '@ionic/react';
 import { WorkCard } from './WorkCard';
 import styles from './WorkArchive.module.css';
-import { useWorks } from '../../../Store/useWorks';
+import { useWorks } from '../useWorks';
 import { WizardHeader } from '../../Header/WizardHeader';
 
 export const WorkArchive = () => {

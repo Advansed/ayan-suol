@@ -2,39 +2,109 @@
  * Главный компонент модуля Works
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { WorkInfo, OfferInfo, WorkStatus } from './types';
 import { WorksList, WorkView } from './components';
-import { Agreement } from './components/Offer/Agreement';
 import { WorkMap } from './components/WorkMap';
-import { useWorks } from '../../Store/useWorks';
+import { useWorks } from './useWorks';
 import { useWorkNavigation } from './hooks/useNavigation';
+import { workActions } from './workStore';
 import { SaveData, WorkPage1 } from './components/WorkPage1';
 import { useSocket } from '../../Store/useSocket';
 import { useToken } from '../../Store/loginStore';
+import { transportGetters } from '../../Store/transportStore';
 import { IonLoading } from '@ionic/react';
 import './styles.css';
 
 export const Works: React.FC = () => {
-    const { contract, works, isLoading, setOffer, setStatus, refreshWorks, create_contract, get_contract, setContract, set_contract } = useWorks();
+    const { contract, works, isLoading, setOffer, delOffer, setStatus, refreshWorks, create_contract, get_contract, setContract, set_contract } = useWorks();
     const { emit } = useSocket();
     const token = useToken();
 
     const { currentPage, navigateTo, goBack } = useWorkNavigation();
 
-    const handleWorkClick   = async (work: WorkInfo) => {
-        // Сначала создаем контракт, потом получаем его
+    // Обновляем currentPage.work при обновлении списка works
+    useEffect(() => {
+        console.log("workView",  currentPage )
+        if (currentPage.type === 'view') {
+            console.log("work_View",  currentPage.work )
+            const updatedWork = works.find(w => w.cargo === currentPage.work.cargo);
+            console.log("work_View",  updatedWork )
+            if (updatedWork && updatedWork.status !== currentPage.work.status) {
+                workActions.setCurrentPage({ type: 'view', work: updatedWork });
+            }
+        }
+    }, [works, currentPage]);
+
+    const handleWorkClick           = (work: WorkInfo) => {
         navigateTo({ type: 'view', work });
     };
 
-    const handleOfferClick  = async (work: WorkInfo) => {
-        // Получаем договор перед открытием Agreement
-        await create_contract(work);
-        await get_contract(work);
-        navigateTo({ type: 'offer', work });
+    const handleOfferClick          = async (work: WorkInfo) => {
+        // Формируем предложение из данных работы
+        // Транспорт берется из work.transport, который был выбран в OfferCard
+        const offerData: OfferInfo = {
+            guid:       work.cargo,
+            recipient:  work.recipient,
+            price:      work.price,
+            weight:     work.weight,
+            volume:     work.volume,
+            transport:  work.transport || transportGetters.getData()?.guid || '',
+            comment:    '',
+            status:     11 // WorkStatus.OFFERED
+        };
+
+        // Отправляем предложение
+        const res = await setOffer(offerData);
+
+        if (res) {
+            // Отправляем сообщение в чат
+            emit("send_message", {
+                token: token,
+                recipient: offerData.recipient,
+                cargo: offerData.guid,
+                message: "Сделал предложение: Сумма - " + offerData.price.toFixed() + " рублей",
+                image: "",
+            });
+            
+            // Обновляем список работ для получения нового статуса
+            await refreshWorks();
+        }
     };
 
-    const handleStatusClick = (work: WorkInfo) => {
+    const handleOfferCancelClick    = async (work: WorkInfo) => {
+        // Формируем данные предложения для удаления
+        // Транспорт берется из work.transport, который был выбран в OfferCard
+        const offerData: OfferInfo = {
+            guid:       work.cargo,
+            recipient:  work.recipient,
+            price:      work.price,
+            weight:     work.weight,
+            volume:     work.volume,
+            transport:  work.transport || transportGetters.getData()?.guid || '',
+            comment:    '',
+            status:     11 // WorkStatus.OFFERED
+        };
+
+        // Удаляем предложение
+        const res = await delOffer(offerData);
+
+        if (res) {
+            // Отправляем сообщение в чат
+            emit("send_message", {
+                token: token,
+                recipient: offerData.recipient,
+                cargo: offerData.guid,
+                message: "Отозвал предложение",
+                image: "",
+            });
+            
+            // Обновляем список работ для получения нового статуса
+            await refreshWorks();
+        }
+    };
+    
+    const handleStatusClick         = (work: WorkInfo) => {
         const load = async () => {
             await get_contract(work);
             navigateTo({ type: "page1", work });
@@ -63,47 +133,11 @@ export const Works: React.FC = () => {
         }
     };
 
-    const handleMapClick    = (work: WorkInfo) => {
+    const handleMapClick            = (work: WorkInfo) => {
         navigateTo({ type: 'map', work });
     };
 
-    const handleAgreementSign = async (signature: string, offer: OfferInfo) => {
-        // Сначала подписываем договор
-        if (currentPage.type === 'offer') {
-            await set_contract(currentPage.work, signature);
-        }
-        
-        // Затем отправляем предложение
-        const res = await setOffer(offer);
-
-        if (res) {
-            emit("send_message", {
-                token: token,
-                recipient: offer.recipient,
-                cargo: offer.guid,
-                message: "Сделал предложение: Сумма - " + offer.price.toFixed() + " рублей",
-                image: "",
-            });
-        }
-
-        return res;
-    };
-
-    const handleOfferSubmit = async (offer: OfferInfo) => {
-        const res = await setOffer(offer);
-
-        emit("send_message", {
-            token: token,
-            recipient: offer.recipient,
-            cargo: offer.guid,
-            message: "Сделал предложение: Сумма - " + offer.price.toFixed() + " рублей",
-            image: "",
-        });
-
-        return res;
-    };
-
-    const handleSavePage1   = async (data: SaveData) => {
+    const handleSavePage1           = async (data: SaveData) => {
         if (currentPage.type === "page1") {
             set_contract(currentPage.work, data.sign);
             setStatus(currentPage.work);
@@ -128,7 +162,7 @@ export const Works: React.FC = () => {
         return true;
     };
 
-    const renderPage        = () => {
+    const renderPage                = () => {
         switch (currentPage.type) {
             case 'list':
                 return (
@@ -143,25 +177,13 @@ export const Works: React.FC = () => {
             case 'view':
                 return (
                     <WorkView
-                        work            = { currentPage.work }
-                        onBack          = { goBack }
-                        onOfferClick    = { handleOfferClick }
-                        onStatusClick   = { handleStatusClick }
-                        onMapClick      = { handleMapClick }
-                        onCounterOffer  = { handleOfferSubmit }
+                        work                    = { currentPage.work }
+                        onBack                  = { goBack }
+                        onOfferClick            = { handleOfferClick }
+                        onOfferCancelClick      = { handleOfferCancelClick }
+                        onStatusClick           = { handleStatusClick }
+                        onMapClick              = { handleMapClick }
                     />
-                );
-
-            case 'offer':
-                return (
-                    contract ? (
-                        <Agreement
-                            work         = { currentPage.work }
-                            contractData = { contract }
-                            onBack       = { goBack }
-                            onSign       = { handleAgreementSign }
-                        />
-                    ) : ( <></> )
                 );
 
             case 'map':

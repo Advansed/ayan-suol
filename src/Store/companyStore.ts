@@ -136,9 +136,7 @@ export const companyGetters = {
     const totalFields = requiredFields.length
     let filledCount = 0
     // Обязательные поля
-    console.log('requiredFields', requiredFields)
     requiredFields.forEach(field => {
-      console.log(field, data[field])
       if (data[field]) filledCount++
     })
     

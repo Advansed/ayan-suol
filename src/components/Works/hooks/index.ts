@@ -19,7 +19,7 @@ export type {
 
 import { useOfferForm } from './useOfferForm';
 import { workDataUtils, workStatusUtils } from '../utils';
-import { useWorks } from '../../../Store/useWorks';
+import { useWorks } from '../useWorks';
 
 /**
  * Комбинированный хук для страницы списка работ
