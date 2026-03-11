@@ -122,7 +122,8 @@ export type WorkPageType =
     | { type: 'archive' }
     | { type: 'map'; work: WorkInfo }
     | { type: 'page1'; work: WorkInfo }
-    | { type: 'page2'; work: WorkInfo };
+    | { type: 'page2'; work: WorkInfo }
+    | { type: 'agreement'; work: WorkInfo; contract?: any };
 
 // Состояние формы предложения
 export interface OfferFormState {

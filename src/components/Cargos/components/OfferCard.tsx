@@ -60,22 +60,22 @@ export const OfferCard: React.FC<OfferCardProps> = ({
                 <div className={styles.buttonsRow}>
                     {onReject && (
                         <IonButton
-                            className={styles.rejectButton}
-                            color="warning"
-                            expand="block"
-                            onClick={() => onReject(info)}
-                            disabled={isLoading}
+                            className   = {styles.rejectButton}
+                            color       = "warning"
+                            expand      = "block"
+                            onClick     = {() => onReject( info )}
+                            disabled    = {isLoading}
                         >
                             <span><b>Отказать</b></span>
                         </IonButton>
                     )}
                     {onAccept && (
                         <IonButton
-                            className={styles.acceptButton}
-                            color="success"
-                            expand="block"
-                            onClick={() => onAccept(info)}
-                            disabled={isLoading}
+                            className   = {styles.acceptButton}
+                            color       = "success"
+                            expand      = "block"
+                            onClick     = { () => onAccept( info ) }
+                            disabled    = { isLoading }
                         >
                             <span><b>Принять</b></span>
                         </IonButton>

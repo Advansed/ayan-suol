@@ -7,10 +7,11 @@ import { useWorkStore, workActions, workGetters }
                           from './workStore'
 import { WorkInfo, WorkFilters, OfferInfo, WorkStatus } 
                           from './types'
+import type { ContractData } from './components/Offer/Agreement'
 
 export const useWorks = () => {
     const token             = useToken()
-    const { socket }        = useSocket()
+    const { socket, emit, once } = useSocket()
     const toast             = useToast()
 
     // ============================================
@@ -285,6 +286,38 @@ export const useWorks = () => {
     }, [token]);
 
 
+    const get_contract_data = useCallback(async (work: WorkInfo): Promise<ContractData | undefined> => {
+        if (!socket) {
+            toast.error('Нет соединения с сервером');
+            return undefined;
+        }
+
+        workActions.setLoading(true);
+
+        return new Promise((resolve) => {
+            once('get_contract', (data: { success: boolean; message?: string; data: ContractData }) => {
+                if (data.success) {
+                    resolve(data.data);
+                } else {
+                    toast.error(data.message || 'Ошибка при получении договора');
+                    resolve(undefined);
+                }
+                workActions.setLoading(false);
+            });
+
+            emit('get_contract', {
+                token: token,
+                id: work.guid,
+            });
+
+            setTimeout(() => {
+                workActions.setLoading(false);
+                resolve(undefined);
+            }, 10000);
+        });
+    }, [token, socket, emit, once]);
+
+
     const set_contract      = useCallback(async (info: WorkInfo, sign: string ) => {
         
         if (!socket) {
@@ -410,6 +443,7 @@ function statusText( work: WorkInfo ) {
       setSearchQuery,
       create_contract,
       get_contract,
+      get_contract_data,
       setContract,
       set_contract,
 

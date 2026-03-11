@@ -8,3 +8,4 @@ export { WorkView }             from './WorkView';
 export { WorkOffer }            from './WorkOffer';
 export { WorkArchive }          from './WorkArchive';
 export { CounterOfferCard }     from './Offer/OfferCard';
+export { ContractCard }         from './Offer/ContractCard';

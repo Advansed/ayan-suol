@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IonButton, IonLabel, useIonRouter } from '@ionic/react';
+import { useIonRouter } from '@ionic/react';
 import { WorkInfo, WorkStatus } from '../types';
 import { useWorkStore } from '../workStore';
 import { passportGetters } from '../../../Store/passportStore';
@@ -8,15 +8,16 @@ import { transportGetters } from '../../../Store/transportStore';
 import { useToast } from '../../Toast';
 import { WizardHeader } from '../../Header/WizardHeader';
 import { WorkCard } from './WorkCard';
-import { CounterOfferCard } from '.';
+import { CounterOfferCard, ContractCard } from '.';
 
 interface WorkViewProps {
-    work:           WorkInfo;
-    onBack:         () => void;
-    onOfferClick:   (work: WorkInfo ) => void;
-    onOfferCancelClick:   (work: WorkInfo ) => void;
-    onStatusClick:  (work: WorkInfo ) => void;
-    onMapClick:     (work: WorkInfo ) => void;
+    work:               WorkInfo;
+    onBack:              () => void;
+    onOfferClick:        (work: WorkInfo) => void;
+    onOfferCancelClick:  (work: WorkInfo) => void;
+    onStatusClick:       (work: WorkInfo) => void;
+    onMapClick:          (work: WorkInfo) => void;
+    onSignContract?:     (work: WorkInfo) => void;
 }
 
 export const WorkView: React.FC<WorkViewProps> = ({ 
@@ -24,7 +25,8 @@ export const WorkView: React.FC<WorkViewProps> = ({
     onBack, 
     onOfferClick,
     onOfferCancelClick,
-    onStatusClick
+    onStatusClick,
+    onSignContract
 }) => {
     const [workInfo, setWorkInfo] = useState(work);
     const works = useWorkStore(state => state.works);
@@ -64,11 +66,6 @@ export const WorkView: React.FC<WorkViewProps> = ({
         }
     }, [works, workInfo.guid]);
 
-    const handleChat            = (work: WorkInfo, e: React.MouseEvent) => {
-        e.stopPropagation();
-        hist.push(`/tab2/${work.recipient}:${work.cargo}:${work.client}`);
-    };
-
     const handleStatusClick     = (work: WorkInfo) => {
         onStatusClick(work);
     };
@@ -99,7 +96,6 @@ export const WorkView: React.FC<WorkViewProps> = ({
         console.log("offerData", data, volume);
     };
 
-
     if (!workInfo) {
         return null;
     }
@@ -129,6 +125,14 @@ export const WorkView: React.FC<WorkViewProps> = ({
                         onSubmit    = { handleCancelOffer }
                     />
                 )}
+
+                {workInfo.status === WorkStatus.TO_LOAD && onSignContract && (
+                    <ContractCard
+                        work            = {workInfo}
+                        onSignContract  = {() => onSignContract(workInfo)}
+                    />
+                )}
+                
             </div>
         </>
     );

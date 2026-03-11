@@ -6,17 +6,19 @@ import { CargosList }                                   from './components/Cargo
 import { CargoView }                                    from './components/CargoView';
 import { CargoInvoice }                                 from './components/CargoInvoices';
 import { InsurancePage }                                from './components/InsurancePage';
-import { cargoGetters, CargoInfo, EMPTY_CARGO }         from '../../Store/cargoStore';
+import { cargoGetters, CargoInfo, EMPTY_CARGO, DriverInfo } from '../../Store/cargoStore';
 import { CargoNew }                                               from './components';
 import { IonLoading }                                   from '@ionic/react';
 import { useCargoNavigation }                           from './hooks/useNavigation';
 import { PrepaymentPage }                               from './components/PrePayment';
+import { Agreement }                                    from '../Offers/Agreement';
+import { useInvoices }                                  from './hooks/useInvoices';
 
 export const Cargos: React.FC = () => {
     
     const { cargos, isLoading, createCargo, updateCargo, deleteCargo, publishCargo, refreshCargos } = useCargos()
     const { currentPage, navigateTo, handleCreateNew, handleCargoClick } = useCargoNavigation()
-    
+    const { create_contract, handleAccept } = useInvoices({ info: currentPage.cargo })
 
     useEffect(()                    => {
         if (currentPage.cargo?.guid) {
@@ -31,12 +33,21 @@ export const Cargos: React.FC = () => {
     const handleBack                = useCallback(() => {
         if (currentPage.type === 'view' || currentPage.type === 'create') {
             navigateTo({ type: 'list' });
+        } else if (currentPage.type === 'agreement' && currentPage.cargo?.guid) {
+            const cargo = cargoGetters.getCargo(currentPage.cargo.guid);
+            navigateTo({ type: 'invoices', cargo });
         } else if (currentPage.cargo?.guid) {
             const cargo = cargoGetters.getCargo(currentPage.cargo.guid);
             navigateTo({ type: 'view', cargo: cargo });
             console.log("back", 'view', cargo )
         }
     }, [currentPage.type, currentPage.cargo?.guid, navigateTo]);
+
+    const handleAgreementSign       = useCallback(async (invoice: DriverInfo, signature: string) => {
+        await create_contract(invoice, signature);
+        await handleAccept(invoice, 12);
+        navigateTo({ type: 'view', cargo: currentPage.cargo });
+    }, [create_contract, handleAccept, handleBack]);
 
 
     // Функция рендеринга контента
@@ -72,8 +83,25 @@ export const Cargos: React.FC = () => {
                 case 'invoices':
                     return (
                         <CargoInvoice
-                            cargo       = { currentPage.cargo! }
-                            onBack      = { handleBack }
+                            cargo           = { currentPage.cargo! }
+                            onBack          = { handleBack }
+                            onOpenAgreement = { (invoice, contract) =>
+                                navigateTo({ type: 'agreement', cargo: currentPage.cargo!, invoice, contract })
+                            }
+                            onSign          = { handleAgreementSign }
+                        />
+                    );
+
+                case 'agreement':
+                    if (!currentPage.invoice) return null;
+                    return (
+                        <Agreement
+                            data     = { currentPage.contract }
+                            onMenu   = { handleBack }
+                            onCancel = { handleBack }
+                            onSign   = { (signature: string) =>
+                                handleAgreementSign(currentPage.invoice!, signature)
+                            }
                         />
                     );
 

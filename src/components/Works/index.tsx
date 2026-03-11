@@ -2,10 +2,11 @@
  * Главный компонент модуля Works
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { WorkInfo, OfferInfo, WorkStatus } from './types';
 import { WorksList, WorkView } from './components';
 import { WorkMap } from './components/WorkMap';
+import { Agreement } from './components/Offer/Agreement';
 import { useWorks } from './useWorks';
 import { useWorkNavigation } from './hooks/useNavigation';
 import { workActions } from './workStore';
@@ -17,7 +18,8 @@ import { IonLoading } from '@ionic/react';
 import './styles.css';
 
 export const Works: React.FC = () => {
-    const { contract, works, isLoading, setOffer, delOffer, setStatus, refreshWorks, create_contract, get_contract, setContract, set_contract } = useWorks();
+    const { contract, works, isLoading, setOffer, delOffer, setStatus, refreshWorks
+        , get_contract, get_contract_data, setContract, set_contract } = useWorks();
     const { emit } = useSocket();
     const token = useToken();
 
@@ -137,6 +139,21 @@ export const Works: React.FC = () => {
         navigateTo({ type: 'map', work });
     };
 
+    const handleSignContract        = useCallback(async (work: WorkInfo) => {
+        const contractData = await get_contract_data(work);
+        console.log('get_contract', contractData)
+        if (contractData) {
+            navigateTo({ type: 'agreement', work, contract: contractData });
+        }
+    }, [get_contract_data, navigateTo]);
+
+    const handleAgreementSign       = useCallback(async (signature: string, _offer: OfferInfo) => {
+        if (currentPage.type !== 'agreement') return false;
+        await set_contract(currentPage.work, signature);
+        goBack();
+        return true;
+    }, [currentPage, set_contract, goBack]);
+
     const handleSavePage1           = async (data: SaveData) => {
         if (currentPage.type === "page1") {
             set_contract(currentPage.work, data.sign);
@@ -183,6 +200,7 @@ export const Works: React.FC = () => {
                         onOfferCancelClick      = { handleOfferCancelClick }
                         onStatusClick           = { handleStatusClick }
                         onMapClick              = { handleMapClick }
+                        onSignContract          = { handleSignContract }
                     />
                 );
 
@@ -201,6 +219,17 @@ export const Works: React.FC = () => {
                         pdf={contract}
                         onBack={goBack}
                         onSave={handleSavePage1}
+                    />
+                );
+
+            case 'agreement':
+                if (currentPage.type !== 'agreement') return null;
+                return (
+                    <Agreement
+                        work            = { currentPage.work }
+                        contractData    = { currentPage.contract }
+                        onBack          = { goBack }
+                        onSign          = { handleAgreementSign }
                     />
                 );
 

@@ -1,18 +1,12 @@
-// src/Store/useCargoNavigation.ts
+// src/components/Cargos/hooks/useNavigation.ts
 import { useCallback } from 'react'
-import { useCargoStore, CargoInfo } from '../../../Store/cargoStore'
+import { useNavigateStore } from '../../../Store/navigateStore'
+import type { CargoInfo } from '../../../Store/cargoStore'
 
 export const useCargoNavigation = () => {
-    const currentPage   = useCargoStore(state => state.currentPage)
-    const navigateTo    = useCargoStore(state => state.navigateTo)
-    
-    const goBack        = useCallback(() => {
-
-        if (currentPage.type === 'view') { navigateTo({ type: 'list' })} 
-        else if (currentPage.type === 'create') { navigateTo({ type: 'list' })} 
-        else { navigateTo({ type: 'view', cargo: currentPage.cargo }) }
-
-    }, [currentPage, navigateTo])
+    const currentPage   = useNavigateStore(state => state.currentPage)
+    const navigateTo    = useNavigateStore(state => state.navigateTo)
+    const goBack        = useNavigateStore(state => state.goBack)
 
     const handleCreateNew = useCallback(() => {
 

@@ -67,6 +67,10 @@ export const Agreement: React.FC<AgreementProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
+  if (!work) {
+    return null;
+  }
+
   const company = companyGetters.getData();
   const transport = transportGetters.getData();
   const passport = passportGetters.getData();
@@ -86,12 +90,15 @@ export const Agreement: React.FC<AgreementProps> = ({
     const year = now.getFullYear().toString();
     const contractDate = `${day} ${month} ${year}`;
 
-    const cargoQuantity = `${work.weight.toFixed(3)} т, ${work.volume.toFixed(3)} м³`;
+    const cargoQuantity = `${(work.weight ?? 0).toFixed(3)} т, ${(work.volume ?? 0).toFixed(3)} м³`;
+
+    const cityFrom = typeof work.address?.city === 'object' ? work.address?.city?.city : work.address?.city;
+    const cityTo = typeof work.destiny?.city === 'object' ? work.destiny?.city?.city : work.destiny?.city;
 
     return {
       document_info: {
-        order_number: work.guid.slice(0, 8) || work.cargo.slice(0, 8),
-        city: work.address.city || '',
+        order_number: work.guid?.slice(0, 8) || work.cargo?.slice(0, 8) || '',
+        city: cityFrom || '',
         day,
         month,
         year
@@ -103,11 +110,11 @@ export const Agreement: React.FC<AgreementProps> = ({
       },
       carrier: {
         name: company?.name || 'Перевозчик',
-        representative: passport ? `${passport.surname || ''} ${passport.name || ''} ${passport.patronymic || ''}`.trim() || 'Представитель перевозчика' : 'Представитель перевозчика',
+        representative: passport ? `${(passport as any)?.surname || ''} ${(passport as any)?.name || ''} ${(passport as any)?.patronymic || ''}`.trim() || 'Представитель перевозчика' : 'Представитель перевозчика',
         basis: company?.ogrn ? 'ОГРН' : 'Устав'
       },
       payment: {
-        amount: work.price.toString()
+        amount: (work.price ?? 0).toString()
       },
       contract_date: contractDate,
       specification: {
@@ -124,7 +131,7 @@ export const Agreement: React.FC<AgreementProps> = ({
           company_name: company?.name || '',
           inn: company?.inn || '',
           ogrn: company?.ogrn || '',
-          representative: passport ? `${passport.surname || ''} ${passport.name || ''} ${passport.patronymic || ''}`.trim() : '',
+          representative: passport ? `${(passport as any)?.surname || ''} ${(passport as any)?.name || ''} ${(passport as any)?.patronymic || ''}`.trim() : '',
           basis: company?.ogrn ? 'ОГРН' : 'Устав'
         }),
         recipient_details: JSON.stringify({
@@ -213,8 +220,8 @@ export const Agreement: React.FC<AgreementProps> = ({
     const quantity = data.specification?.cargo_quantity || '';
     // Пример: "40.000 т, 0.000 м³"
     const parts = quantity.split(', ');
-    const weightPart = parts[0] || `${work.weight.toFixed(3)} т`;
-    const volumePart = parts[1] || `${work.volume.toFixed(3)} м³`;
+    const weightPart = parts[0] || `${(work.weight ?? 0).toFixed(3)} т`;
+    const volumePart = parts[1] || `${(work.volume ?? 0).toFixed(3)} м³`;
     
     return {
       weight: weightPart,
@@ -226,7 +233,7 @@ export const Agreement: React.FC<AgreementProps> = ({
 
   // Расчет платежей (примерно 30% предоплата)
   const calculatePayments = () => {
-    const total = parseFloat(data.payment?.amount || work.price.toString());
+    const total = parseFloat(data.payment?.amount || (work.price ?? 0).toString());
     const prepaymentPercent = 30;
     const prepayment = total * (prepaymentPercent / 100);
     const remaining = total - prepayment;
@@ -260,9 +267,9 @@ export const Agreement: React.FC<AgreementProps> = ({
       const offerData: OfferInfo = {
         guid: work.cargo,
         recipient: work.recipient,
-        price: work.price,
-        weight: work.weight,
-        volume: work.volume,
+        price: work.price ?? 0,
+        weight: work.weight ?? 0,
+        volume: work.volume ?? 0,
         transport: transport?.guid || '',
         comment: '',
         status: nextStatus(work.status)
@@ -452,7 +459,7 @@ export const Agreement: React.FC<AgreementProps> = ({
           <div className={styles.infoBox}>
             <div className={styles.infoLabel}>Маршрут</div>
             <div className={styles.infoValue}>
-              {work.address.city || ''} → {work.destiny.city || ''}
+              {(typeof work.address?.city === 'object' ? work.address?.city?.city : work.address?.city) || ''} → {(typeof work.destiny?.city === 'object' ? work.destiny?.city?.city : work.destiny?.city) || ''}
             </div>
           </div>
           <div className={styles.infoBox}>
@@ -474,7 +481,7 @@ export const Agreement: React.FC<AgreementProps> = ({
           <div className={styles.totalCostBox}>
             <div className={styles.totalCostLabel}>Общая стоимость услуг</div>
             <div className={styles.totalCostValue}>
-              {formatPrice(data.payment?.amount || work.price)}
+              {formatPrice(data.payment?.amount || (work.price ?? 0))}
             </div>
           </div>
           <div className={styles.paymentGrid}>

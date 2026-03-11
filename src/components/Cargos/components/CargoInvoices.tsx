@@ -14,8 +14,10 @@ import { api }                          from '../../../Store/api';
 import { CargoPage4, SaveData4 }        from './CargoPage4';
 
 interface CargoInvoiceProps {
-    cargo:      CargoInfo;
-    onBack:     ()=>void;
+    cargo:           CargoInfo;
+    onBack:          () => void;
+    onOpenAgreement?: (invoice: DriverInfo, contract: any) => void;
+    onSign?:         (invoice: DriverInfo, signature: string) => void | Promise<void>;
 }
 
 interface Route1 {
@@ -23,8 +25,9 @@ interface Route1 {
     info:   DriverInfo | undefined;
 }
 
-export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack }) => {
-    const { invoices, isLoading, contract, handleAccept,  handleReject, handleChat, get_contract, setContract, create_contract } = useInvoices({ info: cargo })
+export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpenAgreement, onSign }) => {
+    const { invoices, isLoading, contract, handleAccept,  handleReject, handleChat
+        , get_contract, setContract, create_contract } = useInvoices({ info: cargo })
     const [ page, setPage ] = useState<Route1>({ type: 'main', info: undefined })
     const { emit } = useSocket()
     const token = useToken()
@@ -107,14 +110,24 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack }) => 
 
     }
 
-    const handleClick            = async( invoice:DriverInfo ) => {
-
-        await get_contract( invoice )
-        setPage({ type: "page4", info: invoice })
-    }
+    const handleClick = async (invoice: DriverInfo) => {
+        const contractData = await get_contract(invoice);
+        if (onOpenAgreement && contractData) {
+            onOpenAgreement(invoice, contractData);
+        } else {
+            setPage({ type: "page4", info: invoice });
+        }
+    };
 
     const handleClose           = async () => {
         setContract( undefined )
+    }
+
+    const handleRejectAndGoBack = async (invoice: DriverInfo) => {
+        const success = await handleReject(invoice);
+        if (success) {
+            onBack();
+        }
     }
 
     // Рендер секции инвойсов
@@ -136,7 +149,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack }) => 
                     >
                         <DriverCard
                             info                = { invoice }
-                            onReject            = { handleReject }
+                            onReject            = { handleRejectAndGoBack }
                             onAccept            = { handleClick }
                             onChat              = { handleChat  }
                         />

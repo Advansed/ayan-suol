@@ -2,7 +2,7 @@ import { useCallback, useState }    from 'react';
 import { useHistory }               from 'react-router';
 import { useSocket }                from '../../../Store/useSocket';
 import { useToken }                 from '../../../Store/loginStore';
-import { DriverInfo }               from '../../../Store/cargoStore';
+import { DriverInfo, cargoActions } from '../../../Store/cargoStore';
 import { useToast } from '../../Toast';
 
 export interface TaskCompletion {
@@ -53,27 +53,27 @@ export const useInvoices = ({ info }) => {
     }, [once, emit, token]);
 
 
-    const get_contract = useCallback(async (info: DriverInfo ) => {
+    const get_contract = useCallback(async (info: DriverInfo ): Promise<any> => {
         
         setIsLoading(true);
-                
-        once('get_contract', (data: { success: boolean; message?: string; data:any }) => {
-            console.log("get_contract", data)
-            if (data.success) {
-                
-               setContract( data.data ) 
+        
+        return new Promise((resolve) => {
+            once('get_contract', (data: { success: boolean; message?: string; data: any }) => {
+                console.log("get_contract", data);
+                if (data.success) {
+                    setContract(data.data);
+                    resolve(data.data);
+                } else {
+                    console.error("Ошибка при получении договора:", data.message);
+                    resolve(undefined);
+                }
+                setIsLoading(false);
+            });
 
-            } else {
-
-                console.error("Ошибка при принятии заявки:", data.message);
-
-            }
-            setIsLoading(false);
-        });
-
-        emit('get_contract', {
-            token:      token,
-            id:         info.guid,
+            emit('get_contract', {
+                token: token,
+                id: info.guid,
+            });
         });
         
     }, [once, emit, token]);
@@ -97,6 +97,7 @@ export const useInvoices = ({ info }) => {
             setIsLoading(false);
         });
 
+        console.log('create_contract', sign)
         emit('create_contract', {
             token:          token,
             id:             info.guid,
@@ -111,7 +112,7 @@ export const useInvoices = ({ info }) => {
     const handleReject = useCallback(async (info: DriverInfo) => {
         if (!socket) {
             toast.error('Нет соединения с сервером');
-            return;
+            return false;
         }
 
         setIsLoading(true);
@@ -120,25 +121,21 @@ export const useInvoices = ({ info }) => {
             try {
                 // Формируем данные предложения для удаления (аналогично delOffer из useWorks)
                 const offerData = {
-                    guid:       info.cargo,        // ID груза
-                    recipient:  info.recipient,   // ID водителя
-                    price:      info.price,
-                    weight:     info.weight,
-                    volume:     info.volume,
-                    transport:  info.transport || '',
-                    comment:    '',
+                    guid:       info.guid,        // ID предложения
                     status:     11 // WorkStatus.OFFERED
                 };
 
-                // Обработчик однократного ответа от сервера
+                // Обработчик однократного ответа от сервера (cancel_offer — для Cargos; del_offer — для Works)
                 const handleOfferResponse = (response: { success: boolean; error?: string }) => {
                     if (response.success) {
                         toast.success('Предложение успешно удалено');
                         
-                        // Удаляем предложение из списка
-                        setInvoices(prevInvoices => 
-                            prevInvoices.filter(invoice => invoice.guid !== info.guid)
-                        );
+                        // Удаляем предложение из списка и обновляем стор
+                        setInvoices(prevInvoices => {
+                            const next = prevInvoices.filter(invoice => invoice.guid !== info.guid);
+                            cargoActions.updateCargo(info.cargo, { invoices: next });
+                            return next;
+                        });
                         
                         resolve(true);
                     } else {
@@ -148,11 +145,11 @@ export const useInvoices = ({ info }) => {
                     setIsLoading(false);
                 };
 
-                // Подписываемся на ответ от сервера
+                // Подписываемся на ответ от сервера (cancel_offer обновляет данные cargos)
                 socket.once('del_offer', handleOfferResponse);
                 
                 // Отправляем запрос на сервер
-                socket.emit('del_offer', { token, ...offerData });
+                socket.emit('cancel_offer', { token, ...offerData });
 
                 // Таймаут на случай, если ответ не придет
                 setTimeout(() => {

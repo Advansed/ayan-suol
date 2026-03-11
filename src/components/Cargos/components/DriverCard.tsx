@@ -6,11 +6,17 @@ import { OfferCard } from './OfferCard';
 import styles from './DriverCard.module.css';
 
 interface DriverInfoProps {
+
     info: DriverInfo;
-    onAccept?: (info: DriverInfo) => void;
-    onReject?: (info: DriverInfo) => void;
-    onChat?: (info: DriverInfo) => void;
+
+    onAccept?:  (info: DriverInfo) => void;
+
+    onReject?:  (info: DriverInfo) => void;
+
+    onChat?:    (info: DriverInfo) => void;
+
     isLoading?: boolean;
+    
 }
 
 const contractSigned = (
@@ -87,7 +93,7 @@ export const DriverCard: React.FC<DriverInfoProps> = ({
 }) => {
     return (
         <div>
-            <div className="borders">
+            <div className = "borders">
                 {/* Основная информация о водителе */}
                 <div className="flex fl-space mt-1">
                     <div className="flex">
@@ -119,10 +125,10 @@ export const DriverCard: React.FC<DriverInfoProps> = ({
             {
                   info.status === "Заказано"
                     ? <OfferCard 
-                        info={info}
-                        onAccept={onAccept}
-                        onReject={onReject}
-                        isLoading={isLoading}
+                        info        = { info }
+                        onAccept    = { onAccept }
+                        onReject    = { onReject }
+                        isLoading   = { isLoading }
                       />
                 : info.status === "Принято" 
                     ? contractSigned(info, onChat, isLoading)

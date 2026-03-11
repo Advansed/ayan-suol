@@ -83,9 +83,11 @@ export enum       CargoPriority {
 }
 
 export interface  PageType {
-    type:       'list' | 'create' | 'edit' | 'view' | 'invoices' | 'prepayment' | 'insurance' | 'page1' | 'payment'
+    type:       'list' | 'create' | 'edit' | 'view' | 'invoices' | 'prepayment' | 'insurance' | 'page1' | 'payment' | 'agreement'
     cargo?:     any
     subPage?:   string
+    invoice?:   DriverInfo
+    contract?:  any
 }
 
 export interface  CargoFilters {
@@ -142,21 +144,16 @@ export interface CargoState {
     cargos:             CargoInfo[]
     archives:           CargoInfo[]
     isLoading:          boolean
-    currentPage:        PageType
     filters:            CargoFilters
     searchQuery:        string
-    navigationHistory:  PageType[]
 }
 
 interface CargoActions {
     setCargos:            ( cargos: CargoInfo[] ) => void
     setCargoArchives:     ( archives: CargoInfo[] ) => void
     setLoading:           ( loading: boolean ) => void
-    setCurrentPage:       ( page: PageType ) => void
     setFilters:           ( filters: CargoFilters ) => void
     setSearchQuery:       ( query: string ) => void
-    navigateTo:           ( page: PageType ) => void
-    goBack:               ( ) => void
     updateCargo:          ( guid: string, data: Partial<CargoInfo >) => void
     publishCargo:         ( guid: string ) => void
     addCargo:             ( cargo: CargoInfo ) => void
@@ -172,28 +169,15 @@ export const useCargoStore = create<CargoStore>()(
       cargos:             [],
       archives:           [],
       isLoading:          false,
-      currentPage:        { type: 'list' },
       filters:            {},
       searchQuery:        '',
-      navigationHistory:  [{ type: 'list' }],
 
       // ACTIONS
       setCargos:          (cargos)        => set({ cargos }),
       setCargoArchives:   (archives)      => set({ archives }),
       setLoading:         (isLoading)     => set({ isLoading }),
-      setCurrentPage:     (currentPage)   => set({ currentPage }),
       setFilters:         (filters)       => set({ filters }),
       setSearchQuery:     (searchQuery)   => set({ searchQuery }),
-
-      navigateTo: (page) => {
-        const { navigationHistory } = get()
-        set({ 
-          currentPage: page,
-          navigationHistory: [...navigationHistory, page]
-        })
-      },
-
-      goBack: () => set({ currentPage: { type: 'list' } }),
 
       updateCargo: (guid, data) => {
         const { cargos } = get()
