@@ -2,20 +2,19 @@
  * Форма регистрации + все шаги в одном файле
  */
 
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, memo, lazy, Suspense } from 'react'
 import { IonCard } from '@ionic/react'
 import { 
   MaskedInput, 
   TextInput, 
   PasswordInput, 
-  ProgressBar, 
   FormButtons, 
   NavigationLinks 
 } from '../SharedComponents'
-import styles from './Registration.module.css'
-import EULA from './eula'
 import { useReg, UseRegReturn } from './hooks/useReg'
 import { useEULA, UseEULAReturn } from './hooks/useEULA'
+
+const EULA = lazy(() => import('./eula'))
 
 interface RegistrationFormProps {
   onSwitchToLogin?: () => void
@@ -35,7 +34,7 @@ const formatPhoneDisplay = (phone: string): string => {
 const RoleSelector: React.FC<{ 
   reg: UseRegReturn, 
   eula: UseEULAReturn 
-}> = ({ reg, eula }) => {
+}> = memo(({ reg, eula }) => {
   
   const handleNext = () => {
     // Проверяем соглашение перед переходом
@@ -120,13 +119,13 @@ const RoleSelector: React.FC<{
       />
     </div>
   )
-}
+})
 
 // ======================
 // ШАГ 1: ЛИЧНЫЕ ДАННЫЕ
 // ======================
 
-const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
+const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
   
   const handleNext = useCallback(() => {
     reg.submitStep()
@@ -203,33 +202,26 @@ const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
       
     </div>
   )
-}
+})
 
 // ======================
 // ШАГ 2: ПОДТВЕРЖДЕНИЕ SMS
 // ======================
 
-const StepVerification: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
+const StepVerification: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
   const [pin, setPin] = React.useState(['', '', '', ''])
 
-  React.useEffect(() => {
-    const pinString = pin.join('')
-    reg.updateFormData('pincode', pinString)
-  }, [pin]) // Убрать reg из зависимостей
-
-  const handlePinChange = (value: string, index: number) => {
+  const handlePinChange = useCallback((value: string, index: number) => {
     const newPin = [...pin]
-    newPin[index] = value.slice(-1) // Только последний символ
+    newPin[index] = value.slice(-1)
     setPin(newPin)
+    reg.updateFormData('pincode', newPin.join(''))
     
-    // Автофокус на следующее поле
     if (value && index < 3) {
       const nextInput = document.querySelector(`input[data-pin-index="${index + 1}"]`) as HTMLInputElement
-      if (nextInput) {
-        nextInput.focus()
-      }
+      nextInput?.focus()
     }
-  }
+  }, [reg, pin])
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
     if (e.key === 'Backspace' && !pin[index] && index > 0) {
@@ -284,17 +276,17 @@ const StepVerification: React.FC<{ reg: UseRegReturn }> = ({ reg }) => {
       />
     </div>
   )
-}
+})
 
 // ======================
 // ШАГ 3: УСТАНОВКА ПАРОЛЯ
 // ======================
 
-const StepSetPassword: React.FC<{ reg: UseRegReturn, toLogin: any }> = ({ reg, toLogin }) => {
+const StepSetPassword: React.FC<{ reg: UseRegReturn, toLogin: (() => void) | undefined }> = memo(({ reg, toLogin }) => {
   const handleSave = useCallback(() => {
     reg.submitStep()
-    toLogin()
-  }, [reg])
+    toLogin?.()
+  }, [reg, toLogin])
 
   const handlePasswordBlur = useCallback(() => {
     if (reg.formData.password) {
@@ -362,7 +354,7 @@ const StepSetPassword: React.FC<{ reg: UseRegReturn, toLogin: any }> = ({ reg, t
       />
     </div>
   )
-}
+})
 
 // ======================
 // ГЛАВНЫЙ КОМПОНЕНТ РЕГИСТРАЦИИ
@@ -370,55 +362,44 @@ const StepSetPassword: React.FC<{ reg: UseRegReturn, toLogin: any }> = ({ reg, t
 
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin, onSwitchToRecovery }) => {
   const reg = useReg()
-  const eula = useEULA(false) // Изначально не принято
-
-  
-  const steps = [
-    <RoleSelector     reg={reg} eula={ eula } />,        // Шаг 0: Выбор роли
-    <StepPersonalInfo reg={reg} />,    // Шаг 1: Личные данные  
-    <StepVerification reg={reg} />,    // Шаг 2: Верификация
-    <StepSetPassword  reg={reg} toLogin = { onSwitchToLogin }/>      // Шаг 3: Пароль
-  ]
+  const eula = useEULA(false)
 
   const navigationLinks = [
-    ...(onSwitchToLogin ? [{
-      text: 'Есть аккаунт? Авторизироваться',
-      onClick: onSwitchToLogin
-    }] : []),
-    ...(onSwitchToRecovery ? [{
-      text: 'Забыли пароль? Восстановить',
-      onClick: onSwitchToRecovery
-    }] : [])
+    ...(onSwitchToLogin ? [{ text: 'Есть аккаунт? Авторизироваться', onClick: onSwitchToLogin }] : []),
+    ...(onSwitchToRecovery ? [{ text: 'Забыли пароль? Восстановить', onClick: onSwitchToRecovery }] : [])
   ]
+
+  const renderStep = () => {
+    switch (reg.registrationStep) {
+      case 0: return <RoleSelector reg={reg} eula={eula} />
+      case 1: return <StepPersonalInfo reg={reg} />
+      case 2: return <StepVerification reg={reg} />
+      case 3: return <StepSetPassword reg={reg} toLogin={onSwitchToLogin} />
+      default: return null
+    }
+  }
 
   return (
     <div className="container">
       <IonCard className="login-container">
-
-        
-        {/* Текущий шаг */}
-        {steps[reg.registrationStep]}
-        
-        {/* Навигационные ссылки на последнем шаге */}
+        {renderStep()}
         {reg.registrationStep === 3 && navigationLinks.length > 0 && (
-          <>
-            <NavigationLinks links={navigationLinks} />
-          </>
-          
+          <NavigationLinks links={navigationLinks} />
         )}
-        <div className='ml-3 pb-1'
-          onClick={ onSwitchToLogin }
-        >Есть аккаунт? Авторизироваться</div>
+        {reg.registrationStep !== 3 && onSwitchToLogin && (
+          <div className="ml-3 pb-1" onClick={onSwitchToLogin} role="button" tabIndex={0}>
+            Есть аккаунт? Авторизироваться
+          </div>
+        )}
       </IonCard>
-       
-       {/* Модальное окно EULA */}
-      <EULA
-        check     = { eula.isEULAAccepted }
-        onClose   = { eula.closeEULA }
-        isOpen    = { eula.isEULAOpen }
-        setCheck  = { eula.setEULAAccepted }
-      />
-
+      <Suspense fallback={null}>
+        <EULA
+          check={eula.isEULAAccepted}
+          onClose={eula.closeEULA}
+          isOpen={eula.isEULAOpen}
+          setCheck={eula.setEULAAccepted}
+        />
+      </Suspense>
     </div>
   )
 }

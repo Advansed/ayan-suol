@@ -17,6 +17,10 @@ interface MaskedInputProps {
   error?: string
 }
 
+const PHONE_MASK_OPTIONS: MaskitoOptions = {
+  mask: ['+', '7', ' ', '(', /\d/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, '-', /\d/, /\d/]
+}
+
 export const MaskedInput: React.FC<MaskedInputProps> = ({ 
   placeholder, 
   value, 
@@ -24,11 +28,7 @@ export const MaskedInput: React.FC<MaskedInputProps> = ({
   onBlur,
   error 
 }) => {
-  const phoneMaskOptions: MaskitoOptions = {
-    mask: ['+', '7', ' ', '(', /\d/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, '-', /\d/, /\d/]
-  }
-  
-  const phoneMask = useMaskito({ options: phoneMaskOptions })
+  const phoneMask = useMaskito({ options: PHONE_MASK_OPTIONS })
 
   return (
     <div className="masked-input-container">
