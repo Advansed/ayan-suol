@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { IonButton, IonIcon, IonLoading } from '@ionic/react';
-import { 
-  warningOutline, 
-  personOutline, 
+import {
+  warningOutline,
+  personOutline,
   attachOutline,
   checkmarkCircleOutline
 } from 'ionicons/icons';
@@ -84,8 +84,8 @@ export const Agreement: React.FC<AgreementProps> = ({
     // Формируем данные из WorkInfo и данных пользователя
     const now = new Date();
     const day = now.getDate().toString();
-    const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 
-                    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
     const month = months[now.getMonth()];
     const year = now.getFullYear().toString();
     const contractDate = `${day} ${month} ${year}`;
@@ -146,7 +146,7 @@ export const Agreement: React.FC<AgreementProps> = ({
   };
 
   const data = buildContractData();
-  
+
   const formatPrice = (price: string | number): string => {
     if (!price) return '0 ₽';
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
@@ -222,7 +222,7 @@ export const Agreement: React.FC<AgreementProps> = ({
     const parts = quantity.split(', ');
     const weightPart = parts[0] || `${(work.weight ?? 0).toFixed(3)} т`;
     const volumePart = parts[1] || `${(work.volume ?? 0).toFixed(3)} м³`;
-    
+
     return {
       weight: weightPart,
       volume: volumePart
@@ -237,7 +237,7 @@ export const Agreement: React.FC<AgreementProps> = ({
     const prepaymentPercent = 30;
     const prepayment = total * (prepaymentPercent / 100);
     const remaining = total - prepayment;
-    
+
     return {
       total,
       prepayment,
@@ -276,7 +276,7 @@ export const Agreement: React.FC<AgreementProps> = ({
       };
 
       const success = await onSign(signature, offerData);
-      
+
       if (success) {
         onBack();
       } else {
@@ -291,24 +291,24 @@ export const Agreement: React.FC<AgreementProps> = ({
   };
 
   function nextStatus(status: WorkStatus): number {
-    switch(status) {
-      case WorkStatus.NEW:            return 11;
-      case WorkStatus.TO_LOAD:        return 13;
-      case WorkStatus.LOADING:        return 15;
-      case WorkStatus.IN_WORK:        return 17;
-      case WorkStatus.UNLOADING:      return 19;
-      case WorkStatus.REJECTED:       return 11;
+    switch (status) {
+      case WorkStatus.NEW: return 11;
+      case WorkStatus.TO_LOAD: return 13;
+      case WorkStatus.LOADING: return 15;
+      case WorkStatus.IN_WORK: return 17;
+      case WorkStatus.UNLOADING: return 19;
+      case WorkStatus.REJECTED: return 11;
       default: return 22;
     }
   }
 
   return (
     <div className={styles.agreementContainer}>
-      <WizardHeader 
+      <WizardHeader
         title="Оформление договора"
         onBack={onBack}
       />
-      
+
       <div className="ml-2 cl-prim fs-09 a-center">{work.name}</div>
 
       {/* Warning Section */}
@@ -317,7 +317,7 @@ export const Agreement: React.FC<AgreementProps> = ({
         <div className={styles.warningContent}>
           <div className={styles.warningTitle}>Внимание! Ознакомьтесь с полным договором</div>
           <div className={styles.warningText}>
-            Перед подписанием обязательно скачайте и внимательно прочитайте полный текст договора. 
+            Перед подписанием обязательно скачайте и внимательно прочитайте полный текст договора.
             Подписывая договор, вы принимаете все условия и обязательства.
           </div>
         </div>
@@ -509,7 +509,7 @@ export const Agreement: React.FC<AgreementProps> = ({
                 Безопасная оплата через платформу
               </div>
               <div className={styles.securePaymentText}>
-                Все платежи проходят через специальный счет приложения. 
+                Все платежи проходят через специальный счет приложения.
                 Комиссия платформы 5% обеспечивает защиту обеих сторон и гарантию выполнения сделки.
               </div>
             </div>
@@ -588,7 +588,7 @@ export const Agreement: React.FC<AgreementProps> = ({
 
       {/* Bottom Buttons */}
       <div className={styles.buttonsSection}>
-        <IonButton 
+        <IonButton
           className={styles.cancelButton}
           onClick={onBack}
           expand="block"
@@ -596,7 +596,7 @@ export const Agreement: React.FC<AgreementProps> = ({
         >
           Отменить
         </IonButton>
-        <IonButton 
+        <IonButton
           className={styles.signButton}
           onClick={handleSign}
           expand="block"
@@ -606,10 +606,6 @@ export const Agreement: React.FC<AgreementProps> = ({
         </IonButton>
       </div>
 
-      <IonLoading
-        isOpen={loading}
-        message="Подписание договора..."
-      />
     </div>
   );
 };

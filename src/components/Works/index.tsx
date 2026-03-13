@@ -27,33 +27,33 @@ export const Works: React.FC = () => {
 
     // Обновляем currentPage.work при обновлении списка works
     useEffect(() => {
-        console.log("workView",  currentPage )
+        console.log("workView", currentPage)
         if (currentPage.type === 'view') {
-            console.log("work_View",  currentPage.work )
+            console.log("work_View", currentPage.work)
             const updatedWork = works.find(w => w.cargo === currentPage.work.cargo);
-            console.log("work_View",  updatedWork )
+            console.log("work_View", updatedWork)
             if (updatedWork && updatedWork.status !== currentPage.work.status) {
                 workActions.setCurrentPage({ type: 'view', work: updatedWork });
             }
         }
     }, [works, currentPage]);
 
-    const handleWorkClick           = (work: WorkInfo) => {
+    const handleWorkClick = (work: WorkInfo) => {
         navigateTo({ type: 'view', work });
     };
 
-    const handleOfferClick          = async (work: WorkInfo) => {
+    const handleOfferClick = async (work: WorkInfo) => {
         // Формируем предложение из данных работы
         // Транспорт берется из work.transport, который был выбран в OfferCard
         const offerData: OfferInfo = {
-            guid:       work.cargo,
-            recipient:  work.recipient,
-            price:      work.price,
-            weight:     work.weight,
-            volume:     work.volume,
-            transport:  work.transport || transportGetters.getData()?.guid || '',
-            comment:    '',
-            status:     11 // WorkStatus.OFFERED
+            guid: work.cargo,
+            recipient: work.recipient,
+            price: work.price,
+            weight: work.weight,
+            volume: work.volume,
+            transport: work.transport || transportGetters.getData()?.guid || '',
+            comment: '',
+            status: 11 // WorkStatus.OFFERED
         };
 
         // Отправляем предложение
@@ -68,24 +68,24 @@ export const Works: React.FC = () => {
                 message: "Сделал предложение: Сумма - " + offerData.price.toFixed() + " рублей",
                 image: "",
             });
-            
+
             // Обновляем список работ для получения нового статуса
             await refreshWorks();
         }
     };
 
-    const handleOfferCancelClick    = async (work: WorkInfo) => {
+    const handleOfferCancelClick = async (work: WorkInfo) => {
         // Формируем данные предложения для удаления
         // Транспорт берется из work.transport, который был выбран в OfferCard
         const offerData: OfferInfo = {
-            guid:       work.cargo,
-            recipient:  work.recipient,
-            price:      work.price,
-            weight:     work.weight,
-            volume:     work.volume,
-            transport:  work.transport || transportGetters.getData()?.guid || '',
-            comment:    '',
-            status:     11 // WorkStatus.OFFERED
+            guid: work.cargo,
+            recipient: work.recipient,
+            price: work.price,
+            weight: work.weight,
+            volume: work.volume,
+            transport: work.transport || transportGetters.getData()?.guid || '',
+            comment: '',
+            status: 11 // WorkStatus.OFFERED
         };
 
         // Удаляем предложение
@@ -100,20 +100,22 @@ export const Works: React.FC = () => {
                 message: "Отозвал предложение",
                 image: "",
             });
-            
+
             // Обновляем список работ для получения нового статуса
             await refreshWorks();
         }
     };
-    
-    const handleStatusClick         = (work: WorkInfo) => {
-        const load = async () => {
-            await get_contract(work);
-            navigateTo({ type: "page1", work });
-        };
+
+    const handleStatusClick = (work: WorkInfo) => {
 
         if (work.status === WorkStatus.TO_LOAD) {
-            load();
+            setStatus(work);
+            emit("send_message", {
+                token: token,
+                recipient: work.recipient,
+                cargo: work.cargo,
+                message: "Транспорт прибыл на точку погрузки"
+            });
         } else if (work.status === WorkStatus.IN_WORK) {
             setStatus(work);
             emit("send_message", {
@@ -135,11 +137,11 @@ export const Works: React.FC = () => {
         }
     };
 
-    const handleMapClick            = (work: WorkInfo) => {
+    const handleMapClick = (work: WorkInfo) => {
         navigateTo({ type: 'map', work });
     };
 
-    const handleSignContract        = useCallback(async (work: WorkInfo) => {
+    const handleSignContract = useCallback(async (work: WorkInfo) => {
         const contractData = await get_contract_data(work);
         console.log('get_contract', contractData)
         if (contractData) {
@@ -147,14 +149,14 @@ export const Works: React.FC = () => {
         }
     }, [get_contract_data, navigateTo]);
 
-    const handleAgreementSign       = useCallback(async (signature: string, _offer: OfferInfo) => {
+    const handleAgreementSign = useCallback(async (signature: string, _offer: OfferInfo) => {
         if (currentPage.type !== 'agreement') return false;
         await set_contract(currentPage.work, signature);
         goBack();
         return true;
     }, [currentPage, set_contract, goBack]);
 
-    const handleSavePage1           = async (data: SaveData) => {
+    const handleSavePage1 = async (data: SaveData) => {
         if (currentPage.type === "page1") {
             set_contract(currentPage.work, data.sign);
             setStatus(currentPage.work);
@@ -179,28 +181,28 @@ export const Works: React.FC = () => {
         return true;
     };
 
-    const renderPage                = () => {
+    const renderPage = () => {
         switch (currentPage.type) {
             case 'list':
                 return (
                     <WorksList
-                        works       = { works }
-                        isLoading   = { isLoading }
-                        onWorkClick = { handleWorkClick }
-                        onRefresh   = { refreshWorks }
+                        works={works}
+                        isLoading={isLoading}
+                        onWorkClick={handleWorkClick}
+                        onRefresh={refreshWorks}
                     />
                 );
 
             case 'view':
                 return (
                     <WorkView
-                        work                    = { currentPage.work }
-                        onBack                  = { goBack }
-                        onOfferClick            = { handleOfferClick }
-                        onOfferCancelClick      = { handleOfferCancelClick }
-                        onStatusClick           = { handleStatusClick }
-                        onMapClick              = { handleMapClick }
-                        onSignContract          = { handleSignContract }
+                        work={currentPage.work}
+                        onBack={goBack}
+                        onOfferClick={handleOfferClick}
+                        onOfferCancelClick={handleOfferCancelClick}
+                        onStatusClick={handleStatusClick}
+                        onMapClick={handleMapClick}
+                        onSignContract={handleSignContract}
                     />
                 );
 
@@ -226,10 +228,10 @@ export const Works: React.FC = () => {
                 if (currentPage.type !== 'agreement') return null;
                 return (
                     <Agreement
-                        work            = { currentPage.work }
-                        contractData    = { currentPage.contract }
-                        onBack          = { goBack }
-                        onSign          = { handleAgreementSign }
+                        work={currentPage.work}
+                        contractData={currentPage.contract}
+                        onBack={goBack}
+                        onSign={handleAgreementSign}
                     />
                 );
 

@@ -2,120 +2,122 @@
  * Типы для модуля Works (работы для водителей)
  */
 
-import { CargoAddress }         from "../../Store/cargoStore";
+import { CargoAddress } from "../../Store/cargoStore";
 
 
 // Статусы работ с точки зрения водителя
 export enum WorkStatus {
-    NEW             = "Новый",              // Доступна для предложения             10
-    OFFERED         = "Торг",               // Водитель сделал предложение          11    
-    TO_LOAD         = "На погрузку",        // Едет на погрузку                     12    
-    ON_LOAD         = "На погрузке",        // Прибыл на погрузку                   13 
-    LOADING         = "Загружается",        // Загружается                          14 
-    LOADED          = "Загружено",          // Загрузился                           15 
-    IN_WORK         = "В работе",           // Груз в работе                        16
-    TO_UNLOAD       = "Доставлено",         // Прибыл на место выгрузки             17
-    UNLOADING       = "Разгружается",        // Груз выгружается                     18
-    UNLOADED        = "Выгружено",          // Груз выгружен                        19
-    COMPLETED       = "Завершено" ,         // Работа завершена                     20
-    REJECTED        = "Отказано"            // Отказано                             21    
+    NEW = "Новый",              // Доступна для предложения             10
+    OFFERED = "Торг",               // Водитель сделал предложение          11    
+    TO_LOAD = "На погрузку",        // Едет на погрузку                     12    
+    ON_LOAD = "На погрузке",        // Прибыл на погрузку                   13 
+    LOADING = "Загружается",        // Загружается                          14 
+    LOADED = "Загружено",          // Загрузился                           15 
+    IN_WORK = "В работе",           // Груз в работе                        16
+    TO_UNLOAD = "Доставлено",         // Прибыл на место выгрузки             17
+    UNLOADING = "Разгружается",        // Груз выгружается                     18
+    UNLOADED = "Выгружено",          // Груз выгружен                        19
+    COMPLETED = "Завершено",         // Работа завершена                     20
+    REJECTED = "Отказано"            // Отказано                             21    
 }
 
 // Приоритет работы
 export enum WorkPriority {
-    LOW             = "Низкий",
-    NORMAL          = "Обычный", 
-    HIGH            = "Высокий",
-    URGENT          = "Срочный"
+    LOW = "Низкий",
+    NORMAL = "Обычный",
+    HIGH = "Высокий",
+    URGENT = "Срочный"
 }
 
 // Информация о предложении водителя
 export interface OfferInfo {
 
-    guid:               string;
-    recipient:          string;
-    price:              number;
-    weight:             number;
-    volume:             number;
-    transport:          string;
-    comment:            string;
-    status:             number;
+    guid: string;
+    recipient: string;
+    price: number;
+    weight: number;
+    volume: number;
+    transport: string;
+    comment: string;
+    status: number;
 
 }
 
 
 // Статусы предложения
 export enum OfferStatus {
-    PENDING         = "Ожидает",
-    ACCEPTED        = "Принят",
-    REJECTED        = "Отклонен"
+    PENDING = "Ожидает",
+    ACCEPTED = "Принят",
+    REJECTED = "Отклонен"
 }
 
 // Основная информация о работе (адаптированная CargoInfo)
 export interface WorkInfo {
-    guid:           string;
-    cargo:          string;           // ID исходного груза
-    recipient:      string;       // ID заказчика
-    client:         string;          // Имя заказчика
-    name:           string;
-    transport:      string;
-    description:    string;
-    
-    // Адреса (переиспользуем из Cargos)
-    address:        CargoAddress;
-    destiny:        CargoAddress;
-    
-    // Характеристики груза
-    weight:         number;
-    volume:         number;
-    price:          number;
-    advance:        number;
-    insurance:      number;
+    guid: string;
+    cargo: string;           // ID исходного груза
+    recipient: string;       // ID заказчика
+    client: string;          // Имя заказчика
+    name: string;
+    transport: string;
+    description: string;
 
-    pickup_date:    string;
-    delivery_date:  string;
-    
+    // Адреса (переиспользуем из Cargos)
+    address: CargoAddress;
+    destiny: CargoAddress;
+
+    // Характеристики груза
+    weight: number;
+    volume: number;
+    price: number;
+    advance: number;
+    insurance: number;
+
+    pickup_date: string;
+    delivery_date: string;
+
     // Контакты
-    phone:          string;
-    face:           string;
-    
+    phone: string;
+    face: string;
+
     // Статус работы
-    status:         WorkStatus;
-    priority?:      WorkPriority;
-    
+    status: WorkStatus;
+    priority?: WorkPriority;
+
     // Предложения
-    offers?:        OfferInfo[];
-    currentOffer?:  OfferInfo;  // Текущее предложение водителя
-    
+    offers?: OfferInfo[];
+    currentOffer?: OfferInfo;  // Текущее предложение водителя
+
     // Метаданные
-    createdAt?:     string;
-    updatedAt?:     string;
+    createdAt?: string;
+    updatedAt?: string;
+
+    signed: boolean;
 }
 
 // Данные для создания предложения
 export interface CreateOfferData {
-    workId:         string;
-    transportId:    string;
-    price:          number;
-    weight:         number;
-    comment?:       string;
+    workId: string;
+    transportId: string;
+    price: number;
+    weight: number;
+    comment?: string;
 }
 
 // Фильтры для списка работ
 export interface WorkFilters {
-    status?:        WorkStatus[];
-    cityFrom?:      string;
-    cityTo?:        string;
-    priceMin?:      number;
-    priceMax?:      number;
-    weightMin?:     number;
-    weightMax?:     number;
-    dateFrom?:      string;
-    dateTo?:        string;
+    status?: WorkStatus[];
+    cityFrom?: string;
+    cityTo?: string;
+    priceMin?: number;
+    priceMax?: number;
+    weightMin?: number;
+    weightMax?: number;
+    dateFrom?: string;
+    dateTo?: string;
 }
 
 // Типы страниц для навигации
-export type WorkPageType = 
+export type WorkPageType =
     | { type: 'list' }
     | { type: 'view'; work: WorkInfo }
     | { type: 'offer'; work: WorkInfo }
@@ -127,17 +129,17 @@ export type WorkPageType =
 
 // Состояние формы предложения
 export interface OfferFormState {
-    data:           CreateOfferData;
-    isValid:        boolean;
-    isSubmitting:   boolean;
-    isDirty:        boolean;
+    data: CreateOfferData;
+    isValid: boolean;
+    isSubmitting: boolean;
+    isDirty: boolean;
 }
 
 // Действия с формой предложения
 export interface OfferFormActions {
     setFieldValue: (fieldPath: string, value: any) => void;
-    resetForm:      () => void;
-    submitForm:     () => Promise<boolean>;
+    resetForm: () => void;
+    submitForm: () => Promise<boolean>;
 }
 
 // Хук управления работами
@@ -145,24 +147,24 @@ export interface UseWorksReturn {
     // Состояние
     works: WorkInfo[];
     isLoading: boolean;
-    
+
     // Операции с предложениями
     createOffer: (data: CreateOfferData) => Promise<boolean>;
     updateOffer: (offerId: string, data: Partial<OfferInfo>) => Promise<boolean>;
     cancelOffer: (offerId: string) => Promise<boolean>;
     markCompleted: (workId: string) => Promise<boolean>;
-    
+
     // Навигация
     currentPage: WorkPageType;
     navigateTo: (page: WorkPageType) => void;
     goBack: () => void;
-    
+
     // Фильтрация и поиск
     filters: WorkFilters;
     setFilters: (filters: WorkFilters) => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
-    
+
     // Утилиты
     getWork: (guid: string) => WorkInfo | undefined;
     refreshWorks: () => Promise<void>;
@@ -172,15 +174,15 @@ export interface UseWorksReturn {
 export interface UseOfferFormReturn {
     // Состояние формы
     formState: OfferFormState;
-    
+
     // Действия
     actions: OfferFormActions;
-    
+
     // Валидация
     validateField: (fieldPath: string) => string | null;
     hasErrors: () => boolean;
     getFieldError: (fieldPath: string) => string | undefined;
-    
+
     // Инициализация
     initializeForm: (workInfo: WorkInfo) => void;
 
@@ -225,11 +227,11 @@ export interface UseWorksReturn {
     currentPage: WorkPageType;
     filters: WorkFilters;
     searchQuery: string;
-    
+
     // Архив (добавить)
     archiveWorks: WorkInfo[];
     isArchiveLoading: boolean;
-    
+
     // Существующие методы
     navigateTo: (page: WorkPageType) => void;
     goBack: () => void;
@@ -240,7 +242,7 @@ export interface UseWorksReturn {
     cancelOffer: (offerId: string) => Promise<boolean>;
     getWork: (guid: string) => WorkInfo | undefined;
     refreshWorks: () => Promise<void>;
-    
+
     // Архив (добавить)
     loadArchiveWorks: () => Promise<void>;
 }

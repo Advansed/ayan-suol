@@ -9,14 +9,14 @@ interface DriverInfoProps {
 
     info: DriverInfo;
 
-    onAccept?:  (info: DriverInfo) => void;
+    onAccept?: (info: DriverInfo) => void;
 
-    onReject?:  (info: DriverInfo) => void;
+    onReject?: (info: DriverInfo) => void;
 
-    onChat?:    (info: DriverInfo) => void;
+    onChat?: (info: DriverInfo) => void;
 
     isLoading?: boolean;
-    
+
 }
 
 const contractSigned = (
@@ -69,13 +69,13 @@ const contractSigned = (
             {onChat && (
                 <IonButton
                     // className={styles.submitButton}
-                    color       = "success"
-                    expand      = "block"
-                    onClick     = { () => { if(onChat) onChat(info)} }
-                    disabled    = { isLoading }
+                    color="success"
+                    expand="block"
+                    onClick={() => { if (onChat) onChat(info) }}
+                    disabled={isLoading}
                 >
-                    <IonIcon icon={chatboxEllipsesOutline} className={styles.buttonIcon + " fs-14"} color = "light"/>
-                    <span className = 'ml-05 cl-white' ><b>Чат</b></span>
+                    <IonIcon icon={chatboxEllipsesOutline} className={styles.buttonIcon + " fs-14"} color="light" />
+                    <span className='ml-05 cl-white' ><b>Чат</b></span>
                 </IonButton>
             )}
         </div>
@@ -84,22 +84,22 @@ const contractSigned = (
 
 
 
-export const DriverCard: React.FC<DriverInfoProps> = ({ 
-    info, 
-    onAccept, 
-    onReject, 
+export const DriverCard: React.FC<DriverInfoProps> = ({
+    info,
+    onAccept,
+    onReject,
     onChat,
-    isLoading = false 
+    isLoading = false
 }) => {
     return (
         <div>
-            <div className = "borders">
+            <div className="borders">
                 {/* Основная информация о водителе */}
                 <div className="flex fl-space mt-1">
                     <div className="flex">
-                        <IonIcon 
-                            icon={personCircleOutline} 
-                            color="primary" 
+                        <IonIcon
+                            icon={personCircleOutline}
+                            color="primary"
                             className="w-3 h-3"
                         />
                         <div className="fs-1 ml-05">
@@ -123,18 +123,20 @@ export const DriverCard: React.FC<DriverInfoProps> = ({
             </div>
 
             {
-                  info.status === "Заказано"
-                    ? <OfferCard 
-                        info        = { info }
-                        onAccept    = { onAccept }
-                        onReject    = { onReject }
-                        isLoading   = { isLoading }
-                      />
-                : info.status === "Принято" 
-                    ? contractSigned(info, onChat, isLoading)
-                : <></>
+                info.status === "Заказано"
+                    ? <OfferCard
+                        info={info}
+                        onAccept={onAccept}
+                        onReject={onReject}
+                        isLoading={isLoading}
+                    />
+                    : info.status === "Принято"
+                        ? contractSigned(info, onChat, isLoading)
+                        : info.status === "На погрузке"
+                            ? contractSigned(info, onChat, isLoading)
+                            : <></>
             }
-            
+
         </div>
     );
 };

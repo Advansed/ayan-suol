@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useIonRouter } from '@ionic/react';
+import { IonButton, useIonRouter } from '@ionic/react';
 import { WorkInfo, WorkStatus } from '../types';
 import { useWorkStore } from '../workStore';
 import { passportGetters } from '../../../Store/passportStore';
@@ -11,18 +11,18 @@ import { WorkCard } from './WorkCard';
 import { CounterOfferCard, ContractCard } from '.';
 
 interface WorkViewProps {
-    work:               WorkInfo;
-    onBack:              () => void;
-    onOfferClick:        (work: WorkInfo) => void;
-    onOfferCancelClick:  (work: WorkInfo) => void;
-    onStatusClick:       (work: WorkInfo) => void;
-    onMapClick:          (work: WorkInfo) => void;
-    onSignContract?:     (work: WorkInfo) => void;
+    work: WorkInfo;
+    onBack: () => void;
+    onOfferClick: (work: WorkInfo) => void;
+    onOfferCancelClick: (work: WorkInfo) => void;
+    onStatusClick: (work: WorkInfo) => void;
+    onMapClick: (work: WorkInfo) => void;
+    onSignContract?: (work: WorkInfo) => void;
 }
 
-export const WorkView: React.FC<WorkViewProps> = ({ 
-    work, 
-    onBack, 
+export const WorkView: React.FC<WorkViewProps> = ({
+    work,
+    onBack,
     onOfferClick,
     onOfferCancelClick,
     onStatusClick,
@@ -66,11 +66,11 @@ export const WorkView: React.FC<WorkViewProps> = ({
         }
     }, [works, workInfo.guid]);
 
-    const handleStatusClick     = (work: WorkInfo) => {
+    const handleStatusClick = (work: WorkInfo) => {
         onStatusClick(work);
     };
 
-    const handleOffer           = async (data: Partial<WorkInfo>, volume: number): Promise<void> => {
+    const handleOffer = async (data: Partial<WorkInfo>, volume: number): Promise<void> => {
         // Создаем полный объект WorkInfo, объединяя исходные данные работы с обновленными из формы
         const updatedWork: WorkInfo = {
             ...workInfo,
@@ -83,7 +83,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
         console.log("offerData", data, volume);
     };
 
-    const handleCancelOffer     = async (data: Partial<WorkInfo>, volume: number): Promise<void> => {
+    const handleCancelOffer = async (data: Partial<WorkInfo>, volume: number): Promise<void> => {
         // Создаем полный объект WorkInfo, объединяя исходные данные работы с обновленными из формы
         const updatedWork: WorkInfo = {
             ...workInfo,
@@ -102,7 +102,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
 
     return (
         <>
-            <WizardHeader 
+            <WizardHeader
                 title={`Заказ ID ${workInfo.guid.substr(0, 8)}`}
                 onBack={onBack}
             />
@@ -114,25 +114,38 @@ export const WorkView: React.FC<WorkViewProps> = ({
 
                 {workInfo.status === WorkStatus.NEW && (
                     <CounterOfferCard
-                        work        = { workInfo }
-                        onSubmit    = { handleOffer }
+                        work={workInfo}
+                        onSubmit={handleOffer}
                     />
                 )}
 
                 {workInfo.status === WorkStatus.OFFERED && (
                     <CounterOfferCard
-                        work        = { workInfo }
-                        onSubmit    = { handleCancelOffer }
+                        work={workInfo}
+                        onSubmit={handleCancelOffer}
                     />
                 )}
 
-                {workInfo.status === WorkStatus.TO_LOAD && onSignContract && (
+                {workInfo.status === WorkStatus.TO_LOAD && !workInfo.signed && (
                     <ContractCard
-                        work            = {workInfo}
-                        onSignContract  = {() => onSignContract(workInfo)}
+                        work={workInfo}
+                        onSignContract={() => { if (onSignContract) onSignContract(workInfo) }}
                     />
                 )}
-                
+
+                {workInfo.status === WorkStatus.TO_LOAD && workInfo.signed && (
+                    <div className='mt-1 mr-2 ml-2'>
+                        <IonButton
+                            expand='block'
+                            onClick={() => {
+                                handleStatusClick(workInfo)
+                            }}
+                        >
+                            Приехал на погрузку
+                        </IonButton>
+                    </div>
+                )}
+
             </div>
         </>
     );

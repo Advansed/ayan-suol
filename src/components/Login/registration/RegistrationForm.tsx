@@ -2,14 +2,14 @@
  * Форма регистрации + все шаги в одном файле
  */
 
-import React, { useCallback, memo, lazy, Suspense } from 'react'
+import React, { useCallback, memo, lazy, Suspense, useState, useRef } from 'react'
 import { IonCard } from '@ionic/react'
-import { 
-  MaskedInput, 
-  TextInput, 
-  PasswordInput, 
-  FormButtons, 
-  NavigationLinks 
+import {
+  MaskedInput,
+  TextInput,
+  PasswordInput,
+  FormButtons,
+  NavigationLinks
 } from '../SharedComponents'
 import { useReg, UseRegReturn } from './hooks/useReg'
 import { useEULA, UseEULAReturn } from './hooks/useEULA'
@@ -31,11 +31,11 @@ const formatPhoneDisplay = (phone: string): string => {
 // ШАГ 0: ВЫБОР РОЛИ
 // ======================
 
-const RoleSelector: React.FC<{ 
-  reg: UseRegReturn, 
-  eula: UseEULAReturn 
+const RoleSelector: React.FC<{
+  reg: UseRegReturn,
+  eula: UseEULAReturn
 }> = memo(({ reg, eula }) => {
-  
+
   const handleNext = () => {
     // Проверяем соглашение перед переходом
     const eulaError = eula.validateEULA()
@@ -43,14 +43,14 @@ const RoleSelector: React.FC<{
       reg.updateFormData('agreementError', eulaError)
       return
     }
-    
+
     if (reg.formData.userType) {
       reg.updateRegistrationData('userType', reg.formData.userType)
       reg.updateFormData('agreementAccepted', eula.isEULAAccepted)
       reg.nextStep()
     }
   }
-  
+
   return (
     <div className="login-container">
       <div className="a-center">
@@ -126,7 +126,7 @@ const RoleSelector: React.FC<{
 // ======================
 
 const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
-  
+
   const handleNext = useCallback(() => {
     reg.submitStep()
   }, [reg])
@@ -199,7 +199,7 @@ const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
         disabled={!reg.formData.phone?.trim() || !reg.formData.name?.trim()}
         loading={reg.isLoading}
       />
-      
+
     </div>
   )
 })
@@ -209,32 +209,34 @@ const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
 // ======================
 
 const StepVerification: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
-  const [pin, setPin] = React.useState(['', '', '', ''])
+  const [pin, setPin] = useState(['', '', '', '']);
+
+  // Создаем массив рефов для прямого управления фокусом без поиска по DOM
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handlePinChange = useCallback((value: string, index: number) => {
-    const newPin = [...pin]
-    newPin[index] = value.slice(-1)
-    setPin(newPin)
-    reg.updateFormData('pincode', newPin.join(''))
-    
-    if (value && index < 3) {
-      const nextInput = document.querySelector(`input[data-pin-index="${index + 1}"]`) as HTMLInputElement
-      nextInput?.focus()
+    const digit = value.slice(-1);
+    const newPin = [...pin];
+    newPin[index] = digit;
+
+    setPin(newPin);
+
+    // Синхронизируем со стором (можно через дебаунс или по завершению)
+    const fullCode = newPin.join('');
+    reg.updateFormData('pincode', fullCode);
+
+    // Автофокус на следующий инпут через рефы
+    if (digit && index < 3) {
+      inputRefs.current[index + 1]?.focus();
     }
-  }, [reg, pin])
+  }, [reg, pin]);
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+    // Возврат на предыдущее поле при удалении
     if (e.key === 'Backspace' && !pin[index] && index > 0) {
-      const prevInput = document.querySelector(`input[data-pin-index="${index - 1}"]`) as HTMLInputElement
-      if (prevInput) {
-        prevInput.focus()
-      }
+      inputRefs.current[index - 1]?.focus();
     }
-  }
-
-  const handleCall = useCallback(() => {
-    reg.submitStep()
-  }, [reg])
+  };
 
   return (
     <div className="login-container">
@@ -247,36 +249,45 @@ const StepVerification: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
       </div>
 
       <div className="a-center fs-14 mt-2 mb-2">
-        <b>{formatPhoneDisplay(reg.registrationData.call_phone || '')}</b>
+        <b>{reg.registrationData.call_phone || ''}</b>
       </div>
 
-      {/* PIN код */}
       <div className="mt-1">
-        <div className="pin-input-container">
+        <div className="pin-input-container" style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
           {[0, 1, 2, 3].map((index) => (
             <input
               key={index}
-              type="text"
+              ref={(el) => (inputRefs.current[index] = el)} // Привязка рефа
+              type="tel" // Вызываем цифровую клавиатуру на мобильных
+              inputMode="numeric"
               maxLength={1}
-              value={pin[index] || ''}
+              value={pin[index]}
               onChange={(e) => handlePinChange(e.target.value, index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
-              data-pin-index={index}
               className="pin-input"
+              style={{
+                width: '45px',
+                height: '50px',
+                textAlign: 'center',
+                fontSize: '20px',
+                borderRadius: '8px',
+                border: '1px solid #ccc'
+              }}
             />
           ))}
         </div>
       </div>
 
       <FormButtons
-        onNext={handleCall}
+        onNext={() => reg.submitStep()}
         onBack={reg.prevStep}
         nextText="Проверить"
         loading={reg.isLoading}
+        disabled={pin.some(d => d === '')} // Кнопка активна только при полном заполнении
       />
     </div>
-  )
-})
+  );
+});
 
 // ======================
 // ШАГ 3: УСТАНОВКА ПАРОЛЯ
@@ -297,7 +308,7 @@ const StepSetPassword: React.FC<{ reg: UseRegReturn, toLogin: (() => void) | und
   const handlePassword1Blur = useCallback(() => {
     if (reg.formData.password1) {
       reg.validateField('password1', reg.formData.password1)
-      
+
       if (reg.formData.password && reg.formData.password1) {
         if (reg.formData.password !== reg.formData.password1) {
           reg.updateFormData('password1Error', 'Пароли не совпадают')
@@ -308,8 +319,8 @@ const StepSetPassword: React.FC<{ reg: UseRegReturn, toLogin: (() => void) | und
     }
   }, [reg])
 
-  const passwordsMatch = reg.formData.password && reg.formData.password1 && 
-                        reg.formData.password === reg.formData.password1
+  const passwordsMatch = reg.formData.password && reg.formData.password1 &&
+    reg.formData.password === reg.formData.password1
 
   return (
     <div className="login-container">
