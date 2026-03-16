@@ -8,7 +8,7 @@ import { transportGetters } from '../../../Store/transportStore';
 import { useToast } from '../../Toast';
 import { WizardHeader } from '../../Header/WizardHeader';
 import { WorkCard } from './WorkCard';
-import { CounterOfferCard, ContractCard } from '.';
+import { CounterOfferCard, ContractCard, ArrivedCard, LoadedCard } from '.';
 
 interface WorkViewProps {
     work: WorkInfo;
@@ -16,6 +16,7 @@ interface WorkViewProps {
     onOfferClick: (work: WorkInfo) => void;
     onOfferCancelClick: (work: WorkInfo) => void;
     onStatusClick: (work: WorkInfo) => void;
+    onLoaded?: (work: WorkInfo, data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }) => Promise<void>;
     onMapClick: (work: WorkInfo) => void;
     onSignContract?: (work: WorkInfo) => void;
 }
@@ -26,16 +27,17 @@ export const WorkView: React.FC<WorkViewProps> = ({
     onOfferClick,
     onOfferCancelClick,
     onStatusClick,
+    onLoaded,
     onSignContract
 }) => {
-    const [workInfo, setWorkInfo] = useState(work);
-    const works = useWorkStore(state => state.works);
-    const hist = useIonRouter();
-    const toast = useToast();
+    const [workInfo, setWorkInfo]   = useState(work);
+    const works                     = useWorkStore(state => state.works);
+    const hist                      = useIonRouter();
+    const toast                     = useToast();
 
-    const passportCompletion = passportGetters.getCompletionPercentage();
-    const companyCompletion = companyGetters.getCompletionPercentage();
-    const transportCompletion = transportGetters.getCompletionPercentage();
+    const passportCompletion        = passportGetters.getCompletionPercentage();
+    const companyCompletion         = companyGetters.getCompletionPercentage();
+    const transportCompletion       = transportGetters.getCompletionPercentage();
 
     useEffect(() => {
         if (passportCompletion < 80) {
@@ -99,7 +101,6 @@ export const WorkView: React.FC<WorkViewProps> = ({
     if (!workInfo) {
         return null;
     }
-
     return (
         <>
             <WizardHeader
@@ -108,9 +109,9 @@ export const WorkView: React.FC<WorkViewProps> = ({
             />
 
             <div className='ml-05 mr-05'>
-                <div className="mt-1">
+                {/* <div className="mt-1">
                     <WorkCard work={workInfo} mode="view" />
-                </div>
+                </div> */}
 
                 {workInfo.status === WorkStatus.NEW && (
                     <CounterOfferCard
@@ -134,18 +135,19 @@ export const WorkView: React.FC<WorkViewProps> = ({
                 )}
 
                 {workInfo.status === WorkStatus.TO_LOAD && workInfo.signed && (
-                    <div className='mt-1 mr-2 ml-2'>
-                        <IonButton
-                            expand='block'
-                            onClick={() => {
-                                handleStatusClick(workInfo)
-                            }}
-                        >
-                            Приехал на погрузку
-                        </IonButton>
-                    </div>
+                    <ArrivedCard
+                        work={workInfo}
+                        onArrivedClick={() => handleStatusClick(workInfo)}
+                    />
                 )}
 
+
+                {workInfo.status === WorkStatus.LOADING && (
+                    <LoadedCard
+                        work={workInfo}
+                        onLoaded={(data) => onLoaded ? onLoaded(workInfo, data) : Promise.resolve()}
+                    />
+                )}
             </div>
         </>
     );

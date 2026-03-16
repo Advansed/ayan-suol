@@ -11,6 +11,7 @@ import { useSocket }                    from '../../../Store/useSocket';
 import { useToken }                     from '../../../Store/loginStore';
 import { CargoPage3, SaveData3 }        from './CargoPage3';
 import { api }                          from '../../../Store/api';
+import { sendImageViaMinIO }            from '../../../utils/fileUpload';
 import { CargoPage4, SaveData4 }        from './CargoPage4';
 
 interface CargoInvoiceSectionsProps {
@@ -36,20 +37,13 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
         await handleAccept( invoice, status )
     
         if( status === 16 ) {
-            data.sealPhotos.forEach(elem => {
-                // emit("send_message", {
-                //     token:          token,
-                //     recipient:      invoice.recipient,
-                //     cargo:          invoice.cargo,
-                //     image:          elem,
-                // })                    
-                api("api/sendimage", {
-                    token:          token,
-                    recipient:      invoice.recipient,
-                    cargo:          invoice.cargo,
-                    image:          elem,
-                })    
-            });
+            for (const elem of data.sealPhotos) {
+                await sendImageViaMinIO(elem, {
+                    token,
+                    recipient: invoice.recipient,
+                    cargo: invoice.cargo,
+                });
+            }
 
             emit("send_message", {
                 token:          token,
@@ -65,20 +59,13 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
             })                
         } else 
         if( status === 18 ) {
-            data.sealPhotos.forEach(elem => {
-                api("api/sendimage", {
-                    token:          token,
-                    recipient:      invoice.recipient,
-                    cargo:          invoice.cargo,
-                    image:          elem,
-                })    
-                // emit("send_message", {
-                //     token:          token,
-                //     recipient:      invoice.recipient,
-                //     cargo:          invoice.cargo,
-                //     image:          elem,
-                // })                        
-            });
+            for (const elem of data.sealPhotos) {
+                await sendImageViaMinIO(elem, {
+                    token,
+                    recipient: invoice.recipient,
+                    cargo: invoice.cargo,
+                });
+            }
 
             emit("send_message", {
                 token:          token,

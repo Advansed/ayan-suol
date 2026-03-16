@@ -1,15 +1,15 @@
 import React from 'react';
 import { IonButton, IonIcon } from '@ionic/react';
-import { checkmarkCircleOutline, documentTextOutline, shieldCheckmarkOutline } from 'ionicons/icons';
+import { locationOutline } from 'ionicons/icons';
 import { WorkInfo } from '../../types';
 import styles from './OfferCard.module.css';
 
-interface ContractCardProps {
+interface ArrivedCardProps {
     work: WorkInfo;
-    onSignContract: () => void;
+    onArrivedClick: () => void;
 }
 
-export const ContractCard: React.FC<ContractCardProps> = ({ work, onSignContract }) => {
+export const ArrivedCard: React.FC<ArrivedCardProps> = ({ work, onArrivedClick }) => {
     const formatPrice = (price: number): string => {
         return price.toLocaleString('ru-RU').replace(/,/g, ' ');
     };
@@ -19,17 +19,17 @@ export const ContractCard: React.FC<ContractCardProps> = ({ work, onSignContract
 
     return (
         <div className={styles.offerCard}>
-            {/* Card 1: Notification */}
+            {/* Card 1: Cargo name */}
             <div className={styles.notificationCard}>
                 <div className={styles.notificationHeader}>
                     <div className={styles.notificationTitleRow}>
-                        <IonIcon icon={checkmarkCircleOutline} className={styles.notificationIcon} />
+                        <IonIcon icon={locationOutline} className={styles.notificationIcon} />
                         <h2 className={styles.notificationTitle}>
-                            Предложение принято, договор подписан
+                            {work.name || 'Груз'}
                         </h2>
                     </div>
                     <p className={styles.notificationSubtitle}>
-                        Подпишите договор со своей стороны (Исполнитель/Перевозчик)
+                        Договор подписан. Прибывайте на место погрузки.
                     </p>
                 </div>
             </div>
@@ -38,9 +38,9 @@ export const ContractCard: React.FC<ContractCardProps> = ({ work, onSignContract
             <div className={styles.detailsCard}>
                 <div className={styles.infoRow}>
                     <div className={styles.infoField}>
-                        <label className={styles.label}>Вес (т)</label>
+                        <label className={styles.label}>Цена (₽)</label>
                         <div className={styles.value}>
-                            {weight.toFixed(1)} тонн
+                            {formatPrice(price)} (₽)
                         </div>
                     </div>
                     <div className={styles.infoField}>
@@ -50,21 +50,12 @@ export const ContractCard: React.FC<ContractCardProps> = ({ work, onSignContract
                         </div>
                     </div>
                     <div className={styles.infoField}>
-                        <label className={styles.label}>Цена (₽)</label>
+                        <label className={styles.label}>Вес (т)</label>
                         <div className={styles.value}>
-                            {formatPrice(price)} (₽)
+                            {weight.toFixed(1)} тонн
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Card 3: Secure Payment */}
-            <div className={styles.secureCard}>
-                <IonIcon icon={shieldCheckmarkOutline} className={styles.secureIcon} />
-                <h3 className={styles.secureTitle}>Безопасная оплата через платформу</h3>
-                <p className={styles.secureDescription}>
-                    Все платежи проходят через специальный счет приложения. Комиссия платформы 5% обеспечивает защиту обеих сторон и гарантию выполнения сделки.
-                </p>
             </div>
 
             {/* Action Button */}
@@ -72,10 +63,9 @@ export const ContractCard: React.FC<ContractCardProps> = ({ work, onSignContract
                 <IonButton
                     className={styles.submitButton}
                     expand="block"
-                    onClick={onSignContract}
+                    onClick={onArrivedClick}
                 >
-                    <IonIcon icon={documentTextOutline} slot="start" />
-                    <span>Подписать договор</span>
+                    <span>Приехал на погрузку</span>
                 </IonButton>
             </div>
         </div>

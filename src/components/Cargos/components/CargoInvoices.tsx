@@ -9,8 +9,8 @@ import { CargoPage1, SaveData }         from './CargoPage1';
 import { CargoPage2 }                   from './CargoPage2';
 import { useSocket }                    from '../../../Store/useSocket';
 import { useToken }                     from '../../../Store/loginStore';
+import { useChats }                     from '../../../Store/useChats';
 import { CargoPage3, SaveData3 }        from './CargoPage3';
-import { api }                          from '../../../Store/api';
 import { CargoPage4, SaveData4 }        from './CargoPage4';
 
 interface CargoInvoiceProps {
@@ -31,6 +31,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpe
     const [ page, setPage ] = useState<Route1>({ type: 'main', info: undefined })
     const { emit } = useSocket()
     const token = useToken()
+    const { sendImage } = useChats()
 
     useEffect(()=>{ console.log(contract)},[contract])
 
@@ -39,20 +40,9 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpe
         await handleAccept( invoice, status )
     
         if( status === 16 ) {
-            data.sealPhotos.forEach(elem => {
-                // emit("send_message", {
-                //     token:          token,
-                //     recipient:      invoice.recipient,
-                //     cargo:          invoice.cargo,
-                //     image:          elem,
-                // })                    
-                api("api/sendimage", {
-                    token:          token,
-                    recipient:      invoice.recipient,
-                    cargo:          invoice.cargo,
-                    image:          elem,
-                })    
-            });
+            for (const elem of data.sealPhotos) {
+                await sendImage(invoice.recipient, invoice.cargo, elem);
+            }
 
             emit("send_message", {
                 token:          token,
@@ -68,20 +58,9 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpe
             })                
         } else 
         if( status === 18 ) {
-            data.sealPhotos.forEach(elem => {
-                api("api/sendimage", {
-                    token:          token,
-                    recipient:      invoice.recipient,
-                    cargo:          invoice.cargo,
-                    image:          elem,
-                })    
-                // emit("send_message", {
-                //     token:          token,
-                //     recipient:      invoice.recipient,
-                //     cargo:          invoice.cargo,
-                //     image:          elem,
-                // })                        
-            });
+            for (const elem of data.sealPhotos) {
+                await sendImage(invoice.recipient, invoice.cargo, elem);
+            }
 
             emit("send_message", {
                 token:          token,
@@ -152,6 +131,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpe
                             onReject            = { handleRejectAndGoBack }
                             onAccept            = { handleClick }
                             onChat              = { handleChat  }
+                            onStartLoading      = { (info) => handleAccept(info, 14) }
                         />
                         
                         {/* { renderButtons( invoice ) } */}

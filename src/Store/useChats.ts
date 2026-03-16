@@ -30,7 +30,7 @@ export interface UseChatsReturn {
   loadChats:            ( ) => Promise<void>
   loadMessages:         ( recipient: string, cargo: string, loadMore?: boolean ) => Promise<void>
   sendMessage:          ( recipient: string, cargo: string, message: string, image: string ) => Promise<boolean>
-  sendImage:            ( recipient: string, cargo: string, imageFile: string ) => Promise<boolean>
+  sendImage:            ( recipient: string, cargo: string, imageFile: string | File ) => Promise<boolean>
   markAsRead:           ( recipient: string, cargo: string, guids: {guid:string}[] ) => Promise<void>
   setCurrentChat:       ( recipient: string, cargo: string ) => void
   clearCurrentChat:     ( ) => void
@@ -158,48 +158,44 @@ export const useChats = (): UseChatsReturn => {
     }
   }, [isConnected, token, emit, toast])
 
-  // Отправка изображения через HTTP
+  // Отправка изображения через MinIO (Presigned URL)
   const sendImage = useCallback(async (
     recipient: string,
     cargo: string,
-    imageFile: string
+    imageFile: string | File
   ): Promise<boolean> => {
     if (!token) {
       toast.error('Нет токена авторизации')
       return false
     }
 
-    const formData = new FormData()
-    formData.append('recipient', recipient)
-    formData.append('cargo', cargo)
-    formData.append('image', imageFile)
-    formData.append('token', token)
-
     try {
-      const response = await fetch('/api/sendImage', {
-        method: 'POST',
-        body: formData
+      const { uploadFileToMinIO, dataUrlToFile } = await import('../utils/fileUpload')
+      const file = typeof imageFile === 'string'
+        ? dataUrlToFile(imageFile)
+        : imageFile
+
+      const { filePath } = await uploadFileToMinIO(file, {
+        cargo_id: cargo,
+        recipient_id: recipient,
+        token,
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-
-      const result = await response.json()
-      
-      if (result.success) {
-        emit("get_chats", {token: token})
-        emit("get_messages", {token: token, cargo: cargo, recipient: recipient})
-        return true
-      } else {
-        toast.error(result.message || 'Ошибка отправки')
-        return false
-      }
+      emit(SOCKET_EVENTS.SEND_MESSAGE, {
+        token,
+        recipient,
+        cargo,
+        message: '',
+        image: filePath,
+      })
+      emit(SOCKET_EVENTS.GET_CHATS, { token })
+      emit(SOCKET_EVENTS.GET_MESSAGES, { token, cargo, recipient })
+      return true
     } catch (error) {
       toast.error('Ошибка отправки изображения')
       return false
     }
-  }, [token, toast])
+  }, [token, toast, emit])
 
 
   // Пометить как прочитанное

@@ -13,6 +13,7 @@ import { workActions } from './workStore';
 import { SaveData, WorkPage1 } from './components/WorkPage1';
 import { useSocket } from '../../Store/useSocket';
 import { useToken } from '../../Store/loginStore';
+import { useChats } from '../../Store/useChats';
 import { transportGetters } from '../../Store/transportStore';
 import { IonLoading } from '@ionic/react';
 import './styles.css';
@@ -22,6 +23,7 @@ export const Works: React.FC = () => {
         , get_contract, get_contract_data, setContract, set_contract } = useWorks();
     const { emit } = useSocket();
     const token = useToken();
+    const { sendImage } = useChats();
 
     const { currentPage, navigateTo, goBack } = useWorkNavigation();
 
@@ -106,6 +108,28 @@ export const Works: React.FC = () => {
         }
     };
 
+    const handleLoaded = async (work: WorkInfo, data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }) => {
+        try {
+            for (const image of data.cargoPhotos) {
+                await sendImage(work.recipient, work.cargo, image);
+            }
+            for (const image of data.sealPhotos) {
+                await sendImage(work.recipient, work.cargo, image);
+            }
+            emit("send_message", {
+                token,
+                recipient: work.recipient,
+                cargo: work.cargo,
+                message: "Груз загружен и опломбирован, фото приложено",
+            });
+           // await setStatus(work);
+            await refreshWorks();
+        } catch (err) {
+            console.error("handleLoaded error:", err);
+            throw err;
+        }
+    };
+
     const handleStatusClick = (work: WorkInfo) => {
 
         if (work.status === WorkStatus.TO_LOAD) {
@@ -160,15 +184,22 @@ export const Works: React.FC = () => {
         if (currentPage.type === "page1") {
             set_contract(currentPage.work, data.sign);
             setStatus(currentPage.work);
-            data.bodyPhotos.forEach(elem => {
+            for (const elem of data.bodyPhotos) {
+                const { uploadFileToMinIO, dataUrlToFile } = await import('../../utils/fileUpload');
+                const file = dataUrlToFile(elem);
+                const { filePath } = await uploadFileToMinIO(file, {
+                    cargo_id: currentPage.work.cargo,
+                    recipient_id: currentPage.work.recipient,
+                    token,
+                });
                 emit("send_message", {
-                    token: token,
+                    token,
                     recipient: currentPage.work.recipient,
                     cargo: currentPage.work.cargo,
                     message: "",
-                    image: elem,
+                    image: filePath,
                 });
-            });
+            }
             emit("send_message", {
                 token: token,
                 recipient: currentPage.work.recipient,
@@ -201,6 +232,7 @@ export const Works: React.FC = () => {
                         onOfferClick={handleOfferClick}
                         onOfferCancelClick={handleOfferCancelClick}
                         onStatusClick={handleStatusClick}
+                        onLoaded={handleLoaded}
                         onMapClick={handleMapClick}
                         onSignContract={handleSignContract}
                     />

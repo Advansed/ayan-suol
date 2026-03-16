@@ -381,6 +381,7 @@ export const useWorks = () => {
     switch (status) {
       case WorkStatus.NEW: return 11;
       case WorkStatus.TO_LOAD: return 13;
+      case WorkStatus.ON_LOAD: return 15;
       case WorkStatus.LOADING: return 15;
       case WorkStatus.IN_WORK: return 17;
       case WorkStatus.UNLOADING: return 19;

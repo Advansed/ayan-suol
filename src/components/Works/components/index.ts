@@ -9,3 +9,5 @@ export { WorkOffer }            from './WorkOffer';
 export { WorkArchive }          from './WorkArchive';
 export { CounterOfferCard }     from './Offer/OfferCard';
 export { ContractCard }         from './Offer/ContractCard';
+export { ArrivedCard }          from './Offer/ArrivedCard';
+export { LoadedCard }           from './Offer/LoadedCard';

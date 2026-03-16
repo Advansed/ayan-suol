@@ -15,15 +15,15 @@ import UTIF from 'utif';
 
 defineCustomElements(window)
 
-export async function takePicture_() {
+export async function takePicture() {
     try {
         const image = await Camera.getPhoto({
-            quality: 80,
-            allowEditing: false,
-            resultType: CameraResultType.Base64, // Используем Base64 вместо DataUrl
-            source: CameraSource.Camera,
-            width: 600,
-            height: 800
+            quality:        80,
+            allowEditing:   false,
+            resultType:     CameraResultType.Base64,
+            source:         CameraSource.Prompt,
+            width:          600,
+            height:         800
         });
 
         if (!image || !image.base64String) {
@@ -46,7 +46,7 @@ export async function takePicture_() {
 }
 
 
-export async function takePicture(): Promise<{ format: string; dataUrl: string } | null> {
+export async function takePicture_(): Promise<{ format: string; dataUrl: string } | null> {
   return new Promise((resolve) => {
     // Создаем модальное окно для камеры
     const cameraModal = document.createElement('div');
