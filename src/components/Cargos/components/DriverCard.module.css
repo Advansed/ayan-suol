@@ -8,7 +8,7 @@
   box-shadow:     0 4px 16px rgba(39, 176, 62, 0.3);
   box-sizing:     border-box;
   padding:        0.5em 0.5em 0.5em 0.5em;
-  margin-top:     0.5em;
+  margin-top:     0;
 }
 
 .header {
@@ -110,14 +110,14 @@
 
 /* Стили для карточки предложения от водителя */
 .offerCard {
-  width: calc(100% - 1em);
+  width: 100%;
   max-width: 100%;
   background: linear-gradient(135deg, #3880ff 0%, #5260ff 100%);
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(56, 128, 255, 0.3);
   padding: 1em;
   box-sizing: border-box;
-  margin: 0.5em auto;
+  margin: 0;
 }
 
 .offerHeader {

@@ -363,11 +363,11 @@
   margin-bottom: 0.3em;
 }
 
-/* Signature Section */
+/* Signature Section — блоки подписей друг под другом, полная ширина */
 .signatureSection {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75em;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25em;
   margin: 1.5em 0.75em;
 }
 
@@ -375,6 +375,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.75em;
+  width: 100%;
 }
 
 .signatureHeader {
@@ -395,7 +396,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5em;
-  min-height: 120px;
+  min-height: 150px;
   justify-content: center;
 }
 
@@ -479,10 +480,6 @@
   }
 
   .paymentGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .signatureSection {
     grid-template-columns: 1fr;
   }
 }

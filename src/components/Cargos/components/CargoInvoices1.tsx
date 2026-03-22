@@ -118,7 +118,7 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
                 
                 {invoices.map((invoice, index) => (
 
-                    <IonCard className='ml-1 mr-1 mt-1 pt-1 pl-1 pr-1 pb-1'
+                    <IonCard className="cargo-driver-card mt-05 ml-05 mr-05"
                         key = { index }
                     >
                         <DriverCard

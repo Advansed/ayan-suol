@@ -33,28 +33,72 @@ const unformatNumber = (value: string): number => {
   return Number(value.replace(/\s/g, '')) || 0;
 };
 
+/** Число → строка для поля веса/объёма (запятая как разделитель) */
+const numberToDecimalDraft = (n: number | undefined): string => {
+  if (n === undefined || n === null || Number.isNaN(n) || n === 0) return '';
+  return String(n).replace('.', ',');
+};
+
+/** Нормализация ввода: только цифры и одна запятая; точка → запятая */
+const normalizeDecimalInput = (raw: string): string => {
+  let v = raw.replace(/\./g, ',').replace(/[^\d,]/g, '');
+  const firstComma = v.indexOf(',');
+  if (firstComma !== -1) {
+    v = v.slice(0, firstComma + 1) + v.slice(firstComma + 1).replace(/,/g, '');
+  }
+  return v;
+};
+
+/** Парсинг в число без потери промежуточного «0,» / «0.» при вводе */
+const parseDecimalDraft = (raw: string): number => {
+  const normalized = raw.replace(',', '.').replace(/\s/g, '');
+  if (normalized === '' || normalized === '.' || normalized === '-') return 0;
+  const n = parseFloat(normalized);
+  return Number.isFinite(n) ? n : 0;
+};
+
 export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack, onUpdate, onCreate }) => {
   const userName = useLoginStore(state => state.name);
   const userPhone = useLoginStore(state => state.phone);
   const [info, setInfo] = useState<CargoInfo>(initialCargo || { ...EMPTY_CARGO });
   const [multiplePerformers, setMultiplePerformers] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [weightDraft, setWeightDraft] = useState(() => numberToDecimalDraft(initialCargo?.weight));
+  const [volumeDraft, setVolumeDraft] = useState(() => numberToDecimalDraft(initialCargo?.volume));
 
   const isEdit = Boolean(initialCargo?.guid);
 
+  const cargoGuid = initialCargo?.guid;
+
+  // Только смена режима / груза — без userName/userPhone, иначе форма сбрасывается после ввода городов
   useEffect(() => {
-    if (initialCargo?.guid) {
-      // При редактировании используем данные из груза
+    if (cargoGuid) {
       setInfo(initialCargo);
+      setWeightDraft(numberToDecimalDraft(initialCargo.weight));
+      setVolumeDraft(numberToDecimalDraft(initialCargo.volume));
     } else {
-      // При создании нового груза заполняем контактные данные текущего пользователя
       setInfo({
         ...EMPTY_CARGO,
         face: userName || '',
         phone: userPhone || ''
       });
+      setWeightDraft('');
+      setVolumeDraft('');
     }
-  }, [initialCargo?.guid, userName, userPhone]);
+    // Только cargoGuid: при том же guid не перезатираем правки при обновлении initialCargo из стора
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initialCargo/userName из замыкания при смене guid
+  }, [cargoGuid]);
+
+  // Подставить ФИО/телефон из профиля, когда поля ещё пустые (не затираем уже введённое)
+  useEffect(() => {
+    if (cargoGuid) return;
+    if (!userName && !userPhone) return;
+    setInfo(prev => ({
+      ...prev,
+      face: prev.face || userName || '',
+      phone: prev.phone || userPhone || ''
+    }));
+  }, [userName, userPhone, cargoGuid]);
 
   const buildCargo = (): CargoInfo => {
     return {
@@ -113,12 +157,16 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
               <label className={styles.label}>Вес (т)</label>
               <div className={styles.inputWrap}>
                 <input
-                  type="number"
+                  type="text"
                   inputMode="decimal"
                   className={styles.input}
                   placeholder="0"
-                  value={info.weight || ''}
-                  onChange={(e) => setInfo({ ...info, weight: Number(e.target.value) || 0 })}
+                  value={weightDraft}
+                  onChange={(e) => {
+                    const v = normalizeDecimalInput(e.target.value);
+                    setWeightDraft(v);
+                    setInfo({ ...info, weight: parseDecimalDraft(v) });
+                  }}
                 />
               </div>
             </div>
@@ -126,12 +174,16 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
               <label className={styles.label}>Объем (м³)</label>
               <div className={styles.inputWrap}>
                 <input
-                  type="number"
+                  type="text"
                   inputMode="decimal"
                   className={styles.input}
                   placeholder="0"
-                  value={info.volume || ''}
-                  onChange={(e) => setInfo({ ...info, volume: Number(e.target.value) || 0 })}
+                  value={volumeDraft}
+                  onChange={(e) => {
+                    const v = normalizeDecimalInput(e.target.value);
+                    setVolumeDraft(v);
+                    setInfo({ ...info, volume: parseDecimalDraft(v) });
+                  }}
                 />
               </div>
             </div>
@@ -191,20 +243,26 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
             <CityField
               label="Город отправки"
               value={info.address?.city || EMPTY_CARGO.address.city}
-              onChange={(cityData) => setInfo({ 
-                ...info, 
-                address: { 
-                  ...(info.address || EMPTY_CARGO.address),
-                  city: cityData
-                } 
-              })}
-              onFIAS={(fias) => setInfo({ 
-                ...info, 
-                address: { 
-                  ...(info.address || EMPTY_CARGO.address),
-                  fias: fias || info.address?.fias || ''
-                } 
-              })}
+              onChange={(cityData) => {
+                setInfo(prev => ({
+                  ...prev,
+                  address: {
+                    ...(prev.address || EMPTY_CARGO.address),
+                    city: cityData,
+                    fias: cityData.fias || prev.address?.fias || ''
+                  }
+                }));
+              }}
+              onFIAS={(fias) => {
+                setInfo(prev => ({
+                  ...prev,
+                  address: {
+                    ...(prev.address || EMPTY_CARGO.address),
+                    fias: fias || prev.address?.fias || '',
+                    city: prev.address?.city || EMPTY_CARGO.address.city
+                  }
+                }));
+              }}
             />
           </div>
 
@@ -217,17 +275,19 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
                 lat: info.address?.lat ? String(info.address.lat) : '',
                 lon: info.address?.lon ? String(info.address.lon) : ''
               }}
-              onChange={(addressData) => setInfo({ 
-                ...info, 
-                address: { 
-                  ...(info.address || EMPTY_CARGO.address),
-                  address: addressData.address,
-                  fias: addressData.fias || info.address?.fias || '',
-                  lat: addressData.lat ? Number(addressData.lat) : (info.address?.lat || 0),
-                  lon: addressData.lon ? Number(addressData.lon) : (info.address?.lon || 0)
-                } 
-              })}
-              cityFias={info.address?.fias}
+              onChange={(addressData) =>
+                setInfo(prev => ({
+                  ...prev,
+                  address: {
+                    ...(prev.address || EMPTY_CARGO.address),
+                    address: addressData.address,
+                    fias: addressData.fias || prev.address?.fias || '',
+                    lat: addressData.lat ? Number(addressData.lat) : (prev.address?.lat || 0),
+                    lon: addressData.lon ? Number(addressData.lon) : (prev.address?.lon || 0)
+                  }
+                }))
+              }
+              cityFias={info.address?.city?.fias || info.address?.fias}
             />
           </div>
 
@@ -258,20 +318,26 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
             <CityField
               label="Город прибытия"
               value={info.destiny?.city || EMPTY_CARGO.destiny.city}
-              onChange={(cityData) => setInfo({ 
-                ...info, 
-                destiny: { 
-                  ...(info.destiny || EMPTY_CARGO.destiny),
-                  city: cityData
-                } 
-              })}
-              onFIAS={(fias) => setInfo({ 
-                ...info, 
-                destiny: { 
-                  ...(info.destiny || EMPTY_CARGO.destiny),
-                  fias: fias || info.destiny?.fias || ''
-                } 
-              })}
+              onChange={(cityData) => {
+                setInfo(prev => ({
+                  ...prev,
+                  destiny: {
+                    ...(prev.destiny || EMPTY_CARGO.destiny),
+                    city: cityData,
+                    fias: cityData.fias || prev.destiny?.fias || ''
+                  }
+                }));
+              }}
+              onFIAS={(fias) => {
+                setInfo(prev => ({
+                  ...prev,
+                  destiny: {
+                    ...(prev.destiny || EMPTY_CARGO.destiny),
+                    fias: fias || prev.destiny?.fias || '',
+                    city: prev.destiny?.city || EMPTY_CARGO.destiny.city
+                  }
+                }));
+              }}
             />
           </div>
 
@@ -284,17 +350,19 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
                 lat: info.destiny?.lat ? String(info.destiny.lat) : '',
                 lon: info.destiny?.lon ? String(info.destiny.lon) : ''
               }}
-              onChange={(addressData) => setInfo({ 
-                ...info, 
-                destiny: { 
-                  ...(info.destiny || EMPTY_CARGO.destiny),
-                  address: addressData.address,
-                  fias: addressData.fias || info.destiny?.fias || '',
-                  lat: addressData.lat ? Number(addressData.lat) : (info.destiny?.lat || 0),
-                  lon: addressData.lon ? Number(addressData.lon) : (info.destiny?.lon || 0)
-                } 
-              })}
-              cityFias={info.destiny?.fias}
+              onChange={(addressData) =>
+                setInfo(prev => ({
+                  ...prev,
+                  destiny: {
+                    ...(prev.destiny || EMPTY_CARGO.destiny),
+                    address: addressData.address,
+                    fias: addressData.fias || prev.destiny?.fias || '',
+                    lat: addressData.lat ? Number(addressData.lat) : (prev.destiny?.lat || 0),
+                    lon: addressData.lon ? Number(addressData.lon) : (prev.destiny?.lon || 0)
+                  }
+                }))
+              }
+              cityFias={info.destiny?.city?.fias || info.destiny?.fias}
             />
           </div>
 

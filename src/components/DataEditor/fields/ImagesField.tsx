@@ -3,7 +3,7 @@ import React, { useState }                            from "react";
 import { IonButton, IonIcon, IonModal }               from "@ionic/react";
 import { cameraOutline, trashOutline, closeOutline }  from "ionicons/icons";
 import { takePicture }                                from "../../Files";
-import styles                                         from './ImageField.module.css';
+import styles                                         from './ImagesField.module.css';
 
 // TODO: Добавить функцию toTIFF позже
 
@@ -16,6 +16,8 @@ interface ImagesFieldProps {
   error?:       string;
   maxImages?:   number;
   validate?:    boolean;
+  /** Светлый текст и рамка на тёмном/зелёном фоне (Works OfferCard) */
+  light?:       boolean;
 }
 
 export const ImagesField: React.FC<ImagesFieldProps> = ({
@@ -25,7 +27,8 @@ export const ImagesField: React.FC<ImagesFieldProps> = ({
   placeholder = "Добавьте изображения",
   disabled = false,
   error,
-  maxImages = 10
+  maxImages = 10,
+  light = false,
 }) => {
   const [loading, setLoading] = useState(false);
   const [modalImage, setModalImage] = useState<string | undefined>(undefined);
@@ -52,12 +55,14 @@ export const ImagesField: React.FC<ImagesFieldProps> = ({
     onChange(newImages);
   }
 
-  console.log(label, value)
-
   return (
     <div className={styles.field}>
-      <label className={styles.label}>{label}</label>
-      <div className={`${styles.imageWrapper} ${error ? styles.wrapperError : ''}`}>
+      <label className={`${styles.label} ${light ? styles.labelLight : ''}`}>{label}</label>
+      <div
+        className={`${styles.imageWrapper} ${error ? styles.wrapperError : ''} ${
+          light ? styles.imageWrapperLight : ''
+        }`}
+      >
         
         {/* Превью изображений */}
         <div className={styles.imageGrid}>
@@ -87,7 +92,7 @@ export const ImagesField: React.FC<ImagesFieldProps> = ({
         {(!disabled && value.length < maxImages) && (
           <IonButton
             fill="outline"
-            className={styles.addButton}
+            className={`${styles.addButton} ${light ? styles.addButtonLight : ''}`}
             onClick={handleAddPhoto}
             disabled={loading}
           >
@@ -98,7 +103,7 @@ export const ImagesField: React.FC<ImagesFieldProps> = ({
 
         {/* Счетчик изображений */}
         {value.length > 0 && (
-          <div className={styles.counter}>
+          <div className={`${styles.counter} ${light ? styles.counterLight : ''}`}>
             {value.length} из {maxImages}
           </div>
         )}

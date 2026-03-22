@@ -19,6 +19,15 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Вложенный блок согласий (стили строк из ProfileOld Agreements) */
+.agreementsEmbed {
+  margin-top: 0.5em;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fafafa;
+}
+
 .sectionHeader {
   display: flex;
   align-items: center;
@@ -43,6 +52,85 @@
   color: #666;
   margin: 0 0 1em 0;
   line-height: 1.4;
+}
+
+.walletPreview {
+  display: flex;
+  flex-direction: column;
+}
+
+.walletTopUpsHeader {
+  font-size: 0.85em;
+  color: #666;
+  font-weight: 600;
+  margin-top: 0.2em;
+  margin-bottom: 0.6em;
+}
+
+.walletTopUpList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+}
+
+.walletTopUpItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8em;
+  padding: 0.55em 0.6em;
+  border-radius: 10px;
+  background: #f6f8ff;
+  cursor: pointer;
+}
+
+.walletTopUpItem:active {
+  transform: scale(0.99);
+}
+
+.walletTopUpLeft {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+
+.walletTopUpTitle {
+  font-size: 0.85em;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 55vw;
+}
+
+.walletTopUpDate {
+  font-size: 0.75em;
+  color: #999;
+}
+
+.walletTopUpAmount {
+  font-size: 0.85em;
+  color: var(--ion-color-primary, #1976d2);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.walletEmpty {
+  font-size: 0.8em;
+  color: #999;
+  padding: 0.4em 0.2em;
+}
+
+.walletAllLink {
+  margin-top: 0.9em;
+  text-align: center;
+  color: var(--ion-color-primary, #1976d2);
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.4em 0;
 }
 
 .settingsList {

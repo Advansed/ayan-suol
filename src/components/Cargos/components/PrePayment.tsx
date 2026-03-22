@@ -16,8 +16,7 @@ interface PrepaymentPageProps {
 
 export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack }) => {
   const [amount, setAmount]                 = useState<string>(cargo.advance === 0 ? '' : cargo.advance.toString());  
-  const { accountData, set_payment, id,
-    isLoading, set_prepayment, del_prepayment }             = useData( cargo, onBack )
+  const { accountData, isLoading, set_prepayment, del_prepayment } = useData(cargo, onBack)
 
   const hist = useIonRouter()
 
@@ -64,67 +63,75 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack })
 
   return (
     <div className="prepayment-page">
-      
-      <div>
-        <WizardHeader 
-            title   = "Спецсчет"
-            onBack  = { onBack }
-        />
-      </div>
+      <WizardHeader
+        title="Спецсчет"
+        onBack={onBack}
+      />
 
+      <div style={{ paddingLeft: '0.5em', paddingRight: '0.5em' }}>
       <div className="prepayment-form">
         <div className="cargo-info">
           <h3>Информация о перевозке: </h3>
-          <p className='flex fl-space'>
-            <strong>Груз:</strong> 
+          <p className="flex fl-space">
+            <strong>Груз:</strong>
             <div>{cargo.name}</div>
           </p>
-          <p className='flex fl-space'>
-            <strong>Стоимость:</strong> 
+
+          <p className="flex fl-space">
+            <strong>Стоимость:</strong>
             <div>{formatters.currency(cargo.price)} </div>
           </p>
-          <div className='mt-1'>
-            <p className='flex fl-space'>
-              <strong>Баланс:</strong> 
-              <div>{ formatters.currency(accountData?.balance || 0) }</div> 
+
+          <div className="mt-1">
+            <p className="flex fl-space">
+              <strong>Баланс:</strong>
+              <div>{formatters.currency(accountData?.balance || 0)}</div>
             </p>
-            <p className='flex fl-space'>
-              <strong>Аванс:</strong> 
-              <div>{formatters.currency( (parseFloat(amount) || 0)) + ' - (' + ( percent() ).toFixed(2) + '%)' }</div>
+
+            <p className="flex fl-space">
+              <strong>Аванс:</strong>
+              <div>
+                {formatters.currency(parseFloat(amount) || 0)} - ({percent().toFixed(2)}%)
+              </div>
             </p>
-            { ((accountData?.balance || 0) - (parseFloat(amount) || 0)) < 0 && (
+
+            {((accountData?.balance || 0) - (parseFloat(amount) || 0)) < 0 && (
               <>
-                <p className='flex fl-space'>
-                  <strong>К доплате:</strong> 
-                  <div>{ formatters.currency((parseFloat(amount) || 0) - (accountData?.balance || 0))  }</div>
+                <p className="flex fl-space">
+                  <strong>К доплате:</strong>
+                  <div>{formatters.currency((parseFloat(amount) || 0) - (accountData?.balance || 0))}</div>
                 </p>
               </>
             )}
-            { ((accountData?.balance || 0) - (parseFloat(amount) || 0)) >= 0 && (
+
+            {((accountData?.balance || 0) - (parseFloat(amount) || 0)) >= 0 && (
               <>
-                <p className='flex fl-space'>
-                  <strong>Остаток баланса:</strong> 
-                  <div>{ formatters.currency(((accountData?.balance || 0) - parseFloat(amount) || 0))  }</div>
+                <p className="flex fl-space">
+                  <strong>Остаток баланса:</strong>
+                  <div>
+                    {formatters.currency(((accountData?.balance || 0) - parseFloat(amount) || 0))}
+                  </div>
                 </p>
               </>
             )}
-            <p className='flex fl-space'>
-              { percent() === 0 &&(
+
+            <p className="flex fl-space">
+              {percent() === 0 && (
                 <>
                   <div className="circle-3"></div>
-                  <div> { ' ' + ( percent() ).toFixed(2) + '% (Не серьезно)' } </div>
+                  <div>{' ' + percent().toFixed(2) + '% (Не серьезно)'}</div>
                 </>
               )}
-              { percent() > 0 && percent() <  100 && (
+              {percent() > 0 && percent() < 100 && (
                 <>
                   <div className="circle-2"></div>
-                  <div> { ' ' + ( percent() ).toFixed(2) + '% (Сомнительно)' } </div>
+                  <div>{' ' + percent().toFixed(2) + '% (Сомнительно)'}</div>
                 </>
               )}
-              { percent() === 100 && (
+              {percent() === 100 && (
                 <>
                   <div className="circle-1"></div>
-                  <div> { ' ' + ( percent() ).toFixed(2) + '% (Конкретно)' } </div>
+                  <div>{' ' + percent().toFixed(2) + '% (Конкретно)'}</div>
                 </>
               )}
             </p>
@@ -139,53 +146,53 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack })
             value={amount}
             onChange={(e) => {
               let value = parseFloat(e.target.value)
-              if( value > cargo.price ) value = cargo.price
-              setAmount( value.toString() ) }
-            }
+              if (value > cargo.price) value = cargo.price
+              setAmount(value.toString())
+            }}
             min="0"
             max={cargo.price - (cargo.advance || 0)}
             placeholder="Введите сумму"
           />
-          <small>Доступно для оплаты: { cargo.price } ₽</small>
+          <small>Доступно для оплаты: {cargo.price} ₽</small>
         </div>
 
         <div className="actions">
-            { ((accountData?.balance || 0) - (parseFloat(amount) || 0)) < 0 && (
-                <IonButton
-                    expand='block'
-                    onClick={()=>{
-
-                       handlePayment()
-
-                    }}
-                >
-                    { "К оплате " + formatters.currency(-((accountData?.balance || 0) - (parseFloat(amount) || 0))) }
-                </IonButton>
-            )}
-          { ((accountData?.balance || 0) - (parseFloat(amount) || 0)) > 0 && (
-              <button 
-                onClick={handleSubmit} 
-                disabled={isLoading || (parseFloat(amount) || 0 ) <= 0 || (accountData?.balance || 0) < parseFloat(amount) }
-                className="submit-button"
-              >
-                {isLoading ? 'Создание...' : 'Создать предоплату'}
-              </button>
+          {((accountData?.balance || 0) - (parseFloat(amount) || 0)) < 0 && (
+            <IonButton
+              expand="block"
+              onClick={() => {
+                handlePayment()
+              }}
+            >
+              {"К оплате " + formatters.currency(-((accountData?.balance || 0) - (parseFloat(amount) || 0)))}
+            </IonButton>
           )}
-          { cargo.advance !== 0 && (
-              <IonButton 
-                onClick   = { handleDelSubmit } 
-                disabled  = { isLoading || (parseFloat(amount) || 0 ) <= 0 || (accountData?.balance || 0) < parseFloat(amount) }
-                color     = { "danger" }
-              >
-                {isLoading ? 'Удаление...' : 'Удалить предоплату'}
-              </IonButton>
+
+          {((accountData?.balance || 0) - (parseFloat(amount) || 0)) > 0 && (
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading || (parseFloat(amount) || 0) <= 0 || (accountData?.balance || 0) < parseFloat(amount)}
+              className="submit-button"
+            >
+              {isLoading ? 'Создание...' : 'Создать предоплату'}
+            </button>
           )}
-          
+
+          {cargo.advance !== 0 && (
+            <IonButton
+              onClick={handleDelSubmit}
+              disabled={isLoading || (parseFloat(amount) || 0) <= 0 || (accountData?.balance || 0) < parseFloat(amount)}
+              color="danger"
+            >
+              {isLoading ? 'Удаление...' : 'Удалить предоплату'}
+            </IonButton>
+          )}
+
           <button onClick={onBack} className="cancel-button">
-              Отмена
+            Отмена
           </button>
-
         </div>
+      </div>
       </div>
     </div>
   );

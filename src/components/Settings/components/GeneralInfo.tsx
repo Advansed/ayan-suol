@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { IonIcon, IonButton, IonCheckbox } from '@ionic/react';
 import { personOutline, cameraOutline } from 'ionicons/icons';
 import styles from '../../Profile/Profile.module.css';
+import { useAgreements } from '../../ProfileOld/components/Agreements/useAgreements';
+import { useProfile } from '../../Profile/useProfile';
+import { useToast } from '../../Toast';
+import { PersonalDataAgreementModal } from './PersonalDataAgreementModal';
 
 interface GeneralInfoProps {
     image: string | null;
@@ -27,6 +31,14 @@ export const GeneralInfo: React.FC<GeneralInfoProps> = ({
     onImageUpload,
     onSave
 }) => {
+    const { agreements, toggleAgreement, isLoading } = useAgreements();
+    const { setUser: saveProfile } = useProfile();
+    const toast = useToast();
+    const [pdModalOpen, setPdModalOpen] = useState(false);
+    const [consentBusy, setConsentBusy] = useState(false);
+
+    const fieldsLocked = !agreements.personalData || isLoading || consentBusy;
+
     const [formData, setFormData] = useState({
         name: initialName,
         phone: initialPhone,
@@ -51,8 +63,50 @@ export const GeneralInfo: React.FC<GeneralInfoProps> = ({
     };
 
     const handleSave = async () => {
+        if (!agreements.personalData) {
+            toast.info('Сначала нужно принять согласие на обработку персональных данных');
+            return;
+        }
         await onSave(formData);
     };
+
+    const anonymizedPayload = {
+        name: '',
+        phone: '',
+        email: '',
+        image: ''
+    };
+
+    const handlePersonalDataCheckbox = async (checked: boolean) => {
+        if (checked === agreements.personalData || isLoading || consentBusy) return;
+
+        if (!checked && agreements.personalData) {
+            setConsentBusy(true);
+            try {
+                const ok = await saveProfile(anonymizedPayload);
+                if (!ok) {
+                    toast.error('Не удалось удалить персональные данные на сервере');
+                    return;
+                }
+                setFormData((prev) => ({
+                    ...prev,
+                    name: '',
+                    phone: '',
+                    email: '',
+                    additionalPhone: '',
+                    phoneOnlyForRegistration: false,
+                    displayAdditionalAsPrimary: false
+                }));
+                toggleAgreement('personalData');
+            } finally {
+                setConsentBusy(false);
+            }
+            return;
+        }
+
+        toggleAgreement('personalData');
+    };
+
     return (
         <div className={styles.card}>
             <h3 className={styles.cardTitle}>Общие сведения</h3>
@@ -81,7 +135,11 @@ export const GeneralInfo: React.FC<GeneralInfoProps> = ({
                     <IonButton
                         color="primary"
                         className={styles.uploadButton}
-                        onClick={() => document.getElementById('photo-upload')?.click()}
+                        disabled={fieldsLocked}
+                        onClick={() => {
+                            if (fieldsLocked) return;
+                            document.getElementById('photo-upload')?.click();
+                        }}
                     >
                         <IonIcon icon={cameraOutline} slot="start" />
                         Загрузить фото
@@ -100,6 +158,7 @@ export const GeneralInfo: React.FC<GeneralInfoProps> = ({
                         type="text"
                         className={styles.input}
                         value={formData.name}
+                        disabled={fieldsLocked}
                         onChange={(e) => handleInputChange('name', e.target.value)}
                         placeholder="Введите имя"
                     />
@@ -111,12 +170,14 @@ export const GeneralInfo: React.FC<GeneralInfoProps> = ({
                         type="tel"
                         className={styles.input}
                         value={formData.phone}
+                        disabled={fieldsLocked}
                         onChange={(e) => handleInputChange('phone', e.target.value)}
                         placeholder="+ 123 456 789"
                     />
                     <div className={styles.checkboxWrapper}>
                         <IonCheckbox
                             checked={formData.phoneOnlyForRegistration}
+                            disabled={fieldsLocked}
                             onIonChange={(e) => handleInputChange('phoneOnlyForRegistration', e.detail.checked)}
                         />
                         <label className={styles.checkboxLabel}>
@@ -134,6 +195,7 @@ export const GeneralInfo: React.FC<GeneralInfoProps> = ({
                         type="email"
                         className={styles.input}
                         value={formData.email}
+                        disabled={fieldsLocked}
                         onChange={(e) => handleInputChange('email', e.target.value)}
                         placeholder="example@email.com"
                     />
@@ -145,12 +207,14 @@ export const GeneralInfo: React.FC<GeneralInfoProps> = ({
                         type="tel"
                         className={styles.input}
                         value={formData.additionalPhone}
+                        disabled={fieldsLocked}
                         onChange={(e) => handleInputChange('additionalPhone', e.target.value)}
                         placeholder="+ 123 456 789"
                     />
                     <div className={styles.checkboxWrapper}>
                         <IonCheckbox
                             checked={formData.displayAdditionalAsPrimary}
+                            disabled={fieldsLocked}
                             onIonChange={(e) => handleInputChange('displayAdditionalAsPrimary', e.detail.checked)}
                         />
                         <label className={styles.checkboxLabel}>
@@ -163,10 +227,35 @@ export const GeneralInfo: React.FC<GeneralInfoProps> = ({
                 </div>
             </div>
 
+            <div className={`${styles.field} ${styles.consentBlock}`}>
+                <div className={styles.checkboxWrapper}>
+                    <IonCheckbox
+                        checked={agreements.personalData}
+                        disabled={isLoading || consentBusy}
+                        onIonChange={(e) => void handlePersonalDataCheckbox(e.detail.checked)}
+                    />
+                    <div className={styles.consentCheckboxText}>
+                        <span className={styles.checkboxLabel}>
+                            Я согласен(на) на обработку персональных данных
+                        </span>
+                        <button
+                            type="button"
+                            className={styles.consentTextLink}
+                            onClick={() => setPdModalOpen(true)}
+                        >
+                            Текст согласия
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <PersonalDataAgreementModal isOpen={pdModalOpen} onClose={() => setPdModalOpen(false)} />
+
             <div style={{ marginTop: '1em' }}>
                 <IonButton
                     color="primary"
                     onClick={handleSave}
+                    disabled={isLoading || consentBusy || !agreements.personalData}
                     style={{ width: '100%' }}
                 >
                     Сохранить общие сведения

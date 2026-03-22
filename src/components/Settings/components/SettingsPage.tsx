@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { IonIcon, IonToggle, IonButton } from '@ionic/react';
 import {
   personOutline,
-  phonePortraitOutline,
+  businessOutline,
+  carOutline,
   checkmarkCircleOutline,
   walletOutline,
   documentTextOutline,
-  moonOutline,
-  languageOutline,
-  powerOutline,
   notificationsOutline,
   volumeHighOutline,
   phonePortrait,
@@ -23,20 +21,39 @@ import { useLogin } from '../../../Store/useLogin';
 import { useProfile } from '../../Profile/useProfile';
 import { useHistory } from 'react-router-dom';
 import styles from '../Settings.module.css';
+import { SettingsAgreementsSection } from './SettingsAgreementsSection';
+import { useWallet } from '../hooks/useWallet';
 
 export interface SettingsPageProps {
   onProfileClick?: () => void;
+  onOrganizationClick?: () => void;
+  onTransportClick?: () => void;
+  onWalletClick?: () => void;
   onToggleClick?: () => void;
   onBack?: () => void;
 }
 
-export const SettingsPage: React.FC<SettingsPageProps> = ({ onProfileClick, onToggleClick, onBack }) => {
+export const SettingsPage: React.FC<SettingsPageProps> = ({
+  onProfileClick,
+  onOrganizationClick,
+  onTransportClick,
+  onWalletClick,
+  onToggleClick,
+  onBack
+}) => {
   const { user, logout } = useLogin();
-  const { user_type } = useProfile();
+  const { user_type, companyData, transportData } = useProfile();
   const history = useHistory();
 
-  const [darkMode, setDarkMode] = useState(false);
-  const [keepScreenOn, setKeepScreenOn] = useState(false);
+  const { accountData, isLoading: accountLoading, transactions, load } = useWallet();
+
+  const loadedRef = useRef(false);
+  useEffect(() => {
+    if (loadedRef.current) return;
+    loadedRef.current = true;
+    load();
+  }, [load]);
+
   const [pushNotifications, setPushNotifications] = useState(true);
   const [sound, setSound] = useState(true);
   const [vibration, setVibration] = useState(true);
@@ -55,19 +72,68 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onProfileClick, onTo
   };
 
   const handleToggle = () => {
-    console.log( 'handleTogglewClick', onProfileClick )
     if (onToggleClick) {
       onToggleClick();
-    } 
+    }
   };
+
   const handleProfileClick = () => {
-    console.log( 'handleProfileClick', onProfileClick )
     if (onProfileClick) {
       onProfileClick();
     } else {
       history.push('/cabinet');
     }
   };
+
+  const handleOrganizationClick = () => {
+    if (onOrganizationClick) {
+      onOrganizationClick();
+    }
+  };
+
+  const handleTransportClick = () => {
+    if (onTransportClick) {
+      onTransportClick();
+    }
+  };
+
+  const handleWalletClick = () => {
+    if (onWalletClick) onWalletClick();
+  };
+
+  const profileSubtext =
+    [user.name?.trim(), user.email?.trim()].filter(Boolean).join(' · ') || '—';
+
+  const organizationSubtext =
+    companyData?.name?.trim() ||
+    companyData?.inn ||
+    'Указать реквизиты';
+
+  const transportSubtext = transportData
+    ? [transportData.license_plate || transportData.number, transportData.transport_type || transportData.type]
+        .filter(Boolean)
+        .join(' · ') || 'Транспорт'
+    : 'Добавить транспорт';
+
+  const balanceText = useMemo(() => {
+    if (!accountData) return '—';
+    if (accountLoading) return 'Загрузка...';
+    try {
+      return accountData.balance.toLocaleString('ru-RU', {
+        style: 'currency',
+        currency: accountData.currency || 'RUB',
+        maximumFractionDigits: 0
+      });
+    } catch {
+      return `${accountData.balance} ${accountData.currency || 'RUB'}`;
+    }
+  }, [accountData, accountLoading]);
+
+  const transactionsText = useMemo(() => {
+    if (!transactions) return '—';
+    if (transactions.length === 0) return 'Пока нет транзакций';
+    return `${transactions.length} операций`;
+  }, [transactions]);
 
   return (
     <div className={styles.settingsContainer}>
@@ -86,19 +152,30 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onProfileClick, onTo
               <IonIcon icon={personCircleOutline} className={styles.settingIcon} color="primary" />
               <div className={styles.settingContent}>
                 <span className={styles.settingLabel}>Профиль</span>
-                <span className={styles.settingSubtext}>{user.phone || '+123 456 789'}</span>
+                <span className={styles.settingSubtext}>{profileSubtext}</span>
               </div>
               <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
             </div>
 
-            <div className={styles.settingItem}>
-              <IonIcon icon={phonePortraitOutline} className={styles.settingIcon} color="primary" />
+            <div className={styles.settingItem} onClick={handleOrganizationClick}>
+              <IonIcon icon={businessOutline} className={styles.settingIcon} color="primary" />
               <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Номер телефона</span>
-                <span className={styles.settingSubtext}>{user.phone || '+123 456 789'}</span>
+                <span className={styles.settingLabel}>Организация</span>
+                <span className={styles.settingSubtext}>{organizationSubtext}</span>
               </div>
               <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
             </div>
+
+            {user_type === 2 && (
+              <div className={styles.settingItem} onClick={handleTransportClick}>
+                <IonIcon icon={carOutline} className={styles.settingIcon} color="primary" />
+                <div className={styles.settingContent}>
+                  <span className={styles.settingLabel}>Транспорт</span>
+                  <span className={styles.settingSubtext}>{transportSubtext}</span>
+                </div>
+                <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
+              </div>
+            )}
 
             <div className={styles.settingItem}>
               <IonIcon icon={checkmarkCircleOutline} className={styles.settingIconVerified} />
@@ -150,64 +227,38 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onProfileClick, onTo
             <IonIcon icon={walletOutline} className={styles.sectionIcon} />
             <h3 className={styles.sectionTitle}>Мой кошелёк</h3>
           </div>
+
           <div className={styles.settingsList}>
-            <div className={styles.settingItem}>
+            <div className={styles.settingItem} onClick={handleWalletClick}>
               <IonIcon icon={walletOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
                 <span className={styles.settingLabel}>Баланс счёта</span>
-                <span className={styles.settingSubtext}>125 450 ₽</span>
+                <span className={styles.settingSubtext}>{balanceText}</span>
               </div>
               <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
             </div>
-            <div className={styles.settingItem}>
+
+            <div className={styles.settingItem} onClick={handleWalletClick}>
               <IonIcon icon={documentTextOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
                 <span className={styles.settingLabel}>История транзакций</span>
+                <span className={styles.settingSubtext}>{transactionsText}</span>
               </div>
               <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
             </div>
           </div>
         </div>
 
-        {/* Секция: Внешний вид */}
+        {/* Секция: пользовательское соглашение и маркетинг (ProfileOld Agreements) */}
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
-            <IonIcon icon={moonOutline} className={styles.sectionIcon} />
-            <h3 className={styles.sectionTitle}>Внешний вид</h3>
+            <IonIcon icon={documentTextOutline} className={styles.sectionIcon} />
+            <h3 className={styles.sectionTitle}>Согласия</h3>
           </div>
-          <div className={styles.settingsList}>
-            <div className={styles.settingItem}>
-              <IonIcon icon={moonOutline} className={styles.settingIcon} />
-              <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Тёмный режим</span>
-                <span className={styles.settingSubtext}>Тёмная тема интерфейса</span>
-              </div>
-              <IonToggle
-                checked={darkMode}
-                onIonChange={(e) => setDarkMode(e.detail.checked)}
-                className={styles.toggle}
-              />
-            </div>
-            <div className={styles.settingItem}>
-              <IonIcon icon={languageOutline} className={styles.settingIcon} />
-              <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Язык</span>
-              </div>
-              <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
-            </div>
-            <div className={styles.settingItem}>
-              <IonIcon icon={powerOutline} className={styles.settingIcon} />
-              <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Не выключать экран</span>
-                <span className={styles.settingSubtext}>Экран всегда активен в приложении</span>
-              </div>
-              <IonToggle
-                checked={keepScreenOn}
-                onIonChange={(e) => setKeepScreenOn(e.detail.checked)}
-                className={styles.toggle}
-              />
-            </div>
-          </div>
+          <p className={styles.sectionDescription}>
+            Пользовательское соглашение, документы к нему и согласие на рекламные рассылки
+          </p>
+          <SettingsAgreementsSection />
         </div>
 
         {/* Секция: Уведомления */}

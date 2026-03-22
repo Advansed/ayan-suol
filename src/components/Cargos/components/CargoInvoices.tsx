@@ -5,13 +5,9 @@ import { IonButton, IonCard, IonIcon }  from '@ionic/react';
 import { DriverCard }                   from './DriverCard';
 import { useInvoices }                  from '../hooks/useInvoices';
 import { chatboxEllipsesOutline }       from 'ionicons/icons';
-import { CargoPage1, SaveData }         from './CargoPage1';
-import { CargoPage2 }                   from './CargoPage2';
 import { useSocket }                    from '../../../Store/useSocket';
 import { useToken }                     from '../../../Store/loginStore';
 import { useChats }                     from '../../../Store/useChats';
-import { CargoPage3, SaveData3 }        from './CargoPage3';
-import { CargoPage4, SaveData4 }        from './CargoPage4';
 
 interface CargoInvoiceProps {
     cargo:           CargoInfo;
@@ -20,15 +16,9 @@ interface CargoInvoiceProps {
     onSign?:         (invoice: DriverInfo, signature: string) => void | Promise<void>;
 }
 
-interface Route1 {
-    type:   string;
-    info:   DriverInfo | undefined;
-}
-
 export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpenAgreement, onSign }) => {
     const { invoices, isLoading, contract, handleAccept,  handleReject, handleChat
-        , get_contract, setContract, create_contract } = useInvoices({ info: cargo })
-    const [ page, setPage ] = useState<Route1>({ type: 'main', info: undefined })
+        , get_contract, setContract, create_contract, handleComplete } = useInvoices({ info: cargo })
     const { emit } = useSocket()
     const token = useToken()
     const { sendImage } = useChats()
@@ -93,8 +83,6 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpe
         const contractData = await get_contract(invoice);
         if (onOpenAgreement && contractData) {
             onOpenAgreement(invoice, contractData);
-        } else {
-            setPage({ type: "page4", info: invoice });
         }
     };
 
@@ -123,7 +111,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpe
                 
                 {invoices.map((invoice, index) => (
 
-                    <IonCard className='ml-05 mr-05 mt-05 pt-05 pl-05 pr-05 pb-05'
+                    <IonCard className="cargo-driver-card mt-05 ml-05 mr-05"
                         key = { index }
                     >
                         <DriverCard
@@ -132,6 +120,12 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpe
                             onAccept            = { handleClick }
                             onChat              = { handleChat  }
                             onStartLoading      = { (info) => handleAccept(info, 14) }
+                            onSend              = { (info) => handleAccept(info, 16) }
+                            onStartUnloading    = { (info) => AcceptClick(info, { sealPhotos: [] }, 18) }
+                            onComplete          = { (info, rating, completed) => {
+                                handleComplete(info, rating, { delivered: completed, documents: completed });
+                                AcceptClick(info, {}, 20);
+                            }}
                         />
                         
                         {/* { renderButtons( invoice ) } */}
@@ -271,17 +265,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpe
 
                         </div>
 
-                        <div>
-                            <IonButton
-                                className   = "w-100"
-                                mode        = "ios"
-                                color       = "primary"
-                                onClick     = { () => setPage({ type: "page1", info: invoice }) }
-                                disabled    = { isLoading }
-                            >
-                                <span className="ml-1 fs-1">Отправить транспорт</span>
-                            </IonButton>
-                        </div>
+                        {/* Кнопка "Отправить транспорт" больше не нужна — заменена на карточку DriverCard */}
                     </div>
                 );
 
@@ -302,18 +286,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpe
                             </IonButton>
 
                         </div>
-                        <div className='flex mt-1'>
-
-                            <IonButton
-                                className   = "w-100"
-                                mode        = "ios"
-                                color       = "primary"
-                                onClick     = { () => setPage({ type: "page2", info: invoice }) }
-                                disabled    = { isLoading }
-                            >
-                                <span className="ml-1">Начать разгрузку</span>
-                            </IonButton>
-                        </div>
+                        {/* Кнопка "Начать разгрузку" больше не нужна — заменена на карточку DriverCard */}
                     </div>
                 );
 
@@ -335,17 +308,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpe
 
            
                         </div>
-                        <div>
-                            <IonButton
-                                className   = "w-100 mt-1"
-                                mode        = "ios"
-                                color       = "primary"
-                                onClick     = { () => setPage({ type: "page3", info: invoice }) }
-                                disabled    = { isLoading }
-                            >
-                                <span className="ml-1 fs-08">Завершить</span>
-                            </IonButton>
-                        </div>
+                        {/* Кнопка "Завершить" больше не нужна — заменена на карточку DriverCard */}
                     </div>
                 );
 
@@ -354,92 +317,15 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({ cargo, onBack, onOpe
         }
     };
 
-    const render                = () =>{
-        return (
-            <>
-                <WizardHeader 
-                    title   = "Заявки "
-                    pages   = { cargo && cargo.name || '' }
-                    onBack  = { onBack }
-                />
-
-
-                { renderInvoiceSection( invoices) }
-
-            </>
-        )
-    }
-
-    const renderPage1           = ( invoice: DriverInfo ) => {
-        return (
-            <>
-                <CargoPage1 
-                    info    = { invoice }
-                    onBack  = { () => { setPage({type: "main", info: undefined})}}
-                    onSave  = { (data: SaveData) => { return AcceptClick( invoice, data, 16 ) }}
-                />
-            </> 
-        )
-    }
-
-    const renderPage2           = ( invoice: DriverInfo ) => {
-        return (
-            <>
-                <CargoPage2
-                    info    = { invoice }
-                    onBack  = { () => { setPage({type: "main", info: undefined})}}
-                    onSave  = { (data: SaveData) => { return AcceptClick( invoice, data, 18 ) }}
-                />
-            </> 
-        )
-    }
-
-    const renderPage3           = ( invoice: DriverInfo ) => {
-        return (
-            <>
-                <CargoPage3
-                    info    = { invoice }
-                    onBack  = { () => { setPage({type: "main", info: undefined})}}
-                    onSave  = { (data: SaveData3) => { return AcceptClick( invoice, data, 20 ) }}
-                />
-            </> 
-        )
-    }
-
-    const renderPage4           = ( invoice: DriverInfo ) => {
-        return (
-            <>
-                <CargoPage4
-                    info        = { invoice }
-                    contract    = { contract }
-                    cargo       = { cargo }
-                    onBack      = { () => { setPage({type: "main", info: undefined})}}
-                    onSave      = { (data: SaveData4) => { 
-                        console.log('sign', data)
-                        create_contract( invoice, data.sign )
-                        return AcceptClick( invoice, data, 12 ) 
-                    }}
-                />
-            </> 
-        )
-    }
-
     return (
         <>
-        {
-            page.type === 'main'
-                ? render()
-            : page.type === 'page1' 
-                ? page.info && renderPage1( page.info )
-            : page.type === 'page2' 
-                ? page.info && renderPage2( page.info )
-            : page.type === 'page3' 
-                ? page.info && renderPage3( page.info )
-            : page.type === 'page4' 
-                ? page.info && renderPage4( page.info )
-            : <></>
-        }
-         
-      </>
+            <WizardHeader 
+                title   = "Заявки "
+                pages   = { cargo && cargo.name || '' }
+                onBack  = { onBack }
+            />
+
+            { renderInvoiceSection( invoices) }
+        </>
     );
 };

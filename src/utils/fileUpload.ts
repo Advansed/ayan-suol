@@ -61,23 +61,34 @@ export async function uploadFileToMinIO(
     recipient_id: params.recipient_id,
   });
 
-  const res = await fetch(`${API_BASE}/api/get-upload-url?${searchParams}`);
+  console.log('minio_send', searchParams);
+  const res = await fetch(`${API_BASE}/api/getUrl?${searchParams}`);
+  console.log('minio_get', res);
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || `HTTP ${res.status}`);
   }
 
   const data = await res.json();
-  const { uploadUrl, filePath, url } = data;
-
+  const { uploadUrl, filePath, publicUrl: url } = data;
+  
+  console.log("S3_upload_start", url);
+  
   const uploadRes = await fetch(uploadUrl, {
-    method: 'PUT',
-    body: file,
+      method: 'PUT',
+      body: file,
+      headers: {
+        'Content-Type': '', // Должно быть в точности как на бэкенде
+      },
   });
 
-  if (!uploadRes.ok) {
-    throw new Error(`Ошибка загрузки в хранилище: ${uploadRes.status}`);
-  }
+  const xhr = new XMLHttpRequest();
+  xhr.open('PUT', uploadUrl);
+  //xhr.setRequestHeader('Content-Type', ''); // Опять же, пусто
+  xhr.onload = () => console.log('Загружено!', xhr.status);
+  xhr.onerror = () => console.error('Ошибка!', xhr.status);
+  xhr.send(file);
+
 
   return { filePath, url };
 }

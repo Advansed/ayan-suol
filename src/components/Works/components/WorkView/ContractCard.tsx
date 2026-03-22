@@ -3,6 +3,7 @@ import { IonButton, IonIcon } from '@ionic/react';
 import { checkmarkCircleOutline, documentTextOutline, shieldCheckmarkOutline } from 'ionicons/icons';
 import { WorkInfo } from '../../types';
 import styles from './OfferCard.module.css';
+import { FitTextLine } from './FitTextLine';
 
 interface ContractCardProps {
     work: WorkInfo;
@@ -19,7 +20,6 @@ export const ContractCard: React.FC<ContractCardProps> = ({ work, onSignContract
 
     return (
         <div className={styles.offerCard}>
-            {/* Card 1: Notification */}
             <div className={styles.notificationCard}>
                 <div className={styles.notificationHeader}>
                     <div className={styles.notificationTitleRow}>
@@ -34,31 +34,29 @@ export const ContractCard: React.FC<ContractCardProps> = ({ work, onSignContract
                 </div>
             </div>
 
-            {/* Card 2: Details */}
             <div className={styles.detailsCard}>
                 <div className={styles.infoRow}>
                     <div className={styles.infoField}>
                         <label className={styles.label}>Вес (т)</label>
-                        <div className={styles.value}>
+                        <FitTextLine className={styles.value}>
                             {weight.toFixed(1)} тонн
-                        </div>
+                        </FitTextLine>
                     </div>
                     <div className={styles.infoField}>
                         <label className={styles.label}>Объем (м³)</label>
-                        <div className={styles.value}>
+                        <FitTextLine className={styles.value}>
                             {volume.toFixed(1)} м³
-                        </div>
+                        </FitTextLine>
                     </div>
                     <div className={styles.infoField}>
                         <label className={styles.label}>Цена (₽)</label>
-                        <div className={styles.value}>
+                        <FitTextLine className={styles.value}>
                             {formatPrice(price)} (₽)
-                        </div>
+                        </FitTextLine>
                     </div>
                 </div>
             </div>
 
-            {/* Card 3: Secure Payment */}
             <div className={styles.secureCard}>
                 <IonIcon icon={shieldCheckmarkOutline} className={styles.secureIcon} />
                 <h3 className={styles.secureTitle}>Безопасная оплата через платформу</h3>
@@ -67,7 +65,6 @@ export const ContractCard: React.FC<ContractCardProps> = ({ work, onSignContract
                 </p>
             </div>
 
-            {/* Action Button */}
             <div className={styles.actions}>
                 <IonButton
                     className={styles.submitButton}
@@ -81,3 +78,4 @@ export const ContractCard: React.FC<ContractCardProps> = ({ work, onSignContract
         </div>
     );
 };
+

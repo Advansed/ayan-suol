@@ -48,7 +48,6 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
         return price.toLocaleString('ru-RU').replace(/,/g, ' ');
     };
 
-    // Устанавливаем транспорт из store при монтировании
     useEffect(() => {
         if (transport?.guid) {
             setFormData(prev => ({ ...prev, transport: transport.guid }));
@@ -93,7 +92,6 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
 
     return (
         <div className={styles.offerCard}>
-            {/* Card 1: Notification */}
             <div className={styles.notificationCard}>
                 <div className={styles.notificationHeader}>
                     <div className={styles.notificationTitleRow}>
@@ -111,7 +109,6 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
                 </div>
             </div>
 
-            {/* Card 2: Form Details */}
             <div className={styles.detailsCard}>
                 <div className={styles.infoRow}>
                     <div className={styles.infoField}>
@@ -148,7 +145,6 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
                     </div>
                 </div>
 
-                {/* Transport from store */}
                 <div className={styles.transportField}>
                     <label className={styles.label}>Транспорт</label>
                     {transport ? (
@@ -164,7 +160,6 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
                 </div>
             </div>
 
-            {/* Card 3: Secure Payment */}
             <div className={styles.secureCard}>
                 <IonIcon icon={shieldCheckmarkOutline} className={styles.secureIcon} />
                 <h3 className={styles.secureTitle}>Безопасная оплата через платформу</h3>
@@ -175,9 +170,9 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
 
             {error && <div className={styles.error}>{error}</div>}
 
-            {/* Submit Button */}
             <div className={styles.actions}>
                 <IonButton
+                    fill={isOffered ? 'outline' : 'solid'}
                     className={isOffered ? styles.cancelButton : styles.submitButton}
                     expand="block"
                     onClick={handleSubmit}
@@ -189,3 +184,4 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
         </div>
     );
 };
+

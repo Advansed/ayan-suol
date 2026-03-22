@@ -6,10 +6,10 @@ import React, { useEffect, useCallback } from 'react';
 import { WorkInfo, OfferInfo, WorkStatus } from './types';
 import { WorksList, WorkView } from './components';
 import { WorkMap } from './components/WorkMap';
-import { Agreement } from './components/Offer/Agreement';
+import { Agreement } from './components/WorkView/index';
 import { useWorks } from './useWorks';
 import { useWorkNavigation } from './hooks/useNavigation';
-import { workActions } from './workStore';
+import { workActions, workGetters } from './workStore';
 import { SaveData, WorkPage1 } from './components/WorkPage1';
 import { useSocket } from '../../Store/useSocket';
 import { useToken } from '../../Store/loginStore';
@@ -27,14 +27,15 @@ export const Works: React.FC = () => {
 
     const { currentPage, navigateTo, goBack } = useWorkNavigation();
 
-    // Обновляем currentPage.work при обновлении списка works
+    // Обновляем currentPage.work при обновлении списка works (статус, подпись и т.д.)
     useEffect(() => {
-        console.log("workView", currentPage)
         if (currentPage.type === 'view') {
-            console.log("work_View", currentPage.work)
             const updatedWork = works.find(w => w.cargo === currentPage.work.cargo);
-            console.log("work_View", updatedWork)
-            if (updatedWork && updatedWork.status !== currentPage.work.status) {
+            if (
+                updatedWork &&
+                (updatedWork.status !== currentPage.work.status ||
+                    Boolean(updatedWork.signed) !== Boolean(currentPage.work.signed))
+            ) {
                 workActions.setCurrentPage({ type: 'view', work: updatedWork });
             }
         }
@@ -111,10 +112,10 @@ export const Works: React.FC = () => {
     const handleLoaded = async (work: WorkInfo, data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }) => {
         try {
             for (const image of data.cargoPhotos) {
-                await sendImage(work.recipient, work.cargo, image);
+                await sendImage(work.recipient, work.cargo, image, 16);
             }
             for (const image of data.sealPhotos) {
-                await sendImage(work.recipient, work.cargo, image);
+                await sendImage(work.recipient, work.cargo, image, 16);
             }
             emit("send_message", {
                 token,
@@ -122,7 +123,7 @@ export const Works: React.FC = () => {
                 cargo: work.cargo,
                 message: "Груз загружен и опломбирован, фото приложено",
             });
-           // await setStatus(work);
+            await setStatus(work);
             await refreshWorks();
         } catch (err) {
             console.error("handleLoaded error:", err);
@@ -130,35 +131,83 @@ export const Works: React.FC = () => {
         }
     };
 
-    const handleStatusClick = (work: WorkInfo) => {
-
-        if (work.status === WorkStatus.TO_LOAD) {
-            setStatus(work);
+    const handleArrivedAtLoad = async (work: WorkInfo, data: { bodyPhotos: string[] }) => {
+        try {
+            for (const image of data.bodyPhotos) {
+                await sendImage(work.recipient, work.cargo, image, 14);
+            }
             emit("send_message", {
-                token: token,
+                token,
                 recipient: work.recipient,
                 cargo: work.cargo,
-                message: "Транспорт прибыл на точку погрузки"
+                message: "Транспорт прибыл на точку погрузки, фото кузова приложено",
             });
-        } else if (work.status === WorkStatus.IN_WORK) {
-            setStatus(work);
-            emit("send_message", {
-                token: token,
-                recipient: work.recipient,
-                cargo: work.cargo,
-                message: "Транспорт прибыл на точку разгрузки"
-            });
-        } else if (work.status === WorkStatus.UNLOADING) {
-            setStatus(work);
-            emit("send_message", {
-                token: token,
-                recipient: work.recipient,
-                cargo: work.cargo,
-                message: "Транспорт разгружен"
-            });
-        } else {
-            setStatus(work);
+            await setStatus(work);
+            await refreshWorks();
+        } catch (err) {
+            console.error("handleArrivedAtLoad error:", err);
+            throw err;
         }
+    };
+
+    const handleArrivedUnload = async (
+        work: WorkInfo,
+        data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }
+    ) => {
+        try {
+            for (const image of data.cargoPhotos) {
+                const ok = await sendImage(work.recipient, work.cargo, image, 18);
+                if (!ok) throw new Error('Не удалось отправить фото груза');
+            }
+            for (const image of data.sealPhotos) {
+                const ok = await sendImage(work.recipient, work.cargo, image, 18);
+                if (!ok) throw new Error('Не удалось отправить фото пломбы');
+            }
+            emit("send_message", {
+                token,
+                recipient: work.recipient,
+                cargo: work.cargo,
+                message:
+                    "Транспорт прибыл на точку разгрузки, груз и пломба в порядке, фото приложено",
+            });
+            // Сервер ожидает сначала «На месте выгрузки» (17), затем «Разгружается» (18)
+            const okArrived = await setStatus(work);
+            if (!okArrived) throw new Error('Не удалось подтвердить прибытие на выгрузку');
+            const okUnloading = await setStatus({
+                ...work,
+                status: WorkStatus.TO_UNLOAD,
+            });
+            if (!okUnloading) throw new Error('Не удалось начать этап разгрузки');
+            await refreshWorks();
+        } catch (err) {
+            console.error("handleArrivedUnload error:", err);
+            throw err;
+        }
+    };
+
+    const handleUnloadComplete = async (work: WorkInfo, data: { bodyPhotos: string[] }) => {
+        try {
+            for (const image of data.bodyPhotos) {
+                const ok = await sendImage(work.recipient, work.cargo, image, 20);
+                if (!ok) throw new Error('Не удалось отправить фото кузова');
+            }
+            emit("send_message", {
+                token,
+                recipient: work.recipient,
+                cargo: work.cargo,
+                message: "Транспорт разгружен, фото кузова после разгрузки приложено",
+            });
+            const ok = await setStatus(work);
+            if (!ok) throw new Error('Не удалось обновить статус');
+            await refreshWorks();
+        } catch (err) {
+            console.error("handleUnloadComplete error:", err);
+            throw err;
+        }
+    };
+
+    const handleStatusClick = (work: WorkInfo) => {
+        setStatus(work);
     };
 
     const handleMapClick = (work: WorkInfo) => {
@@ -175,10 +224,14 @@ export const Works: React.FC = () => {
 
     const handleAgreementSign = useCallback(async (signature: string, _offer: OfferInfo) => {
         if (currentPage.type !== 'agreement') return false;
-        await set_contract(currentPage.work, signature);
-        goBack();
+        const ok = await set_contract(currentPage.work, signature);
+        if (!ok) return false;
+        const work =
+            workGetters.getWork(currentPage.work.guid) ?? { ...currentPage.work, signed: true };
+        workActions.setCurrentPage({ type: 'view', work });
+        void refreshWorks();
         return true;
-    }, [currentPage, set_contract, goBack]);
+    }, [currentPage, set_contract, refreshWorks]);
 
     const handleSavePage1 = async (data: SaveData) => {
         if (currentPage.type === "page1") {
@@ -233,6 +286,9 @@ export const Works: React.FC = () => {
                         onOfferCancelClick={handleOfferCancelClick}
                         onStatusClick={handleStatusClick}
                         onLoaded={handleLoaded}
+                        onArrivedAtLoad={handleArrivedAtLoad}
+                        onArrivedUnload={handleArrivedUnload}
+                        onUnloadComplete={handleUnloadComplete}
                         onMapClick={handleMapClick}
                         onSignContract={handleSignContract}
                     />

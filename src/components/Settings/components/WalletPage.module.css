@@ -1,0 +1,215 @@
+.balanceValue {
+  font-size: 1.4em;
+  font-weight: 700;
+  margin: 0.15em 0 0.25em 0;
+}
+
+.topUpSection {
+  padding-top: 0.85em;
+  padding-bottom: 0.85em;
+}
+
+.topUpSectionHeader {
+  margin-bottom: 0.45em !important;
+}
+
+.topUpForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+
+.amountRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.fieldLabel {
+  font-size: 0.8em;
+  color: #666;
+  font-weight: 600;
+  flex-shrink: 0;
+  min-width: 3.2em;
+}
+
+.amountInput {
+  flex: 1;
+  --padding-start: 0.55em;
+  --padding-end: 0.55em;
+  min-height: 2.25em;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95em;
+}
+
+.payButtonsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+  margin-top: 0.15em;
+}
+
+.payBtn {
+  flex: 1 1 calc(33.33% - 0.35em);
+  min-width: 5.5rem;
+  margin: 0;
+  --padding-top: 0.45em;
+  --padding-bottom: 0.45em;
+  font-size: 0.78em;
+  font-weight: 600;
+}
+
+.hintTextCompact {
+  font-size: 0.7em;
+  color: #aaa;
+  margin: 0.15em 0 0 0;
+  line-height: 1.25;
+}
+
+.loadingWrap {
+  display: flex;
+  justify-content: center;
+  padding: 1em 0;
+}
+
+.txList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55em;
+}
+
+.txItem {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35em;
+  padding: 0.65em 0.7em;
+  border-radius: 10px;
+  background: #f6f8ff;
+}
+
+.txItemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55em;
+  width: 100%;
+  min-width: 0;
+}
+
+.txItemInvClickable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(25, 118, 210, 0.12);
+}
+
+.txItemInvClickable:active {
+  opacity: 0.92;
+}
+
+.txItemInvClickable:focus-visible {
+  outline: 2px solid var(--ion-color-primary, #1976d2);
+  outline-offset: 2px;
+}
+
+.txIconWrap {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.txTypeIcon {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.txIconIncome {
+  color: #2e7d32;
+}
+
+.txIconExpense {
+  color: #c62828;
+}
+
+.txIconInv {
+  color: var(--ion-color-primary, #1976d2);
+}
+
+.txIconPending {
+  color: #ef6c00;
+}
+
+.txIconNeutral {
+  color: #757575;
+}
+
+.txRight {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.txRowSpinner {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.txInvoiceHint {
+  font-size: 0.68em;
+  color: #999;
+  text-align: left;
+  margin: 0;
+  padding: 0.15em 0 0 0;
+  line-height: 1.35;
+  width: 100%;
+}
+
+.txLeft {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+
+.txTitle {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60vw;
+}
+
+.txDate {
+  font-size: 0.75em;
+  color: #999;
+}
+
+.txAmountPositive {
+  font-size: 0.9em;
+  font-weight: 800;
+  color: var(--ion-color-primary, #1976d2);
+  white-space: nowrap;
+}
+
+.txAmountNegative {
+  font-size: 0.9em;
+  font-weight: 800;
+  color: #d32f2f;
+  white-space: nowrap;
+}
+
+.emptyState {
+  font-size: 0.85em;
+  color: #999;
+  padding: 0.6em 0;
+}
+

@@ -1,24 +1,25 @@
 import React, { useState } from 'react';
 import { IonButton, IonIcon } from '@ionic/react';
-import { cubeOutline, checkmarkOutline, shieldCheckmarkOutline } from 'ionicons/icons';
+import { checkmarkOutline, cubeOutline } from 'ionicons/icons';
 import { CheckField } from '../../../DataEditor/fields/CheckField';
 import { ImagesField } from '../../../DataEditor/fields/ImagesField';
 import { WorkInfo } from '../../types';
 import styles from './OfferCard.module.css';
+import { FitTextLine } from './FitTextLine';
 
-export interface LoadedCardData {
+export interface InWorkUnloadData {
     verified: boolean;
     cargoPhotos: string[];
     sealPhotos: string[];
 }
 
-interface LoadedCardProps {
+interface InWorkCardProps {
     work: WorkInfo;
-    onLoaded: (data: LoadedCardData) => Promise<void>;
+    onArrivedUnload: (data: InWorkUnloadData) => Promise<void>;
     isLoading?: boolean;
 }
 
-export const LoadedCard: React.FC<LoadedCardProps> = ({ work, onLoaded, isLoading = false }) => {
+export const InWorkCard: React.FC<InWorkCardProps> = ({ work, onArrivedUnload, isLoading = false }) => {
     const [verified, setVerified] = useState(false);
     const [cargoPhotos, setCargoPhotos] = useState<string[]>([]);
     const [sealPhotos, setSealPhotos] = useState<string[]>([]);
@@ -27,6 +28,7 @@ export const LoadedCard: React.FC<LoadedCardProps> = ({ work, onLoaded, isLoadin
     const formatPrice = (price: number): string => {
         return price.toLocaleString('ru-RU').replace(/,/g, ' ');
     };
+
     const price = work.currentOffer?.price ?? work.price;
     const weight = work.currentOffer?.weight ?? work.weight;
     const volume = work.currentOffer?.volume ?? work.volume;
@@ -35,11 +37,11 @@ export const LoadedCard: React.FC<LoadedCardProps> = ({ work, onLoaded, isLoadin
         setError('');
 
         if (!verified) {
-            setError('Подтвердите, что груз проверен');
+            setError('Подтвердите, что с грузом и пломбой всё в порядке');
             return;
         }
         if (cargoPhotos.length === 0) {
-            setError('Добавьте фото загруженного груза');
+            setError('Добавьте фото груза');
             return;
         }
         if (sealPhotos.length === 0) {
@@ -48,68 +50,61 @@ export const LoadedCard: React.FC<LoadedCardProps> = ({ work, onLoaded, isLoadin
         }
 
         try {
-            await onLoaded({ verified, cargoPhotos, sealPhotos });
-        } catch (err) {
-            setError('Ошибка при отправке');
+            await onArrivedUnload({ verified, cargoPhotos, sealPhotos });
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Ошибка при отправке');
         }
     };
 
     return (
         <div className={styles.offerCard}>
-            {/* Card 1: Notification */}
             <div className={styles.notificationCard}>
                 <div className={styles.notificationHeader}>
                     <div className={styles.notificationTitleRow}>
                         <IonIcon icon={cubeOutline} className={styles.notificationIcon} />
                         <h2 className={styles.notificationTitle}>
-                            {work.name || 'Груз'}
+                            {work.name || 'Груз в работе'}
                         </h2>
                     </div>
                     <p className={styles.notificationSubtitle}>
-                        Загрузите груз и приложите фото
+                        Товар загружен и опечатан. Прибыв на место выгрузки, сфотографируйте груз и пломбу и
+                        подтвердите осмотр.
                     </p>
                 </div>
             </div>
 
-            {/* Card 2: Details */}
             <div className={styles.detailsCard}>
                 <div className={styles.infoRow}>
                     <div className={styles.infoField}>
                         <label className={styles.label}>Цена (₽)</label>
-                        <div className={styles.value}>
-                            {formatPrice(price)} (₽)
-                        </div>
+                        <FitTextLine className={styles.value}>{formatPrice(price)} (₽)</FitTextLine>
                     </div>
                     <div className={styles.infoField}>
                         <label className={styles.label}>Объем (м³)</label>
-                        <div className={styles.value}>
-                            {volume.toFixed(1)} м³
-                        </div>
+                        <FitTextLine className={styles.value}>{volume.toFixed(1)} м³</FitTextLine>
                     </div>
                     <div className={styles.infoField}>
                         <label className={styles.label}>Вес (т)</label>
-                        <div className={styles.value}>
-                            {weight.toFixed(1)} тонн
-                        </div>
+                        <FitTextLine className={styles.value}>{weight.toFixed(1)} тонн</FitTextLine>
                     </div>
                 </div>
             </div>
 
-            {/* Card 3: Verification and Photos */}
             <div className={styles.detailsCard}>
                 <div className={styles.loadedForm}>
                     <CheckField
-                        label="Проверен"
+                        label="Всё в порядке"
                         value={verified}
                         onChange={setVerified}
-                        description="Груз осмотрен и проверен"
+                        description="Груз и пломба в порядке, замечаний нет"
                     />
                     <ImagesField
-                        label="Фото загруженного груза"
+                        label="Фото груза"
                         value={cargoPhotos}
                         onChange={setCargoPhotos}
                         placeholder="Добавить фото груза"
                         maxImages={5}
+                        light
                     />
                     <ImagesField
                         label="Фото пломбы"
@@ -117,22 +112,13 @@ export const LoadedCard: React.FC<LoadedCardProps> = ({ work, onLoaded, isLoadin
                         onChange={setSealPhotos}
                         placeholder="Добавить фото пломбы"
                         maxImages={5}
+                        light
                     />
                 </div>
             </div>
 
-            {/* Card 4: Secure Payment */}
-            {/* <div className={styles.secureCard}>
-                <IonIcon icon={shieldCheckmarkOutline} className={styles.secureIcon} />
-                <h3 className={styles.secureTitle}>Безопасная оплата через платформу</h3>
-                <p className={styles.secureDescription}>
-                    Все платежи проходят через специальный счет приложения. Комиссия платформы 5% обеспечивает защиту обеих сторон и гарантию выполнения сделки.
-                </p>
-            </div> */}
-
             {error && <div className={styles.error}>{error}</div>}
 
-            {/* Action Button */}
             <div className={styles.actions}>
                 <IonButton
                     className={styles.submitButton}
@@ -141,7 +127,7 @@ export const LoadedCard: React.FC<LoadedCardProps> = ({ work, onLoaded, isLoadin
                     disabled={isLoading}
                 >
                     <IonIcon icon={checkmarkOutline} slot="start" />
-                    <span>Загружен</span>
+                    <span>Прибыл на выгрузку</span>
                 </IonButton>
             </div>
         </div>

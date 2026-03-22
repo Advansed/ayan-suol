@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { IonIcon, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
-import { personOutline, carOutline } from 'ionicons/icons';
+import React from 'react';
 import { WizardHeader } from '../Header/WizardHeader';
 import { useProfile } from '../Profile/useProfile';
 import { GeneralInfo } from './components/GeneralInfo';
-import { CustomerInfo } from './components/CustomerInfo';
-import { DriverInfo } from './components/DriverInfo';
 import { useHistory } from 'react-router-dom';
+import { useLoginStore } from '../../Store/loginStore';
 import styles from './Settings.module.css';
 
 export interface CabinetProps {
@@ -15,35 +12,21 @@ export interface CabinetProps {
 
 export const Cabinet: React.FC<CabinetProps> = ({ onBack }) => {
   const history = useHistory();
-  const { 
-    user_type, 
-    image, 
-    name, 
-    phone, 
-    email, 
-    setUser,
-    companyData,
-    updateCompany,
-    transportData,
-    updateTransport
-  } = useProfile();
-
-  // Пагинация между кабинетом заказчика и водителя
-  const [activeTab, setActiveTab] = useState<'customer' | 'driver'>(user_type === 1 ? 'customer' : 'driver');
-
-  // Синхронизация activeTab с user_type при изменении
-  useEffect(() => {
-    setActiveTab(user_type === 1 ? 'customer' : 'driver');
-  }, [user_type]);
+  const { image, name, phone, email, setUser } = useProfile();
+  const personalDataConsent = useLoginStore((s) => s.agreements.personalData);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!personalDataConsent) {
+      e.target.value = '';
+      return;
+    }
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.match(/^image\/(png|jpg|jpeg)$/)) {
         alert('Формат файла должен быть PNG или JPG');
         return;
       }
-      
+
       if (file.size > 12 * 1024 * 1024) {
         alert('Размер файла не должен превышать 12 МБ');
         return;
@@ -73,36 +56,6 @@ export const Cabinet: React.FC<CabinetProps> = ({ onBack }) => {
     });
   };
 
-  const handleCustomerInfoSave = async (data: any) => {
-    await updateCompany(data);
-  };
-
-  const handleDriverInfoSave = async (data: any) => {
-    await updateTransport(data);
-  };
-
-  const handleTransportImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.match(/^image\/(png|jpg|jpeg)$/)) {
-        alert('Формат файла должен быть PNG или JPG');
-        return;
-      }
-      
-      if (file.size > 12 * 1024 * 1024) {
-        alert('Размер файла не должен превышать 12 МБ');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        updateTransport({ image: base64String });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleMenuClick = () => {
     if (onBack) {
       onBack();
@@ -113,13 +66,9 @@ export const Cabinet: React.FC<CabinetProps> = ({ onBack }) => {
 
   return (
     <div className={styles.settingsContainer}>
-      <WizardHeader 
-        title={user_type === 1 ? "Личный кабинет заказчика" : "Личный кабинет водителя"}
-        onBack  = { handleMenuClick }
-      />
+      <WizardHeader title="Персональные данные" onBack={handleMenuClick} />
 
       <div className={styles.content}>
-        {/* Общие сведения (показываются всегда) */}
         <GeneralInfo
           image={image}
           name={name}
@@ -128,21 +77,6 @@ export const Cabinet: React.FC<CabinetProps> = ({ onBack }) => {
           onImageUpload={handleImageUpload}
           onSave={handleGeneralInfoSave}
         />
-
-        {/* Сведения заказчика */}
-        <CustomerInfo
-          companyData={companyData}
-          onSave={handleCustomerInfoSave}
-        />
-
-        {/* Сведения водителя */}
-        {activeTab === 'driver' && (
-          <DriverInfo
-            transportData={transportData}
-            onSave={handleDriverInfoSave}
-            onImageUpload={handleTransportImageUpload}
-          />
-        )}
       </div>
     </div>
   );

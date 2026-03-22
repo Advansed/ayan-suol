@@ -30,11 +30,12 @@ export interface UseChatsReturn {
   loadChats:            ( ) => Promise<void>
   loadMessages:         ( recipient: string, cargo: string, loadMore?: boolean ) => Promise<void>
   sendMessage:          ( recipient: string, cargo: string, message: string, image: string ) => Promise<boolean>
-  sendImage:            ( recipient: string, cargo: string, imageFile: string | File ) => Promise<boolean>
+  sendImage:            ( recipient: string, cargo: string, imageFile: string | File, status?: number ) => Promise<boolean>
   markAsRead:           ( recipient: string, cargo: string, guids: {guid:string}[] ) => Promise<void>
   setCurrentChat:       ( recipient: string, cargo: string ) => void
   clearCurrentChat:     ( ) => void
   refresh:              ( ) => void
+  getPhotos:            ( recipient: string, cargo: string, status: number ) => Promise<any[]>
 }
 
 // ============================================
@@ -55,7 +56,7 @@ const MESSAGES_LIMIT = 50
 export const useChats = (): UseChatsReturn => {
 
   const token           = useToken()
-  const { emit }        = useSocket()
+  const { emit, once }  = useSocket()
   const toast           = useToast()
   const isConnected     = useSocketStore(state => state.isConnected)
 
@@ -158,11 +159,52 @@ export const useChats = (): UseChatsReturn => {
     }
   }, [isConnected, token, emit, toast])
 
+  // Отправка сообщения
+  const getPhotos = useCallback(async (
+    recipient:  string, 
+    cargo:      string,
+    status:     number
+  ): Promise<any[]> => {
+    if (!isConnected) {
+      toast.error('Нет соединения с сервером')
+      return []
+    }
+
+    if (!token) {
+      toast.error('Нет токена авторизации')
+      return []
+    }
+
+    return new Promise<any[]>((resolve) => {
+      try {
+        once('get_photos', (data: any) => {
+          const photos = Array.isArray(data?.data)
+            ? data.data
+            : Array.isArray(data)
+              ? data
+              : []
+          resolve(photos)
+        })
+
+        emit("get_photos", {
+          token,
+          recipient,
+          cargo,
+          status
+        })
+      } catch (error) {
+        toast.error('Ошибка получения фотографий')
+        resolve([])
+      }
+    })
+  }, [isConnected, token, emit, once])
+
   // Отправка изображения через MinIO (Presigned URL)
   const sendImage = useCallback(async (
     recipient: string,
     cargo: string,
-    imageFile: string | File
+    imageFile: string | File,
+    status?: number
   ): Promise<boolean> => {
     if (!token) {
       toast.error('Нет токена авторизации')
@@ -175,7 +217,7 @@ export const useChats = (): UseChatsReturn => {
         ? dataUrlToFile(imageFile)
         : imageFile
 
-      const { filePath } = await uploadFileToMinIO(file, {
+      const { filePath, url } = await uploadFileToMinIO(file, {
         cargo_id: cargo,
         recipient_id: recipient,
         token,
@@ -186,7 +228,8 @@ export const useChats = (): UseChatsReturn => {
         recipient,
         cargo,
         message: '',
-        image: filePath,
+        image: url || filePath,
+        status: status || null
       })
       emit(SOCKET_EVENTS.GET_CHATS, { token })
       emit(SOCKET_EVENTS.GET_MESSAGES, { token, cargo, recipient })
@@ -263,6 +306,7 @@ export const useChats = (): UseChatsReturn => {
     loadMessages,
     sendMessage,
     sendImage,
+    getPhotos,
     markAsRead,
     setCurrentChat,
     clearCurrentChat,

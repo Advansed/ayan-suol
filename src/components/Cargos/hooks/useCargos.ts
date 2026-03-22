@@ -75,6 +75,7 @@ export const useCargos = (): UseCargosReturn => {
         setLoading(true)
         try {
             storeUpdateCargo(guid, data)
+            console.log('cargo-data', data)
             emit(SOCKET_EVENTS.UPDATE_CARGO, { guid, cargo: data, token })
             toast.success('Груз обновлен')
             return true

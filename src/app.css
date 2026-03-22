@@ -17,6 +17,14 @@
 .pl-4{    padding-left: 4em;}
 
 .pr-05{    padding-right: 0.5em;}
+.p-05{    padding: 0.5em;}
+/* IonCard с DriverCard: внешние отступы — классы mt/ml/mr, внутри без лишнего padding (контент с p-05 в DriverCard) */
+ion-card.cargo-driver-card {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
 .pr-1{    padding-right: 1em;}
 .pr-2{    padding-right: 2em;}
 .pr-3{    padding-right: 3em;}

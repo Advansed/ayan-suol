@@ -339,14 +339,12 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
         <>
             <IonLoading isOpen={isLoading} message="Оформление страховки..." />
             
-            {/* Header */}
-            <div className="ml-1 mr-1">
-                <WizardHeader 
-                    title   = 'Страхования груза'
-                    onBack  = { onBack }
-                />
-            </div>
+            <WizardHeader 
+                title   = 'Страхования груза'
+                onBack  = { onBack }
+            />
 
+            <div style={{ paddingLeft: '0.5em', paddingRight: '0.5em' }}>
             <CargoCost />
 
             <InsuranceTypeSelectorSimple cargo = { cargo }/>
@@ -387,7 +385,7 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
             </div>
 
             {/* Кнопки действий */}
-            <div className="flex ml-1 mr-1 mt-1" style={{ gap: '0.5em' }}>
+            <div className="flex mt-1" style={{ gap: '0.5em' }}>
                 <button 
                     className="cr-button-2 flex-1 pt-1 pb-1"
                     onClick={() => setShowCancelAlert(true)}
@@ -425,6 +423,7 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
                             </button>
                         </>
                 }
+            </div>
             </div>
 
             {/* Alert для подтверждения страхования */}

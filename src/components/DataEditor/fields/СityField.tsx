@@ -32,14 +32,21 @@ export const CityField: React.FC<CityFieldProps> = ({
         value               = {{ value: value?.city || '' } as any}
         onChange            = {(suggestion) => {
           if (suggestion) {
+            const d = suggestion.data as Record<string, string | undefined>;
+            const cityName =
+              d.city_with_type ||
+              d.city ||
+              d.settlement_with_type ||
+              d.settlement ||
+              suggestion.value ||
+              '';
+            const cityFias =
+              d.city_fias_id ||
+              d.settlement_fias_id ||
+              '';
 
-            onChange({
-              city: suggestion.data.city || '',
-              fias: suggestion.data.city_fias_id || ''
-            });
-
-            onFIAS( suggestion.data.city_fias_id || '' );
-
+            onChange({ city: cityName, fias: cityFias });
+            onFIAS(cityFias);
           }
         }}
         inputProps={{

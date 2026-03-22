@@ -1,11 +1,11 @@
 import React from 'react';
 import { IonButton, IonIcon } from '@ionic/react';
 import { mailOutline, shieldCheckmarkOutline, documentOutline, timeOutline, closeOutline, checkmarkOutline } from 'ionicons/icons';
-import { DriverInfo } from '../../../Store/cargoStore';
 import styles from './OfferCard.module.css';
+import { DriverInfo } from '../../../../Store/cargoStore';
 
 interface OfferCardProps {
-    info: DriverInfo;
+    info: DriverInfo
     onAccept?: (info: DriverInfo) => void;
     onReject?: (info: DriverInfo) => void;
     isLoading?: boolean;

@@ -86,6 +86,36 @@
   text-align: right;
 }
 
+/* На зелёном градиенте (Works ArrivedCard и т.п.) */
+.labelLight {
+  color: #ffffff !important;
+}
+
+.imageWrapperLight {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.imageWrapperLight:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.addButtonLight {
+  --color: #ffffff;
+  --border-color: rgba(255, 255, 255, 0.55);
+  --background: transparent;
+  --background-activated: rgba(255, 255, 255, 0.15);
+  --background-hover: rgba(255, 255, 255, 0.08);
+}
+
+.addButtonLight ion-icon {
+  color: #ffffff;
+}
+
+.counterLight {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .errorMessage {
   display: block;
   font-size: 0.75rem;

@@ -1,9 +1,9 @@
 /* Карточка предложения от водителя — дизайн по макету */
 
 .offerCard {
-    width: calc(100% - 1em);
+    width: 100%;
     max-width: 100%;
-    margin: 0.5em auto;
+    margin: 0;
     padding: 0;
     box-sizing: border-box;
     display: flex;
@@ -119,6 +119,11 @@
     flex-direction: row;
     gap: 0.75em;
     width: 100%;
+}
+
+/* Несколько строк полей в одной карточке — не слипать */
+.detailsCard > .infoRow + .infoRow {
+    margin-top: 0.85em;
 }
 
 .infoField {
@@ -256,11 +261,81 @@
     cursor: not-allowed;
 }
 
+/* Оценка водителя (CompletedCard / FinalCard) */
+.ratingBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65em;
+    width: 100%;
+}
+
+.ratingStarsRow {
+    display: flex;
+    align-self: stretch;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.35em 0.45em;
+    margin-top: 0.35em;
+    padding: 0.75em 1em;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.ratingStarsRow span {
+    flex: 0 0 auto;
+    font-size: 1.75rem;
+    line-height: 1;
+    padding: 0;
+}
+
+.ratingConfirmRow {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6em;
+    margin-top: 1em;
+    padding-top: 1em;
+    border-top: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.ratingConfirmRow span {
+    line-height: 1.45;
+    font-size: 0.92em;
+    color: rgba(255, 255, 255, 0.95);
+    padding-top: 0.1em;
+}
+
+.ratingSummaryCard {
+    margin-top: 0.35em;
+}
+
+.ratingSummaryBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    padding: 0.75em 0 0.15em;
+}
+
+.ratingSummaryValue {
+    width: 100%;
+    border-radius: 10px;
+    padding: 0.75em 1em;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #fff;
+    font-size: 1.05em;
+    font-weight: 600;
+    text-align: center;
+}
+
 /* Маленькие экраны */
 @media (max-width: 360px) {
     .offerCard {
         padding: 0;
-        margin: 0.4em auto;
+        margin: 0;
     }
 
     .notificationCard,

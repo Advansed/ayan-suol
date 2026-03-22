@@ -47,7 +47,7 @@ export const SettingsMenu: React.FC = () => {
   return (
     <div className={styles.settingsContainer}>
       <WizardHeader 
-        title="Настройки"
+        title="Нас тройки"
         onMenu={handleMenuClick}
       />
 

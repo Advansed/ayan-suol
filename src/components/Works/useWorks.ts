@@ -7,7 +7,7 @@ import { useWorkStore, workActions, workGetters }
   from './workStore'
 import { WorkInfo, WorkFilters, OfferInfo, WorkStatus }
   from './types'
-import type { ContractData } from './components/Offer/Agreement'
+import type { ContractData } from './components/WorkView/index'
 
 export const useWorks = () => {
   const token = useToken()
@@ -319,37 +319,48 @@ export const useWorks = () => {
   }, [token, socket, emit, once]);
 
 
-  const set_contract = useCallback(async (info: WorkInfo, sign: string) => {
-
+  const set_contract = useCallback(async (info: WorkInfo, sign: string): Promise<boolean> => {
     if (!socket) {
       toast.error('Нет соединения с сервером')
       return false
     }
 
-    // workActions.setLoading(true);
+    return new Promise((resolve) => {
+      let settled = false
 
-    socket.once('set_contract', (data: { success: boolean; message?: string; data: any }) => {
-      console.log("set_contract", data)
-      if (data.success) {
-
-        toast.success("Договор подписан")
-
-      } else {
-
-        toast.error("Ошибка при принятии заявки:" + data.message);
-
+      const finish = (ok: boolean) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timeoutId)
+        resolve(ok)
       }
-      console.log("set_contract loading", false)
-      // workActions.setLoading(false);
-    });
 
-    socket.emit('set_contract', {
-      token: token,
-      id: info.guid,
-      sign: sign
-    });
+      const timeoutId = setTimeout(() => {
+        toast.error('Таймаут ожидания ответа от сервера')
+        finish(false)
+      }, 10000)
 
-  }, [token]);
+      const handler = (data: { success: boolean; message?: string; data?: unknown }) => {
+        if (settled) return
+        if (data.success) {
+          toast.success('Договор подписан')
+          workActions.updateWork(info.guid, { signed: true })
+          finish(true)
+        } else {
+          toast.error('Ошибка при принятии заявки:' + (data.message || ''))
+          finish(false)
+        }
+      }
+
+      socket.once('set_contract', handler)
+
+      socket.emit('set_contract', {
+        token: token,
+        id: info.guid,
+        sign: sign
+      })
+    })
+  }, [token, socket]);
 
   // ============================================
   // ЗАГРУЗКА ДАННЫХ
@@ -384,6 +395,7 @@ export const useWorks = () => {
       case WorkStatus.ON_LOAD: return 15;
       case WorkStatus.LOADING: return 15;
       case WorkStatus.IN_WORK: return 17;
+      case WorkStatus.TO_UNLOAD: return 18;
       case WorkStatus.UNLOADING: return 19;
       case WorkStatus.REJECTED: return 11;
       default: return 22;
