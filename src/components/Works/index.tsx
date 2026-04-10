@@ -9,7 +9,7 @@ import { WorkMap } from './components/WorkMap';
 import { Agreement } from './components/WorkView/index';
 import { useWorks } from './useWorks';
 import { useWorkNavigation } from './hooks/useNavigation';
-import { workActions, workGetters } from './workStore';
+import { workActions, workGetters, useWorkStore } from './workStore';
 import { SaveData, WorkPage1 } from './components/WorkPage1';
 import { useSocket } from '../../Store/useSocket';
 import { useToken } from '../../Store/loginStore';
@@ -20,7 +20,7 @@ import './styles.css';
 
 export const Works: React.FC = () => {
     const { contract, works, isLoading, setOffer, delOffer, setStatus, refreshWorks
-        , get_contract, get_contract_data, setContract, set_contract } = useWorks();
+        , get_contract_data, set_contract } = useWorks();
     const { emit } = useSocket();
     const token = useToken();
     const { sendImage } = useChats();
@@ -30,13 +30,35 @@ export const Works: React.FC = () => {
     // Обновляем currentPage.work при обновлении списка works (статус, подпись и т.д.)
     useEffect(() => {
         if (currentPage.type === 'view') {
-            const updatedWork = works.find(w => w.cargo === currentPage.work.cargo);
+            const updatedWork = works.find(w => w.guid === currentPage.work.guid);
             if (
                 updatedWork &&
                 (updatedWork.status !== currentPage.work.status ||
                     Boolean(updatedWork.signed) !== Boolean(currentPage.work.signed))
             ) {
                 workActions.setCurrentPage({ type: 'view', work: updatedWork });
+            }
+            return;
+        }
+        if (currentPage.type === 'map') {
+            const updatedWork = works.find(w => w.guid === currentPage.work.guid);
+            if (updatedWork && updatedWork !== currentPage.work) {
+                workActions.setCurrentPage({ type: 'map', work: updatedWork });
+            }
+            return;
+        }
+        if (currentPage.type === 'agreement') {
+            const updatedWork = works.find(w => w.guid === currentPage.work.guid);
+            if (
+                updatedWork &&
+                (updatedWork.status !== currentPage.work.status ||
+                    Boolean(updatedWork.signed) !== Boolean(currentPage.work.signed))
+            ) {
+                workActions.setCurrentPage({
+                    type: 'agreement',
+                    work: updatedWork,
+                    contract: currentPage.contract,
+                });
             }
         }
     }, [works, currentPage]);
@@ -111,12 +133,10 @@ export const Works: React.FC = () => {
 
     const handleLoaded = async (work: WorkInfo, data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }) => {
         try {
-            for (const image of data.cargoPhotos) {
-                await sendImage(work.recipient, work.cargo, image, 16);
-            }
-            for (const image of data.sealPhotos) {
-                await sendImage(work.recipient, work.cargo, image, 16);
-            }
+            await Promise.all([
+                ...data.cargoPhotos.map(image => sendImage(work.recipient, work.cargo, image, 16)),
+                ...data.sealPhotos.map(image => sendImage(work.recipient, work.cargo, image, 16)),
+            ]);
             emit("send_message", {
                 token,
                 recipient: work.recipient,
@@ -133,9 +153,9 @@ export const Works: React.FC = () => {
 
     const handleArrivedAtLoad = async (work: WorkInfo, data: { bodyPhotos: string[] }) => {
         try {
-            for (const image of data.bodyPhotos) {
-                await sendImage(work.recipient, work.cargo, image, 14);
-            }
+            await Promise.all(
+                data.bodyPhotos.map(image => sendImage(work.recipient, work.cargo, image, 14))
+            );
             emit("send_message", {
                 token,
                 recipient: work.recipient,
@@ -155,13 +175,12 @@ export const Works: React.FC = () => {
         data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }
     ) => {
         try {
-            for (const image of data.cargoPhotos) {
-                const ok = await sendImage(work.recipient, work.cargo, image, 18);
-                if (!ok) throw new Error('Не удалось отправить фото груза');
-            }
-            for (const image of data.sealPhotos) {
-                const ok = await sendImage(work.recipient, work.cargo, image, 18);
-                if (!ok) throw new Error('Не удалось отправить фото пломбы');
+            const uploadResults = await Promise.all([
+                ...data.cargoPhotos.map(image => sendImage(work.recipient, work.cargo, image, 18)),
+                ...data.sealPhotos.map(image => sendImage(work.recipient, work.cargo, image, 18)),
+            ]);
+            if (uploadResults.some(ok => !ok)) {
+                throw new Error('Не удалось отправить одно или несколько фото');
             }
             emit("send_message", {
                 token,
@@ -187,9 +206,11 @@ export const Works: React.FC = () => {
 
     const handleUnloadComplete = async (work: WorkInfo, data: { bodyPhotos: string[] }) => {
         try {
-            for (const image of data.bodyPhotos) {
-                const ok = await sendImage(work.recipient, work.cargo, image, 20);
-                if (!ok) throw new Error('Не удалось отправить фото кузова');
+            const uploadResults = await Promise.all(
+                data.bodyPhotos.map(image => sendImage(work.recipient, work.cargo, image, 20))
+            );
+            if (uploadResults.some(ok => !ok)) {
+                throw new Error('Не удалось отправить фото кузова');
             }
             emit("send_message", {
                 token,
@@ -206,28 +227,30 @@ export const Works: React.FC = () => {
         }
     };
 
-    const handleStatusClick = (work: WorkInfo) => {
-        setStatus(work);
-    };
-
     const handleMapClick = (work: WorkInfo) => {
         navigateTo({ type: 'map', work });
     };
 
     const handleSignContract = useCallback(async (work: WorkInfo) => {
         const contractData = await get_contract_data(work);
-        console.log('get_contract', contractData)
         if (contractData) {
             navigateTo({ type: 'agreement', work, contract: contractData });
         }
     }, [get_contract_data, navigateTo]);
 
     const handleAgreementSign = useCallback(async (signature: string, _offer: OfferInfo) => {
+        void _offer;
         if (currentPage.type !== 'agreement') return false;
         const ok = await set_contract(currentPage.work, signature);
         if (!ok) return false;
         const work =
             workGetters.getWork(currentPage.work.guid) ?? { ...currentPage.work, signed: true };
+        const state = useWorkStore.getState();
+        const hist = state.navigationHistory;
+        const last = hist[hist.length - 1];
+        if (last?.type === 'agreement') {
+            workActions.setNavigationHistory(hist.slice(0, -1));
+        }
         workActions.setCurrentPage({ type: 'view', work });
         void refreshWorks();
         return true;
@@ -284,7 +307,6 @@ export const Works: React.FC = () => {
                         onBack={goBack}
                         onOfferClick={handleOfferClick}
                         onOfferCancelClick={handleOfferCancelClick}
-                        onStatusClick={handleStatusClick}
                         onLoaded={handleLoaded}
                         onArrivedAtLoad={handleArrivedAtLoad}
                         onArrivedUnload={handleArrivedUnload}

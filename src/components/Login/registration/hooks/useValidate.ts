@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { validateLoginPhoneRaw } from '../../phone';
 
 export interface UseValidateReturn {
   errors: Record<string, string>;
@@ -13,8 +14,7 @@ export const validateRegistrationField = (field: string, value: any): string | n
   switch (field) {
     case 'phone':
       if (!value || value.trim() === '') return 'Заполните телефон';
-      const phoneRegex = /^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$/;
-      return null;
+      return validateLoginPhoneRaw(value);
     case 'name':
       if (!value || value.trim() === '') return 'Заполните ФИО';
       return value.length < 2 ? 'Имя должно содержать минимум 2 символа' : null;

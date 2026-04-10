@@ -290,7 +290,7 @@
 }
 
 .cargo-card-list:hover {
-    background-color: #f5f5f5;
+    filter: brightness(0.97);
 }
 
 .cargo-card-view {

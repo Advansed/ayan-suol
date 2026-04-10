@@ -1,6 +1,5 @@
-import React            from 'react'
-import { IonRefresher, IonRefresherContent, IonSearchbar } from '@ionic/react'
-import { useHistory }   from 'react-router'
+import React from 'react'
+import { useHistory } from 'react-router'
 import styles           from './ChatList.module.css'
 import { useChats } from '../../Store/useChats'
 import { WizardHeader } from '../Header/WizardHeader'
@@ -63,44 +62,37 @@ export function ChatsList() {
 
 
   return (
-    <div className='ml-1 mr-1'>
-        <WizardHeader
-            title       = { 'Чаты' }
-            onRefresh   = { handleRefresh }
-        />
-      <div className={ "" }>
-
-        { isLoading 
-          ? (
-              <div className={styles.skeleton}>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className={styles.skeletonItem} />
-                ))}
-              </div>
-            ) 
-          : (
-              <div className={styles.chatList}>
-                
-                {filteredChats.map((chat, index) => (
-                  <ChatItem
-                      key={`${chat.recipient}-${chat.cargo}`}
-                      chat={chat}
-                      onClick={() => handleChatClick(chat)}
-                  />
-                ))}
-
-                {filteredChats.length === 0 && (
-                  <div className={styles.emptyState}>
-                      <div className="cr-empty-icon">💬</div>
-                      <div>Нет активных чатов</div>
-                  </div>
-                )}
-              </div>
-            )
-        }
-
+    <div className={styles.pageRoot}>
+      <div className={styles.pageHeader}>
+        <WizardHeader title="Чаты" onRefresh={handleRefresh} />
       </div>
 
-   </div>
+      <div className={styles.pageContent}>
+        {isLoading ? (
+          <div className={styles.skeleton}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className={styles.skeletonItem} />
+            ))}
+          </div>
+        ) : (
+          <div className={styles.chatList}>
+            {filteredChats.map((chat) => (
+              <ChatItem
+                key={`${chat.recipient}-${chat.cargo}`}
+                chat={chat}
+                onClick={() => handleChatClick(chat)}
+              />
+            ))}
+
+            {filteredChats.length === 0 && (
+              <div className={styles.emptyState}>
+                <div className={styles.emptyIcon}>💬</div>
+                <div>Нет активных чатов</div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

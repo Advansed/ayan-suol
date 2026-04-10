@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import type { PageType } from './cargoStore'
 
+const MAX_NAV_HISTORY = 50
+
 export interface NavigateState {
     currentPage:        PageType
     navigationHistory:  PageType[]
@@ -22,9 +24,14 @@ export const useNavigateStore = create<NavigateStore>()(
 
       navigateTo: (page) => {
         const { navigationHistory } = get()
+        const appended = [...navigationHistory, page]
+        const capped =
+          appended.length > MAX_NAV_HISTORY
+            ? appended.slice(-MAX_NAV_HISTORY)
+            : appended
         set({
           currentPage: page,
-          navigationHistory: [...navigationHistory, page],
+          navigationHistory: capped,
         })
       },
 

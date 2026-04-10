@@ -18,7 +18,8 @@ export const Cargos: React.FC = () => {
     
     const { cargos, isLoading, createCargo, updateCargo, deleteCargo, publishCargo, refreshCargos } = useCargos()
     const { currentPage, navigateTo, handleCreateNew, handleCargoClick } = useCargoNavigation()
-    const { create_contract, handleAccept } = useInvoices({ info: currentPage.cargo })
+    const invoiceApi = useInvoices({ info: currentPage.cargo })
+    const { create_contract, handleAccept } = invoiceApi
 
     useEffect(()                    => {
         if (currentPage.cargo?.guid) {
@@ -39,21 +40,22 @@ export const Cargos: React.FC = () => {
         } else if (currentPage.cargo?.guid) {
             const cargo = cargoGetters.getCargo(currentPage.cargo.guid);
             navigateTo({ type: 'view', cargo: cargo });
-            console.log("back", 'view', cargo )
         }
     }, [currentPage.type, currentPage.cargo?.guid, navigateTo]);
 
-    const handleAgreementSign       = useCallback(async (invoice: DriverInfo, signature: string) => {
-        await create_contract(invoice, signature);
-        await handleAccept(invoice, 12);
-        navigateTo({ type: 'view', cargo: currentPage.cargo });
-    }, [create_contract, handleAccept, handleBack]);
+    const handleAgreementSign = useCallback(
+        async (invoice: DriverInfo, signature: string) => {
+            await create_contract(invoice, signature);
+            await handleAccept(invoice, 12);
+            const guid = currentPage.cargo?.guid;
+            const cargo = guid ? cargoGetters.getCargo(guid) ?? currentPage.cargo : currentPage.cargo;
+            if (cargo) navigateTo({ type: 'view', cargo });
+        },
+        [create_contract, handleAccept, currentPage.cargo, navigateTo]
+    );
 
 
-    // Функция рендеринга контента
     const renderContent = () => {
-        console.log(currentPage);
-        
         if (currentPage.cargo) {
             switch (currentPage.type) {
                 case 'edit':
@@ -84,11 +86,11 @@ export const Cargos: React.FC = () => {
                     return (
                         <CargoInvoice
                             cargo           = { currentPage.cargo! }
+                            invoiceApi      = { invoiceApi }
                             onBack          = { handleBack }
                             onOpenAgreement = { (invoice, contract) =>
                                 navigateTo({ type: 'agreement', cargo: currentPage.cargo!, invoice, contract })
                             }
-                            onSign          = { handleAgreementSign }
                         />
                     );
 

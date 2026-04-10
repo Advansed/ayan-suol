@@ -156,7 +156,7 @@ const MessagesList = React.memo(({ messages, userInitials, clickMessage }: {
     return (
         <>
             {groupedMessages.map((messageGroup: any, index: number) => (
-                <div key={`group-${index}`} className="ml-1 mt-1">
+                <div key={`group-${index}`} className="chat-message-group">
                     <div className="chat-date-separator" data-date={messageGroup.date}>
                         {messageGroup.date}
                     </div>
@@ -350,8 +350,14 @@ export function Chats(props: ChatsProps) {
         );
     }, [selectedImage]);
     
-    // Загрузка сообщений при открытии чата
+    // Загрузка сообщений (ручное обновление в шапке)
     const loadChatMessages = useCallback(() => {
+        loadMessages(recipient, cargo);
+    }, [recipient, cargo, loadMessages]);
+
+    // Загрузка при смене чата. loadMessages должен быть стабильным (useChats + useToast), иначе
+    // после каждого ответа get_messages эффект срабатывает снова и уходит в цикл emit.
+    useEffect(() => {
         loadMessages(recipient, cargo);
     }, [recipient, cargo, loadMessages]);
 
@@ -396,7 +402,6 @@ export function Chats(props: ChatsProps) {
     // Lifecycle хуки
     useIonViewDidEnter(() => {
         setIsVisible(true);
-        loadChatMessages();
     });
 
     useIonViewDidLeave(() => {
@@ -410,35 +415,42 @@ export function Chats(props: ChatsProps) {
 
     return (
         <div className="chat-container">
-            {/* Используем либо WizardHeader, либо ChatHeader - но не оба одновременно */}
-            <div className="ml-1 mr-1">
-                <WizardHeader 
-                    title           = { userName }
-                    onBack          = { handleBack }
-                    onRefresh       = { loadChatMessages }
+            <div className="chat-page-header">
+                <WizardHeader
+                    title={userName}
+                    onBack={handleBack}
+                    onRefresh={loadChatMessages}
                 />
             </div>
-            
-            <div className="chat-body">
-                {ImagePreview}
-                
-                {(!currentMessages || currentMessages.length === 0) && !selectedImage ? ( 
-                    <EmptyState /> 
-                ) : ( 
-                    <MessagesList messages={currentMessages || []} userInitials={userInitials} clickMessage = { (url: string) => setOpen( url )} /> 
-                )}
-                
-                <div ref={messagesEndRef} />
+
+            <div className="chat-page-content">
+                <div className="chat-body">
+                    {ImagePreview}
+
+                    {(!currentMessages || currentMessages.length === 0) && !selectedImage ? (
+                        <EmptyState />
+                    ) : (
+                        <MessagesList
+                            messages={currentMessages || []}
+                            userInitials={userInitials}
+                            clickMessage={(url: string) => setOpen(url)}
+                        />
+                    )}
+
+                    <div ref={messagesEndRef} />
+                </div>
             </div>
 
-            <ChatFooter 
-                value           = { value }
-                selectedImage   = { selectedImage || null }
-                onChange        = { handleValueChange }
-                onSend          = { handleSendMessage }
-                onKeyPress      = { handleKeyPress }
-                onImageSelect   = { handleImageSelect }
-            />
+            <div className="chat-page-footer">
+                <ChatFooter
+                    value={value}
+                    selectedImage={selectedImage || null}
+                    onChange={handleValueChange}
+                    onSend={handleSendMessage}
+                    onKeyPress={handleKeyPress}
+                    onImageSelect={handleImageSelect}
+                />
+            </div>
             
             <PhotoPreview
                 imageUrl = { isOpen }

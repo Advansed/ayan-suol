@@ -1,75 +1,38 @@
-.container {
-  padding-left: 1em;
-  padding-right: 1em;
-  min-height: 100vh;
+/* Как CargoArchive: фон страницы, шапка на всю ширину, контент с боковым отступом */
+
+.pageRoot {
+  min-height: 100%;
   background: #f5f5f5;
+  box-sizing: border-box;
 }
 
-.loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  color: #666;
+.pageHeader {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  background: white;
-  padding: 16px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.refreshBtn {
-  padding: 8px 16px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: white;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-  color: #007bff;
-}
-
-.refreshBtn:hover:not(:disabled) {
-  background: #f8f9fa;
-  border-color: #007bff;
-}
-
-.refreshBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.refreshBtn.refreshing {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.pageContent {
+  padding: 0 0.5em 0.5em;
+  box-sizing: border-box;
 }
 
 .stats {
-  background: #e3f2fd;
-  color: #1565c0;
-  padding: 12px 16px;
+  background: #e8f5e8;
+  color: #2d5a2d;
+  padding: 0.75em 1em;
   border-radius: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 0.5em;
   font-size: 14px;
   font-weight: 500;
-  border-left: 4px solid #2196f3;
+  border-left: 4px solid #28a745;
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.5em;
 }
 
 .empty {
@@ -77,10 +40,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 3em 0.5em;
   background: white;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .emptyIcon {
@@ -92,4 +55,16 @@
 .emptyText {
   color: #666;
   font-size: 16px;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3em 0.5em;
+  color: #666;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }

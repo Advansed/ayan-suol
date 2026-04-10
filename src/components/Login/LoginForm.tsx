@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import { IonCard } from '@ionic/react'
 import { MaskedInput, PasswordInput, FormButtons, NavigationLinks } from './SharedComponents'
+import { validateLoginPhoneRaw } from './phone'
 
 // ============================================
 // ТИПЫ
@@ -32,8 +33,7 @@ const validateField = (field: string, value: string): string | null => {
   switch (field) {
     case 'phone':
       if (!value || value.trim() === '') return 'Заполните телефон'
-      const phoneRegex = /^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$/
-      return  null //phoneRegex.test(value) ? null : 'Некорректный формат номера телефона'
+      return validateLoginPhoneRaw(value)
       
     case 'password':
       if (!value || value.trim() === '') return 'Заполните пароль'
@@ -170,7 +170,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           {/* Поле телефона */}
           <div className="mt-1">
             <MaskedInput
-              placeholder="+7 (XXX) XXX-XXXX"
+              placeholder="Телефон: +7… или международный +…"
               value={formData.phone}
               onChange={(value) => updateFormData('phone', value)}
               onBlur={handlePhoneBlur}

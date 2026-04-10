@@ -15,6 +15,21 @@ interface WorkCardProps {
     onClick?: () => void;
 }
 
+const SURFACE_BY_STATUS: Record<WorkStatus, string> = {
+    [WorkStatus.NEW]: styles.surfaceNew,
+    [WorkStatus.OFFERED]: styles.surfaceOffered,
+    [WorkStatus.TO_LOAD]: styles.surfaceToLoad,
+    [WorkStatus.ON_LOAD]: styles.surfaceOnLoad,
+    [WorkStatus.LOADING]: styles.surfaceLoading,
+    [WorkStatus.LOADED]: styles.surfaceLoaded,
+    [WorkStatus.IN_WORK]: styles.surfaceInWork,
+    [WorkStatus.TO_UNLOAD]: styles.surfaceToUnload,
+    [WorkStatus.UNLOADING]: styles.surfaceUnloading,
+    [WorkStatus.UNLOADED]: styles.surfaceUnloaded,
+    [WorkStatus.COMPLETED]: styles.surfaceCompleted,
+    [WorkStatus.REJECTED]: styles.surfaceRejected,
+};
+
 export const WorkCard: React.FC<WorkCardProps> = ({ 
     work, 
     mode = 'list',
@@ -52,34 +67,30 @@ export const WorkCard: React.FC<WorkCardProps> = ({
         return tags;
     };
 
-    const hasOffer = work.status === WorkStatus.OFFERED;
     const bottomTags = getBottomTags();
+
+    const surfaceClass = `${styles.cardSurface} ${SURFACE_BY_STATUS[work.status] ?? styles.surfaceNew}`;
 
     // Режим для списка (новый дизайн)
     return (
         <div 
-            className={styles.workCard}
+            className={`${styles.workCard} ${surfaceClass}`}
             onClick={handleClick}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
         >
-            {/* Верхняя строка: два тега "Торг", ID, цена */}
+            {/* Одна строка: статус, ID, сумма */}
             <div className={styles.topRow}>
-                <div className={styles.topRowLeft}>
-                    <span className={`${styles.statusBadge} ${styles.statusBargaining}`}>
-                        { work.status }
-                    </span>
-                    <span className={'fs-08 cl-gray'}>
-                        ID: {workFormatters.shortId(work.guid)}
-                    </span>
-                </div>
-                <div className={styles.topRowRight}>
-                    <span className={`${styles.statusBadge} ${styles.statusBargaining}`}>
-                        Торг
-                    </span>
-                    <span className={`${styles.statusBadge} ${styles.statusWaiting}`}>
-                        ₽ {work.price.toLocaleString('ru-RU').replace(/,/g, ' ')}
-                    </span>
-                </div>
+                <span
+                    className={`${styles.topRowStatus} ${workStatusUtils.getClassName(work.status)}`}
+                >
+                    {work.status}
+                </span>
+                <span className={`${styles.topRowId} fs-08 cl-gray`}>
+                    ID: {workFormatters.shortId(work.guid)}
+                </span>
+                <span className={`${styles.topRowPrice} fs-09 cl-prim`}>
+                    <b>{workFormatters.currency(work.price)}</b>
+                </span>
             </div>
 
             {/* Вторая строка: теги */}

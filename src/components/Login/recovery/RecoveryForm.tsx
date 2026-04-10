@@ -1,12 +1,13 @@
 import React from 'react'
 import { IonCard } from '@ionic/react'
 import { useRecovery } from './hooks/useRecovery'
-import { 
-  MaskedInput, 
-  PasswordInput, 
-  FormButtons, 
+import type { OtpTransport } from '../otpTransport'
+import {
+  MaskedInput,
+  PasswordInput,
+  FormButtons,
   NavigationLinks,
-  ProgressBar 
+  ProgressBar
 } from '../SharedComponents'
 
 interface RecoveryFormProps {
@@ -18,19 +19,21 @@ interface RecoveryFormProps {
 // ШАГ 1: ВВОД ТЕЛЕФОНА
 // ======================
 
-const StepPhone: React.FC<{ 
+const StepPhone: React.FC<{
   recovery: ReturnType<typeof useRecovery>
   onSwitchToLogin: () => void
   onSwitchToRegister: () => void
 }> = ({ recovery, onSwitchToLogin, onSwitchToRegister }) => {
-  
+  const otpTransport: OtpTransport =
+    recovery.formData.transport === 'telegram' ? 'telegram' : 'sms'
+
   const handleSubmit = () => {
     recovery.submitRecoveryStep()
   }
 
   const handlePhoneBlur = () => {
-    if (recovery.recoveryData.phone) {
-      recovery.validateField('phone', recovery.recoveryData.phone)
+    if (recovery.formData.phone) {
+      recovery.validateField('phone', recovery.formData.phone)
     }
   }
 
@@ -39,80 +42,101 @@ const StepPhone: React.FC<{
       <div className="a-center">
         <h2>Восстановление пароля</h2>
       </div>
-      
+
       <div className="fs-11 a-center mb-2">
         Введите номер телефона, привязанный к вашему аккаунту
       </div>
-      
+
       <MaskedInput
-        placeholder="+7 (XXX) XXX-XXXX"
-        value={recovery.recoveryData.phone || ''}
-        onChange={(value) => recovery.updateRecoveryData('phone', value)}
+        placeholder="Телефон: +7… или международный +…"
+        value={recovery.formData.phone || ''}
+        onChange={(value) => recovery.updateFormData('phone', value)}
         onBlur={handlePhoneBlur}
         error={recovery.errors.phone}
       />
 
-      <FormButtons 
-        onNext={handleSubmit} 
-        nextText="Восстановить пароль" 
+      <div className="mt-2">
+        <div className="fs-11 a-center mb-1">Как получить код?</div>
+        <div className="role-selection-buttons">
+          <button
+            type="button"
+            className={`role-button ${otpTransport === 'sms' ? 'selected' : ''}`}
+            onClick={() => recovery.updateFormData('transport', 'sms')}
+          >
+            <div className="role-icon">💬</div>
+            <div>SMS</div>
+          </button>
+          <button
+            type="button"
+            className={`role-button ${otpTransport === 'telegram' ? 'selected' : ''}`}
+            onClick={() => recovery.updateFormData('transport', 'telegram')}
+          >
+            <div className="role-icon">✈️</div>
+            <div>Telegram</div>
+          </button>
+        </div>
+      </div>
+
+      <FormButtons
+        onNext={handleSubmit}
+        nextText="Далее"
         loading={recovery.isLoading}
-        disabled={!recovery.recoveryData.phone?.trim()}
+        disabled={!recovery.formData.phone?.trim()}
       />
-      
-      <NavigationLinks links={[
-        { text: 'Вспомнили пароль? Авторизироваться', onClick: onSwitchToLogin },
-        { text: 'Нет аккаунта? Регистрация', onClick: onSwitchToRegister }
-      ]} />
+
+      <NavigationLinks
+        links={[
+          { text: 'Вспомнили пароль? Авторизироваться', onClick: onSwitchToLogin },
+          { text: 'Нет аккаунта? Регистрация', onClick: onSwitchToRegister }
+        ]}
+      />
     </>
   )
 }
 
 // ======================
-// ШАГ 2: ПОДТВЕРЖДЕНИЕ SMS
+// ШАГ 2: КОД ИЗ SMS / TELEGRAM
 // ======================
 
-const StepSmsAndPassword: React.FC<{ 
+const StepOtp: React.FC<{
   recovery: ReturnType<typeof useRecovery>
   onSwitchToLogin: () => void
 }> = ({ recovery, onSwitchToLogin }) => {
   const [pin, setPin] = React.useState(['', '', '', ''])
-
-  // Используем useCallback для стабильной функции
-  const updateSmsCode = React.useCallback((smsCode: string) => {
-    recovery.updateRecoveryData('sms', smsCode)
-  }, [recovery])
-
-  // Фиксируем useEffect с правильными зависимостями
-  React.useEffect(() => {
-    const smsCode = pin.join('')
-    if (smsCode.length === 4) {
-      updateSmsCode(smsCode)
-    }
-  }, [pin ]) // Только pin и updateSmsCode в зависимостях
+  const pinRefs = React.useRef<(HTMLInputElement | null)[]>([])
 
   const handlePinChange = (value: string, index: number) => {
+    const digits = value.replace(/\D/g, '')
     const newPin = [...pin]
-    newPin[index] = value.slice(-1)
-    setPin(newPin)
-    
-    // Также обновляем recoveryData сразу при изменении
-    const smsCode = newPin.join('')
-    recovery.updateRecoveryData('sms', smsCode)
-    
-    if (value && index < 3) {
-      const nextInput = document.querySelector(`input[data-pin-index="${index + 1}"]`) as HTMLInputElement
-      if (nextInput) {
-        nextInput.focus()
+
+    if (digits.length === 0) {
+      newPin[index] = ''
+    } else if (digits.length === 1) {
+      newPin[index] = digits
+    } else {
+      for (let i = 0; i < digits.length && index + i < 4; i++) {
+        newPin[index + i] = digits[i]!
       }
+    }
+
+    setPin(newPin)
+    recovery.updateFormData('pincode', newPin.join(''))
+
+    if (digits.length > 0) {
+      const firstEmpty = newPin.findIndex((c) => c === '')
+      requestAnimationFrame(() => {
+        if (firstEmpty >= 0) {
+          pinRefs.current[firstEmpty]?.focus()
+        } else {
+          pinRefs.current[3]?.focus()
+        }
+      })
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
     if (e.key === 'Backspace' && !pin[index] && index > 0) {
-      const prevInput = document.querySelector(`input[data-pin-index="${index - 1}"]`) as HTMLInputElement
-      if (prevInput) {
-        prevInput.focus()
-      }
+      pinRefs.current[index - 1]?.focus()
     }
   }
 
@@ -120,118 +144,153 @@ const StepSmsAndPassword: React.FC<{
     recovery.submitRecoveryStep()
   }
 
-  const handlePasswordBlur = () => {
-    if (recovery.recoveryData.password) {
-      recovery.validateField('password', recovery.recoveryData.password)
-    }
-  }
-
-  const handlePassword1Blur = () => {
-    if (recovery.recoveryData.password1) {
-      recovery.validateField('password1', recovery.recoveryData.password1)
-    }
-  }
-
-  const isFormValid = pin.join('').length === 4 && 
-                     recovery.recoveryData.password && 
-                     recovery.recoveryData.password1 && 
-                     recovery.recoveryData.password === recovery.recoveryData.password1
-
   return (
     <>
       <div className="a-center">
         <h2>Восстановление пароля</h2>
       </div>
-      
+
       <div className="fs-11 a-center mb-2">
-        Введите код из SMS и новый пароль
+        {recovery.otpTransport === 'telegram'
+          ? 'Введите код из Telegram'
+          : 'Введите код из SMS'}
       </div>
 
-      {/* SMS код */}
       <div className="mt-1">
         <div className="pin-input-container">
           {[0, 1, 2, 3].map((index) => (
             <input
               key={index}
-              type="text"
+              ref={(el) => {
+                pinRefs.current[index] = el
+              }}
+              type="tel"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete={index === 0 ? 'one-time-code' : 'off'}
+              autoCapitalize="off"
+              spellCheck={false}
               maxLength={1}
               value={pin[index] || ''}
               onChange={(e) => handlePinChange(e.target.value, index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
-              data-pin-index={index}
               className="pin-input"
             />
           ))}
         </div>
         {recovery.errors.sms && (
-          <div className="text-red-500 text-xs mt-2 text-center">
-            {recovery.errors.sms}
-          </div>
+          <div className="text-red-500 text-xs mt-2 text-center">{recovery.errors.sms}</div>
         )}
       </div>
 
-      {/* Пароль */}
+      <FormButtons
+        onNext={handleSubmit}
+        onBack={recovery.prevStep}
+        nextText="Проверить"
+        disabled={pin.join('').length !== 4}
+        loading={recovery.isLoading}
+      />
+
+      <NavigationLinks
+        links={[{ text: 'Вспомнили пароль? Авторизироваться', onClick: onSwitchToLogin }]}
+      />
+    </>
+  )
+}
+
+// ======================
+// ШАГ 3: НОВЫЙ ПАРОЛЬ
+// ======================
+
+const StepNewPassword: React.FC<{
+  recovery: ReturnType<typeof useRecovery>
+  onSwitchToLogin: () => void
+}> = ({ recovery, onSwitchToLogin }) => {
+  const handleSubmit = () => {
+    recovery.submitRecoveryStep()
+  }
+
+  const handlePasswordBlur = () => {
+    if (recovery.formData.password) {
+      recovery.validateField('password', recovery.formData.password)
+    }
+  }
+
+  const handlePassword1Blur = () => {
+    if (recovery.formData.password1) {
+      recovery.validateField('password1', recovery.formData.password1)
+    }
+  }
+
+  const match =
+    recovery.formData.password &&
+    recovery.formData.password1 &&
+    recovery.formData.password === recovery.formData.password1
+
+  return (
+    <>
+      <div className="a-center">
+        <h2>Новый пароль</h2>
+      </div>
+
+      <div className="fs-11 a-center mb-2">Придумайте новый пароль для входа</div>
+
       <div className="mt-1">
         <PasswordInput
           placeholder="Новый пароль"
-          value={recovery.recoveryData.password || ''}
-          onChange={(value) => recovery.updateRecoveryData('password', value)}
+          value={recovery.formData.password || ''}
+          onChange={(value) => recovery.updateFormData('password', value)}
           onBlur={handlePasswordBlur}
           error={recovery.errors.password}
           autocomplete="new-password"
         />
       </div>
 
-      {/* Подтверждение пароля */}
       <div className="mt-1">
         <PasswordInput
           placeholder="Подтверждение пароля"
-          value={recovery.recoveryData.password1 || ''}
-          onChange={(value) => recovery.updateRecoveryData('password1', value)}
+          value={recovery.formData.password1 || ''}
+          onChange={(value) => recovery.updateFormData('password1', value)}
           onBlur={handlePassword1Blur}
           error={recovery.errors.password1}
           autocomplete="new-password"
         />
       </div>
 
-      <FormButtons 
+      <FormButtons
         onNext={handleSubmit}
         onBack={recovery.prevStep}
         nextText="Сохранить пароль"
-        disabled={!isFormValid}
+        disabled={!match}
         loading={recovery.isLoading}
       />
 
-      <NavigationLinks links={[
-        { text: 'Вспомнили пароль? Авторизироваться', onClick: onSwitchToLogin }
-      ]} />
+      <NavigationLinks
+        links={[{ text: 'Вспомнили пароль? Авторизироваться', onClick: onSwitchToLogin }]}
+      />
     </>
   )
 }
 
-
 // ======================
-// ГЛАВНЫЙ КОМПОНЕНТ ВОССТАНОВЛЕНИЯ
+// ГЛАВНЫЙ КОМПОНЕНТ
 // ======================
 
-export const RecoveryForm: React.FC<RecoveryFormProps> = ({ 
-  onSwitchToLogin, 
-  onSwitchToRegister 
+export const RecoveryForm: React.FC<RecoveryFormProps> = ({
+  onSwitchToLogin,
+  onSwitchToRegister
 }) => {
-  const recovery = useRecovery( onSwitchToLogin )
+  const recovery = useRecovery(onSwitchToLogin)
 
-   const steps = [
-    <StepPhone 
-      key="phone" 
+  const steps = [
+    <StepPhone
+      key="phone"
       recovery={recovery}
       onSwitchToLogin={onSwitchToLogin}
       onSwitchToRegister={onSwitchToRegister}
     />,
-    <StepSmsAndPassword 
-      key="sms-password" 
-      recovery={recovery}
-      onSwitchToLogin={onSwitchToLogin}
-    />
+    <StepOtp key="otp" recovery={recovery} onSwitchToLogin={onSwitchToLogin} />,
+    <StepNewPassword key="password" recovery={recovery} onSwitchToLogin={onSwitchToLogin} />
   ]
 
   return (

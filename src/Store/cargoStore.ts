@@ -18,7 +18,7 @@ export interface  CargoAddress {
     lon: number;
 }
 
-export type       DriverStatus    = 'Заказано'  | 'Принято'   | 'На погрузке'   | 'Загружается'   | 'Загружено'   | 'В пути'  | 'Доставлено'  | 'Разгружается'  |  'Разгружено'  | 'Завершено';
+export type       DriverStatus    = 'Заказано'  | 'Принято'   | 'На погрузке'   | 'Загружается'   | 'Загружено'   | 'В пути'  | 'Прибыл'  | 'Доставлено'  | 'Разгружается'  |  'Разгружено'  | 'Завершено';
 
 
 export type       DriverCardMode  = 'offered'   | 'assigned'  | 'to_load'       | 'on_load'       | 'loaded'      | 'on_way'  | 'delivered'   | 'on_unload'     | 'unloaded'    | 'completed';
@@ -295,7 +295,16 @@ export const cargoSocketHandlers = {
         if (response.success && response.data) {
             useCargoStore.getState().updateCargo(response.data.guid, response.data)
         }
-    }
+    },
+
+    /** Ответ на emit('update_cargo', …) — тот же контракт, что и у set_cargo */
+    onUpdateCargo: (response: any) => {
+        console.log('onUpdateCargo response:', response)
+
+        if (response.success && response.data?.guid) {
+            useCargoStore.getState().updateCargo(response.data.guid, response.data)
+        }
+    },
     
 }
 
@@ -308,6 +317,7 @@ export const initCargoSocketHandlers = (socket: any) => {
     socket.on('get_cargos',           cargoSocketHandlers.onGetCargos)
     socket.on('get_cargo_archives',   cargoSocketHandlers.onGetCargoArchives)
     socket.on('set_cargo',            cargoSocketHandlers.onSaveCargo)  
+    socket.on('update_cargo',         cargoSocketHandlers.onUpdateCargo)
     socket.on('delete_cargo',         cargoSocketHandlers.onDeleteCargo)
     socket.on('publish_cargo',        cargoSocketHandlers.onPublishCargo)
     
@@ -320,6 +330,7 @@ export const destroyCargoSocketHandlers = (socket: any) => {
     socket.off('get_cargos',          cargoSocketHandlers.onGetCargos)
     socket.off('get_cargo_archives',  cargoSocketHandlers.onGetCargoArchives)
     socket.off('set_cargo',          cargoSocketHandlers.onSaveCargo)
+    socket.off('update_cargo',        cargoSocketHandlers.onUpdateCargo)
     socket.off('delete_cargo',        cargoSocketHandlers.onDeleteCargo)
     socket.off('publish_cargo',       cargoSocketHandlers.onPublishCargo)
     

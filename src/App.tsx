@@ -1,7 +1,6 @@
 import { Redirect, Route, Switch, useHistory } from 'react-router-dom';
 import {
   IonApp,
-  IonIcon,
   IonLabel,
   IonRouterOutlet,
   IonTabBar,
@@ -13,7 +12,7 @@ import {
   setupIonicReact
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { archiveOutline, bicycleOutline, chatboxEllipses, chatboxEllipsesOutline, contractOutline, ellipse, giftOutline, personOutline, square, triangle, walkOutline } from 'ionicons/icons';
+import { Archive, FileSignature, MessageCircle, User } from 'lucide-react';
 import Tab1 from './pages/Tab1';
 import Tab2 from './pages/Tab2';
 import Tab3 from './pages/Tab3';
@@ -128,22 +127,30 @@ const AppContent: React.FC = () => {
             
             <IonTabBar slot="bottom">
               <IonTabButton tab="tab1" href="/tab1">
-                <IonIcon aria-hidden="true" icon={contractOutline} />
+                <span className="tab-bar-lucide" aria-hidden="true">
+                  <FileSignature size={24} strokeWidth={1.75} />
+                </span>
                 <IonLabel>{user.user_type === 2 ? "Работы" : "Заказы"}</IonLabel>
               </IonTabButton>
 
               <IonTabButton tab="tab4" href="/tab4">
-                <IonIcon aria-hidden="true" icon={archiveOutline} />
+                <span className="tab-bar-lucide" aria-hidden="true">
+                  <Archive size={24} strokeWidth={1.75} />
+                </span>
                 <IonLabel>Архив</IonLabel>
               </IonTabButton>
 
               <IonTabButton tab="tab2" href="/tab2">
-                <IonIcon aria-hidden="true" icon={chatboxEllipsesOutline} />
+                <span className="tab-bar-lucide" aria-hidden="true">
+                  <MessageCircle size={24} strokeWidth={1.75} />
+                </span>
                 <IonLabel>Чат</IonLabel>
               </IonTabButton>
 
               <IonTabButton tab="tab3" href="/tab3">
-                <IonIcon aria-hidden="true" icon={personOutline} />
+                <span className="tab-bar-lucide" aria-hidden="true">
+                  <User size={24} strokeWidth={1.75} />
+                </span>
                 <IonLabel>Профиль</IonLabel>
               </IonTabButton>
             </IonTabBar>

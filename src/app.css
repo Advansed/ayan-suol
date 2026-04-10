@@ -606,6 +606,17 @@ ion-tab-bar {
   padding-bottom: var(--ion-safe-area-bottom);
 }
 
+ion-tab-button .tab-bar-lucide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+ion-tab-button .tab-bar-lucide svg {
+  color: inherit;
+}
+
 /* Заголовки страниц */
 ion-header {
   padding-top: max(20px, var(--ion-safe-area-top));

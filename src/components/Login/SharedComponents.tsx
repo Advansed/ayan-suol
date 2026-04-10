@@ -1,12 +1,11 @@
 import React from 'react'
 import { IonInput, IonSpinner, IonButton, IonLabel, IonIcon } from '@ionic/react'
-import { useMaskito } from '@maskito/react'
-import { MaskitoOptions } from '@maskito/core'
+import type { AutocompleteTypes } from '@ionic/core'
 import { closeOutline } from 'ionicons/icons'
-
+import { formatPhoneInputDisplay } from './phone'
 
 // ======================
-// МАСКИРОВАННЫЙ ВВОД ТЕЛЕФОНА
+// ВВОД ТЕЛЕФОНА (E.164, международный)
 // ======================
 
 interface MaskedInputProps {
@@ -17,32 +16,24 @@ interface MaskedInputProps {
   error?: string
 }
 
-const PHONE_MASK_OPTIONS: MaskitoOptions = {
-  mask: ['+', '7', ' ', '(', /\d/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, '-', /\d/, /\d/]
-}
-
-export const MaskedInput: React.FC<MaskedInputProps> = ({ 
-  placeholder, 
-  value, 
-  onChange, 
+/** Свободный ввод телефона в международном формате (без фиксированной маски +7) */
+export const MaskedInput: React.FC<MaskedInputProps> = ({
+  placeholder,
+  value,
+  onChange,
   onBlur,
-  error 
+  error
 }) => {
-  const phoneMask = useMaskito({ options: PHONE_MASK_OPTIONS })
-
   return (
     <div className="masked-input-container">
       <div className="l-input">
         <IonInput
-          ref={async (phoneInput) => {
-            if (phoneInput) {
-              const input = await phoneInput.getInputElement()
-              phoneMask(input)
-            }
-          }}
+          type="tel"
+          inputMode="tel"
+          autocomplete="tel"
           placeholder={placeholder}
           value={value}
-          onIonInput={(e) => onChange(e.detail.value || '')}
+          onIonInput={(e) => onChange(formatPhoneInputDisplay(e.detail.value ?? ''))}
           onIonBlur={onBlur}
         />
       </div>
@@ -61,7 +52,7 @@ interface PasswordInputProps {
   onChange: (value: string) => void
   onBlur?: () => void
   error?: string
-  autocomplete?: string
+  autocomplete?: AutocompleteTypes
 }
 
 export const PasswordInput: React.FC<PasswordInputProps> = ({ 
@@ -79,7 +70,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
           type="password"
           placeholder={placeholder}
           value={value}
-        //   autocomplete={autocomplete}
+          autocomplete={autocomplete}
           onIonInput={(e) => onChange(e.detail.value || '')}
           onIonBlur={onBlur}
         />

@@ -319,7 +319,10 @@ export const chatSocketHandlers = {
 // ============================================
 export const initChatSocketHandlers = (socket: any) => {
   if (!socket) return
-  
+
+  // Снимаем прежние подписки, чтобы повторный init не дублировал обработчики (N× onGetMessages на один ответ)
+  destroyChatSocketHandlers(socket)
+
   socket.on('get_chats',        chatSocketHandlers.onGetChats)
   socket.on('get_messages',     chatSocketHandlers.onGetMessages)
   socket.on('new_message',      chatSocketHandlers.onNewMessage)

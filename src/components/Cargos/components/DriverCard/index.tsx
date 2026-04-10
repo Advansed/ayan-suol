@@ -5,6 +5,7 @@ import { LoadingStartedCard } from './LoadingStartedCard';
 import { LoadedCard } from './LoadedCard';
 import { OnWayCard } from './OnWayCard';
 import { ToUnloadCard } from './ToUnloadCard';
+import { ArrivedUnloadCard } from './ArrivedUnloadCard';
 import { UnloadingCard } from './UnloadingCard';
 import { CompletedCard } from './CompletedCard';
 import { FinalCard } from './FinalCard';
@@ -70,6 +71,10 @@ export const DriverCard: React.FC<DriverInfoProps> = ({
                 );
             case 'В пути':
                 return <OnWayCard info={info} />;
+            case 'Прибыл':
+                return (
+                    <ArrivedUnloadCard info={info} onChat={onChat} isLoading={isLoading} />
+                );
             case 'Доставлено':
                 return (
                     <ToUnloadCard

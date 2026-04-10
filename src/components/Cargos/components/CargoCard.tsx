@@ -11,6 +11,16 @@ interface CargoCardProps {
     onClick?: () => void;
 }
 
+const SURFACE_BY_STATUS: Record<CargoStatus, string> = {
+    [CargoStatus.NEW]: styles.surfaceNew,
+    [CargoStatus.WAITING]: styles.surfaceWaiting,
+    [CargoStatus.HAS_ORDERS]: styles.surfaceHasOrders,
+    [CargoStatus.NEGOTIATION]: styles.surfaceNegotiation,
+    [CargoStatus.IN_WORK]: styles.surfaceInWork,
+    [CargoStatus.DELIVERED]: styles.surfaceDelivered,
+    [CargoStatus.COMPLETED]: styles.surfaceCompleted,
+};
+
 export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', onClick }) => {
     
     const handleClick = () => {
@@ -168,10 +178,12 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', onCl
         </>
     );
 
+    const surfaceClass = `${styles.cardSurface} ${SURFACE_BY_STATUS[cargo.status] ?? styles.surfaceNew}`;
+
     // Обёртка для разных режимов
     if (mode === 'view') {
         return (
-            <div className="cr-card cargo-card-view">
+            <div className={`cr-card cargo-card-view ${surfaceClass}`}>
                 {CardInner}
             </div>
         );
@@ -180,7 +192,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', onCl
     // Режим для списка (новый компактный дизайн по образцу WorkCard)
     return (
         <div
-            className="cr-card mt-1 cargo-card-list"
+            className={`cr-card mt-1 cargo-card-list ${surfaceClass}`}
             onClick={handleClick}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
         >
@@ -194,10 +206,4 @@ function getCircle( cargo: CargoInfo) {
    if(cargo.advance === cargo.price) return 'circle-1'
    if(cargo.advance !== 0 ) return 'circle-2'
    return 'circle-3'
-}
-
-function getCSS( cargo: CargoInfo) {
-   if(cargo.advance === cargo.price) return 'cr-status-6'
-   if(cargo.advance !== 0 ) return 'cr-status-2'
-   return 'cr-status-5'
 }

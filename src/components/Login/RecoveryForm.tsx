@@ -28,7 +28,7 @@ const StepPhone: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
       <div className="fs-11 a-center mb-2">Введите номер телефона, привязанный к вашему аккаунту</div>
       
       <MaskedInput
-        placeholder="+7 (XXX) XXX-XXXX"
+        placeholder="Телефон: +7… или международный +…"
         value={auth.recoveryData.phone || ''}
         onChange={(value) => auth.updateRecoveryData('phone', value)}
         error={auth.formErrors.phone}

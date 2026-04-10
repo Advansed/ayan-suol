@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 import { ToastContext } from './ToastManager';
 
 export const useToast = () => {
@@ -10,10 +10,13 @@ export const useToast = () => {
 
   const { addToast } = context;
 
-  return {
-    success: (message: string, duration?: number) => addToast('success', message, duration),
-    error: (message: string, duration?: number) => addToast('error', message, duration),
-    warning: (message: string, duration?: number) => addToast('warning', message, duration),
-    info: (message: string, duration?: number) => addToast('info', message, duration),
-  };
+  return useMemo(
+    () => ({
+      success: (message: string, duration?: number) => addToast('success', message, duration),
+      error: (message: string, duration?: number) => addToast('error', message, duration),
+      warning: (message: string, duration?: number) => addToast('warning', message, duration),
+      info: (message: string, duration?: number) => addToast('info', message, duration),
+    }),
+    [addToast]
+  );
 };

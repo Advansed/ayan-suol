@@ -27,6 +27,8 @@ export interface UserData {
   image:              string
   token:              string
   user_type:          number
+  /** Канал OTP: sms | telegram */
+  transport:          string
   description:        string
   account:            string
   password:           string
@@ -51,6 +53,7 @@ interface LoginState {
   image:              string
   token:              string
   user_type:          number
+  transport:          string
   description:        string
   account:            string
   seller:             string
@@ -90,6 +93,7 @@ export const useLoginStore = create<LoginStore>()(
       image:            '',
       token:            '',
       user_type:        0,
+      transport:        '',
       description:      '',
       account:          '',
       seller:           '',
@@ -118,6 +122,7 @@ export const useLoginStore = create<LoginStore>()(
         image:          '',
         token:          '',
         user_type:      0,
+        transport:      '',
         description:    '',
         account:        '',
         seller:         '',

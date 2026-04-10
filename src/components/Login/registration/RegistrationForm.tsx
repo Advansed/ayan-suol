@@ -12,19 +12,15 @@ import {
   NavigationLinks
 } from '../SharedComponents'
 import { useReg, UseRegReturn } from './hooks/useReg'
+import { loginActions } from '../../../Store/loginStore'
 import { useEULA, UseEULAReturn } from './hooks/useEULA'
+import type { OtpTransport } from '../otpTransport'
 
 const EULA = lazy(() => import('./eula'))
 
 interface RegistrationFormProps {
   onSwitchToLogin?: () => void
   onSwitchToRecovery?: () => void
-}
-
-// Утилита для форматирования телефона
-const formatPhoneDisplay = (phone: string): string => {
-  if (!phone || phone.length < 10) return phone
-  return `${phone.substring(0, 2)} (${phone.substring(2, 5)}) ${phone.substring(5, 8)}-${phone.substring(8, 10)}-${phone.substring(10)}`
 }
 
 // ======================
@@ -45,7 +41,7 @@ const RoleSelector: React.FC<{
     }
 
     if (reg.formData.userType) {
-      reg.updateRegistrationData('userType', reg.formData.userType)
+      loginActions.updateUser({ user_type: Number(reg.formData.userType) })
       reg.updateFormData('agreementAccepted', eula.isEULAAccepted)
       reg.nextStep()
     }
@@ -126,6 +122,8 @@ const RoleSelector: React.FC<{
 // ======================
 
 const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
+  const otpTransport: OtpTransport =
+    reg.formData.otpTransport === 'telegram' ? 'telegram' : 'sms'
 
   const handleNext = useCallback(() => {
     reg.submitStep()
@@ -162,7 +160,7 @@ const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
       {/* Телефон */}
       <div className="mt-1">
         <MaskedInput
-          placeholder="+7 (XXX) XXX-XXXX"
+          placeholder="Телефон: +7… или международный +…"
           value={reg.formData.phone || ''}
           onChange={(value) => reg.updateFormData('phone', value)}
           onBlur={handlePhoneBlur}
@@ -192,6 +190,28 @@ const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
         />
       </div>
 
+      <div className="mt-2">
+        <div className="fs-11 a-center mb-1">Как получить код подтверждения?</div>
+        <div className="role-selection-buttons">
+          <button
+            type="button"
+            className={`role-button ${otpTransport === 'sms' ? 'selected' : ''}`}
+            onClick={() => reg.updateFormData('otpTransport', 'sms')}
+          >
+            <div className="role-icon">💬</div>
+            <div>SMS</div>
+          </button>
+          <button
+            type="button"
+            className={`role-button ${otpTransport === 'telegram' ? 'selected' : ''}`}
+            onClick={() => reg.updateFormData('otpTransport', 'telegram')}
+          >
+            <div className="role-icon">✈️</div>
+            <div>Telegram</div>
+          </button>
+        </div>
+      </div>
+
       <FormButtons
         onNext={handleNext}
         onBack={reg.prevStep}
@@ -209,27 +229,42 @@ const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
 // ======================
 
 const StepVerification: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
+  const otpTransport: OtpTransport =
+    reg.formData.otpTransport === 'telegram' ? 'telegram' : 'sms'
+
   const [pin, setPin] = useState(['', '', '', '']);
 
   // Создаем массив рефов для прямого управления фокусом без поиска по DOM
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handlePinChange = useCallback((value: string, index: number) => {
-    const digit = value.slice(-1);
-    const newPin = [...pin];
-    newPin[index] = digit;
+    const digits = value.replace(/\D/g, '')
+    const newPin = [...pin]
 
-    setPin(newPin);
-
-    // Синхронизируем со стором (можно через дебаунс или по завершению)
-    const fullCode = newPin.join('');
-    reg.updateFormData('pincode', fullCode);
-
-    // Автофокус на следующий инпут через рефы
-    if (digit && index < 3) {
-      inputRefs.current[index + 1]?.focus();
+    if (digits.length === 0) {
+      newPin[index] = ''
+    } else if (digits.length === 1) {
+      newPin[index] = digits
+    } else {
+      for (let i = 0; i < digits.length && index + i < 4; i++) {
+        newPin[index + i] = digits[i]!
+      }
     }
-  }, [reg, pin]);
+
+    setPin(newPin)
+    reg.updateFormData('pincode', newPin.join(''))
+
+    if (digits.length > 0) {
+      const firstEmpty = newPin.findIndex((c) => c === '')
+      requestAnimationFrame(() => {
+        if (firstEmpty >= 0) {
+          inputRefs.current[firstEmpty]?.focus()
+        } else {
+          inputRefs.current[3]?.focus()
+        }
+      })
+    }
+  }, [reg, pin])
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
     // Возврат на предыдущее поле при удалении
@@ -245,11 +280,9 @@ const StepVerification: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
       </div>
 
       <div className="fs-11 a-center mb-2">
-        Введите код из SMS или дождитесь звонка
-      </div>
-
-      <div className="a-center fs-14 mt-2 mb-2">
-        <b>{reg.registrationData.call_phone || ''}</b>
+        {otpTransport === 'telegram'
+          ? 'Введите код из Telegram'
+          : 'Введите код из SMS'}
       </div>
 
       <div className="mt-1">
@@ -260,6 +293,10 @@ const StepVerification: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
               ref={(el) => (inputRefs.current[index] = el)} // Привязка рефа
               type="tel" // Вызываем цифровую клавиатуру на мобильных
               inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete={index === 0 ? 'one-time-code' : 'off'}
+              autoCapitalize="off"
+              spellCheck={false}
               maxLength={1}
               value={pin[index]}
               onChange={(e) => handlePinChange(e.target.value, index)}

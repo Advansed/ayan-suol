@@ -140,10 +140,9 @@ export const useCargos = (): UseCargosReturn => {
             emit(SOCKET_EVENTS.GET_CARGOS, { token })
         } catch (error) {
             toast.error('Ошибка обновления данных')
-        } finally {
             setLoading(false)
         }
-    }, [ token, setLoading])
+    }, [ token, setLoading, emit, toast])
     
 
     // Мемоизируем возвращаемый объект

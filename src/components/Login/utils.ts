@@ -2,6 +2,8 @@
  * Все утилиты для Login модуля
  */
 
+import { parseLoginPhone, formatLoginPhoneInternational } from './phone'
+
 // ======================
 // ВАЛИДАЦИЯ
 // ======================
@@ -10,8 +12,10 @@ export const validateField = (field: string, value: any): string | null => {
   switch (field) {
     case 'phone':
       if (!value || value.trim() === '') return 'Заполните телефон'
-      const phoneRegex = /^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$/
-      return phoneRegex.test(value) ? null : 'Некорректный формат номера телефона'
+      {
+        const parsed = parseLoginPhone(value)
+        return parsed.ok ? null : parsed.error
+      }
       
     case 'password':
       if (!value || value.trim() === '') return 'Заполните пароль'
@@ -75,33 +79,18 @@ export const validateForm = (formType: string, data: any): Record<string, string
 
 export const formatPhone = (phone: string): string => {
   if (!phone) return ''
-  // Убираем все кроме цифр
+  const parsed = parseLoginPhone(phone)
+  if (parsed.ok) return parsed.e164
   const digits = phone.replace(/\D/g, '')
-  
-  // Добавляем +7 если нужно
-  if (digits.length === 11 && digits.startsWith('7')) {
-    return `+${digits}`
-  }
-  if (digits.length === 10) {
-    return `+7${digits}`
-  }
-  
-  return `+${digits}`
+  return digits ? `+${digits}` : ''
 }
 
-export const Phone = (phone: string): string => {
-  if (!phone) return ''
-  let str = '+'
-  for (let i = 0; i < phone.length; i++) {
-    const ch = phone.charCodeAt(i)
-    if (ch >= 48 && ch <= 57) str = str + phone.charAt(i)
-  }
-  return str
-}
+/** @deprecated Используйте parseLoginPhone; оставлено для совместимости импортов */
+export const Phone = (phone: string): string => formatPhone(phone)
 
 export const formatPhoneDisplay = (phone: string): string => {
-  if (!phone || phone.length < 10) return phone
-  return `${phone.substring(0, 2)} (${phone.substring(2, 5)}) ${phone.substring(5, 8)}-${phone.substring(8, 10)}-${phone.substring(10)}`
+  if (!phone?.trim()) return phone
+  return formatLoginPhoneInternational(phone)
 }
 
 // ======================
@@ -145,6 +134,5 @@ export const STORAGE_KEYS = {
 }
 
 export const VALIDATION_PATTERNS = {
-  phone: /^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$/,
   email: /\S+@\S+\.\S+/
 }

@@ -24,18 +24,17 @@ export interface User {
 }
 
 export interface AuthState {
-  isAuthenticated:  boolean
-  user:             User | null
-  isLoading:        boolean
-  error:            string
-  currentForm:      'login' | 'register' | 'recovery'
-  formData:         Record<string, any>
-  formErrors:       Record<string, string>
+  isAuthenticated: boolean
+  user: User | null
+  isLoading: boolean
+  error: string
+  currentForm: 'login' | 'register' | 'recovery'
+  formData: Record<string, any>
+  formErrors: Record<string, string>
   registrationStep: number
-  registrationData: RegistrationData
-  recoveryStep:     number
-  recoveryData:     RecoveryData
-  socketStatus:     'connected' | 'disconnected' | 'connecting'
+  recoveryStep: number
+  recoveryData: RecoveryData
+  socketStatus: 'connected' | 'disconnected' | 'connecting'
 }
 
 export interface LoginCredentials {
@@ -43,26 +42,25 @@ export interface LoginCredentials {
   password: string
 }
 
+/** Устаревший тип формы регистрации (актуальные данные — в loginStore) */
 export interface RegistrationData {
-  phone:        string
-  name:         string
-  email?:       string
-  token?:       string
-  status?:      string
-  check_id?:    string
-  call_phone?:  string
-  user_type?:   string
+  phone: string
+  name: string
+  email?: string
+  userType: '0' | '1' | '2'
+  partner?: string
+  token?: string
 }
 
 export interface RecoveryData {
-  phone:          string
-  token?:         string
-  status?:        string
-  check_id?:      string
-  call_phone?:    string
-  password?:      string
-  password1?:     string
-  pincode?:        string
+  phone: string
+  token?: string
+  status?: string
+  check_id?: string
+  call_phone?: string
+  password?: string
+  password1?: string
+  pincode?: string
   user_data?: {
     name: string
   }
@@ -72,7 +70,7 @@ export interface PasswordData {
   token: string
   password: string
   password1: string
-  phone?: string
+  userType?: string
 }
 
 export interface SocketResponse {
@@ -82,61 +80,25 @@ export interface SocketResponse {
 }
 
 export interface UseAuthReturn extends AuthState {
-  // Основные действия
   login: (credentials: LoginCredentials) => Promise<void>
   register: (data: RegistrationData) => Promise<void>
   recoverPassword: (data: any) => Promise<void>
-  
-  // Навигация форм
+
   showLoginForm: () => void
   showRegisterForm: () => void
   showRecoveryForm: () => void
-  
-  // Валидация
+
   validateField: (field: string, value: any) => string | null
-  
-  // Шаги регистрации
+
   nextRegistrationStep: () => void
   prevRegistrationStep: () => void
   submitRegistrationStep: () => Promise<void>
-  
-  // Шаги восстановления
+
   nextRecoveryStep: () => void
   prevRecoveryStep: () => void
   submitRecoveryStep: () => Promise<void>
-  
-  // Утилиты
+
   clearErrors: () => void
   updateFormData: (field: string, value: any) => void
-  updateRegistrationData: (field: string, value: any) => void
   updateRecoveryData: (field: string, value: any) => void
-}
-
-// src/components/Login/types.ts - ДОПОЛНЕНИЯ
-
-export interface RegistrationData {
-  phone: string
-  name: string
-  email?: string
-  userType: '0' | '1' | '2'  // ← ДОБАВИТЬ
-  partner?: string
-  token?: string
-  status?: string
-  check_id?: string
-  call_phone?: string
-}
-
-export interface AuthState {
-  isAuthenticated:  boolean
-  user:             User | null
-  isLoading:        boolean
-  error:            string
-  currentForm:      'login' | 'register' | 'recovery'
-  formData:         Record<string, any>
-  formErrors:       Record<string, string>
-  registrationStep: number  // теперь 0-4 вместо 0-3
-  registrationData: RegistrationData
-  recoveryStep:     number
-  recoveryData:     RecoveryData
-  socketStatus:     'connected' | 'disconnected' | 'connecting'
 }

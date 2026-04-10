@@ -24,7 +24,7 @@ export const useWorks = () => {
   const filters = useWorkStore(state => state.filters)
   const searchQuery = useWorkStore(state => state.searchQuery)
 
-  const [contract, setContract] = useState<any>()
+  const [contract, setContract] = useState<string>()
 
   // ============================================
   // ФИЛЬТРЫ И ПОИСК
@@ -49,46 +49,47 @@ export const useWorks = () => {
     workActions.setLoading(true);
 
     return new Promise((resolve) => {
+      let settled = false;
+      const timerRef: { id?: ReturnType<typeof setTimeout> } = {};
+
+      const finish = (value: boolean) => {
+        if (settled) return;
+        settled = true;
+        if (timerRef.id !== undefined) clearTimeout(timerRef.id);
+        workActions.setLoading(false);
+        resolve(value);
+      };
+
       try {
         const offerData = {
           ...data,
           createdAt: new Date().toISOString()
         };
 
-        // Обработчик однократного ответа от сервера
         const handleOfferResponse = (response: { success: boolean; error?: string }) => {
           if (response.success) {
             toast.success('Предложение успешно создано');
-
-            resolve(true);
+            finish(true);
           } else {
             toast.error(response.error || 'Ошибка создания предложения');
-            resolve(false);
+            finish(false);
           }
         };
 
-        // Подписываемся на ответ от сервера
         socket.once('set_offer', handleOfferResponse);
-
-        // Отправляем запрос на сервер
         socket.emit('set_offer', { token, ...offerData });
 
-        // Таймаут на случай, если ответ не придет
-        setTimeout(() => {
+        timerRef.id = setTimeout(() => {
           toast.error('Таймаут ожидания ответа от сервера');
-          resolve(false);
-        }, 10000); // 10 секунд таймаут
-
+          finish(false);
+        }, 10000);
       } catch (error) {
         console.error('Error creating offer:', error);
         toast.error('Ошибка создания предложения');
-        resolve(false);
-      } finally {
-        workActions.setLoading(false);
+        finish(false);
       }
     });
-
-  }, [token]);
+  }, [socket, token, toast]);
 
 
   const delOffer = useCallback(async (data: OfferInfo): Promise<boolean> => {
@@ -100,45 +101,47 @@ export const useWorks = () => {
     workActions.setLoading(true);
 
     return new Promise((resolve) => {
+      let settled = false;
+      const timerRef: { id?: ReturnType<typeof setTimeout> } = {};
+
+      const finish = (value: boolean) => {
+        if (settled) return;
+        settled = true;
+        if (timerRef.id !== undefined) clearTimeout(timerRef.id);
+        workActions.setLoading(false);
+        resolve(value);
+      };
+
       try {
         const offerData = {
           ...data,
           createdAt: new Date().toISOString()
         };
 
-        // Обработчик однократного ответа от сервера
         const handleOfferResponse = (response: { success: boolean; error?: string }) => {
           if (response.success) {
             toast.success('Предложение успешно удалено');
-
-            resolve(true);
+            finish(true);
           } else {
             toast.error(response.error || 'Ошибка удаления предложения');
-            resolve(false);
+            finish(false);
           }
         };
 
-        // Подписываемся на ответ от сервера
         socket.once('del_offer', handleOfferResponse);
-
-        // Отправляем запрос на сервер
         socket.emit('del_offer', { token, ...offerData });
 
-        // Таймаут на случай, если ответ не придет
-        setTimeout(() => {
+        timerRef.id = setTimeout(() => {
           toast.error('Таймаут ожидания ответа от сервера');
-          resolve(false);
-        }, 10000); // 10 секунд таймаут
-
+          finish(false);
+        }, 10000);
       } catch (error) {
         console.error('Error deleting offer:', error);
         toast.error('Ошибка удаления предложения');
-        resolve(false);
-      } finally {
-        workActions.setLoading(false);
+        finish(false);
       }
     });
-  }, [token]);
+  }, [socket, token, toast]);
 
 
   const setStatus = useCallback(async (work: WorkInfo): Promise<boolean> => {
@@ -150,6 +153,17 @@ export const useWorks = () => {
     workActions.setLoading(true);
 
     return new Promise((resolve) => {
+      let settled = false;
+      const timerRef: { id?: ReturnType<typeof setTimeout> } = {};
+
+      const finish = (value: boolean) => {
+        if (settled) return;
+        settled = true;
+        if (timerRef.id !== undefined) clearTimeout(timerRef.id);
+        workActions.setLoading(false);
+        resolve(value);
+      };
+
       try {
         const offerData = {
           guid: work.guid,
@@ -158,40 +172,31 @@ export const useWorks = () => {
           createdAt: new Date().toISOString()
         };
 
-        // Обработчик однократного ответа от сервера
         const handleStatusResponse = (response: { success: boolean; error?: string }) => {
           if (response.success) {
             toast.success('Статус успешно обновлен');
-
-            resolve(true);
+            finish(true);
           } else {
             toast.error(response.error || 'Ошибка обновления статуса');
-            resolve(false);
+            finish(false);
           }
         };
 
-        // Подписываемся на ответ от сервера
         socket.once('set_status', handleStatusResponse);
-
-        // Отправляем запрос на сервер
-        toast.info("Отправка статуса...");
+        toast.info('Отправка статуса...');
         socket.emit('set_status', { token, ...offerData });
 
-        // Таймаут на случай, если ответ не придет
-        setTimeout(() => {
+        timerRef.id = setTimeout(() => {
           toast.error('Таймаут ожидания ответа от сервера');
-          resolve(false);
-        }, 10000); // 10 секунд таймаут
-
+          finish(false);
+        }, 10000);
       } catch (error) {
         console.error('Error creating offer:', error);
         toast.error('Ошибка создания предложения');
-        resolve(false);
-      } finally {
-        workActions.setLoading(false);
+        finish(false);
       }
     });
-  }, [token]);
+  }, [socket, token, toast]);
 
 
   const setDeliver = useCallback(async (data: OfferInfo): Promise<boolean> => {
@@ -217,7 +222,7 @@ export const useWorks = () => {
     } finally {
       workActions.setLoading(false)
     }
-  }, [token])
+  }, [token, socket, toast])
 
 
   const create_contract = useCallback(async (info: WorkInfo): Promise<boolean> => {
@@ -229,16 +234,25 @@ export const useWorks = () => {
     workActions.setLoading(true);
 
     return new Promise((resolve) => {
-      socket.once('create_contract', (data: { success: boolean; message?: string; data?: any }) => {
-        console.log("create_contract", data)
-        if (data.success) {
-          toast.success("Договор создан")
-          resolve(true);
-        } else {
-          toast.error("Ошибка при создании договора: " + (data.message || 'Неизвестная ошибка'));
-          resolve(false);
-        }
+      let settled = false;
+      const timerRef: { id?: ReturnType<typeof setTimeout> } = {};
+
+      const finish = (value: boolean) => {
+        if (settled) return;
+        settled = true;
+        if (timerRef.id !== undefined) clearTimeout(timerRef.id);
         workActions.setLoading(false);
+        resolve(value);
+      };
+
+      socket.once('create_contract', (data: { success: boolean; message?: string; data?: unknown }) => {
+        if (data.success) {
+          toast.success('Договор создан');
+          finish(true);
+        } else {
+          toast.error('Ошибка при создании договора: ' + (data.message || 'Неизвестная ошибка'));
+          finish(false);
+        }
       });
 
       socket.emit('create_contract', {
@@ -246,14 +260,12 @@ export const useWorks = () => {
         id: info.guid,
       });
 
-      // Таймаут на случай, если ответ не придет
-      setTimeout(() => {
+      timerRef.id = setTimeout(() => {
         toast.error('Таймаут ожидания ответа от сервера');
-        resolve(false);
-        workActions.setLoading(false);
+        finish(false);
       }, 10000);
     });
-  }, [token]);
+  }, [socket, token, toast]);
 
 
   const get_contract = useCallback(async (info: WorkInfo) => {
@@ -265,7 +277,7 @@ export const useWorks = () => {
 
     workActions.setLoading(true);
 
-    socket.once('get_pdf1', (data: { success: boolean; message?: string; data: any }) => {
+    socket.once('get_pdf1', (data: { success: boolean; message?: string; data: string }) => {
       console.log("get_pdf1", data)
       if (data.success) {
 
@@ -284,7 +296,7 @@ export const useWorks = () => {
       id: info.guid,
     });
 
-  }, [token]);
+  }, [token, socket, toast]);
 
 
   const get_contract_data = useCallback(async (work: WorkInfo): Promise<ContractData | undefined> => {
@@ -296,14 +308,24 @@ export const useWorks = () => {
     workActions.setLoading(true);
 
     return new Promise((resolve) => {
+      let settled = false;
+      const timerRef: { id?: ReturnType<typeof setTimeout> } = {};
+
+      const finish = (value: ContractData | undefined) => {
+        if (settled) return;
+        settled = true;
+        if (timerRef.id !== undefined) clearTimeout(timerRef.id);
+        workActions.setLoading(false);
+        resolve(value);
+      };
+
       once('get_contract', (data: { success: boolean; message?: string; data: ContractData }) => {
         if (data.success) {
-          resolve(data.data);
+          finish(data.data);
         } else {
           toast.error(data.message || 'Ошибка при получении договора');
-          resolve(undefined);
+          finish(undefined);
         }
-        workActions.setLoading(false);
       });
 
       emit('get_contract', {
@@ -311,12 +333,12 @@ export const useWorks = () => {
         id: work.guid,
       });
 
-      setTimeout(() => {
-        workActions.setLoading(false);
-        resolve(undefined);
+      timerRef.id = setTimeout(() => {
+        toast.error('Таймаут ожидания ответа от сервера');
+        finish(undefined);
       }, 10000);
     });
-  }, [token, socket, emit, once]);
+  }, [token, socket, emit, once, toast]);
 
 
   const set_contract = useCallback(async (info: WorkInfo, sign: string): Promise<boolean> => {
@@ -327,15 +349,16 @@ export const useWorks = () => {
 
     return new Promise((resolve) => {
       let settled = false
+      const timerRef: { id?: ReturnType<typeof setTimeout> } = {}
 
       const finish = (ok: boolean) => {
         if (settled) return
         settled = true
-        clearTimeout(timeoutId)
+        if (timerRef.id !== undefined) clearTimeout(timerRef.id)
         resolve(ok)
       }
 
-      const timeoutId = setTimeout(() => {
+      timerRef.id = setTimeout(() => {
         toast.error('Таймаут ожидания ответа от сервера')
         finish(false)
       }, 10000)
@@ -360,7 +383,7 @@ export const useWorks = () => {
         sign: sign
       })
     })
-  }, [token, socket]);
+  }, [token, socket, toast]);
 
   // ============================================
   // ЗАГРУЗКА ДАННЫХ
@@ -370,14 +393,14 @@ export const useWorks = () => {
 
     workActions.setLoading(true)
     socket.emit('get_works', { token })
-  }, [token])
+  }, [token, socket])
 
   const loadArchiveWorks = useCallback(async (): Promise<void> => {
     if (!socket) return
 
     workActions.setArchiveLoading(true)
     socket.emit('get_work_archives', { token })
-  }, [token])
+  }, [token, socket])
 
   // ============================================
   // УТИЛИТЫ
@@ -391,41 +414,20 @@ export const useWorks = () => {
 
     switch (status) {
       case WorkStatus.NEW: return 11;
+      case WorkStatus.OFFERED: return 12;
       case WorkStatus.TO_LOAD: return 13;
       case WorkStatus.ON_LOAD: return 15;
       case WorkStatus.LOADING: return 15;
+      case WorkStatus.LOADED: return 16;
       case WorkStatus.IN_WORK: return 17;
       case WorkStatus.TO_UNLOAD: return 18;
       case WorkStatus.UNLOADING: return 19;
+      case WorkStatus.UNLOADED: return 20;
+      case WorkStatus.COMPLETED: return 20;
       case WorkStatus.REJECTED: return 11;
-      default: return 22;
-    }
-
-    // NEW             = "Новый",              // Доступна для предложения             10
-    // OFFERED         = "Торг",               // Водитель сделал предложение          11    
-    // TO_LOAD         = "На погрузку",        // Едет на погрузку                     12    
-    // ON_LOAD         = "На погрузке",        // Прибыл на погрузку                   13 
-    // LOADING         = "Загружается",        // Загружается                          14 
-    // LOADED          = "Загружено",          // Загрузился                           15 
-    // IN_WORK         = "В работе",           // Груз в работе                        16
-    // TO_UNLOAD       = "Доставлено",         // Прибыл на место выгрузки             17
-    // UNLOADING       = "Выгружается",        // Груз выгружается                     18
-    // UNLOADED        = "Выгружено",          // Груз выгружен                        19
-    // COMPLETED       = "Завершено" ,         // Работа завершена                     20
-    // REJECTED        = "Отказано"            // Отказано                             21     
-
-  }
-
-  function statusText(work: WorkInfo) {
-
-    switch (work.status) {
-      case WorkStatus.NEW: return "Сделал предложение";
-      case WorkStatus.TO_LOAD: return "Транспорт " + work.transport + " прибыл на погрузку";
-      case WorkStatus.LOADING: return "Транспорт " + work.transport + " загрузился и готов выехать";
-      case WorkStatus.IN_WORK: return "Транспорт " + work.transport + " выехал в точку доставки";
-      case WorkStatus.UNLOADING: return "Транспорт " + work.transport + " разгрузился и готов сдаче груза";
-      case WorkStatus.REJECTED: return "";
-      default: return 22;
+      default:
+        console.warn('[useWorks] nextStatus: неизвестный статус', status);
+        return 20;
     }
 
     // NEW             = "Новый",              // Доступна для предложения             10

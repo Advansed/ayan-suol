@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useIonRouter } from '@ionic/react';
 import { WorkInfo, WorkStatus } from '../../types';
 import { useWorkStore } from '../../workStore';
@@ -23,7 +23,6 @@ interface WorkViewProps {
     onBack: () => void;
     onOfferClick: (work: WorkInfo) => void;
     onOfferCancelClick: (work: WorkInfo) => void;
-    onStatusClick: (work: WorkInfo) => void;
     onLoaded?: (work: WorkInfo, data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }) => Promise<void>;
     onArrivedAtLoad?: (work: WorkInfo, data: { bodyPhotos: string[] }) => Promise<void>;
     onArrivedUnload?: (
@@ -40,17 +39,20 @@ export const WorkView: React.FC<WorkViewProps> = ({
     onBack,
     onOfferClick,
     onOfferCancelClick,
-    onStatusClick,
     onLoaded,
     onArrivedAtLoad,
     onArrivedUnload,
     onUnloadComplete,
     onSignContract
 }) => {
-    const [workInfo, setWorkInfo] = useState(work);
     const works = useWorkStore(state => state.works);
     const hist = useIonRouter();
     const toast = useToast();
+
+    const workInfo = useMemo(() => {
+        const w = works.find(item => item.guid === work.guid);
+        return w ?? work;
+    }, [works, work]);
 
     const passportCompletion = passportGetters.getCompletionPercentage();
     const companyCompletion = companyGetters.getCompletionPercentage();
@@ -72,21 +74,6 @@ export const WorkView: React.FC<WorkViewProps> = ({
         }
     }, [passportCompletion, companyCompletion, transportCompletion, onBack, toast, hist]);
 
-    useEffect(() => {
-        setWorkInfo(work);
-    }, [work]);
-
-    useEffect(() => {
-        const w = works.find(item => item.guid === workInfo.guid);
-        if (w) {
-            setWorkInfo(w);
-        }
-    }, [works, workInfo.guid]);
-
-    const handleStatusClick = (currentWork: WorkInfo) => {
-        onStatusClick(currentWork);
-    };
-
     const handleOffer = async (data: Partial<WorkInfo>, volume: number): Promise<void> => {
         const updatedWork: WorkInfo = {
             ...workInfo,
@@ -104,10 +91,6 @@ export const WorkView: React.FC<WorkViewProps> = ({
         };
         onOfferCancelClick(updatedWork);
     };
-
-    if (!workInfo) {
-        return null;
-    }
 
     return (
         <>

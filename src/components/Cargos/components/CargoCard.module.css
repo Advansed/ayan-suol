@@ -1,3 +1,49 @@
+/* Мягкая подложка карточки по статусу (бордер + лёгкий залив) */
+.cardSurface {
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 8px;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    filter 0.2s;
+}
+
+.cardSurface.surfaceNew {
+  border-color: #64b5f6;
+  background-color: rgba(100, 181, 246, 0.12);
+}
+
+.cardSurface.surfaceWaiting {
+  border-color: #81c784;
+  background-color: rgba(129, 199, 132, 0.16);
+}
+
+.cardSurface.surfaceHasOrders {
+  border-color: #ffb74d;
+  background-color: rgba(255, 183, 77, 0.18);
+}
+
+.cardSurface.surfaceNegotiation {
+  border-color: #ce93d8;
+  background-color: rgba(186, 104, 200, 0.12);
+}
+
+.cardSurface.surfaceInWork {
+  border-color: #ba68c8;
+  background-color: rgba(186, 104, 200, 0.1);
+}
+
+.cardSurface.surfaceDelivered {
+  border-color: #66bb6a;
+  background-color: rgba(102, 187, 106, 0.14);
+}
+
+.cardSurface.surfaceCompleted {
+  border-color: #4db6ac;
+  background-color: rgba(77, 182, 172, 0.14);
+}
+
 .topRow {
   display: flex;
   justify-content: space-between;

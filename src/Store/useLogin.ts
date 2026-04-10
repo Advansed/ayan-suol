@@ -3,20 +3,7 @@ import { useCallback } from 'react'
 import { useSocket } from './useSocket'
 import { useToast } from '../components/Toast'
 import { AuthResponse, useLoginStore, UserData } from './loginStore'
-
-// ============================================
-// УТИЛИТЫ
-// ============================================
-
-export function Phone(phone: string): string {
-  if (!phone) return ''
-  let str = '+'
-  for (let i = 0; i < phone.length; i++) {
-    const ch = phone.charCodeAt(i)
-    if (ch >= 48 && ch <= 57) str = str + phone.charAt(i)
-  }
-  return str
-}
+import { parseLoginPhone } from '../components/Login/phone'
 
 // ============================================
 // HOOK
@@ -52,6 +39,12 @@ export function useLogin() {
       return false
     }
 
+    const parsedPhone = parseLoginPhone(phoneNumber)
+    if (!parsedPhone.ok) {
+      toast.error(parsedPhone.error)
+      return false
+    }
+
     setLoading(true)
     setAuth(false)
 
@@ -61,8 +54,8 @@ export function useLogin() {
         const handleAuthResponse = (response: { success: boolean; data?: AuthResponse; message?: string }) => {
           setLoading(false)
 
-          localStorage.setItem("gvrs.login", phoneNumber )
-          localStorage.setItem("gvrs.password", password )
+          localStorage.setItem('gvrs.login', parsedPhone.e164)
+          localStorage.setItem('gvrs.password', password)
           
           if (response.success && response.data) {
             console.log("authorization", response)
@@ -77,7 +70,7 @@ export function useLogin() {
         }
 
         once('authorization', handleAuthResponse)
-        emit('authorization', { phone: Phone(phoneNumber), password })
+        emit('authorization', { phone: parsedPhone.e164, password })
       })
     } catch (error) {
       setLoading(false)

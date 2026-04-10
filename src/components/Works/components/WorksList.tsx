@@ -13,7 +13,7 @@ interface WorksListProps {
     onRefresh?: () => Promise<void>;
 }
 
-export const WorksList: React.FC<WorksListProps> = ({
+const WorksListInner: React.FC<WorksListProps> = ({
     works,
     isLoading = false,
     onWorkClick,
@@ -65,3 +65,5 @@ export const WorksList: React.FC<WorksListProps> = ({
         </div>
     );
 };
+
+export const WorksList = React.memo(WorksListInner);

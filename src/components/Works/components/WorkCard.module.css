@@ -1,8 +1,77 @@
 /* Стили для мобильных устройств ~420px */
 
+/* Мягкая подложка карточки по статусу (как CargoCard) */
+.cardSurface {
+  border-width: 1px;
+  border-style: solid;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    filter 0.2s;
+}
+
+.workCard.cardSurface.surfaceNew {
+  border-color: #64b5f6;
+  background-color: rgba(100, 181, 246, 0.12);
+}
+
+.workCard.cardSurface.surfaceOffered {
+  border-color: #ffb74d;
+  background-color: rgba(255, 183, 77, 0.18);
+}
+
+.workCard.cardSurface.surfaceToLoad {
+  border-color: #ffcc80;
+  background-color: rgba(255, 204, 128, 0.2);
+}
+
+.workCard.cardSurface.surfaceOnLoad {
+  border-color: #ce93d8;
+  background-color: rgba(206, 147, 216, 0.14);
+}
+
+.workCard.cardSurface.surfaceLoading {
+  border-color: #ffca28;
+  background-color: rgba(255, 236, 179, 0.35);
+}
+
+.workCard.cardSurface.surfaceLoaded {
+  border-color: #81c784;
+  background-color: rgba(129, 199, 132, 0.16);
+}
+
+.workCard.cardSurface.surfaceInWork {
+  border-color: #ba68c8;
+  background-color: rgba(186, 104, 200, 0.12);
+}
+
+.workCard.cardSurface.surfaceToUnload {
+  border-color: #4dd0e1;
+  background-color: rgba(77, 208, 225, 0.14);
+}
+
+.workCard.cardSurface.surfaceUnloading {
+  border-color: #4fc3f7;
+  background-color: rgba(79, 195, 247, 0.12);
+}
+
+.workCard.cardSurface.surfaceUnloaded {
+  border-color: #66bb6a;
+  background-color: rgba(102, 187, 106, 0.14);
+}
+
+.workCard.cardSurface.surfaceCompleted {
+  border-color: #4db6ac;
+  background-color: rgba(77, 182, 172, 0.14);
+}
+
+.workCard.cardSurface.surfaceRejected {
+  border-color: #e57373;
+  background-color: rgba(229, 115, 115, 0.12);
+}
+
 .workCard {
   background-color: white;
-  /* border-left: 4px solid #90EE90; */
   border: 1px solid silver;
   border-radius: 8px;
   padding: 0.75em 0.5em;
@@ -13,30 +82,34 @@
 }
 
 .topRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr) max-content;
   align-items: center;
-  justify-content: space-between;
+  column-gap: 0.5em;
   margin-bottom: 0.6em;
-  gap: 0.4em;
-  flex-wrap: nowrap;
   width: 100%;
-}
-
-.topRowLeft {
-  display: flex;
-  align-items: center;
-  gap: 0.4em;
-  flex-wrap: nowrap;
-  flex: 1;
   min-width: 0;
-  overflow: hidden;
 }
 
-.topRowRight {
-  display: flex;
-  align-items: center;
-  gap: 0.4em;
-  flex-shrink: 0;
+.topRowStatus {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topRowId {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topRowPrice {
+  justify-self: end;
+  text-align: right;
+  white-space: nowrap;
 }
 
 /* Цена теперь использует класс statusBadge, стили удалены */
@@ -232,15 +305,9 @@
   }
   
   .topRow {
-    flex-wrap: wrap;
+    column-gap: 0.35em;
   }
-  
-  .topRowRight {
-    width: 100%;
-    justify-content: flex-end;
-    margin-top: 0.4em;
-  }
-  
+
   .statusBadge {
     font-size: 0.8em;
     padding: 0.35em 0.75em;
