@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { SettingsPage } from './components/SettingsPage';
-import { Cabinet } from './Cabinet';
 import { OrganizationEditPage } from './components/OrganizationEditPage';
 import { TransportEditPage } from './components/TransportEditPage';
 import { WalletPage } from './components/WalletPage';
 import { useProfile } from './useProfile';
 import { useParams } from 'react-router-dom';
 
-export type SettingsPageType = 'menu' | 'cabinet' | 'organization' | 'transport' | 'wallet';
+export type SettingsPageType = 'menu' | 'organization' | 'transport' | 'wallet';
 
 /**
- * Основной компонент Settings — точка входа.
- * Меню настроек, персональные данные, организация и транспорт (водитель).
+ * Настройки: организация, транспорт, кошелёк, режим, согласия и т.д.
+ * Персональные данные — отдельно в /profile.
  */
 
 export const Settings: React.FC = () => {
@@ -34,14 +33,12 @@ export const Settings: React.FC = () => {
       {currentPage === 'menu' && (
         <SettingsPage
           onToggleClick={handleDriverClick}
-          onProfileClick={() => setCurrentPage('cabinet')}
           onOrganizationClick={() => setCurrentPage('organization')}
           onTransportClick={() => setCurrentPage('transport')}
           onWalletClick={() => setCurrentPage('wallet')}
           onBack={undefined}
         />
       )}
-      {currentPage === 'cabinet' && <Cabinet onBack={() => setCurrentPage('menu')} />}
       {currentPage === 'organization' && (
         <OrganizationEditPage onBack={() => setCurrentPage('menu')} />
       )}

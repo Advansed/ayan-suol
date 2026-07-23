@@ -389,7 +389,7 @@ export function Chats(props: ChatsProps) {
 
     // Обработчик возврата
     const handleBack = useCallback(() => {
-        hist.push("/tab2");
+        hist.push("/chats");
     }, [hist]);
 
     // Прокрутка при изменении сообщений

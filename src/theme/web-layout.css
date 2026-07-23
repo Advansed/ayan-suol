@@ -1,0 +1,65 @@
+/* Desktop / web layout helpers for content inside AppShell */
+
+html,
+body,
+#root,
+ion-app {
+  height: 100%;
+}
+
+body {
+  background: var(--gvr-bg);
+  color: var(--gvr-text);
+}
+
+/* Login: centered web form */
+@media (min-width: 768px) {
+  .login-page-wrap,
+  .login-root {
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(43, 90, 220, 0.12), transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(255, 186, 0, 0.1), transparent 45%),
+      var(--gvr-bg);
+  }
+
+  .login-container {
+    max-width: 420px;
+    width: 100%;
+    box-shadow: var(--gvr-shadow);
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Лента / списки — на всю ширину панели (2 колонки карточек) */
+  .web-list-layout {
+    max-width: none;
+  }
+
+  .web-finance-layout {
+    max-width: none;
+  }
+
+  .web-chats-layout {
+    max-width: 960px;
+    min-height: calc(100vh - var(--gvr-header-height) - 48px);
+  }
+
+  .web-chats-layout .pageRoot,
+  .web-chats-layout .chat-container {
+    min-height: 520px;
+  }
+
+  .settingsContainer,
+  .settings-container {
+    max-width: 720px;
+  }
+
+  ion-page {
+    padding-top: 0 !important;
+  }
+}

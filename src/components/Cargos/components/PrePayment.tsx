@@ -53,7 +53,7 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack })
 
   const handlePayment                       = async () => {
 
-      hist.push("/tab3/account" )
+      hist.push("/finance")
 
   }
 

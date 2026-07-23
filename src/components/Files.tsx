@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
 import { cameraOutline, closeOutline, sendOutline } from "ionicons/icons";
 import { jsPDF } from "jspdf";
 import { FilePicker } from '@capawesome/capacitor-file-picker';
@@ -15,7 +16,62 @@ import UTIF from 'utif';
 
 defineCustomElements(window)
 
+/** Web fallback: file input (camera capture on mobile browsers) */
+function pickImageFromFileInput(): Promise<{
+  base64: string;
+  format: string;
+  dataUrl: string;
+} | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    // Prefer rear camera on mobile browsers when available
+    input.setAttribute('capture', 'environment');
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
+    const cleanup = () => {
+      input.remove();
+    };
+
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      cleanup();
+      if (!file) {
+        resolve(null);
+        return;
+      }
+      try {
+        const dataUrl = await new Promise<string>((res, rej) => {
+          const reader = new FileReader();
+          reader.onload = () => res(String(reader.result));
+          reader.onerror = () => rej(reader.error);
+          reader.readAsDataURL(file);
+        });
+        const match = dataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+        const format = match?.[1] || 'jpeg';
+        const base64 = match?.[2] || dataUrl.split(',')[1] || '';
+        resolve({ base64, format, dataUrl });
+      } catch {
+        resolve(null);
+      }
+    };
+
+    input.oncancel = () => {
+      cleanup();
+      resolve(null);
+    };
+
+    input.click();
+  });
+}
+
 export async function takePicture() {
+    if (!Capacitor.isNativePlatform()) {
+        return pickImageFromFileInput();
+    }
+
     try {
         const image = await Camera.getPhoto({
             quality:        80,
@@ -41,7 +97,8 @@ export async function takePicture() {
         };
     } catch (error) {
         console.log("Camera error:", error);
-        return null;
+        // Fallback to file input if Camera plugin fails in hybrid webview
+        return pickImageFromFileInput();
     }
 }
 
@@ -446,6 +503,37 @@ export function         Files(props: { info, name, check, title }) {
 
     async function openPDF(){
         try {
+            if (!Capacitor.isNativePlatform()) {
+                const file = await new Promise<File | null>((resolve) => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'application/pdf';
+                    input.style.display = 'none';
+                    document.body.appendChild(input);
+                    input.onchange = () => {
+                        const f = input.files?.[0] || null;
+                        input.remove();
+                        resolve(f);
+                    };
+                    input.oncancel = () => {
+                        input.remove();
+                        resolve(null);
+                    };
+                    input.click();
+                });
+                if (!file) return;
+                const dataUrl = await new Promise<string>((res, rej) => {
+                    const reader = new FileReader();
+                    reader.onload = () => res(String(reader.result));
+                    reader.onerror = () => rej(reader.error);
+                    reader.readAsDataURL(file);
+                });
+                props.info.length = 0;
+                props.info.push({ dataUrl, format: 'pdf' });
+                setUpd(upd + 1);
+                return;
+            }
+
             const res = await FilePicker.pickFiles({types: ['application/pdf'], readData: true})
 
             if(res.files[0]?.data){

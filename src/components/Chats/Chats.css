@@ -7,6 +7,23 @@
     background-color: #f5f5f5;
 }
 
+@media (min-width: 1024px) {
+  .chat-container {
+    height: calc(100vh - var(--gvr-header-height, 64px) - 64px);
+    min-height: 480px;
+    border: 1px solid var(--gvr-border, #e6ebf2);
+    border-radius: var(--gvr-radius-lg, 16px);
+    overflow: hidden;
+    background: var(--gvr-surface, #fff);
+  }
+
+  .chat-header {
+    position: relative;
+    padding-top: 0.75em;
+    border-radius: 0;
+  }
+}
+
 .chat-page-header {
     width: 100%;
     margin: 0;

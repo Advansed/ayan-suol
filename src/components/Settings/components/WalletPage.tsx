@@ -6,12 +6,11 @@ import {
   arrowUp,
   ellipsisHorizontal,
   printOutline,
+  receiptOutline,
   walletOutline
 } from 'ionicons/icons';
-import { WizardHeader } from '../../Header/WizardHeader';
 import { useWallet } from '../hooks/useWallet';
 import walletStyles from './WalletPage.module.css';
-import settingsStyles from '../Settings.module.css';
 import { useToast } from '../../Toast';
 import { useLogin } from '../../../Store/useLogin';
 import { openUrlInApp } from '../../../utils/openUrlInApp';
@@ -25,7 +24,7 @@ export interface WalletPageProps {
 /** Периодическое обновление баланса и операций, пока открыт экран кошелька */
 const WALLET_POLL_MS = 12_000;
 
-export const WalletPage: React.FC<WalletPageProps> = ({ onBack }) => {
+export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack }) => {
   const toast = useToast();
   const { user } = useLogin();
   const {
@@ -61,7 +60,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack }) => {
   }, [refreshWallet]);
 
   const topUpOperations = useMemo(() => {
-    return (transactions || []).slice(0, 20);
+    return (transactions || []).slice(0, 30);
   }, [transactions]);
 
   const formatMoney = (n: number) => {
@@ -199,10 +198,10 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack }) => {
     }
   };
 
-  return (
-    <div className={settingsStyles.settingsContainer}>
-      <WizardHeader title="Кошелёк" onBack={onBack} />
+  const quickAmounts = [1000, 5000, 10000, 25000];
 
+  return (
+    <div className={walletStyles.financeRoot}>
       {invoiceModalData !== undefined && (
         <InvoiceModal
           isOpen={invoiceModalData !== undefined}
@@ -211,25 +210,31 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack }) => {
         />
       )}
 
-      <div className={settingsStyles.content}>
-        <div className={settingsStyles.section}>
-          <div className={settingsStyles.sectionHeader}>
-            <IonIcon icon={walletOutline} className={settingsStyles.sectionIcon} />
-            <h3 className={settingsStyles.sectionTitle}>Доступный баланс</h3>
-          </div>
+      <div className={walletStyles.financeGrid}>
+        <div className={walletStyles.leftCol}>
+          <section className={walletStyles.balanceCard}>
+            <div className={walletStyles.balanceTop}>
+              <div className={walletStyles.balanceIcon} aria-hidden>
+                <IonIcon icon={walletOutline} />
+              </div>
+              <div>
+                <div className={walletStyles.kicker}>Доступный баланс</div>
+                <div className={walletStyles.balanceValue}>{formattedBalance}</div>
+              </div>
+            </div>
+            <p className={walletStyles.balanceHint}>
+              Средства на счёте для оплаты услуг платформы
+            </p>
+          </section>
 
-          <div className={walletStyles.balanceValue}>{formattedBalance}</div>
-        </div>
+          <section className={walletStyles.topUpCard}>
+            <div className={walletStyles.cardHead}>
+              <IonIcon icon={addOutline} className={walletStyles.cardHeadIcon} />
+              <h3 className={walletStyles.cardTitle}>Пополнение</h3>
+            </div>
 
-        <div className={`${settingsStyles.section} ${walletStyles.topUpSection}`}>
-          <div className={`${settingsStyles.sectionHeader} ${walletStyles.topUpSectionHeader}`}>
-            <IonIcon icon={addOutline} className={settingsStyles.sectionIcon} />
-            <h3 className={settingsStyles.sectionTitle}>Пополнение</h3>
-          </div>
-
-          <div className={walletStyles.topUpForm}>
-            <div className={walletStyles.amountRow}>
-              <label className={walletStyles.fieldLabel}>Сумма</label>
+            <div className={walletStyles.topUpForm}>
+              <label className={walletStyles.fieldLabel}>Сумма, ₽</label>
               <IonInput
                 className={walletStyles.amountInput}
                 inputMode="decimal"
@@ -237,51 +242,68 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack }) => {
                 placeholder="0"
                 onIonChange={(e) => setAmount(String(e.detail.value ?? ''))}
               />
+
+              <div className={walletStyles.quickRow}>
+                {quickAmounts.map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    className={walletStyles.quickChip}
+                    onClick={() => setAmount(String(q))}
+                  >
+                    {q.toLocaleString('ru-RU')} ₽
+                  </button>
+                ))}
+              </div>
+
+              <div className={walletStyles.payButtonsRow}>
+                <IonButton
+                  className={walletStyles.payBtn}
+                  color="primary"
+                  disabled={!canPay || payLoading !== null}
+                  onClick={() => handlePay('card')}
+                >
+                  {payLoading === 'card' ? <IonSpinner name="bubbles" /> : 'Карта'}
+                </IonButton>
+
+                <IonButton
+                  className={walletStyles.payBtn}
+                  color="primary"
+                  disabled={!canPay || payLoading !== null}
+                  onClick={() => handlePay('sbp')}
+                >
+                  {payLoading === 'sbp' ? <IonSpinner name="bubbles" /> : 'СБП'}
+                </IonButton>
+
+                <IonButton
+                  className={walletStyles.payBtn}
+                  fill="outline"
+                  color="primary"
+                  disabled={!canPay || invoiceLoading || payLoading !== null}
+                  onClick={handleCreateInvoice}
+                >
+                  {invoiceLoading ? <IonSpinner name="bubbles" /> : 'Счёт (юр.)'}
+                </IonButton>
+              </div>
+
+              <p className={walletStyles.hintTextCompact}>
+                После оплаты список операций обновится автоматически.
+              </p>
             </div>
-
-            <div className={walletStyles.payButtonsRow}>
-              <IonButton
-                size="small"
-                className={walletStyles.payBtn}
-                color="primary"
-                disabled={!canPay || payLoading !== null}
-                onClick={() => handlePay('card')}
-              >
-                {payLoading === 'card' ? <IonSpinner name="bubbles" /> : 'Карта'}
-              </IonButton>
-
-              <IonButton
-                size="small"
-                className={walletStyles.payBtn}
-                color="primary"
-                disabled={!canPay || payLoading !== null}
-                onClick={() => handlePay('sbp')}
-              >
-                {payLoading === 'sbp' ? <IonSpinner name="bubbles" /> : 'СБП'}
-              </IonButton>
-
-              <IonButton
-                size="small"
-                className={walletStyles.payBtn}
-                fill="outline"
-                color="primary"
-                disabled={!canPay || invoiceLoading || payLoading !== null}
-                onClick={handleCreateInvoice}
-              >
-                {invoiceLoading ? <IonSpinner name="bubbles" /> : 'Счёт (юр.)'}
-              </IonButton>
-            </div>
-
-            <p className={walletStyles.hintTextCompact}>
-              Список операций ниже обновится после оплаты.
-            </p>
-          </div>
+          </section>
         </div>
 
-        <div className={settingsStyles.section}>
-          <div className={settingsStyles.sectionHeader}>
-            <IonIcon icon={addOutline} className={settingsStyles.sectionIcon} />
-            <h3 className={settingsStyles.sectionTitle}>Операции</h3>
+        <section className={walletStyles.txCard}>
+          <div className={walletStyles.cardHead}>
+            <IonIcon icon={receiptOutline} className={walletStyles.cardHeadIcon} />
+            <div>
+              <h3 className={walletStyles.cardTitle}>Операции</h3>
+              <div className={walletStyles.txCount}>
+                {topUpOperations.length > 0
+                  ? `${topUpOperations.length} записей`
+                  : 'История пуста'}
+              </div>
+            </div>
           </div>
 
           {isLoading ? (
@@ -316,7 +338,10 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack }) => {
                           {inv && invoiceLoadingId === t.id ? (
                             <IonSpinner name="bubbles" className={walletStyles.txRowSpinner} />
                           ) : (
-                            <IonIcon icon={txTypeIcon(t)} className={`${walletStyles.txTypeIcon} ${txTypeIconClass(t)}`} />
+                            <IonIcon
+                              icon={txTypeIcon(t)}
+                              className={`${walletStyles.txTypeIcon} ${txTypeIconClass(t)}`}
+                            />
                           )}
                         </div>
                         <div className={walletStyles.txLeft}>
@@ -326,7 +351,9 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack }) => {
                         <div className={walletStyles.txRight}>
                           <div
                             className={
-                              t.amount > 0 ? walletStyles.txAmountPositive : walletStyles.txAmountNegative
+                              t.amount > 0
+                                ? walletStyles.txAmountPositive
+                                : walletStyles.txAmountNegative
                             }
                           >
                             {t.amount > 0 ? '+' : ''}
@@ -335,19 +362,26 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack }) => {
                         </div>
                       </div>
                       {inv && (
-                        <p className={walletStyles.txInvoiceHint}>Нажми чтобы скачать счет на оплату</p>
+                        <p className={walletStyles.txInvoiceHint}>
+                          Нажмите, чтобы открыть счёт на оплату
+                        </p>
                       )}
                     </div>
                   );
                 })
               ) : (
-                <div className={walletStyles.emptyState}>Операций пока нет</div>
+                <div className={walletStyles.emptyState}>
+                  <div className={walletStyles.emptyIcon} aria-hidden>
+                    <IonIcon icon={receiptOutline} />
+                  </div>
+                  <p>Операций пока нет</p>
+                  <span>Пополните баланс — история появится здесь</span>
+                </div>
               )}
             </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );
 };
-

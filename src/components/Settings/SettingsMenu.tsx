@@ -60,7 +60,7 @@ export const SettingsMenu: React.FC = () => {
           </div>
 
           <div className={styles.settingsList}>
-            <div className={styles.settingItem} onClick={() => history.push('/settings')}>
+            <div className={styles.settingItem} onClick={() => history.push('/profile')}>
               <IonIcon icon={ personCircleOutline } className={styles.settingIcon} color='primary'/>
               <div className={styles.settingContent}>
                 <span className={styles.settingLabel}>Профиль</span>

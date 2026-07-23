@@ -78,7 +78,14 @@
   margin-bottom: 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: auto;
+  height: 100%;
   box-sizing: border-box;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.workCard:hover {
+  box-shadow: 0 4px 12px rgba(26, 31, 46, 0.1);
 }
 
 .topRow {

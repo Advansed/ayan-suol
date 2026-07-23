@@ -415,7 +415,7 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
                                     color: 'white'
                                 }}
                                 onClick={async () => {
-                                    hist.push("/tab3/account" )
+                                    hist.push("/finance")
                                 }}
                                 disabled={!selectedType || !insuranceCost}
                             >

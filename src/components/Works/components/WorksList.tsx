@@ -11,21 +11,25 @@ interface WorksListProps {
     isLoading?: boolean;
     onWorkClick: (work: WorkInfo) => void;
     onRefresh?: () => Promise<void>;
+    emptyTitle?: string;
+    emptyHint?: string;
 }
 
 const WorksListInner: React.FC<WorksListProps> = ({
     works,
     isLoading = false,
     onWorkClick,
-    onRefresh
+    onRefresh,
+    emptyTitle = 'Нет доступных заказов',
+    emptyHint = 'Доступные заказы появятся здесь, когда их опубликуют заказчики',
 }) => {
     const EmptyState = () => (
         <div>
             <h3 className="fs-12 cl-gray a-center">
-                Нет доступных заказов
+                {emptyTitle}
             </h3>
             <p className="fs-09 cl-gray a-center mt-05">
-                Доступные заказы появятся здесь, когда их опубликуют заказчики
+                {emptyHint}
             </p>
             <Lottie 
                 animationData={animationData} 
@@ -50,14 +54,13 @@ const WorksListInner: React.FC<WorksListProps> = ({
             </div>
             <div className="scroll">
                 {works.length > 0 ? (
-                    works.map((work) => (
-                        <div 
-                            key={work.guid} 
-                            style={{ width: '100%', boxSizing: 'border-box', padding: '0 0.6em', marginBottom: '0.5em' }}
-                        >
-                            <WorkCard work={work} mode="list" onClick={() => onWorkClick(work)} />
-                        </div>
-                    ))
+                    <div className="works-cards-grid">
+                        {works.map((work) => (
+                            <div key={work.guid} className="works-card-cell">
+                                <WorkCard work={work} mode="list" onClick={() => onWorkClick(work)} />
+                            </div>
+                        ))}
+                    </div>
                 ) : (
                     !isLoading && <EmptyState />
                 )}

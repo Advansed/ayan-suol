@@ -220,7 +220,7 @@ export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => 
 
     const handleChat = useCallback(
         (infoRow: DriverInfo) => {
-            history.push(`/tab2/${infoRow.recipient}:${infoRow.cargo}:${infoRow.client}`);
+            history.push(`/chats/${infoRow.recipient}:${infoRow.cargo}:${infoRow.client}`);
         },
         [history]
     );

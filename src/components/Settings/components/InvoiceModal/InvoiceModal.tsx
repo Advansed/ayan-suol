@@ -147,6 +147,19 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, inv
         return;
       }
 
+      if (!Capacitor.isNativePlatform()) {
+        const url = URL.createObjectURL(built.blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = built.fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast.success(`Счёт скачан: ${built.fileName}`);
+        return;
+      }
+
       const result = await Filesystem.writeFile({
         path: built.fileName,
         data: built.base64,

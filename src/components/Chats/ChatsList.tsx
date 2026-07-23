@@ -53,7 +53,7 @@ export function ChatsList() {
 
   const handleChatClick = (chat: any) => {
     setCurrentChat(chat.recipient, chat.cargo)
-    history.push(`/tab2/${chat.recipient}:${chat.cargo}:${chat.rec_name}`)
+    history.push(`/chats/${chat.recipient}:${chat.cargo}:${chat.rec_name}`)
   }
 
   const handleRefresh = () => {

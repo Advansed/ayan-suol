@@ -444,10 +444,10 @@ meta[name="color-scheme"] {
 /* Отключаем CSS переменные темной темы */
 :root {
     color-scheme:                   light !important;
-    --ion-color-primary:            #086CA2 !important;
+    --ion-color-primary:            #2b5adc !important;
     --ion-color-secondary:          #ffba00 !important;
-    --main-color:                   #086CA2; /* Основной цвет */
-    --background-color:             #f0f0f0; /* Фоновый цвет */
+    --main-color:                   #2b5adc;
+    --background-color:             #f0f3f8;
     --dop-color:                    #ffba00;
 
 }

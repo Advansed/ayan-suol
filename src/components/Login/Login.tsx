@@ -50,7 +50,7 @@ const Login: React.FC = () => {
   // ============================================
 
   return (
-    <>
+    <div className="login-root">
       {/* Глобальный спиннер загрузки */}
       {isLoading && <LoadingSpinner />}
       
@@ -76,7 +76,7 @@ const Login: React.FC = () => {
           onSwitchToRegister={handleSwitchToRegister}
         />
       )} 
-    </>
+    </div>
   )
 }
 

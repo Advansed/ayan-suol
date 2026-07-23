@@ -1,14 +1,14 @@
 import React from 'react';
-import { WizardHeader } from '../../Header/WizardHeader';
 import { DriverInfo } from './DriverInfo';
 import { useProfile } from '../useProfile';
-import styles from '../Settings.module.css';
 
 export interface TransportEditPageProps {
   onBack: () => void;
 }
 
-export const TransportEditPage: React.FC<TransportEditPageProps> = ({ onBack }) => {
+export const TransportEditPage: React.FC<TransportEditPageProps> = ({
+  onBack: _onBack,
+}) => {
   const { transportData, updateTransport } = useProfile();
 
   const handleTransportImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,17 +34,12 @@ export const TransportEditPage: React.FC<TransportEditPageProps> = ({ onBack }) 
   };
 
   return (
-    <div className={styles.settingsContainer}>
-      <WizardHeader title="Транспорт" onBack={onBack} />
-      <div className={styles.content}>
-        <DriverInfo
-          transportData={transportData}
-          onSave={async (data) => {
-            await updateTransport(data);
-          }}
-          onImageUpload={handleTransportImageUpload}
-        />
-      </div>
-    </div>
+    <DriverInfo
+      transportData={transportData}
+      onSave={async (data) => {
+        await updateTransport(data);
+      }}
+      onImageUpload={handleTransportImageUpload}
+    />
   );
 };

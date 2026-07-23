@@ -1,6 +1,5 @@
-/* WorksList.css - стили для мобильных устройств ~420px */
+/* WorksList.css */
 
-/* Основные правила для ограничения размеров */
 .works-list-container {
   max-height: 100%;
   overflow: hidden;
@@ -10,7 +9,6 @@
   box-sizing: border-box;
 }
 
-/* Контейнер для скролла */
 .scroll {
   max-height: calc(100vh - 120px);
   overflow-y: auto;
@@ -21,7 +19,49 @@
   box-sizing: border-box;
 }
 
-/* Сегмент с фиксированной позицией */
+/* Лента: карточки в 2 столбца */
+.works-cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 4px 4px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.works-card-cell {
+  flex: 1 1 calc(33.333% - 11px);
+  max-width: calc(33.333% - 11px);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.works-card-cell > * {
+  height: 100%;
+  width: 100%;
+}
+
+/* Планшет: 2 колонки */
+@media (max-width: 1023px) {
+  .works-card-cell {
+    flex: 1 1 calc(50% - 8px);
+    max-width: calc(50% - 8px);
+  }
+}
+
+/* Мобилка: 1 колонка */
+@media (max-width: 767px) {
+  .works-cards-grid {
+    gap: 12px;
+    padding: 0 2px 8px;
+  }
+
+  .works-card-cell {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
 .custom-segment {
   --background: #ffffff;
   --border-radius: 12px;
@@ -35,9 +75,9 @@
   top: 0;
   z-index: 10;
   background-color: white;
+  transition: all 0.3s ease;
 }
 
-/* Фиксируем заголовок */
 .sticky-top {
   position: sticky;
   top: 0;
@@ -45,21 +85,18 @@
   background: inherit;
 }
 
-/* Карточки работ */
 .cr-card {
   max-width: 100%;
   overflow: hidden;
   box-sizing: border-box;
 }
 
-/* Ограничение для Lottie анимации */
 .lottie-container {
   max-width: 100%;
   max-height: 200px;
   margin: 0 auto;
 }
 
-/* Контейнер для пустого состояния */
 .empty-state-container {
   max-width: 100%;
   overflow: hidden;
@@ -67,7 +104,6 @@
   box-sizing: border-box;
 }
 
-/* Базовые стили сегмента */
 .segment-button {
   --background: transparent;
   --background-checked: var(--ion-color-primary);
@@ -78,6 +114,7 @@
   --padding-bottom: 6px;
   --indicator-box-shadow: 0 2px 6px rgba(var(--ion-color-primary-rgb), 0.3);
   min-height: 32px;
+  transition: all 0.2s ease;
 }
 
 .segment-button::part(indicator) {
@@ -93,25 +130,9 @@
   letter-spacing: 0.3px;
 }
 
-/* Стили для активной кнопки */
 .segment-button.segment-button-checked {
   color: #5757e0;
   font-weight: 700;
-}
-
-/* Анимация переключения */
-.custom-segment {
-  transition: all 0.3s ease;
-}
-
-.segment-button {
-  transition: all 0.2s ease;
-}
-
-/* Правила для предотвращения выхода за границы */
-.works-list-container * {
-  max-width: 100%;
-  box-sizing: border-box;
 }
 
 .works-list-container img,
@@ -124,21 +145,20 @@
   display: block;
 }
 
-/* Для очень маленьких экранов (< 360px) */
 @media (max-width: 360px) {
   .custom-segment {
     margin: 0.5em 0.6em;
     width: calc(100% - 1.2em);
   }
-  
+
   .segment-label {
     font-size: 0.75rem;
   }
-  
+
   .scroll {
     max-height: calc(100vh - 110px);
   }
-  
+
   .segment-button {
     min-height: 30px;
     --padding-top: 5px;

@@ -1,47 +1,23 @@
-import { Redirect, Route, Switch, useHistory } from 'react-router-dom';
-import {
-  IonApp,
-  IonLabel,
-  IonRouterOutlet,
-  IonTabBar,
-  IonTabButton,
-  IonTabs,
-  IonCard,
-  IonButton,
-  IonSpinner,
-  setupIonicReact
-} from '@ionic/react';
+import { Redirect, Route, Switch, useParams } from 'react-router-dom';
+import { IonApp, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { Archive, FileSignature, MessageCircle, User } from 'lucide-react';
-import Tab1 from './pages/Tab1';
-import Tab2 from './pages/Tab2';
-import Tab3 from './pages/Tab3';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
-
-/* Basic CSS for apps built with Ionic */
 import '@ionic/react/css/normalize.css';
 import '@ionic/react/css/structure.css';
 import '@ionic/react/css/typography.css';
-
-/* Optional CSS utils that can be commented out */
 import '@ionic/react/css/padding.css';
 import '@ionic/react/css/float-elements.css';
 import '@ionic/react/css/text-alignment.css';
 import '@ionic/react/css/text-transformation.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
+import './theme/design-tokens.css';
 import './app.css';
-
-/* Тёмная палитра отключена — фон всегда светлый */
-/* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
-/* import '@ionic/react/css/palettes/dark.system.css'; */
-
-/* Theme variables */
 import './theme/variables.css';
-import Tab4 from './pages/Tab4';
+import './theme/web-layout.css';
+
 import { ToastProvider } from './components/Toast/ToastManager';
 import { useLogin } from './Store/useLogin';
 import { ServerConnectionGuard } from './components/ServerConnectionGuard';
@@ -50,111 +26,103 @@ import { useSocketManager } from './services/useSocketManager';
 import { useApp } from './Store/useApp';
 import { useEffect } from 'react';
 import { getVersion } from './Store/api';
-import SettingsPage from './pages/Settings';
-import CabinetPage from './pages/Cabinet';
+import { AppShell } from './layout';
+import { HomePage } from './pages/Home/HomePage';
+import { StubPage } from './pages/Stub/StubPage';
+import {
+  ArchivePage,
+  ChatsPage,
+  FeedPage,
+  FinancePage,
+  OrdersPage,
+  ProfileRoutePage,
+  SettingsRoutePage,
+  VehiclesPage,
+} from './pages/RoutePages';
+import { useLoginStore } from './Store/loginStore';
 
 setupIonicReact({
-  mode: 'ios', // или 'md' для Material Design
-  statusTap: true, // Позволяет скроллить наверх при тапе на статус бар
+  mode: 'ios',
+  statusTap: true,
 });
 
+const LegacyTab1Redirect: React.FC = () => {
+  const userType = useLoginStore((s) => s.user_type);
+  return <Redirect to={userType === 2 ? '/feed' : '/orders'} />;
+};
+
+const LegacyChatRedirect: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Redirect to={`/chats/${id}`} />;
+};
 
 const AppContent: React.FC = () => {
-  const { auth, user } = useLogin();
+  const { auth } = useLogin();
 
   useSocketManager();
   useApp();
 
-  const get_Version = async () => {
-    const res = await getVersion();
-    console.log(res);
-  };
-
   useEffect(() => {
-    console.log("useeffect");
-    get_Version();
+    getVersion().then((res) => console.log(res));
   }, []);
 
   return (
     <ServerConnectionGuard>
       {auth ? (
         <IonReactRouter>
-          <IonTabs>
-            <IonRouterOutlet>
-              <Switch>
-                <Route exact path="/tab1">
-                  <Tab1 />
-                </Route>
+          <AppShell>
+            <Switch>
+              <Route exact path="/" component={HomePage} />
+              <Route exact path="/feed" component={FeedPage} />
+              <Route exact path="/applications">
+                <Redirect to="/orders" />
+              </Route>
+              <Route exact path="/orders" component={OrdersPage} />
+              <Route exact path="/archive" component={ArchivePage} />
+              <Route exact path="/finance" component={FinancePage} />
+              <Route exact path="/chats" component={ChatsPage} />
+              <Route exact path="/chats/:id" component={ChatsPage} />
+              <Route exact path="/vehicles" component={VehiclesPage} />
+              <Route exact path="/settings" component={SettingsRoutePage} />
+              <Route exact path="/profile" component={ProfileRoutePage} />
+              <Route exact path="/cabinet">
+                <Redirect to="/profile" />
+              </Route>
 
-                <Route exact path="/tab2">
-                  <Tab2 />
-                </Route>
+              <Route exact path="/support">
+                <StubPage title="Поддержка" description="Служба поддержки скоро будет доступна. Напишите нам на info@gruzreis.ru." />
+              </Route>
+              <Route exact path="/documents">
+                <StubPage title="Документы" description="Раздел документов и договоров в разработке." />
+              </Route>
+              <Route exact path="/verification">
+                <StubPage title="Верификация" description="Пройдите верификацию паспорта и документов — раздел скоро откроется." />
+              </Route>
+              <Route exact path="/partners">
+                <StubPage title="Партнёрам" description="Партнёрская программа в разработке." />
+              </Route>
 
-                <Route exact path="/tab2/:name">
-                  <Tab2 />
-                </Route>
+              {/* Legacy tabs */}
+              <Route exact path="/tab1" component={LegacyTab1Redirect} />
+              <Route exact path="/tab2">
+                <Redirect to="/chats" />
+              </Route>
+              <Route exact path="/tab2/:id" component={LegacyChatRedirect} />
+              <Route exact path="/tab3">
+                <Redirect to="/settings" />
+              </Route>
+              <Route exact path="/tab3/:name">
+                <Redirect to="/settings" />
+              </Route>
+              <Route exact path="/tab4">
+                <Redirect to="/archive" />
+              </Route>
 
-                <Route exact path="/tab3">
-                  <Tab3 />
-                </Route>
-
-                <Route exact path="/tab3/:name">
-                  <Tab3 />
-                </Route>
-
-                <Route exact path="/tab4">
-                  <Tab4 />
-                </Route>
-
-                <Route exact path="/settings">
-                  <SettingsPage />
-                </Route>
-
-                <Route exact path="/cabinet">
-                  <CabinetPage />
-                </Route>
-
-                <Route exact path="/">
-                  <Redirect to="/tab1" />
-                </Route>
-
-                {/* Fallback route для несуществующих путей */}
-                <Route>
-                  <Redirect to="/tab1" />
-                </Route>
-              </Switch>
-            </IonRouterOutlet>
-            
-            <IonTabBar slot="bottom">
-              <IonTabButton tab="tab1" href="/tab1">
-                <span className="tab-bar-lucide" aria-hidden="true">
-                  <FileSignature size={24} strokeWidth={1.75} />
-                </span>
-                <IonLabel>{user.user_type === 2 ? "Работы" : "Заказы"}</IonLabel>
-              </IonTabButton>
-
-              <IonTabButton tab="tab4" href="/tab4">
-                <span className="tab-bar-lucide" aria-hidden="true">
-                  <Archive size={24} strokeWidth={1.75} />
-                </span>
-                <IonLabel>Архив</IonLabel>
-              </IonTabButton>
-
-              <IonTabButton tab="tab2" href="/tab2">
-                <span className="tab-bar-lucide" aria-hidden="true">
-                  <MessageCircle size={24} strokeWidth={1.75} />
-                </span>
-                <IonLabel>Чат</IonLabel>
-              </IonTabButton>
-
-              <IonTabButton tab="tab3" href="/tab3">
-                <span className="tab-bar-lucide" aria-hidden="true">
-                  <User size={24} strokeWidth={1.75} />
-                </span>
-                <IonLabel>Профиль</IonLabel>
-              </IonTabButton>
-            </IonTabBar>
-          </IonTabs>
+              <Route>
+                <Redirect to="/" />
+              </Route>
+            </Switch>
+          </AppShell>
         </IonReactRouter>
       ) : (
         <Login />

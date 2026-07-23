@@ -277,14 +277,14 @@ export const CargoForm: React.FC<CargoFormProps> = ({
     if (passportCompletion < 80) {
       onBack();
       toast.info("Надо сперва заполнить паспортные данные");
-      hist.push("/tab3");
+      hist.push("/settings");
       return;
     }
     if (companyLoading) return;
     if (companyCompletion < 80) {
       onBack();
       toast.info("Надо сперва заполнить данные организации");
-      hist.push("/tab3");
+      hist.push("/settings");
     }
   }, [passportCompletion, companyCompletion, companyLoading, onBack, toast, hist]);
   

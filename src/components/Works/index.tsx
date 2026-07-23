@@ -2,7 +2,7 @@
  * Главный компонент модуля Works
  */
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { WorkInfo, OfferInfo, WorkStatus } from './types';
 import { WorksList, WorkView } from './components';
 import { WorkMap } from './components/WorkMap';
@@ -16,9 +16,10 @@ import { useToken } from '../../Store/loginStore';
 import { useChats } from '../../Store/useChats';
 import { transportGetters } from '../../Store/transportStore';
 import { IonLoading } from '@ionic/react';
+import { filterWorksByMode, type WorksListMode } from './statusFlow';
 import './styles.css';
 
-export const Works: React.FC = () => {
+export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
     const { contract, works, isLoading, setOffer, delOffer, setStatus, refreshWorks
         , get_contract_data, set_contract } = useWorks();
     const { emit } = useSocket();
@@ -26,6 +27,31 @@ export const Works: React.FC = () => {
     const { sendImage } = useChats();
 
     const { currentPage, navigateTo, goBack } = useWorkNavigation();
+
+    const visibleWorks = useMemo(
+        () => filterWorksByMode(works, mode),
+        [works, mode]
+    );
+
+    // Смена раздела (Лента ↔ Мои заказы) — закрыть карточку и показать список
+    useEffect(() => {
+        useWorkStore.getState().setCurrentPage({ type: 'list' });
+        useWorkStore.getState().setNavigationHistory([{ type: 'list' }]);
+    }, [mode]);
+
+    const emptyTitle =
+        mode === 'feed'
+            ? 'Нет новых заказов'
+            : mode === 'mine'
+              ? 'Нет ваших заказов'
+              : 'Нет доступных заказов';
+
+    const emptyHint =
+        mode === 'feed'
+            ? 'Новые заказы появятся здесь, когда их опубликуют заказчики'
+            : mode === 'mine'
+              ? 'Здесь будут заказы с вашим откликом и перевозки в работе'
+              : 'Доступные заказы появятся здесь, когда их опубликуют заказчики';
 
     // Обновляем currentPage.work при обновлении списка works (статус, подпись и т.д.)
     useEffect(() => {
@@ -293,10 +319,12 @@ export const Works: React.FC = () => {
             case 'list':
                 return (
                     <WorksList
-                        works={works}
+                        works={visibleWorks}
                         isLoading={isLoading}
                         onWorkClick={handleWorkClick}
                         onRefresh={refreshWorks}
+                        emptyTitle={emptyTitle}
+                        emptyHint={emptyHint}
                     />
                 );
 
@@ -348,9 +376,11 @@ export const Works: React.FC = () => {
             default:
                 return (
                     <WorksList
-                        works={works}
+                        works={visibleWorks}
                         isLoading={isLoading}
                         onWorkClick={handleWorkClick}
+                        emptyTitle={emptyTitle}
+                        emptyHint={emptyHint}
                     />
                 );
         }

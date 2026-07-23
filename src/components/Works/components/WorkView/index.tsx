@@ -1,12 +1,15 @@
-import React, { useEffect, useMemo } from 'react';
-import { useIonRouter } from '@ionic/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { IonModal, useIonRouter } from '@ionic/react';
+import { useHistory } from 'react-router-dom';
+import { ChevronLeft, MessageCircle, X } from 'lucide-react';
 import { WorkInfo, WorkStatus } from '../../types';
 import { useWorkStore } from '../../workStore';
 import { passportGetters } from '../../../../Store/passportStore';
 import { companyGetters } from '../../../../Store/companyStore';
 import { transportGetters } from '../../../../Store/transportStore';
 import { useToast } from '../../../Toast';
-import { WizardHeader } from '../../../Header/WizardHeader';
+import { useChats } from '../../../../Store/useChats';
+import { WORK_CURRENT_ACTION } from '../../statusFlow';
 import { CounterOfferCard } from './OfferCard';
 import { ContractCard } from './ContractCard';
 import { ArrivedCard } from './ArrivedCard';
@@ -17,6 +20,9 @@ import { InWorkCard } from './InWorkCard';
 import { ToUnloadCard } from './ToUnloadCard';
 import { UnloadingCard } from './UnloadingCard';
 import { UnloadedWaitCard } from './UnloadedWaitCard';
+import { StatusTimeline } from './StatusTimeline';
+import { WorkOrderInfo } from './WorkOrderInfo';
+import styles from './WorkView.module.css';
 
 interface WorkViewProps {
     work: WorkInfo;
@@ -47,7 +53,10 @@ export const WorkView: React.FC<WorkViewProps> = ({
 }) => {
     const works = useWorkStore(state => state.works);
     const hist = useIonRouter();
+    const history = useHistory();
     const toast = useToast();
+    const { setCurrentChat } = useChats();
+    const [actionOpen, setActionOpen] = useState(false);
 
     const workInfo = useMemo(() => {
         const w = works.find(item => item.guid === work.guid);
@@ -58,19 +67,24 @@ export const WorkView: React.FC<WorkViewProps> = ({
     const companyCompletion = companyGetters.getCompletionPercentage();
     const transportCompletion = transportGetters.getCompletionPercentage();
 
+    const actionHint = WORK_CURRENT_ACTION[workInfo.status] || 'Открыть действия по заказу';
+    const hasInteractiveAction =
+        workInfo.status !== WorkStatus.COMPLETED &&
+        workInfo.status !== WorkStatus.REJECTED;
+
     useEffect(() => {
         if (passportCompletion < 80) {
             onBack();
             toast.info('Надо сперва заполнить паспортные данные');
-            hist.push('/tab3');
+            hist.push('/settings');
         } else if (companyCompletion < 80) {
             onBack();
             toast.info('Надо сперва заполнить данные организации');
-            hist.push('/tab3');
+            hist.push('/settings');
         } else if (transportCompletion < 80) {
             onBack();
             toast.info('Надо заполнить данные по транспорту');
-            hist.push('/tab3');
+            hist.push('/settings');
         }
     }, [passportCompletion, companyCompletion, transportCompletion, onBack, toast, hist]);
 
@@ -81,6 +95,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
             volume
         };
         onOfferClick(updatedWork);
+        setActionOpen(false);
     };
 
     const handleCancelOffer = async (data: Partial<WorkInfo>, volume: number): Promise<void> => {
@@ -90,89 +105,181 @@ export const WorkView: React.FC<WorkViewProps> = ({
             volume
         };
         onOfferCancelClick(updatedWork);
+        setActionOpen(false);
     };
 
-    return (
+    const closeAfter = async (fn: () => Promise<void>) => {
+        await fn();
+        setActionOpen(false);
+    };
+
+    const handleOpenChat = () => {
+        const recipient = workInfo.recipient;
+        const cargo = workInfo.cargo || workInfo.guid;
+        const name = workInfo.client || workInfo.face || 'Заказчик';
+        if (!recipient || !cargo) {
+            toast.error('Не удалось открыть чат по этому заказу');
+            return;
+        }
+        setCurrentChat(recipient, cargo);
+        history.push(`/chats/${recipient}:${cargo}:${name}`);
+    };
+
+    const actionContent = (
         <>
-            <WizardHeader
-                title={`Заказ ID ${workInfo.guid.substr(0, 8)}`}
-                onBack={onBack}
-            />
+            {workInfo.status === WorkStatus.NEW && (
+                <CounterOfferCard work={workInfo} onSubmit={handleOffer} />
+            )}
 
-            <div className="p-05">
-                {workInfo.status === WorkStatus.NEW && (
-                    <CounterOfferCard
-                        work={workInfo}
-                        onSubmit={handleOffer}
-                    />
-                )}
+            {workInfo.status === WorkStatus.OFFERED && (
+                <CounterOfferCard work={workInfo} onSubmit={handleCancelOffer} />
+            )}
 
-                {workInfo.status === WorkStatus.OFFERED && (
-                    <CounterOfferCard
-                        work={workInfo}
-                        onSubmit={handleCancelOffer}
-                    />
-                )}
+            {workInfo.status === WorkStatus.TO_LOAD && !workInfo.signed && (
+                <ContractCard
+                    work={workInfo}
+                    onSignContract={() => {
+                        if (onSignContract) onSignContract(workInfo);
+                        setActionOpen(false);
+                    }}
+                />
+            )}
 
-                {workInfo.status === WorkStatus.TO_LOAD && !workInfo.signed && (
-                    <ContractCard
-                        work={workInfo}
-                        onSignContract={() => { if (onSignContract) onSignContract(workInfo); }}
-                    />
-                )}
-
-                {workInfo.status === WorkStatus.TO_LOAD && workInfo.signed && (
-                    <ArrivedCard
-                        work={workInfo}
-                        onArrived={(data) =>
+            {workInfo.status === WorkStatus.TO_LOAD && workInfo.signed && (
+                <ArrivedCard
+                    work={workInfo}
+                    onArrived={(data) =>
+                        closeAfter(() =>
                             onArrivedAtLoad ? onArrivedAtLoad(workInfo, data) : Promise.resolve()
-                        }
-                    />
-                )}
+                        )
+                    }
+                />
+            )}
 
-                {workInfo.status === WorkStatus.ON_LOAD && (
-                    <OnLoadWaitCard work={workInfo} />
-                )}
+            {workInfo.status === WorkStatus.ON_LOAD && <OnLoadWaitCard work={workInfo} />}
 
-                {workInfo.status === WorkStatus.LOADING && (
-                    <LoadedCard
-                        work={workInfo}
-                        onLoaded={(data) => onLoaded ? onLoaded(workInfo, data) : Promise.resolve()}
-                    />
-                )}
+            {workInfo.status === WorkStatus.LOADING && (
+                <LoadedCard
+                    work={workInfo}
+                    onLoaded={(data) =>
+                        closeAfter(() =>
+                            onLoaded ? onLoaded(workInfo, data) : Promise.resolve()
+                        )
+                    }
+                />
+            )}
 
-                {workInfo.status === WorkStatus.LOADED && (
-                    <LoadedWaitDispatchCard work={workInfo} />
-                )}
+            {workInfo.status === WorkStatus.LOADED && (
+                <LoadedWaitDispatchCard work={workInfo} />
+            )}
 
-                {workInfo.status === WorkStatus.IN_WORK && (
-                    <InWorkCard
-                        work={workInfo}
-                        onArrivedUnload={(data) =>
+            {workInfo.status === WorkStatus.IN_WORK && (
+                <InWorkCard
+                    work={workInfo}
+                    onArrivedUnload={(data) =>
+                        closeAfter(() =>
                             onArrivedUnload ? onArrivedUnload(workInfo, data) : Promise.resolve()
-                        }
-                    />
-                )}
+                        )
+                    }
+                />
+            )}
 
-                {workInfo.status === WorkStatus.TO_UNLOAD && <ToUnloadCard work={workInfo} />}
+            {workInfo.status === WorkStatus.TO_UNLOAD && <ToUnloadCard work={workInfo} />}
 
-                {workInfo.status === WorkStatus.UNLOADING && (
-                    <UnloadingCard
-                        work={workInfo}
-                        onCompleted={(data) =>
+            {workInfo.status === WorkStatus.UNLOADING && (
+                <UnloadingCard
+                    work={workInfo}
+                    onCompleted={(data) =>
+                        closeAfter(() =>
                             onUnloadComplete ? onUnloadComplete(workInfo, data) : Promise.resolve()
-                        }
-                    />
-                )}
+                        )
+                    }
+                />
+            )}
 
-                {workInfo.status === WorkStatus.UNLOADED && (
-                    <UnloadedWaitCard work={workInfo} />
-                )}
-            </div>
+            {workInfo.status === WorkStatus.UNLOADED && (
+                <UnloadedWaitCard work={workInfo} />
+            )}
+
+            {workInfo.status === WorkStatus.COMPLETED && (
+                <div className={styles.doneNote}>
+                    Заказ завершён. Дальнейших действий не требуется.
+                </div>
+            )}
+
+            {workInfo.status === WorkStatus.REJECTED && (
+                <div className={styles.doneNote}>
+                    Предложение отклонено. Можно вернуться к ленте заказов.
+                </div>
+            )}
         </>
+    );
+
+    return (
+        <div className={styles.view}>
+            <div className={styles.topBar}>
+                <button type="button" className={styles.backBtn} onClick={onBack}>
+                    <ChevronLeft size={20} strokeWidth={2} />
+                    К ленте
+                </button>
+                <div className={styles.topId}>ID {workInfo.guid.substr(0, 8)}</div>
+            </div>
+
+            <div className={styles.body}>
+                <StatusTimeline work={workInfo} />
+                <WorkOrderInfo work={workInfo} />
+
+                <div className={styles.ctaRow}>
+                    {hasInteractiveAction && (
+                        <button
+                            type="button"
+                            className={styles.actionCta}
+                            onClick={() => setActionOpen(true)}
+                        >
+                            <span className={styles.actionCtaTitle}>Действие по заказу</span>
+                            <span className={styles.actionCtaHint}>{actionHint}</span>
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        className={styles.chatCta}
+                        onClick={handleOpenChat}
+                    >
+                        <MessageCircle size={20} strokeWidth={1.75} />
+                        <span>
+                            <span className={styles.chatCtaTitle}>Чат</span>
+                            <span className={styles.chatCtaHint}>Написать заказчику</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <IonModal
+                isOpen={actionOpen}
+                onDidDismiss={() => setActionOpen(false)}
+                className={styles.actionModal}
+            >
+                <div className={styles.modalShell}>
+                    <div className={styles.modalHead}>
+                        <div>
+                            <div className={styles.modalKicker}>Заказ</div>
+                            <h2 className={styles.modalTitle}>Действие по заказу</h2>
+                        </div>
+                        <button
+                            type="button"
+                            className={styles.modalClose}
+                            onClick={() => setActionOpen(false)}
+                            aria-label="Закрыть"
+                        >
+                            <X size={20} strokeWidth={2} />
+                        </button>
+                    </div>
+                    <div className={styles.modalBody}>{actionContent}</div>
+                </div>
+            </IonModal>
+        </div>
     );
 };
 
 export { Agreement } from './Agreement';
 export type { ContractData } from './Agreement';
-

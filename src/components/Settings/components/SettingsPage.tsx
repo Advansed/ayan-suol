@@ -14,7 +14,6 @@ import {
   linkOutline,
   logOutOutline,
   chevronForwardOutline,
-  personCircleOutline
 } from 'ionicons/icons';
 import { WizardHeader } from '../../Header/WizardHeader';
 import { useLogin } from '../../../Store/useLogin';
@@ -25,7 +24,6 @@ import { SettingsAgreementsSection } from './SettingsAgreementsSection';
 import { useWallet } from '../hooks/useWallet';
 
 export interface SettingsPageProps {
-  onProfileClick?: () => void;
   onOrganizationClick?: () => void;
   onTransportClick?: () => void;
   onWalletClick?: () => void;
@@ -34,14 +32,13 @@ export interface SettingsPageProps {
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
-  onProfileClick,
   onOrganizationClick,
   onTransportClick,
   onWalletClick,
   onToggleClick,
   onBack
 }) => {
-  const { user, logout } = useLogin();
+  const { logout } = useLogin();
   const { user_type, companyData, transportData } = useProfile();
   const history = useHistory();
 
@@ -77,14 +74,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     }
   };
 
-  const handleProfileClick = () => {
-    if (onProfileClick) {
-      onProfileClick();
-    } else {
-      history.push('/cabinet');
-    }
-  };
-
   const handleOrganizationClick = () => {
     if (onOrganizationClick) {
       onOrganizationClick();
@@ -100,9 +89,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const handleWalletClick = () => {
     if (onWalletClick) onWalletClick();
   };
-
-  const profileSubtext =
-    [user.name?.trim(), user.email?.trim()].filter(Boolean).join(' · ') || '—';
 
   const organizationSubtext =
     companyData?.name?.trim() ||
@@ -140,23 +126,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       <WizardHeader title="Настройки" onMenu={handleMenuClick} />
 
       <div className={styles.content}>
-        {/* Секция: Профиль */}
+        {/* Секция: Аккаунт */}
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
-            <IonIcon icon={personOutline} className={styles.sectionIcon} />
-            <h3 className={styles.sectionTitle}>Профиль</h3>
+            <IonIcon icon={businessOutline} className={styles.sectionIcon} />
+            <h3 className={styles.sectionTitle}>Аккаунт</h3>
           </div>
 
           <div className={styles.settingsList}>
-            <div className={styles.settingItem} onClick={handleProfileClick}>
-              <IonIcon icon={personCircleOutline} className={styles.settingIcon} color="primary" />
-              <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Профиль</span>
-                <span className={styles.settingSubtext}>{profileSubtext}</span>
-              </div>
-              <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
-            </div>
-
             <div className={styles.settingItem} onClick={handleOrganizationClick}>
               <IonIcon icon={businessOutline} className={styles.settingIcon} color="primary" />
               <div className={styles.settingContent}>
