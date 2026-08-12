@@ -6,55 +6,72 @@ import { CargoStatus, CargoPriority, CargoInfo } from '../Store/cargoStore';
 
 // CSS классы для статусов
 export const STATUS_CLASSES: Record<CargoStatus, string> = {
-    [CargoStatus.NEW]:          "cr-status-1",
-    [CargoStatus.WAITING]:      "cr-status-2", 
-    [CargoStatus.HAS_ORDERS]:   "cr-status-2",
-    [CargoStatus.NEGOTIATION]:  "cr-status-3",
-    [CargoStatus.IN_WORK]:      "cr-status-3",
-    [CargoStatus.DELIVERED]:    "cr-status-4",
-    [CargoStatus.COMPLETED]:    "cr-status-5"
+    [CargoStatus.NEW]:            'cr-status-1',
+    [CargoStatus.WAITING]:        'cr-status-2',
+    [CargoStatus.HAS_ORDERS]:     'cr-status-2',
+    [CargoStatus.ACCEPTED]:       'cr-status-3',
+    [CargoStatus.WAIT_LOAD]:      'cr-status-3',
+    [CargoStatus.LOADING]:        'cr-status-3',
+    [CargoStatus.HAS_LOADED]:     'cr-status-3',
+    [CargoStatus.IN_TRANSIT]:     'cr-status-3',
+    [CargoStatus.HAS_DELIVERED]:  'cr-status-4',
+    [CargoStatus.UNLOADING]:      'cr-status-4',
+    [CargoStatus.WAIT_COMPLETE]:  'cr-status-4',
+    [CargoStatus.COMPLETED]:      'cr-status-5',
+    [CargoStatus.PROBLEMS]:       'cr-status-danger',
 };
 
 // Цвета статусов
 export const STATUS_COLORS: Record<CargoStatus, string> = {
-    [CargoStatus.NEW]:          "#1976d2",
-    [CargoStatus.WAITING]:      "#f57c00",
-    [CargoStatus.HAS_ORDERS]:   "#f57c00", 
-    [CargoStatus.NEGOTIATION]:  "#7b1fa2",
-    [CargoStatus.IN_WORK]:      "#7b1fa2",
-    [CargoStatus.DELIVERED]:    "#2e7d32",
-    [CargoStatus.COMPLETED]:    "#00695c"
+    [CargoStatus.NEW]:            '#1976d2',
+    [CargoStatus.WAITING]:        '#f57c00',
+    [CargoStatus.HAS_ORDERS]:     '#f57c00',
+    [CargoStatus.ACCEPTED]:       '#7b1fa2',
+    [CargoStatus.WAIT_LOAD]:      '#7b1fa2',
+    [CargoStatus.LOADING]:        '#7b1fa2',
+    [CargoStatus.HAS_LOADED]:     '#6a1b9a',
+    [CargoStatus.IN_TRANSIT]:     '#5e35b1',
+    [CargoStatus.HAS_DELIVERED]:  '#2e7d32',
+    [CargoStatus.UNLOADING]:      '#2e7d32',
+    [CargoStatus.WAIT_COMPLETE]:  '#00897b',
+    [CargoStatus.COMPLETED]:      '#00695c',
+    [CargoStatus.PROBLEMS]:       '#c62828',
 };
 
 // Описания статусов
 export const STATUS_DESCRIPTIONS: Record<CargoStatus, string> = {
-    [CargoStatus.NEW]:          'Заказ создан, нужно опубликовать',
-    [CargoStatus.WAITING]:      'Ожидаем предложения от водителей',
-    [CargoStatus.HAS_ORDERS]:   'Есть предложения, выберите водителя',
-    [CargoStatus.NEGOTIATION]:  'Идут переговоры с водителем',
-    [CargoStatus.IN_WORK]:      'Заказ выполняется',
-    [CargoStatus.DELIVERED]:    'Груз доставлен',
-    [CargoStatus.COMPLETED]:    'Заказ завершен'
+    [CargoStatus.NEW]:            'Заказ создан, нужно опубликовать',
+    [CargoStatus.WAITING]:        'Ожидаем предложения от водителей',
+    [CargoStatus.HAS_ORDERS]:     'Есть предложения, выберите водителя',
+    [CargoStatus.ACCEPTED]:       'Водитель принят',
+    [CargoStatus.WAIT_LOAD]:      'Ожидается загрузка',
+    [CargoStatus.LOADING]:        'Идёт загрузка',
+    [CargoStatus.HAS_LOADED]:     'Есть загруженные позиции',
+    [CargoStatus.IN_TRANSIT]:     'Груз в пути',
+    [CargoStatus.HAS_DELIVERED]:  'Есть доставленные позиции',
+    [CargoStatus.UNLOADING]:      'Идёт разгрузка',
+    [CargoStatus.WAIT_COMPLETE]:  'Ожидается завершение заказа',
+    [CargoStatus.COMPLETED]:      'Заказ завершён',
+    [CargoStatus.PROBLEMS]:       'По заказу возникли проблемы',
 };
 
 // Статусы, при которых можно редактировать груз
 export const EDITABLE_STATUSES = [
     CargoStatus.NEW,
     CargoStatus.WAITING,
-    CargoStatus.HAS_ORDERS
+    CargoStatus.HAS_ORDERS,
 ];
 
 // Статусы, при которых можно удалить груз
 export const DELETABLE_STATUSES = [
     CargoStatus.NEW,
-    CargoStatus.WAITING
+    CargoStatus.WAITING,
 ];
 
 // Статусы, при которых можно опубликовать груз
 export const PUBLISHABLE_STATUSES = [
-    CargoStatus.NEW
+    CargoStatus.NEW,
 ];
-
 
 
 // Лимиты для полей

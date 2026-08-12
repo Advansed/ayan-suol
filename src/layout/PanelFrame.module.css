@@ -43,6 +43,29 @@
   gap: 8px;
 }
 
+.refreshBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--gvr-border);
+  border-radius: var(--gvr-radius);
+  background: var(--gvr-surface);
+  color: var(--gvr-text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.refreshBtn:hover {
+  background: var(--gvr-bg, #f5f5f5);
+}
+
+.refreshBtn:active {
+  transform: translateY(1px);
+}
+
 .panel {
   background: var(--gvr-surface);
   border: 1px solid var(--gvr-border);

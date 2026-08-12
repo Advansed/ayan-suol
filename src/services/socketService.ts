@@ -1,14 +1,14 @@
 // src/services/socketService.ts
-import { io, Socket } from 'socket.io-client';
-import { socketActions } from '../Store/socketStore';
-import { loginGetters } from '../Store/loginStore';
+import { io, Socket }     from 'socket.io-client';
+import { socketActions }  from '../Store/socketStore';
+import { loginGetters }   from '../Store/loginStore';
 
 class SocketService {
   private socket: Socket | null = null;
   private isConnected = false;
 
-  private readonly SERVER_URL = 'https://gruzreis.ru';
-  private readonly SOCKET_PATH = '/socket.io/';
+  private readonly SERVER_URL = 'https://paitza.com';
+  private readonly SOCKET_PATH = '/node/socket.io/';
 
   connect(token: string): Promise<boolean> {
 
@@ -21,6 +21,7 @@ class SocketService {
       }
 
       this.socket = io(this.SERVER_URL, {
+        path:                   this.SOCKET_PATH,
         auth:                   { token },
         transports:             ['polling', 'websocket'],
         withCredentials:        true
@@ -99,6 +100,7 @@ class SocketService {
   getSocket(): Socket | null {
     return this.socket;
   }
+
 }
 
 export const socketService = new SocketService();

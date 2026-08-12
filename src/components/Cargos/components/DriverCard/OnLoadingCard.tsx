@@ -5,6 +5,7 @@ import { DriverInfo } from '../../../../Store/cargoStore';
 import { useChats } from '../../../../Store/useChats';
 import offerStyles from './OfferCard.module.css';
 import { PhotoPreview } from '../../../Chats/PhotoPreview';
+import { resolveImageSrc } from '../../../../utils/fileUpload';
 
 /** Статус изображений «фото кузова при приезде на погрузку» (см. Works sendImage …, 14) */
 const BODY_PHOTO_STATUS = 14;
@@ -108,10 +109,11 @@ export const OnLoadingCard: React.FC<OnLoadingCardProps> = ({
                 {!photosLoading && fotos.length > 0 && (
                     <div className="flex flex-wrap mt-02">
                         {fotos.map((item: any, index: number) => {
-                            const src =
+                            const raw =
                                 typeof item === 'string'
                                     ? item
                                     : item?.url || item?.image || item?.path || item?.filePath;
+                            const src = resolveImageSrc(raw);
 
                             if (!src) return null;
 

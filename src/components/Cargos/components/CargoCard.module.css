@@ -24,24 +24,54 @@
   background-color: rgba(255, 183, 77, 0.18);
 }
 
-.cardSurface.surfaceNegotiation {
+.cardSurface.surfaceAccepted {
   border-color: #ce93d8;
   background-color: rgba(186, 104, 200, 0.12);
 }
 
-.cardSurface.surfaceInWork {
+.cardSurface.surfaceWaitLoad {
   border-color: #ba68c8;
   background-color: rgba(186, 104, 200, 0.1);
 }
 
-.cardSurface.surfaceDelivered {
+.cardSurface.surfaceLoading {
+  border-color: #ab47bc;
+  background-color: rgba(171, 71, 188, 0.1);
+}
+
+.cardSurface.surfaceHasLoaded {
+  border-color: #9c27b0;
+  background-color: rgba(156, 39, 176, 0.1);
+}
+
+.cardSurface.surfaceInTransit {
+  border-color: #7e57c2;
+  background-color: rgba(126, 87, 194, 0.12);
+}
+
+.cardSurface.surfaceHasDelivered {
   border-color: #66bb6a;
   background-color: rgba(102, 187, 106, 0.14);
+}
+
+.cardSurface.surfaceUnloading {
+  border-color: #43a047;
+  background-color: rgba(67, 160, 71, 0.12);
+}
+
+.cardSurface.surfaceWaitComplete {
+  border-color: #26a69a;
+  background-color: rgba(38, 166, 154, 0.12);
 }
 
 .cardSurface.surfaceCompleted {
   border-color: #4db6ac;
   background-color: rgba(77, 182, 172, 0.14);
+}
+
+.cardSurface.surfaceProblems {
+  border-color: #e57373;
+  background-color: rgba(229, 115, 115, 0.14);
 }
 
 .topRow {
@@ -54,10 +84,45 @@
   display: flex;
   align-items: center;
   gap: 0.4em;
+  min-width: 0;
+  flex: 1;
 }
 
 .topRight {
   text-align: right;
+  flex-shrink: 0;
+}
+
+.publishedRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35em 0.5em;
+  margin: 0.35em 0 0.15em;
+  font-size: 0.78em;
+  line-height: 1.3;
+  color: var(--gvr-text-muted, #8b93a7);
+}
+
+.publishedLabel {
+  font-weight: 500;
+  color: var(--gvr-text-secondary, #5c6578);
+}
+
+.publishedValue {
+  font-weight: 600;
+  color: var(--gvr-text, #1a1f2e);
+  font-variant-numeric: tabular-nums;
+}
+
+.publishedRel {
+  color: var(--gvr-text-muted, #8b93a7);
+}
+
+.publishedRel::before {
+  content: '·';
+  margin-right: 0.5em;
+  opacity: 0.55;
 }
 
 .tagsRow {

@@ -1,13 +1,14 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
-import { useIonViewDidEnter, useIonViewDidLeave } from "@ionic/react";
 import { IonIcon, useIonRouter } from "@ionic/react";
 import { arrowBackOutline, cameraSharp, sendSharp } from "ionicons/icons";
 import "./Chats.css";
 import { useChats } from "../../Store/useChats";
+import { chatActions } from "../../Store/chatStore";
 import { loginGetters } from "../../Store/loginStore";
 import { takePicture } from "../Files";
 import { PhotoPreview } from "./PhotoPreview";
 import { WizardHeader } from "../Header/WizardHeader";
+import { resolveImageSrc } from "../../utils/fileUpload";
 
 interface ChatsProps {
     name: string;
@@ -22,12 +23,13 @@ const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessa
 }) => {
     const renderContent = () => {
         if (message.image) {
+            const imageSrc = resolveImageSrc(message.image);
             return (
                 <div className="chat-image-container"
-                    onClick = { () => { clickMessage( message.image ) } }
+                    onClick = { () => { clickMessage( imageSrc ) } }
                 >
                     <img 
-                        src={message.image} 
+                        src={imageSrc} 
                         alt="Изображение" 
                         className="chat-image"
                         onError={(e) => {
@@ -267,7 +269,6 @@ const ChatFooter = React.memo(({
 
 export function Chats(props: ChatsProps) {
     const [value, setValue]                 = useState("");
-    const [isVisible, setIsVisible]         = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);  
     const [isOpen, setOpen]                 = useState<string>("")
     const hist                              = useIonRouter();
@@ -286,9 +287,9 @@ export function Chats(props: ChatsProps) {
     // Мемоизируем разбор имени
     const { recipient, cargo, userName, userInitials } = useMemo(() => {
         const arr       = props.name.split(":");
-        const userName  = arr[2] || '';
         const recipient = arr[0] || '';
         const cargo     = arr[1] || '';
+        const userName  = decodeURIComponent(arr.slice(2).join(':') || '');
 
         const jarr      = userName.split(" ");
         let initials    = "";
@@ -301,12 +302,15 @@ export function Chats(props: ChatsProps) {
 
     // Установка текущего чата при монтировании
     useEffect(() => {
+        if (recipient && cargo) {
+            chatActions.ensureChat(recipient, cargo, { rec_name: userName });
+        }
         setCurrentChat(recipient, cargo);
         
         return () => {
             clearCurrentChat();
         };
-    }, [recipient, cargo, setCurrentChat, clearCurrentChat]);
+    }, [recipient, cargo, userName, setCurrentChat, clearCurrentChat]);
 
     // Пометка сообщений как прочитанных
     useEffect(() => {
@@ -399,19 +403,12 @@ export function Chats(props: ChatsProps) {
         }
     }, [currentMessages, scrollToBottom]);
 
-    // Lifecycle хуки
-    useIonViewDidEnter(() => {
-        setIsVisible(true);
-    });
-
-    useIonViewDidLeave(() => {
-        setIsVisible(false);
-        setValue("");
-    });
-
-    if (!isVisible) {
-        return null;
-    }
+    useEffect(() => {
+        return () => {
+            setValue("");
+            setSelectedImage(null);
+        };
+    }, []);
 
     return (
         <div className="chat-container">

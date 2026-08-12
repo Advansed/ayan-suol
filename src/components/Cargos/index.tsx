@@ -17,23 +17,29 @@ import { useInvoices }                                  from './hooks/useInvoice
 export const Cargos: React.FC = () => {
     
     const { cargos, isLoading, createCargo, updateCargo, deleteCargo, publishCargo, refreshCargos } = useCargos()
-    const { currentPage, navigateTo, handleCreateNew, handleCargoClick } = useCargoNavigation()
+    const { currentPage, navigateTo, replaceCurrentPage, handleCreateNew, handleCargoClick } = useCargoNavigation()
     const invoiceApi = useInvoices({ info: currentPage.cargo })
     const { create_contract, handleAccept } = invoiceApi
 
-    useEffect(()                    => {
-        if (currentPage.cargo?.guid) {
-            const cargo = cargoGetters.getCargo(currentPage.cargo.guid);
-            // Проверяем, что cargo существует и отличается от текущего
-            if (cargo && cargo !== currentPage.cargo) {
-                navigateTo({ type: currentPage.type, cargo: cargo });
-            }
-        }
-    }, [cargos, currentPage.cargo?.guid, currentPage.type, navigateTo]);
+    useEffect(() => {
+        if (!currentPage.cargo?.guid) return;
+        const cargo = cargoGetters.getCargo(currentPage.cargo.guid);
+        if (!cargo || cargo === currentPage.cargo) return;
+        replaceCurrentPage({ type: currentPage.type, cargo });
+    }, [cargos, currentPage.cargo, currentPage.type, replaceCurrentPage]);
 
     const handleBack                = useCallback(() => {
         if (currentPage.type === 'view' || currentPage.type === 'create') {
             navigateTo({ type: 'list' });
+        } else if (currentPage.type === 'edit') {
+            const cargo = currentPage.cargo?.guid
+                ? cargoGetters.getCargo(currentPage.cargo.guid) ?? currentPage.cargo
+                : currentPage.cargo;
+            if (cargo) {
+                navigateTo({ type: 'view', cargo });
+            } else {
+                navigateTo({ type: 'list' });
+            }
         } else if (currentPage.type === 'agreement' && currentPage.cargo?.guid) {
             const cargo = cargoGetters.getCargo(currentPage.cargo.guid);
             navigateTo({ type: 'invoices', cargo });

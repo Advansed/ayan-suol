@@ -1,33 +1,32 @@
 import React, { useMemo } from 'react';
-import { Check, CircleDot, X } from 'lucide-react';
-import { WorkInfo, WorkStatus } from '../../types';
+import { AlertTriangle, Check, CircleDot } from 'lucide-react';
+import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 import {
-  WORK_STATUS_FLOW,
-  WORK_STATUS_SHORT,
-  getStatusFlowIndex,
-  normalizeWorkStatus,
-} from '../../statusFlow';
-import styles from './StatusTimeline.module.css';
+  CARGO_STATUS_FLOW,
+  CARGO_STATUS_SHORT,
+  getCargoStatusFlowIndex,
+  resolveCargoProgressStatus,
+} from '../cargoStatusFlow';
+import styles from './CargoStatusTimeline.module.css';
 
-type StatusTimelineProps = {
-  work: WorkInfo;
+type CargoStatusTimelineProps = {
+  cargo: CargoInfo;
 };
 
-export const StatusTimeline: React.FC<StatusTimelineProps> = ({ work }) => {
-  const current = normalizeWorkStatus(work.status);
-  const currentIndex = getStatusFlowIndex(current);
-  const isRejected = current === WorkStatus.REJECTED;
-
-  const steps = useMemo(() => WORK_STATUS_FLOW, []);
+export const CargoStatusTimeline: React.FC<CargoStatusTimelineProps> = ({ cargo }) => {
+  const current = resolveCargoProgressStatus(cargo);
+  const isProblems = current === CargoStatus.PROBLEMS;
+  const currentIndex = getCargoStatusFlowIndex(current);
+  const steps = useMemo(() => CARGO_STATUS_FLOW, []);
 
   return (
-    <section className={styles.wrap} aria-label="Статусы заказа">
+    <section className={styles.wrap} aria-label="Статусы заявки">
       <div className={styles.head}>
         <div>
-          <div className={styles.kicker}>Прогресс заказа</div>
+          <div className={styles.kicker}>Прогресс заявки</div>
           <h2 className={styles.currentTitle}>
-            {isRejected ? (
-              <span className={styles.rejectedLabel}>{WorkStatus.REJECTED}</span>
+            {isProblems ? (
+              <span className={styles.rejectedLabel}>{CargoStatus.PROBLEMS}</span>
             ) : (
               <>
                 Текущий статус:{' '}
@@ -36,14 +35,14 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({ work }) => {
             )}
           </h2>
         </div>
-        {!isRejected && currentIndex >= 0 && (
+        {!isProblems && currentIndex >= 0 && (
           <div className={styles.progressMeta}>
             Шаг {currentIndex + 1} из {steps.length}
           </div>
         )}
       </div>
 
-      {!isRejected && (
+      {!isProblems && (
         <ol className={styles.track} aria-label="Цепочка статусов">
           {steps.map((status, index) => {
             const done = index < currentIndex;
@@ -74,17 +73,17 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({ work }) => {
                     <CircleDot size={14} strokeWidth={2} />
                   ) : null}
                 </span>
-                <span className={styles.stepLabel}>{WORK_STATUS_SHORT[status]}</span>
+                <span className={styles.stepLabel}>{CARGO_STATUS_SHORT[status]}</span>
               </li>
             );
           })}
         </ol>
       )}
 
-      {isRejected && (
+      {isProblems && (
         <div className={styles.rejectedBanner}>
-          <X size={18} strokeWidth={2} />
-          <span>Заказ перешёл в статус «Отказано»</span>
+          <AlertTriangle size={18} strokeWidth={2} />
+          <span>По заявке зафиксирован внештатный статус «Проблемы»</span>
         </div>
       )}
     </section>

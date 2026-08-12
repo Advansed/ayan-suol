@@ -68,6 +68,7 @@ export const WorkCard: React.FC<WorkCardProps> = ({
     };
 
     const bottomTags = getBottomTags();
+    const publishedAt = work.publish_date || '';
 
     const surfaceClass = `${styles.cardSurface} ${SURFACE_BY_STATUS[work.status] ?? styles.surfaceNew}`;
 
@@ -92,6 +93,16 @@ export const WorkCard: React.FC<WorkCardProps> = ({
                     <b>{workFormatters.currency(work.price)}</b>
                 </span>
             </div>
+
+            {publishedAt && (
+                <div className={styles.publishedRow} title={workFormatters.date(publishedAt)}>
+                    <span className={styles.publishedLabel}>Опубликовано</span>
+                    <span className={styles.publishedValue}>{workFormatters.date(publishedAt)}</span>
+                    {workFormatters.published(publishedAt) !== workFormatters.date(publishedAt) && (
+                        <span className={styles.publishedRel}>{workFormatters.published(publishedAt)}</span>
+                    )}
+                </div>
+            )}
 
             {/* Вторая строка: теги */}
             {bottomTags.length > 0 && (

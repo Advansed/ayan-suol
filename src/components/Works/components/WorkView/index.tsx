@@ -9,7 +9,7 @@ import { companyGetters } from '../../../../Store/companyStore';
 import { transportGetters } from '../../../../Store/transportStore';
 import { useToast } from '../../../Toast';
 import { useChats } from '../../../../Store/useChats';
-import { WORK_CURRENT_ACTION } from '../../statusFlow';
+import { WORK_CURRENT_ACTION, findWorkByRef, normalizeWorkStatus } from '../../statusFlow';
 import { CounterOfferCard } from './OfferCard';
 import { ContractCard } from './ContractCard';
 import { ArrivedCard } from './ArrivedCard';
@@ -52,16 +52,36 @@ export const WorkView: React.FC<WorkViewProps> = ({
     onSignContract
 }) => {
     const works = useWorkStore(state => state.works);
+    const archiveWorks = useWorkStore(state => state.archiveWorks);
     const hist = useIonRouter();
     const history = useHistory();
     const toast = useToast();
     const { setCurrentChat } = useChats();
     const [actionOpen, setActionOpen] = useState(false);
 
-    const workInfo = useMemo(() => {
-        const w = works.find(item => item.guid === work.guid);
-        return w ?? work;
-    }, [works, work]);
+    // Живой объект из стора (guid/cargo), иначе снимок из навигации
+    const storeWork = useMemo(() => {
+        return findWorkByRef(works, work) ?? findWorkByRef(archiveWorks, work) ?? work;
+    }, [works, archiveWorks, work]);
+
+    // Явная подписка на статус/подпись — гарантирует ре-рендер таймлайна при push
+    const liveStatus = useWorkStore((state) => {
+        const found = findWorkByRef(state.works, work) ?? findWorkByRef(state.archiveWorks, work);
+        return found ? normalizeWorkStatus(found.status) : normalizeWorkStatus(work.status);
+    });
+    const liveSigned = useWorkStore((state) => {
+        const found = findWorkByRef(state.works, work) ?? findWorkByRef(state.archiveWorks, work);
+        return found ? Boolean(found.signed) : Boolean(work.signed);
+    });
+
+    const workInfo = useMemo(
+        () => ({
+            ...storeWork,
+            status: liveStatus,
+            signed: liveSigned,
+        }),
+        [storeWork, liveStatus, liveSigned]
+    );
 
     const passportCompletion = passportGetters.getCompletionPercentage();
     const companyCompletion = companyGetters.getCompletionPercentage();
@@ -71,6 +91,11 @@ export const WorkView: React.FC<WorkViewProps> = ({
     const hasInteractiveAction =
         workInfo.status !== WorkStatus.COMPLETED &&
         workInfo.status !== WorkStatus.REJECTED;
+
+    // Смена этапа с сервера — закрыть модалку, чтобы показать новое действие
+    useEffect(() => {
+        setActionOpen(false);
+    }, [liveStatus, liveSigned]);
 
     useEffect(() => {
         if (passportCompletion < 80) {
@@ -122,7 +147,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
             return;
         }
         setCurrentChat(recipient, cargo);
-        history.push(`/chats/${recipient}:${cargo}:${name}`);
+        history.push(`/chats/${recipient}:${cargo}:${encodeURIComponent(name)}`);
     };
 
     const actionContent = (
@@ -226,7 +251,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
             </div>
 
             <div className={styles.body}>
-                <StatusTimeline work={workInfo} />
+                <StatusTimeline key={`${workInfo.guid}-${liveStatus}-${liveSigned}`} work={workInfo} />
                 <WorkOrderInfo work={workInfo} />
 
                 <div className={styles.ctaRow}>

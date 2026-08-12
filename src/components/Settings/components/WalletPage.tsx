@@ -19,12 +19,14 @@ import type { Transaction } from '../../../Store/accountStore';
 
 export interface WalletPageProps {
   onBack: () => void;
+  /** Предзаполнить сумму пополнения (из спецсчёта / страховки) */
+  initialAmount?: number | string | null;
 }
 
 /** Периодическое обновление баланса и операций, пока открыт экран кошелька */
 const WALLET_POLL_MS = 12_000;
 
-export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack }) => {
+export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initialAmount }) => {
   const toast = useToast();
   const { user } = useLogin();
   const {
@@ -39,11 +41,21 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack }) => {
     get_invoice,
     seller_id
   } = useWallet();
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(() => {
+    const n = Number(initialAmount);
+    return Number.isFinite(n) && n > 0 ? String(Math.ceil(n)) : '';
+  });
   const [payLoading, setPayLoading] = useState<'card' | 'sbp' | null>(null);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [invoiceModalData, setInvoiceModalData] = useState<unknown>();
   const [invoiceLoadingId, setInvoiceLoadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const n = Number(initialAmount);
+    if (Number.isFinite(n) && n > 0) {
+      setAmount(String(Math.ceil(n)));
+    }
+  }, [initialAmount]);
 
   const loadedRef = useRef(false);
   useEffect(() => {

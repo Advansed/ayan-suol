@@ -3,6 +3,7 @@ import { useHistory } from 'react-router';
 import { useSocket } from '../../../Store/useSocket';
 import { useToken } from '../../../Store/loginStore';
 import { CargoInfo, DriverInfo, cargoActions } from '../../../Store/cargoStore';
+import { chatActions } from '../../../Store/chatStore';
 import { useToast } from '../../Toast';
 
 export interface TaskCompletion {
@@ -37,13 +38,15 @@ export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => 
     const token = useToken();
     const toast = useToast();
 
+    const invoicesKey = JSON.stringify(info?.invoices ?? null);
+
     useEffect(() => {
         if (!info) {
             setInvoices([]);
         } else {
             setInvoices(info.invoices ?? []);
         }
-    }, [info]);
+    }, [info, info?.guid, invoicesKey]);
 
     const handleAccept = useCallback(
         async (infoRow: DriverInfo, status: number): Promise<void> => {
@@ -220,7 +223,12 @@ export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => 
 
     const handleChat = useCallback(
         (infoRow: DriverInfo) => {
-            history.push(`/chats/${infoRow.recipient}:${infoRow.cargo}:${infoRow.client}`);
+            const name = infoRow.client || 'Водитель';
+            chatActions.ensureChat(infoRow.recipient, infoRow.cargo, { rec_name: name });
+            chatActions.setCurrentChat(infoRow.recipient, infoRow.cargo);
+            history.push(
+                `/chats/${infoRow.recipient}:${infoRow.cargo}:${encodeURIComponent(name)}`
+            );
         },
         [history]
     );

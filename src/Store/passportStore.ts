@@ -21,8 +21,12 @@ export interface PassportData {
   birth_place?: string
   reg_address?: PassportAddress
   act_address?: PassportAddress
+  /** Путь в приватном бакете (сохраняется в set_passport) */
   main_photo?: string
   reg_photo?: string
+  /** Временная signed-ссылка для просмотра (только UI, не сохранять) */
+  main_photo_url?: string
+  reg_photo_url?: string
   isVerified?: boolean
   createdDate?: string
   updatedDate?: string

@@ -4,24 +4,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  padding: var(--spacing-lg);
-  background: var(--corporate-bg, #f9fafb);
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: var(--spacing-lg, 1.25em);
+  background: var(--gvr-bg, #f0f3f8);
 }
 
 .card {
-  background: var(--corporate-surface, #ffffff);
-  border: 1px solid var(--corporate-border, #e5e7eb);
+  background: var(--gvr-surface, #ffffff);
+  border: 1px solid var(--gvr-border, #e6ebf2);
   border-radius: 12px;
   padding: var(--spacing-2xl, 2em);
   max-width: 500px;
   width: 90%;
   margin-left: auto;
   margin-right: auto;
-  margin-top: 3em;
   text-align: center;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--gvr-text, #1a1f2e);
 }
 
 .iconContainer {
@@ -34,44 +35,44 @@
 }
 
 .connecting {
-  color: var(--corporate-warning, #d97706);
+  color: var(--gvr-warning, #f5a524);
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .disconnected {
-  color: var(--corporate-danger, #dc2626);
+  color: var(--gvr-danger, #e5484d);
 }
 
 .title {
   font-size: var(--font-size-2xl, 1.5em);
   font-weight: var(--font-weight-bold, 700);
   margin-bottom: var(--spacing-lg, 1.25em);
-  color: var(--corporate-text, #111827);
+  color: var(--gvr-text, #1a1f2e);
 }
 
 .message {
-  color: var(--corporate-text-secondary, #6b7280);
+  color: var(--gvr-text-secondary, #5c6578);
   font-size: var(--font-size-base, 1em);
   line-height: var(--line-height-relaxed, 1.6);
   margin-bottom: var(--spacing-xl, 1.5em);
 }
 
 .error {
-  background: rgba(220, 38, 38, 0.1);
-  border: 1px solid rgba(220, 38, 38, 0.3);
+  background: rgba(229, 72, 77, 0.1);
+  border: 1px solid rgba(229, 72, 77, 0.3);
   border-radius: 8px;
   padding: var(--spacing-md, 1em);
   margin-bottom: var(--spacing-lg, 1.25em);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm, 0.75em);
-  color: var(--corporate-danger, #dc2626);
+  color: var(--gvr-danger, #e5484d);
 }
 
 .progress {
   width: 100%;
   height: 6px;
-  background: var(--corporate-border, #e5e7eb);
+  background: var(--gvr-border, #e6ebf2);
   border-radius: 3px;
   overflow: hidden;
   margin-bottom: var(--spacing-xl, 1.5em);
@@ -79,14 +80,14 @@
 
 .progressBar {
   height: 100%;
-  background: linear-gradient(90deg, var(--ion-color-primary, #086CA2) 0%, var(--corporate-primary, #1e3a8a) 100%);
+  background: linear-gradient(90deg, var(--gvr-primary, #2b5adc) 0%, var(--gvr-primary-hover, #234bc0) 100%);
   border-radius: 3px;
   animation: progress 2s ease-in-out infinite;
 }
 
 .retryButton {
-  background: linear-gradient(45deg, var(--ion-color-primary, #086CA2) 0%, var(--corporate-primary, #1e3a8a) 100%);
-  color: white;
+  --background: linear-gradient(45deg, var(--gvr-primary, #2b5adc) 0%, var(--gvr-primary-hover, #234bc0) 100%);
+  --color: #fff;
   font-weight: var(--font-weight-semibold, 600);
   margin-bottom: var(--spacing-xl, 1.5em);
   border-radius: 8px;
@@ -99,15 +100,15 @@
 }
 
 .info {
-  background: var(--corporate-bg, #f9fafb);
-  border: 1px solid var(--corporate-border, #e5e7eb);
+  background: var(--gvr-bg, #f0f3f8);
+  border: 1px solid var(--gvr-border, #e6ebf2);
   border-radius: 8px;
   padding: var(--spacing-lg, 1.25em);
   text-align: left;
 }
 
 .info p {
-  color: var(--corporate-text, #111827);
+  color: var(--gvr-text, #1a1f2e);
   font-weight: var(--font-weight-medium, 500);
   margin-bottom: var(--spacing-sm, 0.75em);
 }
@@ -118,7 +119,7 @@
 }
 
 .info li {
-  color: var(--corporate-text-secondary, #6b7280);
+  color: var(--gvr-text-secondary, #5c6578);
   margin-bottom: var(--spacing-xs, 0.5em);
   font-size: var(--font-size-sm, 0.875em);
 }

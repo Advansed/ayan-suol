@@ -1,0 +1,255 @@
+.page {
+  width: 100%;
+  max-width: 920px;
+  padding-bottom: 24px;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 0 8px;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: none;
+  background: transparent;
+  color: var(--gvr-primary, #2b5adc);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.backBtn:hover {
+  opacity: 0.85;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  padding: 16px 18px;
+  background: var(--gvr-surface, #fff);
+  border: 1px solid var(--gvr-border, #e6ebf2);
+  border-radius: var(--gvr-radius-lg, 16px);
+  box-shadow: var(--gvr-shadow-sm, 0 1px 2px rgba(26, 31, 46, 0.05));
+}
+
+.cardKicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gvr-text-muted, #8b93a7);
+  margin-bottom: 4px;
+}
+
+.cardTitle {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gvr-text, #1a1f2e);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gvr-text-secondary, #5c6578);
+}
+
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--gvr-border-strong, #d0d7e2);
+  border-radius: 12px;
+  background: #fafbfc;
+  font-size: 15px;
+  color: var(--gvr-text, #1a1f2e);
+  box-sizing: border-box;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--gvr-primary, #2b5adc);
+  background: #fff;
+}
+
+.inputError {
+  border-color: #d32f2f;
+}
+
+.error {
+  font-size: 12px;
+  color: #d32f2f;
+}
+
+.photos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.photoCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--gvr-border-strong, #d0d7e2);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.photoTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gvr-text, #1a1f2e);
+}
+
+.photoPreview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f0f3f8;
+  border: 1px dashed #c5cddb;
+}
+
+.photoPreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photoEmpty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--gvr-text-muted, #8b93a7);
+  text-align: center;
+  padding: 12px;
+}
+
+.photoActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.photoBtn,
+.photoBtnGhost {
+  flex: 1;
+  min-height: 40px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+}
+
+.photoBtn {
+  background: var(--gvr-primary, #2b5adc);
+  color: #fff;
+}
+
+.photoBtn:hover {
+  background: var(--gvr-primary-hover, #234bc0);
+}
+
+.photoBtnGhost {
+  background: #f0f3f8;
+  color: var(--gvr-text, #1a1f2e);
+}
+
+.photoBtnGhost:hover {
+  background: #e6ebf2;
+}
+
+.photoBtn:disabled,
+.photoBtnGhost:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--gvr-text-secondary, #5c6578);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.btnSecondary,
+.btnPrimary {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+}
+
+.btnSecondary {
+  background: #f0f3f8;
+  color: var(--gvr-text, #1a1f2e);
+}
+
+.btnSecondary:hover {
+  background: #e6ebf2;
+}
+
+.btnPrimary {
+  background: var(--gvr-primary, #2b5adc);
+  color: #fff;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--gvr-primary-hover, #234bc0);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+@media (max-width: 720px) {
+  .grid,
+  .photos {
+    grid-template-columns: 1fr;
+  }
+}

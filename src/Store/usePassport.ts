@@ -13,19 +13,19 @@ import {
 // HOOK
 // ============================================
 
-export const usePassport = () => {
+export const usePassport            = () => {
   const token = loginGetters.getToken()
   const { emit, once } = useSocket()
   
   // Используем хуки из нового passportStore
-  const passportData = usePassportStore(state => state.data)
-  const isLoading = usePassportStore(state => state.isLoading)
-  const isSaving = usePassportStore(state => state.isSaving)
-  const isConnected = useSocketStore(state => state.isConnected)
+  const passportData              = usePassportStore(state => state.data)
+  const isLoading                 = usePassportStore(state => state.isLoading)
+  const isSaving                  = usePassportStore(state => state.isSaving)
+  const isConnected               = useSocketStore(state => state.isConnected)
   
-  const toast = useToast()
+  const toast                     = useToast()
   
-  const load = useCallback(() => {
+  const load                      = useCallback(() => {
     passportActions.setLoading(true)
             
     if (!isConnected) {
@@ -44,6 +44,7 @@ export const usePassport = () => {
       passportActions.setLoading(false)
       
       if (response.success) {
+        console.log('passport_data', response.data)
         passportActions.setData(response.data)
       } else {
         toast.error(response.message || 'Ошибка загрузки паспортных данных')
@@ -54,7 +55,7 @@ export const usePassport = () => {
         
   }, [token, isConnected, once, emit ])
   
-  const save = useCallback((data: PassportData) => {
+  const save                      = useCallback((data: PassportData) => {
     passportActions.setSaving(true)
 
     if (!isConnected) {
@@ -70,6 +71,7 @@ export const usePassport = () => {
     }
 
     once('set_passport', (response) => {
+      console.log('set_passport_response', response)
       passportActions.setSaving(false)
       if (response.success) {
         toast.success('Паспортные данные сохранены')
@@ -80,19 +82,22 @@ export const usePassport = () => {
     })
 
     emit('set_passport', { ...data, token })
+    console.log('set_passport', { ...data, token })
     toast.info("Сохраняются паспортные данные...")
   }, [token, isConnected, once, emit ])
   
-  const updatePassportData = useCallback((data: PassportData) => {
+  const updatePassportData        = useCallback((data: PassportData) => {
     passportActions.setData(data)
   }, [])
   
   return {
+
     passportData,
     load,
     save,
     updatePassportData,
     isSaving,
     isLoading
+
   }
 }

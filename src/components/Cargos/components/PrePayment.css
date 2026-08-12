@@ -10,6 +10,39 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+.prepayment-top-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px 0;
+}
+
+.prepayment-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: none;
+  background: transparent;
+  color: var(--gvr-primary, #2b5adc);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.prepayment-back-btn:hover {
+  opacity: 0.85;
+}
+
+.prepayment-page-title {
+  margin: 0;
+  padding: 8px 12px 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gvr-text, #1a1f2e);
+  line-height: 1.3;
+}
+
 .prepayment-amount-input {
   width: 100%;
   padding: 12px 16px;

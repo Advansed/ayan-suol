@@ -5,6 +5,7 @@ import { DriverInfo } from '../../../../Store/cargoStore';
 import { useChats } from '../../../../Store/useChats';
 import offerStyles from './OfferCard.module.css';
 import { PhotoPreview } from '../../../Chats/PhotoPreview';
+import { resolveImageSrc } from '../../../../utils/fileUpload';
 
 /** Фото груза/пломбы при прибытии на выгрузку (Works sendImage …, 18) */
 const UNLOAD_ARRIVAL_PHOTO_STATUS = 18;
@@ -102,10 +103,11 @@ export const ToUnloadCard: React.FC<ToUnloadCardProps> = ({
                 {!photosLoading && fotos.length > 0 && (
                     <div className="flex flex-wrap mt-02">
                         {fotos.map((item: any, index: number) => {
-                            const src =
+                            const raw =
                                 typeof item === 'string'
                                     ? item
                                     : item?.url || item?.image || item?.path || item?.filePath;
+                            const src = resolveImageSrc(raw);
 
                             if (!src) return null;
 

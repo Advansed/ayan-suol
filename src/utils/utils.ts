@@ -11,6 +11,7 @@ import {
     DELETABLE_STATUSES,
     PUBLISHABLE_STATUSES
 } from './constants';
+import { normalizeCargoStatus } from '../components/Cargos/cargoStatusFlow';
 
 // ======================
 // УТИЛИТЫ ФОРМАТИРОВАНИЯ
@@ -46,7 +47,23 @@ export const formatters = {
     date: (dateString: string): string => {
         if (!dateString) return '';
         try {
-            const date = new Date(dateString);
+            let date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                // DD.MM.YYYY или DD.MM.YYYY HH:mm
+                const m = String(dateString).trim().match(
+                    /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/
+                );
+                if (m) {
+                    date = new Date(
+                        Number(m[3]),
+                        Number(m[2]) - 1,
+                        Number(m[1]),
+                        Number(m[4] || 0),
+                        Number(m[5] || 0),
+                        Number(m[6] || 0)
+                    );
+                }
+            }
             if (isNaN(date.getTime())) return dateString;
             
             return date.toLocaleDateString('ru-RU', {
@@ -130,7 +147,47 @@ export const formatters = {
         } catch {
             return dateString;
         }
-    }
+    },
+
+    /** Дата публикации: «только что» / «3 ч. назад» / «вчера» / DD.MM.YYYY */
+    published: (dateString: string): string => {
+        if (!dateString) return '';
+        try {
+            let date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                const m = String(dateString).trim().match(
+                    /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/
+                );
+                if (m) {
+                    date = new Date(
+                        Number(m[3]),
+                        Number(m[2]) - 1,
+                        Number(m[1]),
+                        Number(m[4] || 0),
+                        Number(m[5] || 0),
+                        Number(m[6] || 0)
+                    );
+                }
+            }
+            if (isNaN(date.getTime())) return formatters.date(dateString);
+
+            const diffMs = Date.now() - date.getTime();
+            if (diffMs < 0) return formatters.date(dateString);
+
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffMins < 1) return 'только что';
+            if (diffMins < 60) return `${diffMins} мин. назад`;
+            if (diffHours < 24) return `${diffHours} ч. назад`;
+            if (diffDays === 1) return 'вчера';
+            if (diffDays < 7) return `${diffDays} дн. назад`;
+            return formatters.date(dateString);
+        } catch {
+            return formatters.date(dateString);
+        }
+    },
 };
 
 // ======================
@@ -139,59 +196,73 @@ export const formatters = {
 
 export const statusUtils = {
     // Получение CSS класса статуса
-    getClassName: (status: CargoStatus): string => {
-        return STATUS_CLASSES[status] || 'cr-status-1';
+    getClassName: (status: CargoStatus | string): string => {
+        const normalized = normalizeCargoStatus(status);
+        return STATUS_CLASSES[normalized] || 'cr-status-1';
     },
 
     // Получение цвета статуса
-    getColor: (status: CargoStatus): string => {
-        return STATUS_COLORS[status] || '#1976d2';
+    getColor: (status: CargoStatus | string): string => {
+        const normalized = normalizeCargoStatus(status);
+        return STATUS_COLORS[normalized] || '#1976d2';
     },
 
     // Получение описания статуса
-    getDescription: (status: CargoStatus): string => {
-        return STATUS_DESCRIPTIONS[status] || '';
+    getDescription: (status: CargoStatus | string): string => {
+        const normalized = normalizeCargoStatus(status);
+        return STATUS_DESCRIPTIONS[normalized] || '';
     },
 
     // Проверка возможности редактирования
-    canEdit: (status: CargoStatus): boolean => {
-        return EDITABLE_STATUSES.includes(status);
+    canEdit: (status: CargoStatus | string): boolean => {
+        return EDITABLE_STATUSES.includes(normalizeCargoStatus(status));
     },
 
     // Проверка возможности удаления
-    canDelete: (status: CargoStatus): boolean => {
-        return DELETABLE_STATUSES.includes(status);
+    canDelete: (status: CargoStatus | string): boolean => {
+        return DELETABLE_STATUSES.includes(normalizeCargoStatus(status));
     },
 
     // Проверка возможности публикации
-    canPublish: (status: CargoStatus): boolean => {
-        return PUBLISHABLE_STATUSES.includes(status);
+    canPublish: (status: CargoStatus | string): boolean => {
+        return PUBLISHABLE_STATUSES.includes(normalizeCargoStatus(status));
     },
 
     // Получение следующего статуса
-    getNextStatus: (currentStatus: CargoStatus): CargoStatus | null => {
-        switch (currentStatus) {
+    getNextStatus: (currentStatus: CargoStatus | string): CargoStatus | null => {
+        switch (normalizeCargoStatus(currentStatus)) {
             case CargoStatus.NEW:               return CargoStatus.WAITING;
             case CargoStatus.WAITING:           return CargoStatus.HAS_ORDERS;
-            case CargoStatus.HAS_ORDERS:        return CargoStatus.IN_WORK;
-            case CargoStatus.NEGOTIATION:       return CargoStatus.IN_WORK;
-            case CargoStatus.IN_WORK:           return CargoStatus.DELIVERED;
-            case CargoStatus.DELIVERED:         return CargoStatus.COMPLETED;
+            case CargoStatus.HAS_ORDERS:        return CargoStatus.ACCEPTED;
+            case CargoStatus.ACCEPTED:          return CargoStatus.WAIT_LOAD;
+            case CargoStatus.WAIT_LOAD:         return CargoStatus.LOADING;
+            case CargoStatus.LOADING:           return CargoStatus.HAS_LOADED;
+            case CargoStatus.HAS_LOADED:        return CargoStatus.IN_TRANSIT;
+            case CargoStatus.IN_TRANSIT:        return CargoStatus.HAS_DELIVERED;
+            case CargoStatus.HAS_DELIVERED:     return CargoStatus.UNLOADING;
+            case CargoStatus.UNLOADING:         return CargoStatus.WAIT_COMPLETE;
+            case CargoStatus.WAIT_COMPLETE:     return CargoStatus.COMPLETED;
             default:                            return null;
         }
     },
 
     // Получение прогресса в процентах
-    getProgress: (status: CargoStatus): number => {
-        const progressMap = {
+    getProgress: (status: CargoStatus | string): number => {
+        const progressMap: Record<CargoStatus, number> = {
             [ CargoStatus.NEW ]:            0,
-            [ CargoStatus.WAITING ]:        20,
-            [ CargoStatus.HAS_ORDERS ]:     40,
-            [ CargoStatus.NEGOTIATION ]:    50,
-            [ CargoStatus.IN_WORK ]:        70,
-            [ CargoStatus.DELIVERED ]:      90,
-            [ CargoStatus.COMPLETED ]:      100
+            [ CargoStatus.WAITING ]:        8,
+            [ CargoStatus.HAS_ORDERS ]:     16,
+            [ CargoStatus.ACCEPTED ]:       25,
+            [ CargoStatus.WAIT_LOAD ]:      33,
+            [ CargoStatus.LOADING ]:        41,
+            [ CargoStatus.HAS_LOADED ]:     50,
+            [ CargoStatus.IN_TRANSIT ]:     58,
+            [ CargoStatus.HAS_DELIVERED ]:  66,
+            [ CargoStatus.UNLOADING ]:      75,
+            [ CargoStatus.WAIT_COMPLETE ]:  83,
+            [ CargoStatus.COMPLETED ]:      100,
+            [ CargoStatus.PROBLEMS ]:       0,
         };
-        return progressMap[status] || 0;
+        return progressMap[normalizeCargoStatus(status)] || 0;
     }
 };

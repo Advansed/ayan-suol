@@ -70,16 +70,17 @@ export const CargosList: React.FC<CargosListProps> = ({
                 ) : cargos.length === 0 ? (
                     renderEmptyState()
                 ) : (
-                    cargos.map((cargo, index) => (
-                        <CargoCard
-                            key     = { index }
-                            cargo   = { cargo }
-                            mode    = "list"
-                            onClick = { () => {
-                                onCargoClick(cargo) 
-                            }}
-                        />
-                    ))
+                    <div className="cargos-cards-grid">
+                        {cargos.map((cargo) => (
+                            <div key={cargo.guid} className="cargos-card-cell">
+                                <CargoCard
+                                    cargo={cargo}
+                                    mode="list"
+                                    onClick={() => onCargoClick(cargo)}
+                                />
+                            </div>
+                        ))}
+                    </div>
                 )}
             </div>
         </>

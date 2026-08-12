@@ -64,6 +64,7 @@ interface ChatActions {
   setSearchQuery:           ( query: string ) => void
   setCurrentChat:           ( recipient: string, cargo: string ) => void
   clearCurrentChat:         ( ) => void
+  ensureChat:               ( recipient: string, cargo: string, partial?: Partial<ChatItem> ) => void
   addMessage:               ( recipient: string, cargo: string, message: ChatMessage ) => void
   addMessages:              ( recipient: string, cargo: string, messages: ChatMessage[] ) => void
   setMessagesLoading:       ( recipient: string, cargo: string, loading: boolean ) => void
@@ -93,8 +94,29 @@ export const useChatStore = create<ChatStore>()(
         set({ currentChat: { recipient, cargo } }),
       
       clearCurrentChat: () => set({ currentChat: undefined }),
+
+      ensureChat: (recipient, cargo, partial = {}) => {
+        const { chats } = get()
+        const exists = chats.some(
+          (chat) => chat.recipient === recipient && chat.cargo === cargo
+        )
+        if (exists) return
+
+        set({
+          chats: [
+            ...chats,
+            {
+              ...EMPTY_CHAT_ITEM,
+              recipient,
+              cargo,
+              ...partial,
+            },
+          ],
+        })
+      },
       
       addMessage: (recipient, cargo, message) => {
+        get().ensureChat(recipient, cargo)
         const { chats } = get()
         
         const updatedChats = chats.map(chat => {
@@ -111,6 +133,7 @@ export const useChatStore = create<ChatStore>()(
       },
       
       addMessages: (recipient, cargo, messages) => {
+        get().ensureChat(recipient, cargo)
         const { chats } = get();
         
         const updatedChats = chats.map(chat => {
@@ -135,6 +158,7 @@ export const useChatStore = create<ChatStore>()(
       },
       
       setMessagesLoading: (recipient, cargo, loading) => {
+        get().ensureChat(recipient, cargo)
         const { chats } = get()
         
         const updatedChats = chats.map(chat => {
@@ -151,6 +175,7 @@ export const useChatStore = create<ChatStore>()(
       },
       
       setHasMore: (recipient, cargo, hasMore) => {
+        get().ensureChat(recipient, cargo)
         const { chats } = get()
         
         const updatedChats = chats.map(chat => {
@@ -236,6 +261,8 @@ export const chatActions = {
   setCurrentChat: (recipient: string, cargo: string) => 
     useChatStore.getState().setCurrentChat(recipient, cargo),
   clearCurrentChat: () => useChatStore.getState().clearCurrentChat(),
+  ensureChat: (recipient: string, cargo: string, partial?: Partial<ChatItem>) =>
+    useChatStore.getState().ensureChat(recipient, cargo, partial),
   addMessage: (recipient: string, cargo: string, message: ChatMessage) => 
     useChatStore.getState().addMessage(recipient, cargo, message),
   addMessages: (recipient: string, cargo: string, messages: ChatMessage[]) => 

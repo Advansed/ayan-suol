@@ -1,7 +1,10 @@
 import React from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { RefreshCw } from 'lucide-react';
 import { Cargos } from '../components/Cargos';
 import { Works } from '../components/Works';
+import { useWorks } from '../components/Works/useWorks';
+import { useCargos } from '../components/Cargos/hooks/useCargos';
 import CargoArchive from '../components/Cargos/components/CargoArchive';
 import { WorkArchive } from '../components/Works/components';
 import { useUserType } from '../Store/loginStore';
@@ -12,14 +15,38 @@ import { Profile } from '../components/Profile';
 import { WalletPage } from '../components/Settings/components/WalletPage';
 import { TransportEditPage } from '../components/Settings/components/TransportEditPage';
 import { PanelFrame } from '../layout/PanelFrame';
+import panelStyles from '../layout/PanelFrame.module.css';
+import { PassportVerification } from '../components/Verification/PassportVerification';
 
 /** Лента заказов — только новые */
 export const FeedPage: React.FC = () => {
   const { user_type } = useUserType();
+  const { refreshWorks } = useWorks();
+  const { refreshCargos } = useCargos();
+
+  const handleRefresh = () => {
+    if (user_type === 2) {
+      void refreshWorks();
+    } else {
+      void refreshCargos();
+    }
+  };
+
   return (
     <PanelFrame
       title="Лента заказов"
       subtitle={user_type === 2 ? 'Новые грузы для перевозки' : 'Ваши заказы'}
+      actions={
+        <button
+          type="button"
+          className={panelStyles.refreshBtn}
+          onClick={handleRefresh}
+          aria-label="Обновить"
+        >
+          <RefreshCw size={16} strokeWidth={2} />
+          Обновить
+        </button>
+      }
     >
       <div className="web-list-layout">
         {user_type === 2 ? <Works mode="feed" /> : <Cargos />}
@@ -31,6 +58,17 @@ export const FeedPage: React.FC = () => {
 /** Мои заказы — отклики и перевозки в работе */
 export const OrdersPage: React.FC = () => {
   const { user_type } = useUserType();
+  const { refreshWorks } = useWorks();
+  const { refreshCargos } = useCargos();
+
+  const handleRefresh = () => {
+    if (user_type === 2) {
+      void refreshWorks();
+    } else {
+      void refreshCargos();
+    }
+  };
+
   return (
     <PanelFrame
       title="Мои заказы"
@@ -38,6 +76,17 @@ export const OrdersPage: React.FC = () => {
         user_type === 2
           ? 'Ваши отклики и заказы в работе'
           : 'Заказы, которые вы разместили'
+      }
+      actions={
+        <button
+          type="button"
+          className={panelStyles.refreshBtn}
+          onClick={handleRefresh}
+          aria-label="Обновить"
+        >
+          <RefreshCw size={16} strokeWidth={2} />
+          Обновить
+        </button>
       }
     >
       <div className="web-list-layout">
@@ -84,10 +133,17 @@ export const ProfileRoutePage: React.FC = () => (
 
 export const FinancePage: React.FC = () => {
   const history = useHistory();
+  const location = useLocation<{ amount?: number | string }>();
+  const queryAmount = new URLSearchParams(location.search).get('amount');
+  const initialAmount = location.state?.amount ?? queryAmount;
+
   return (
     <PanelFrame title="Финансы" subtitle="Баланс, операции и счета" bare>
       <div className="web-finance-layout">
-        <WalletPage onBack={() => history.push('/')} />
+        <WalletPage
+          onBack={() => history.push('/')}
+          initialAmount={initialAmount}
+        />
       </div>
     </PanelFrame>
   );
@@ -98,6 +154,19 @@ export const VehiclesPage: React.FC = () => {
   return (
     <PanelFrame title="Мои машины" subtitle="Транспорт и документы" bare>
       <TransportEditPage onBack={() => history.push('/')} />
+    </PanelFrame>
+  );
+};
+
+export const VerificationPage: React.FC = () => {
+  const history = useHistory();
+  return (
+    <PanelFrame
+      title="Верификация"
+      subtitle="Паспортные данные и фото для подтверждения"
+      bare
+    >
+      <PassportVerification onBack={() => history.push('/profile')} />
     </PanelFrame>
   );
 };

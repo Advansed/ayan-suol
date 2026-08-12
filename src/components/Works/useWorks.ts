@@ -66,8 +66,34 @@ export const useWorks = () => {
           createdAt: new Date().toISOString()
         };
 
-        const handleOfferResponse = (response: { success: boolean; error?: string }) => {
+        const handleOfferResponse = (response: {
+          success: boolean;
+          error?: string;
+          data?: WorkInfo | Partial<WorkInfo>;
+        }) => {
           if (response.success) {
+            const worksList = useWorkStore.getState().works;
+            const workGuid =
+              (response.data as WorkInfo | undefined)?.guid ||
+              worksList.find((w) => w.cargo === data.guid || w.guid === data.guid)?.guid;
+
+            if (workGuid) {
+              if (response.data && typeof response.data === 'object') {
+                workActions.updateWork(workGuid, {
+                  ...response.data,
+                  status: (response.data as WorkInfo).status || WorkStatus.OFFERED,
+                });
+              } else {
+                workActions.updateWork(workGuid, {
+                  status: WorkStatus.OFFERED,
+                  price: data.price,
+                  weight: data.weight,
+                  volume: data.volume,
+                  transport: data.transport,
+                });
+              }
+            }
+
             toast.success('Предложение успешно создано');
             finish(true);
           } else {
@@ -118,8 +144,30 @@ export const useWorks = () => {
           createdAt: new Date().toISOString()
         };
 
-        const handleOfferResponse = (response: { success: boolean; error?: string }) => {
+        const handleOfferResponse = (response: {
+          success: boolean;
+          error?: string;
+          data?: WorkInfo | Partial<WorkInfo>;
+        }) => {
           if (response.success) {
+            const worksList = useWorkStore.getState().works;
+            const workGuid =
+              (response.data as WorkInfo | undefined)?.guid ||
+              worksList.find((w) => w.cargo === data.guid || w.guid === data.guid)?.guid;
+
+            if (workGuid) {
+              if (response.data && typeof response.data === 'object') {
+                workActions.updateWork(workGuid, {
+                  ...response.data,
+                  status: (response.data as WorkInfo).status || WorkStatus.NEW,
+                });
+              } else {
+                workActions.updateWork(workGuid, {
+                  status: WorkStatus.NEW,
+                });
+              }
+            }
+
             toast.success('Предложение успешно удалено');
             finish(true);
           } else {
@@ -174,6 +222,10 @@ export const useWorks = () => {
 
         const handleStatusResponse = (response: { success: boolean; error?: string }) => {
           if (response.success) {
+            const next = statusCodeToWorkStatus(offerData.status);
+            if (next) {
+              workActions.updateWork(work.guid, { status: next });
+            }
             toast.success('Статус успешно обновлен');
             finish(true);
           } else {
@@ -429,20 +481,24 @@ export const useWorks = () => {
         console.warn('[useWorks] nextStatus: неизвестный статус', status);
         return 20;
     }
+  }
 
-    // NEW             = "Новый",              // Доступна для предложения             10
-    // OFFERED         = "Торг",               // Водитель сделал предложение          11    
-    // TO_LOAD         = "На погрузку",        // Едет на погрузку                     12    
-    // ON_LOAD         = "На погрузке",        // Прибыл на погрузку                   13 
-    // LOADING         = "Загружается",        // Загружается                          14 
-    // LOADED          = "Загружено",          // Загрузился                           15 
-    // IN_WORK         = "В работе",           // Груз в работе                        16
-    // TO_UNLOAD       = "Доставлено",         // Прибыл на место выгрузки             17
-    // UNLOADING       = "Выгружается",        // Груз выгружается                     18
-    // UNLOADED        = "Выгружено",          // Груз выгружен                        19
-    // COMPLETED       = "Завершено" ,         // Работа завершена                     20
-    // REJECTED        = "Отказано"            // Отказано                             21     
-
+  function statusCodeToWorkStatus(code: number): WorkStatus | null {
+    switch (code) {
+      case 10: return WorkStatus.NEW;
+      case 11: return WorkStatus.OFFERED;
+      case 12: return WorkStatus.TO_LOAD;
+      case 13: return WorkStatus.ON_LOAD;
+      case 14: return WorkStatus.LOADING;
+      case 15: return WorkStatus.LOADED;
+      case 16: return WorkStatus.IN_WORK;
+      case 17: return WorkStatus.TO_UNLOAD;
+      case 18: return WorkStatus.UNLOADING;
+      case 19: return WorkStatus.UNLOADED;
+      case 20: return WorkStatus.COMPLETED;
+      case 21: return WorkStatus.REJECTED;
+      default: return null;
+    }
   }
 
   return {

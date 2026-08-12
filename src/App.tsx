@@ -37,6 +37,7 @@ import {
   OrdersPage,
   ProfileRoutePage,
   SettingsRoutePage,
+  VerificationPage,
   VehiclesPage,
 } from './pages/RoutePages';
 import { useLoginStore } from './Store/loginStore';
@@ -96,7 +97,7 @@ const AppContent: React.FC = () => {
                 <StubPage title="Документы" description="Раздел документов и договоров в разработке." />
               </Route>
               <Route exact path="/verification">
-                <StubPage title="Верификация" description="Пройдите верификацию паспорта и документов — раздел скоро откроется." />
+                <VerificationPage />
               </Route>
               <Route exact path="/partners">
                 <StubPage title="Партнёрам" description="Партнёрская программа в разработке." />

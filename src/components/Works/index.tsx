@@ -16,7 +16,7 @@ import { useToken } from '../../Store/loginStore';
 import { useChats } from '../../Store/useChats';
 import { transportGetters } from '../../Store/transportStore';
 import { IonLoading } from '@ionic/react';
-import { filterWorksByMode, type WorksListMode } from './statusFlow';
+import { filterWorksByMode, findWorkByRef, type WorksListMode } from './statusFlow';
 import './styles.css';
 
 export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
@@ -41,59 +41,78 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
 
     const emptyTitle =
         mode === 'feed'
-            ? 'Нет новых заказов'
+            ? 'Нет заказов в ленте'
             : mode === 'mine'
               ? 'Нет ваших заказов'
               : 'Нет доступных заказов';
 
     const emptyHint =
         mode === 'feed'
-            ? 'Новые заказы появятся здесь, когда их опубликуют заказчики'
+            ? 'Здесь новые заказы, ваши отклики и заказы до подписи договора'
             : mode === 'mine'
-              ? 'Здесь будут заказы с вашим откликом и перевозки в работе'
+              ? 'Здесь перевозки после подписания договора'
               : 'Доступные заказы появятся здесь, когда их опубликуют заказчики';
 
-    // Обновляем currentPage.work при обновлении списка works (статус, подпись и т.д.)
-    useEffect(() => {
-        if (currentPage.type === 'view') {
-            const updatedWork = works.find(w => w.guid === currentPage.work.guid);
-            if (
-                updatedWork &&
-                (updatedWork.status !== currentPage.work.status ||
-                    Boolean(updatedWork.signed) !== Boolean(currentPage.work.signed))
-            ) {
-                workActions.setCurrentPage({ type: 'view', work: updatedWork });
-            }
-            return;
-        }
-        if (currentPage.type === 'map') {
-            const updatedWork = works.find(w => w.guid === currentPage.work.guid);
-            if (updatedWork && updatedWork !== currentPage.work) {
-                workActions.setCurrentPage({ type: 'map', work: updatedWork });
-            }
-            return;
-        }
-        if (currentPage.type === 'agreement') {
-            const updatedWork = works.find(w => w.guid === currentPage.work.guid);
-            if (
-                updatedWork &&
-                (updatedWork.status !== currentPage.work.status ||
-                    Boolean(updatedWork.signed) !== Boolean(currentPage.work.signed))
-            ) {
-                workActions.setCurrentPage({
-                    type: 'agreement',
-                    work: updatedWork,
-                    contract: currentPage.contract,
-                });
-            }
-        }
-    }, [works, currentPage]);
+    // Обновляем currentPage.work (+ history) при push get_works
+    const pageType = currentPage.type;
+    const pageWork =
+        'work' in currentPage ? currentPage.work : undefined;
+    const pageWorkGuid = pageWork?.guid;
+    const pageWorkCargo = pageWork?.cargo;
+    const pageWorkStatus = pageWork?.status;
+    const pageWorkPrice = pageWork?.price;
+    const pageWorkSigned = pageWork ? Boolean(pageWork.signed) : undefined;
+    const pageWorkRef = pageWork;
+    const pageContract =
+        currentPage.type === 'agreement' ? currentPage.contract : undefined;
 
-    const handleWorkClick = (work: WorkInfo) => {
+    useEffect(() => {
+        if (!pageWork) return;
+
+        const updatedWork = findWorkByRef(works, pageWork);
+        if (!updatedWork) return;
+
+        const changed =
+            updatedWork.status !== pageWorkStatus ||
+            updatedWork.price !== pageWorkPrice ||
+            Boolean(updatedWork.signed) !== pageWorkSigned ||
+            updatedWork !== pageWorkRef;
+
+        if (!changed) return;
+
+        if (pageType === 'view') {
+            workActions.replaceCurrentPage({ type: 'view', work: updatedWork });
+            return;
+        }
+        if (pageType === 'map') {
+            workActions.replaceCurrentPage({ type: 'map', work: updatedWork });
+            return;
+        }
+        if (pageType === 'agreement') {
+            workActions.replaceCurrentPage({
+                type: 'agreement',
+                work: updatedWork,
+                contract: pageContract,
+            });
+        }
+    }, [
+        works,
+        pageType,
+        pageWork,
+        pageWorkGuid,
+        pageWorkCargo,
+        pageWorkStatus,
+        pageWorkPrice,
+        pageWorkSigned,
+        pageWorkRef,
+        pageContract,
+    ]);
+
+    const handleWorkClick                                    = (work: WorkInfo) => {
         navigateTo({ type: 'view', work });
     };
 
-    const handleOfferClick = async (work: WorkInfo) => {
+    const handleOfferClick                                   = async (work: WorkInfo) => {
         // Формируем предложение из данных работы
         // Транспорт берется из work.transport, который был выбран в OfferCard
         const offerData: OfferInfo = {
@@ -120,12 +139,18 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
                 image: "",
             });
 
-            // Обновляем список работ для получения нового статуса
+            // Держим открытую карточку с новым статусом (в ленте заказ пропадёт из списка)
+            const updated =
+                useWorkStore.getState().works.find((w) => w.guid === work.guid) ||
+                { ...work, status: WorkStatus.OFFERED, price: offerData.price };
+            workActions.setCurrentPage({ type: 'view', work: updated });
+
+            // Сверка с сервером
             await refreshWorks();
         }
     };
 
-    const handleOfferCancelClick = async (work: WorkInfo) => {
+    const handleOfferCancelClick                             = async (work: WorkInfo) => {
         // Формируем данные предложения для удаления
         // Транспорт берется из work.transport, который был выбран в OfferCard
         const offerData: OfferInfo = {
@@ -152,12 +177,16 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
                 image: "",
             });
 
-            // Обновляем список работ для получения нового статуса
+            const updated =
+                useWorkStore.getState().works.find((w) => w.guid === work.guid) ||
+                { ...work, status: WorkStatus.NEW };
+            workActions.setCurrentPage({ type: 'view', work: updated });
+
             await refreshWorks();
         }
     };
 
-    const handleLoaded = async (work: WorkInfo, data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }) => {
+    const handleLoaded                                       = async (work: WorkInfo, data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }) => {
         try {
             await Promise.all([
                 ...data.cargoPhotos.map(image => sendImage(work.recipient, work.cargo, image, 16)),
@@ -177,7 +206,7 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
         }
     };
 
-    const handleArrivedAtLoad = async (work: WorkInfo, data: { bodyPhotos: string[] }) => {
+    const handleArrivedAtLoad                                = async (work: WorkInfo, data: { bodyPhotos: string[] }) => {
         try {
             await Promise.all(
                 data.bodyPhotos.map(image => sendImage(work.recipient, work.cargo, image, 14))
@@ -196,7 +225,7 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
         }
     };
 
-    const handleArrivedUnload = async (
+    const handleArrivedUnload                                = async (
         work: WorkInfo,
         data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }
     ) => {
@@ -215,14 +244,10 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
                 message:
                     "Транспорт прибыл на точку разгрузки, груз и пломба в порядке, фото приложено",
             });
-            // Сервер ожидает сначала «На месте выгрузки» (17), затем «Разгружается» (18)
+            // Только прибытие: IN_WORK (16) → TO_UNLOAD / «Доставлено» (17).
+            // «Разгружается» (18) выставляет заказчик при начале разгрузки.
             const okArrived = await setStatus(work);
             if (!okArrived) throw new Error('Не удалось подтвердить прибытие на выгрузку');
-            const okUnloading = await setStatus({
-                ...work,
-                status: WorkStatus.TO_UNLOAD,
-            });
-            if (!okUnloading) throw new Error('Не удалось начать этап разгрузки');
             await refreshWorks();
         } catch (err) {
             console.error("handleArrivedUnload error:", err);
@@ -230,7 +255,7 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
         }
     };
 
-    const handleUnloadComplete = async (work: WorkInfo, data: { bodyPhotos: string[] }) => {
+    const handleUnloadComplete                               = async (work: WorkInfo, data: { bodyPhotos: string[] }) => {
         try {
             const uploadResults = await Promise.all(
                 data.bodyPhotos.map(image => sendImage(work.recipient, work.cargo, image, 20))
@@ -253,18 +278,18 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
         }
     };
 
-    const handleMapClick = (work: WorkInfo) => {
+    const handleMapClick                                     = (work: WorkInfo) => {
         navigateTo({ type: 'map', work });
     };
 
-    const handleSignContract = useCallback(async (work: WorkInfo) => {
+    const handleSignContract                                 = useCallback(async (work: WorkInfo) => {
         const contractData = await get_contract_data(work);
         if (contractData) {
             navigateTo({ type: 'agreement', work, contract: contractData });
         }
     }, [get_contract_data, navigateTo]);
 
-    const handleAgreementSign = useCallback(async (signature: string, _offer: OfferInfo) => {
+    const handleAgreementSign                                = useCallback(async (signature: string, _offer: OfferInfo) => {
         void _offer;
         if (currentPage.type !== 'agreement') return false;
         const ok = await set_contract(currentPage.work, signature);
@@ -282,17 +307,15 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
         return true;
     }, [currentPage, set_contract, refreshWorks]);
 
-    const handleSavePage1 = async (data: SaveData) => {
+    const handleSavePage1                                    = async (data: SaveData) => {
         if (currentPage.type === "page1") {
             set_contract(currentPage.work, data.sign);
             setStatus(currentPage.work);
             for (const elem of data.bodyPhotos) {
-                const { uploadFileToMinIO, dataUrlToFile } = await import('../../utils/fileUpload');
-                const file = dataUrlToFile(elem);
-                const { filePath } = await uploadFileToMinIO(file, {
+                const { uploadOrderPhoto } = await import('../../utils/fileUpload');
+                const { filePath } = await uploadOrderPhoto(elem, {
                     cargo_id: currentPage.work.cargo,
                     recipient_id: currentPage.work.recipient,
-                    token,
                 });
                 emit("send_message", {
                     token,
@@ -314,51 +337,51 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
         return true;
     };
 
-    const renderPage = () => {
+    const renderPage                                         = () => {
         switch (currentPage.type) {
             case 'list':
                 return (
                     <WorksList
-                        works={visibleWorks}
-                        isLoading={isLoading}
-                        onWorkClick={handleWorkClick}
-                        onRefresh={refreshWorks}
-                        emptyTitle={emptyTitle}
-                        emptyHint={emptyHint}
+                        works                     = { visibleWorks }
+                        isLoading                 = { isLoading }
+                        onWorkClick               = { handleWorkClick }
+                        onRefresh                 = { refreshWorks }
+                        emptyTitle                = { emptyTitle }
+                        emptyHint                 = { emptyHint }
                     />
                 );
 
             case 'view':
                 return (
                     <WorkView
-                        work={currentPage.work}
-                        onBack={goBack}
-                        onOfferClick={handleOfferClick}
-                        onOfferCancelClick={handleOfferCancelClick}
-                        onLoaded={handleLoaded}
-                        onArrivedAtLoad={handleArrivedAtLoad}
-                        onArrivedUnload={handleArrivedUnload}
-                        onUnloadComplete={handleUnloadComplete}
-                        onMapClick={handleMapClick}
-                        onSignContract={handleSignContract}
+                        work                      = { currentPage.work }
+                        onBack                    = { goBack }
+                        onOfferClick              = { handleOfferClick }
+                        onOfferCancelClick        = { handleOfferCancelClick }
+                        onLoaded                  = { handleLoaded }
+                        onArrivedAtLoad           = { handleArrivedAtLoad }
+                        onArrivedUnload           = { handleArrivedUnload }
+                        onUnloadComplete          = { handleUnloadComplete }
+                        onMapClick                = { handleMapClick }
+                        onSignContract            = { handleSignContract }
                     />
                 );
 
             case 'map':
                 return (
                     <WorkMap
-                        work={currentPage.work}
-                        onBack={goBack}
+                        work                      = { currentPage.work }
+                        onBack                    = { goBack }
                     />
                 );
 
             case 'page1':
                 return (
                     <WorkPage1
-                        work={currentPage.work}
-                        pdf={contract}
-                        onBack={goBack}
-                        onSave={handleSavePage1}
+                        work                      = { currentPage.work }
+                        pdf                       = { contract ?? '' }
+                        onBack                    = { goBack }
+                        onSave                    = { handleSavePage1 }
                     />
                 );
 
@@ -366,21 +389,21 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
                 if (currentPage.type !== 'agreement') return null;
                 return (
                     <Agreement
-                        work={currentPage.work}
-                        contractData={currentPage.contract}
-                        onBack={goBack}
-                        onSign={handleAgreementSign}
+                        work                      = { currentPage.work }
+                        contractData              = { currentPage.contract }
+                        onBack                    = { goBack }
+                        onSign                    = { handleAgreementSign }
                     />
                 );
 
             default:
                 return (
                     <WorksList
-                        works={visibleWorks}
-                        isLoading={isLoading}
-                        onWorkClick={handleWorkClick}
-                        emptyTitle={emptyTitle}
-                        emptyHint={emptyHint}
+                        works                    = { visibleWorks }
+                        isLoading                = { isLoading }
+                        onWorkClick              = { handleWorkClick }
+                        emptyTitle               = { emptyTitle }
+                        emptyHint                = { emptyHint }
                     />
                 );
         }

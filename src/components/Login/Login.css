@@ -3,9 +3,14 @@
     width: 90%;
     margin: auto;
     padding: 20px;
-    background-color: var(--main-color);
+    /* ion-card читает --background; без этого в части браузеров (Comet)
+       глобальный --background:#fff даёт белый фон + белый текст */
+    --background: var(--main-color, #2b5adc);
+    --color: #fff;
+    background: var(--main-color, #2b5adc);
+    background-color: var(--main-color, #2b5adc);
     border-radius: 10px;
-    color: white;
+    color: #fff;
 }
 
 .l-input {

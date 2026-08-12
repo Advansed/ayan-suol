@@ -133,6 +133,18 @@
     display:        inline-block;
 }
 
+.cr-status-danger {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+    padding: 0.3em 0.8em;
+    border-radius: 0.5em;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-align: center;
+    display: inline-block;
+}
+
 .circle-1 {
     width: 1em;
     height: 1em;
@@ -330,4 +342,45 @@
 
 .gradient-button:hover {
   background: linear-gradient(to right, #2563eb, #7c3aed);
+}
+
+/* Мои заказы (заказчик): карточки в 3 столбца, как у исполнителя */
+.cargos-cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 4px 4px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cargos-card-cell {
+  flex: 1 1 calc(33.333% - 11px);
+  max-width: calc(33.333% - 11px);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.cargos-card-cell > * {
+  height: 100%;
+  width: 100%;
+}
+
+@media (max-width: 1023px) {
+  .cargos-card-cell {
+    flex: 1 1 calc(50% - 8px);
+    max-width: calc(50% - 8px);
+  }
+}
+
+@media (max-width: 767px) {
+  .cargos-cards-grid {
+    gap: 12px;
+    padding: 0 2px 8px;
+  }
+
+  .cargos-card-cell {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
 }

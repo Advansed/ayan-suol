@@ -4,10 +4,11 @@ import { CargoInfo, useCargoStore } from '../../../Store/cargoStore';
 import './PrePayment.css'
 import { formatters } from '../../../utils/utils';
 import { useAccountStore } from '../../../Store/accountStore';
-import { IonButton, useIonRouter } from '@ionic/react';
+import { IonButton } from '@ionic/react';
+import { ChevronLeft } from 'lucide-react';
+import { useHistory } from 'react-router-dom';
 import { useLoginStore, useToken } from '../../../Store/loginStore';
 import { useSocket } from '../../../Store/useSocket';
-import { WizardHeader } from '../../Header/WizardHeader';
 
 interface PrepaymentPageProps {
   cargo: CargoInfo;
@@ -15,10 +16,13 @@ interface PrepaymentPageProps {
 }
 
 export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack }) => {
-  const [amount, setAmount]                 = useState<string>(cargo.advance === 0 ? '' : cargo.advance.toString());  
+  const [amount, setAmount]                 = useState<string>(() => {
+    const advance = Number(cargo.advance) || 0;
+    return advance > 0 ? String(advance) : '';
+  });
   const { accountData, isLoading, set_prepayment, del_prepayment } = useData(cargo, onBack)
 
-  const hist = useIonRouter()
+  const history = useHistory()
 
   const handleSubmit                        = async () => {
     if (parseFloat(amount) <= 0) {
@@ -26,7 +30,7 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack })
       return;
     }
 
-    if (parseFloat(amount) > cargo.cost) {
+    if (parseFloat(amount) > (Number(cargo.cost) || Number(cargo.price) || 0)) {
       alert('Сумма предоплаты не может превышать стоимость груза');
       return;
     }
@@ -52,21 +56,29 @@ export const PrepaymentPage: React.FC<PrepaymentPageProps> = ({ cargo, onBack })
   };
 
   const handlePayment                       = async () => {
-
-      hist.push("/finance")
-
+      const needed = Math.max(0, (parseFloat(amount) || 0) - (accountData?.balance || 0));
+      history.push({
+        pathname: '/finance',
+        state: { amount: needed },
+        search: needed > 0 ? `?amount=${needed}` : undefined,
+      });
   }
 
   const percent  = () => {
-    return (parseFloat(amount) || 0) * 100 / cargo.price 
+    const price = Number(cargo.price) || 0;
+    if (price <= 0) return 0;
+    return (parseFloat(amount) || 0) * 100 / price;
   }
 
   return (
     <div className="prepayment-page">
-      <WizardHeader
-        title="Спецсчет"
-        onBack={onBack}
-      />
+      <div className="prepayment-top-bar">
+        <button type="button" className="prepayment-back-btn" onClick={onBack}>
+          <ChevronLeft size={20} strokeWidth={2} />
+          К заказу
+        </button>
+      </div>
+      <h1 className="prepayment-page-title">Спецсчёт</h1>
 
       <div style={{ paddingLeft: '0.5em', paddingRight: '0.5em' }}>
       <div className="prepayment-form">

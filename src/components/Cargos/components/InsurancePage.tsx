@@ -1,90 +1,320 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { IonIcon, IonAlert, IonLoading, useIonRouter, IonInput, IonButton } from '@ionic/react';
-import { arrowBackOutline, shieldCheckmarkOutline, documentTextOutline, businessOutline } from 'ionicons/icons';
+import { IonAlert, IonLoading, IonInput, IonIcon } from '@ionic/react';
+import { useHistory } from 'react-router-dom';
+import { ChevronDown, ChevronLeft } from 'lucide-react';
+import { shieldCheckmarkOutline, documentTextOutline, businessOutline } from 'ionicons/icons';
 import { formatters } from '../../../utils/utils';
 import { CargoInfo, useCargoStore } from '../../../Store/cargoStore';
 import { useLoginStore, useToken } from '../../../Store/loginStore';
 import { useAccountStore } from '../../../Store/accountStore';
 import { useSocket } from '../../../Store/useSocket';
 import { useToast } from '../../Toast';
-import { WizardHeader } from '../../Header/WizardHeader';
+import styles from './InsurancePage.module.css';
 
 interface InsurancePageProps {
     cargo: CargoInfo;
     onBack: () => void;
 }
 
-// Типы страхового покрытия
-const INSURANCE_TYPES = [
+type InsuranceType = {
+    id: string;
+    name: string;
+    icon: string;
+    description: string;
+    rate: number;
+    coverage: string[];
+};
+
+const INSURANCE_TYPES: InsuranceType[] = [
     {
         id: 'basic',
         name: 'Базовое покрытие',
         icon: shieldCheckmarkOutline,
         description: 'Покрытие от утраты и повреждения',
-        rate: 1.0, // 0.5% от стоимости груза
-        coverage: ['Полная утрата груза', 'Повреждение при перевозке', 'Кража груза']
+        rate: 1.0,
+        coverage: ['Полная утрата груза', 'Повреждение при перевозке', 'Кража груза'],
     },
     {
         id: 'extended',
-        name: 'Расширенное покрытие', 
+        name: 'Расширенное покрытие',
         icon: documentTextOutline,
         description: 'Полное покрытие всех рисков',
-        rate: 2.0, // 1.2% от стоимости груза
-        coverage: ['Все риски базового покрытия', 'Стихийные бедствия', 'Задержка в доставке', 'Порча груза']
+        rate: 2.0,
+        coverage: [
+            'Все риски базового покрытия',
+            'Стихийные бедствия',
+            'Задержка в доставке',
+            'Порча груза',
+        ],
     },
     {
         id: 'premium',
         name: 'Премиум покрытие',
-        icon: businessOutline, 
-        description: 'Максимальная защита + сервис',
-        rate: 3.0, // 2.0% от стоимости груза
-        coverage: ['Все риски расширенного покрытия', 'Экспресс выплаты', 'Юридическое сопровождение']
-    }
+        icon: businessOutline,
+        description: 'Максимальная защита и сервис',
+        rate: 3.0,
+        coverage: [
+            'Все риски расширенного покрытия',
+            'Экспресс-выплаты',
+            'Юридическое сопровождение',
+        ],
+    },
 ];
+
+function calcInsuranceCost(cargoCost: number, rate: number): number {
+    if (!cargoCost || !rate) return 0;
+    return Math.round(cargoCost * rate / 100);
+}
+
+type InsuranceTypeSelectorProps = {
+    cargoCost: number;
+    selectedType: string;
+    onSelect: (id: string) => void;
+};
+
+const InsuranceTypeSelector: React.FC<InsuranceTypeSelectorProps> = ({
+    cargoCost,
+    selectedType,
+    onSelect,
+}) => {
+    const [listOpen, setListOpen] = useState(false);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+
+    const selectedInsurance = INSURANCE_TYPES.find((type) => type.id === selectedType);
+
+    const openList = (id: string) => {
+        setListOpen(true);
+        setExpandedId(id);
+    };
+
+    const handleHeadClick = (id: string) => {
+        if (!listOpen) {
+            openList(id);
+            return;
+        }
+        setExpandedId((prev) => (prev === id ? null : id));
+    };
+
+    const handleSelect = (id: string) => {
+        onSelect(id);
+        setListOpen(false);
+        setExpandedId(null);
+    };
+
+    if (!listOpen && selectedInsurance) {
+        const price = calcInsuranceCost(cargoCost, selectedInsurance.rate);
+        return (
+            <section className={styles.card}>
+                <div className={styles.cardKicker}>Тип покрытия</div>
+                <button
+                    type="button"
+                    className={styles.selectedPreview}
+                    onClick={() => openList(selectedInsurance.id)}
+                >
+                    <span className={styles.typeIcon}>
+                        <IonIcon icon={selectedInsurance.icon} />
+                    </span>
+                    <span className={styles.typeMain}>
+                        <div className={styles.typeName}>{selectedInsurance.name}</div>
+                        <div className={styles.typeDesc}>{selectedInsurance.description}</div>
+                        <div className={styles.typePrice}>
+                            {selectedInsurance.rate}% · {formatters.currency(price)}
+                        </div>
+                    </span>
+                    <span className={styles.selectedBadge}>Выбрано</span>
+                </button>
+                <div className={styles.changeHint}>Нажмите, чтобы изменить тип покрытия</div>
+            </section>
+        );
+    }
+
+    return (
+        <section className={styles.card}>
+            <div className={styles.cardKicker}>Тип покрытия</div>
+            <h2 className={styles.cardTitle}>Выберите покрытие</h2>
+            <div className={styles.typesList}>
+                {INSURANCE_TYPES.map((insurance) => {
+                    const isExpanded = expandedId === insurance.id;
+                    const isSelected = selectedType === insurance.id;
+                    const price = calcInsuranceCost(cargoCost, insurance.rate);
+
+                    return (
+                        <article
+                            key={insurance.id}
+                            className={[
+                                styles.typeCard,
+                                isExpanded ? styles.typeCardExpanded : '',
+                                isSelected ? styles.typeCardSelected : '',
+                            ]
+                                .filter(Boolean)
+                                .join(' ')}
+                        >
+                            <button
+                                type="button"
+                                className={styles.typeHead}
+                                onClick={() => handleHeadClick(insurance.id)}
+                            >
+                                <span className={styles.typeIcon}>
+                                    <IonIcon icon={insurance.icon} />
+                                </span>
+                                <span className={styles.typeMain}>
+                                    <div className={styles.typeName}>{insurance.name}</div>
+                                    <div className={styles.typeDesc}>{insurance.description}</div>
+                                </span>
+                                <span className={styles.typeMeta}>
+                                    <div className={styles.typeRate}>{insurance.rate}%</div>
+                                    <div className={styles.typePrice}>{formatters.currency(price)}</div>
+                                </span>
+                                <ChevronDown
+                                    size={18}
+                                    strokeWidth={2}
+                                    className={`${styles.typeChevron} ${isExpanded ? styles.typeChevronOpen : ''}`}
+                                />
+                            </button>
+
+                            {isExpanded && (
+                                <>
+                                    <div className={styles.typeBody}>
+                                        <div className={styles.coverageTitle}>Что покрывает</div>
+                                        <ul className={styles.coverageList}>
+                                            {insurance.coverage.map((item) => (
+                                                <li key={item} className={styles.coverageItem}>
+                                                    {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    <div className={styles.typeActions}>
+                                        <button
+                                            type="button"
+                                            className={styles.selectBtn}
+                                            onClick={() => handleSelect(insurance.id)}
+                                        >
+                                            {isSelected ? 'Выбрано' : 'Выбрать'}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </article>
+                    );
+                })}
+            </div>
+        </section>
+    );
+};
+
+type CargoCostProps = {
+    cost: number;
+    onChange: (value: number) => void;
+};
+
+const CargoCostEditor: React.FC<CargoCostProps> = ({ cost, onChange }) => {
+    const [focused, setFocused] = useState(false);
+    const [localCost, setLocalCost] = useState(cost || 0);
+
+    useEffect(() => {
+        if (!focused) setLocalCost(cost || 0);
+    }, [cost, focused]);
+
+    const hasValue = (cost || 0) > 0;
+    const showEditor = focused || !hasValue;
+
+    if (!showEditor && hasValue) {
+        return (
+            <section className={styles.card}>
+                <button type="button" className={styles.costCollapsed} onClick={() => setFocused(true)}>
+                    <div>
+                        <div className={styles.cardKicker}>Стоимость груза</div>
+                        <div className={styles.typeDesc}>Сумма для расчёта страховки</div>
+                    </div>
+                    <div className={styles.costValue}>{formatters.currency(cost)}</div>
+                </button>
+            </section>
+        );
+    }
+
+    return (
+        <section className={styles.card}>
+            <div className={styles.cardKicker}>Стоимость груза</div>
+            <div className={styles.costRow}>
+                <div>
+                    <h2 className={styles.cardTitle} style={{ marginBottom: 4 }}>
+                        Сумма для страхования
+                    </h2>
+                    <div className={styles.typeDesc}>Укажите фактическую стоимость груза</div>
+                </div>
+                <div className={styles.costValue}>{formatters.currency(localCost || 0)}</div>
+            </div>
+            <div className={styles.costInputWrap}>
+                <IonInput
+                    type="number"
+                    value={localCost}
+                    className={styles.costInput}
+                    placeholder="0"
+                    onIonInput={(e) => {
+                        const raw = String(e.detail.value ?? '');
+                        const num = parseFloat(raw.replace(',', '.'));
+                        setLocalCost(Number.isNaN(num) ? 0 : num);
+                    }}
+                    onIonFocus={() => setFocused(true)}
+                />
+                <span className={styles.costCurrency}>₽</span>
+            </div>
+            <p className={styles.costHint}>
+                От этой суммы рассчитывается стоимость страхового полиса.
+            </p>
+            <div className={styles.typeActions}>
+                <button
+                    type="button"
+                    className={styles.selectBtn}
+                    onClick={() => {
+                        onChange(localCost);
+                        setFocused(false);
+                    }}
+                >
+                    Применить
+                </button>
+            </div>
+        </section>
+    );
+};
 
 export const InsurancePage: React.FC<InsurancePageProps> = ({
     cargo,
     onBack,
 }) => {
-    const [ cost,               setCost ]               = useState( cargo.cost );
-    const [ selectedType,       setSelectedType]        = useState<string>('basic');
-    const [ showConfirmAlert,   setShowConfirmAlert]    = useState(false);
-    const [ showCancelAlert,    setShowCancelAlert]     = useState(false);
-    const [ insuranceCost,      setInsuranceCost]       = useState(0);
+    const [cost, setCost] = useState(Number(cargo.cost) || Number(cargo.price) || 0);
+    const [selectedType, setSelectedType] = useState<string>('basic');
+    const [showConfirmAlert, setShowConfirmAlert] = useState(false);
+    const [showCancelAlert, setShowCancelAlert] = useState(false);
+    const [insuranceCost, setInsuranceCost] = useState(0);
 
-    const { accountData, id, isLoading, set_insurance, del_insurance } = useData( cargo, onBack )
+    const { accountData, isLoading, set_insurance, del_insurance } = useData(cargo, onBack);
 
-    // Получаем выбранный тип страхования
-    const selectedInsurance = INSURANCE_TYPES.find(type => type.id === selectedType);
+    const selectedInsurance = INSURANCE_TYPES.find((type) => type.id === selectedType);
+    const history = useHistory();
 
-    const hist = useIonRouter() 
-
-    // Рассчитываем стоимость страхования
     useEffect(() => {
-        console.log("useeffect ins", selectedInsurance?.name, cost)
         if (selectedInsurance && cost) {
-            const i_cost = Math.round(cost * selectedInsurance.rate / 100);
-            setInsuranceCost(i_cost);
-            console.log("useeffect ins", i_cost )
+            setInsuranceCost(calcInsuranceCost(cost, selectedInsurance.rate));
+        } else {
+            setInsuranceCost(0);
         }
     }, [selectedType, selectedInsurance, cost]);
 
-    // Обработчик оформления страховки
     const handleInsurance = async () => {
         try {
-
-            set_insurance({ 
-                cargo_id:           cargo.guid, 
-                prepayment:         insuranceCost, 
-                description:        "Страхование " + (selectedInsurance?.name || 'basic') + ' груза ' + cargo.name,
-                currency:           accountData?.currency,
-                type:               2
-            })
-
-
+            await set_insurance({
+                cargo_id: cargo.guid,
+                prepayment: insuranceCost,
+                description:
+                    'Страхование ' + (selectedInsurance?.name || 'basic') + ' груза ' + cargo.name,
+                currency: accountData?.currency,
+                type: 2,
+            });
         } catch (error) {
             console.error('Payment error:', error);
-        } 
+        }
     };
 
     const handleConfirmInsurance = () => {
@@ -92,341 +322,101 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
         handleInsurance();
     };
 
-    const handleCancel = async() => {
+    const handleCancel = async () => {
         setShowCancelAlert(false);
-
-        await del_insurance({ cargo_id: cargo.guid, type: 2 })
-
-        if( onBack ) onBack();
+        await del_insurance({ cargo_id: cargo.guid, type: 2 });
+        if (onBack) onBack();
     };
 
-    const InsuranceTypeSelectorSimple = ({ cargo }) => {
-        const [isExpanded, setIsExpanded] = useState(false);
-
-        // Если развернуто или ничего не выбрано - показываем все
-        const showAll = isExpanded || selectedType === null;
-
-        const handleSelectType = (id) => {
-            setSelectedType(id);
-            // Сворачиваем после выбора (опционально)
-            setIsExpanded(false);
-        };
-
-        return (
-            <div className="cr-card mt-1">
-                <div 
-                    className="fs-09 mb-1"
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    style={{ cursor: 'pointer' }}
-                >
-                    <b>
-                        Выберите тип покрытия 
-                        <span className="ml-05 cl-gray" style={{ fontSize: '0.8em' }}>
-                            ({isExpanded ? 'свернуть ▲' : 'развернуть ▼'})
-                        </span>
-                    </b>
-                </div>
-                
-                {INSURANCE_TYPES.map(insurance => {
-                    // Показываем только если: развернуто ИЛИ это выбранный элемент ИЛИ ничего не выбрано
-                    if (!showAll && selectedType !== insurance.id) {
-                        return null;
-                    }
-
-                    const isSelected = selectedType === insurance.id;
-                    
-                    return (
-                        <div 
-                            key={insurance.id}
-                            className={`insurance-type ${isSelected ? 'selected' : ''}`}
-                            onClick={() => handleSelectType(insurance.id)}
-                            style={{ cursor: 'pointer' }}
-                        >
-                            <div className="flex a-center">
-                                <IonIcon 
-                                    icon={insurance.icon} 
-                                    className="w-15 h-15 mr-05" 
-                                    style={{ 
-                                        color: isSelected ? 'var(--ion-color-primary)' : 'gray' 
-                                    }}
-                                />
-                                <div className="flex-1">
-                                    <div className="flex fl-space a-center">
-                                        <div>
-                                            <div className="fs-08">{insurance.name}</div>
-                                            <div className="fs-07 cl-gray">{insurance.description}</div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="fs-08" style={{ fontWeight: 'bold' }}>
-                                                {insurance.rate}%
-                                            </div>
-                                            <div className="fs-07 cl-gray">
-                                                {formatters.currency(Math.round((cargo?.cost || 0) * insurance.rate / 100))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Покрытие для выбранного типа */}
-                                    {isSelected && (
-                                        <div className="mt-05" style={{ paddingLeft: '0.5em', borderLeft: '2px solid var(--ion-color-primary)' }}>
-                                            <div className="fs-07 cl-gray mb-05"><b>Что покрывает:</b></div>
-                                            {insurance.coverage.map((item, index) => (
-                                                <div key={index} className="fs-07 cl-gray mb-02">
-                                                    • {item}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                                <div 
-                                    className="insurance-radio"
-                                    style={{
-                                        width: '16px',
-                                        height: '16px',
-                                        border: '2px solid',
-                                        borderColor: isSelected ? 'var(--ion-color-primary)' : 'silver',
-                                        borderRadius: '50%',
-                                        backgroundColor: isSelected ? 'var(--ion-color-primary)' : 'transparent',
-                                        marginLeft: '0.5em'
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    );
-                })}
-
-                {/* Показываем сообщение, если ничего не выбрано и список свернут */}
-                {!isExpanded && selectedType === null && (
-                    <div className="fs-08 cl-gray text-center py-1">
-                        Нажмите "развернуть", чтобы выбрать тип покрытия
-                    </div>
-                )}
-            </div>
-        );
-    };
-
-    const CargoCost: React.FC = () => {
-        const [focused, setFocused] = React.useState(false)
-        const [localCost, setLocalCost] = React.useState<number>( cost || 0)
-
-        React.useEffect(() => {
-            if (!focused) {
-            setLocalCost( cost || 0)
-            }
-        }, [ cost, focused])
-
-        const hasValue = ( cost || 0) > 0
-        const showFull = focused || !hasValue
-
-        const handleInput = (e: CustomEvent) => {
-            const raw = (e.detail as any).value as string
-            const num = parseFloat((raw || '').replace(',', '.'))
-            setLocalCost(Number.isNaN(num) ? 0 : num)
-        }
-
-        const commitCost = () => {
-            setCost(localCost)
-            setFocused(false)
-        }
-
-        const handleBlur = () => {
-            setFocused(false)
-            setCost(localCost)
-        }
-
-        return (
-            <div className="cr-card mt-1">
-            <div className="cargo-cost-card">
-                {showFull && (
-                <>
-                    <div className="cargo-cost-header">
-                    <div className="flex fl-space w-100">
-                        <div className="cargo-cost-title">
-                            <span className="cost-label">Стоимость груза</span>
-                            <span className="cost-subtitle">Сумма для страхования</span>
-                        </div>
-                        <div className="cost-display">
-                            <span className="cost-amount">
-                                {formatters.currency( localCost || 0)}
-                            </span>
-                        </div>
-
-                    </div>
-
-                    <div className="cargo-cost-input-section">
-                        <div className="input-wrapper">
-                        <IonInput
-                            type="number"
-                            value={localCost}
-                            className="cost-input"
-                            placeholder="0.00"
-                            onIonInput={handleInput}
-                            onIonFocus={() => setFocused(true)}
-                            onIonBlur={handleBlur}
-                        />
-                        <span className="input-currency">₽</span>
-                        </div>
-
-                    </div>
-                    </div>
-
-                    <div className="cost-hint-section">
-                    <span className="hint-icon">ℹ️</span>
-                    <span className="hint-text">
-                        Укажите фактическую стоимость груза для расчета страховки
-                    </span>
-                    </div>
-
-                    <div className="cost-actions mt-05">
-                    <IonButton
-                        size="small"
-                        color="primary"
-                        onClick={commitCost}
-                    >
-                        Установить стоимость
-                    </IonButton>
-                    </div>
-                </>
-                )}
-
-                {!showFull && hasValue && (
-                <div
-                    className="cargo-cost-collapsed flex fl-space"
-                    onClick={() => setFocused(true)}
-                >
-                    <span className="cost-label">Стоимость груза</span>
-                    <span className="cost-amount">
-                        { formatters.currency( cost || 0) }
-                    </span>
-                </div>
-                )}
-            </div>
-            </div>
-        )
-    }
-
-
-
-
-
-
-    // Форматтер валюты (пример)
-    const formatters = {
-        currency: (value) => {
-            return new Intl.NumberFormat('ru-RU', {
-                style: 'currency',
-                currency: 'RUB',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(value);
-        }
-    };
-
-    // Пример иконки (замените на ваш реальный компонент)
-    const IonIcon = ({ icon, className, style }) => {
-        return (
-            <span className={className} style={style}>
-                {/* Здесь будет ваша иконка */}
-                {icon === 'shield-checkmark-outline' && '🛡️'}
-                {icon === 'shield-half-outline' && '🛡️🟡'}
-                {icon === 'shield-outline' && '🛡️🔵'}
-            </span>
-        );
-    };
-
+    const balance = accountData?.balance || 0;
+    const canPayFromBalance = balance >= insuranceCost;
 
     return (
-        <>
+        <div className={styles.page}>
             <IonLoading isOpen={isLoading} message="Оформление страховки..." />
-            
-            <WizardHeader 
-                title   = 'Страхования груза'
-                onBack  = { onBack }
-            />
 
-            <div style={{ paddingLeft: '0.5em', paddingRight: '0.5em' }}>
-            <CargoCost />
-
-            <InsuranceTypeSelectorSimple cargo = { cargo }/>
-
-            {/* Итого к оплате */}
-            <div className="cr-card mt-1">
-                <div className="flex fl-space">
-                    <div>
-                        <div className="fs-09 cl-black"><b>Стоимость страхования</b></div>
-                        <div className="fs-07 cl-gray">
-                            {selectedInsurance?.rate}% от стоимости груза
-                        </div>
-                    </div>
-                    <div className="text-right">
-                        <div className="fs-12 cl-prim" style={{ fontWeight: 'bold' }}>
-                            {formatters.currency(insuranceCost)}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Информация о страховании */}
-            <div className="cr-card mt-1">
-                <div className="fs-07 cl-gray">
-                    <div className="mb-05">
-                        🛡️ Страхование вступает в силу с момента оплаты.
-                    </div>
-                    <div className="mb-05">
-                        📋 В случае страхового случая обращайтесь в службу поддержки.
-                    </div>
-                    <div className="mb-05">
-                        ⏰ Выплаты по страховым случаям производятся в течение 10 рабочих дней.
-                    </div>
-                    <div>
-                        💳 Оплата страховки производится вместе с публикацией груза.
-                    </div>
-                </div>
-            </div>
-
-            {/* Кнопки действий */}
-            <div className="flex mt-1" style={{ gap: '0.5em' }}>
-                <button 
-                    className="cr-button-2 flex-1 pt-1 pb-1"
-                    onClick={() => setShowCancelAlert(true)}
-                >
-                    Отказаться
+            <div className={styles.topBar}>
+                <button type="button" className={styles.backBtn} onClick={onBack}>
+                    <ChevronLeft size={20} strokeWidth={2} />
+                    К заказу
                 </button>
-                {
-                    (accountData?.balance || 0) > insuranceCost
-                        ? <>
-                            <button 
-                                className="cr-button-1 flex-1  pt-1 pb-1"
-                                style={{ 
-                                    background: 'var(--ion-color-primary)',
-                                    color: 'white'
-                                }}
-                                onClick={() => setShowConfirmAlert(true)}
-                                disabled={!selectedType || !insuranceCost}
-                            >
-                                Оформить за {formatters.currency(insuranceCost)}
-                            </button>
-                        </>
-                        : <>
-                            <button 
-                                className="cr-button-1 flex-1  pt-1 pb-1"
-                                style={{ 
-                                    background: 'var(--ion-color-primary)',
-                                    color: 'white'
-                                }}
-                                onClick={async () => {
-                                    hist.push("/finance")
-                                }}
-                                disabled={!selectedType || !insuranceCost}
-                            >
-                                Доплатите {formatters.currency(insuranceCost - (accountData?.balance || 0 ))}
-                            </button>
-                        </>
-                }
             </div>
+            <h1 className={styles.pageTitle}>Страхование груза</h1>
+
+            <div className={styles.content}>
+                <CargoCostEditor cost={cost} onChange={setCost} />
+
+                <InsuranceTypeSelector
+                    cargoCost={cost}
+                    selectedType={selectedType}
+                    onSelect={setSelectedType}
+                />
+
+                <section className={styles.card}>
+                    <div className={styles.summaryRow}>
+                        <div>
+                            <div className={styles.cardKicker}>Итого</div>
+                            <h2 className={styles.cardTitle} style={{ marginBottom: 4 }}>
+                                Стоимость страхования
+                            </h2>
+                            <div className={styles.typeDesc}>
+                                {selectedInsurance?.rate}% от стоимости груза
+                            </div>
+                        </div>
+                        <div className={styles.summaryPrice}>{formatters.currency(insuranceCost)}</div>
+                    </div>
+                </section>
+
+                <section className={styles.card}>
+                    <div className={styles.cardKicker}>Важно</div>
+                    <ul className={styles.infoList}>
+                        <li className={styles.infoItem}>Страхование вступает в силу с момента оплаты.</li>
+                        <li className={styles.infoItem}>
+                            В случае страхового случая обращайтесь в службу поддержки.
+                        </li>
+                        <li className={styles.infoItem}>
+                            Выплаты по страховым случаям — в течение 10 рабочих дней.
+                        </li>
+                    </ul>
+                </section>
+
+                <div className={styles.actions}>
+                    <button
+                        type="button"
+                        className={styles.btnSecondary}
+                        onClick={() => setShowCancelAlert(true)}
+                    >
+                        Отказаться
+                    </button>
+                    {canPayFromBalance ? (
+                        <button
+                            type="button"
+                            className={styles.btnPrimary}
+                            onClick={() => setShowConfirmAlert(true)}
+                            disabled={!selectedType || !insuranceCost}
+                        >
+                            Оформить за {formatters.currency(insuranceCost)}
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            className={styles.btnPrimary}
+                            onClick={() => {
+                                const needed = Math.max(0, insuranceCost - balance);
+                                history.push({
+                                    pathname: '/finance',
+                                    state: { amount: needed },
+                                    search: needed > 0 ? `?amount=${needed}` : undefined,
+                                });
+                            }}
+                            disabled={!selectedType || !insuranceCost}
+                        >
+                            Доплатить {formatters.currency(Math.max(0, insuranceCost - balance))}
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {/* Alert для подтверждения страхования */}
             <IonAlert
                 isOpen={showConfirmAlert}
                 onDidDismiss={() => setShowConfirmAlert(false)}
@@ -436,17 +426,16 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
                     {
                         text: 'Отмена',
                         role: 'cancel',
-                        handler: () => setShowConfirmAlert(false)
+                        handler: () => setShowConfirmAlert(false),
                     },
                     {
                         text: 'Оформить',
                         role: 'confirm',
-                        handler: handleConfirmInsurance
-                    }
+                        handler: handleConfirmInsurance,
+                    },
                 ]}
             />
 
-            {/* Alert для отказа */}
             <IonAlert
                 isOpen={showCancelAlert}
                 onDidDismiss={() => setShowCancelAlert(false)}
@@ -456,198 +445,142 @@ export const InsurancePage: React.FC<InsurancePageProps> = ({
                     {
                         text: 'Оформить страховку',
                         role: 'cancel',
-                        handler: () => setShowCancelAlert(false)
+                        handler: () => setShowCancelAlert(false),
                     },
                     {
                         text: 'Продолжить без страховки',
                         role: 'confirm',
-                        handler: handleCancel
-                    }
+                        handler: handleCancel,
+                    },
                 ]}
             />
-
-            <style>{`
-                .insurance-type {
-                    padding: 0.8em;
-                    border: 1px solid #e0e0e0;
-                    border-radius: 8px;
-                    margin-bottom: 0.8em;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                }
-
-                .insurance-type:hover {
-                    background-color: #f5f5f5;
-                }
-
-                .insurance-type.selected {
-                    border-color: var(--ion-color-primary);
-                    background-color: rgba(var(--ion-color-primary-rgb), 0.05);
-                }
-
-                .insurance-type:last-child {
-                    margin-bottom: 0;
-                }
-
-                .mb-02 {
-                    margin-bottom: 0.2em;
-                }
-            `}</style>
-        </>
+        </div>
     );
 };
 
+export const useData = (cargo: CargoInfo, onBack: () => void) => {
+    const token = useToken();
+    const id = useLoginStore((state) => state.id);
+    const accountData = useAccountStore((state) => state.accountData);
+    const isLoading = useAccountStore((state) => state.isLoading);
+    const setLoading = useAccountStore((state) => state.setLoading);
+    const { socket } = useSocket();
+    const pendingRequests = useRef<Map<string, { resolve: Function; reject: Function }>>(new Map());
 
-export const useData = ( cargo: CargoInfo, onBack ) => {
-  const token                               = useToken()
-  const id                                  = useLoginStore( state => state.id )
-  // Используем ху  zки из accountStore
-  const accountData                         = useAccountStore( state => state.accountData )
-  const isLoading                           = useAccountStore( state => state.isLoading )
-  const setLoading                          = useAccountStore( state => state.setLoading )
-  const { socket }                          = useSocket()
-  const pendingRequests                     = useRef<Map<string, { resolve: Function, reject: Function }>>(new Map());
+    const updateCargo = useCargoStore((state) => state.updateCargo);
 
-  const updateCargo                         = useCargoStore( state => state.updateCargo )
+    const toast = useToast();
 
-  const toast                               = useToast()
+    const socketRequest = useCallback((event: string, data: any, responseEvent: string): Promise<any> => {
+        return new Promise((resolve, reject) => {
+            const requestId = `${event}_${Date.now()}`;
+            if (!socket) return;
 
-  useEffect(()=>{
-    console.log("useeEffect", accountData)
-  },[accountData])
-  
-    // Универсальная функция для socket запросов с ответом
-    const socketRequest                     = useCallback((event: string, data: any, responseEvent: string): Promise<any> => {
-      return new Promise((resolve, reject) => {
-        const requestId = `${event}_${Date.now()}`;
-        if(!socket) return
-        
-        // Сохраняем промис для данного запроса
-        pendingRequests.current.set(requestId, { resolve, reject });
-        
-        // Обработчик успешного ответа
-        const onSuccess = (response: any) => {
-          console.log(event + " on:",  response)
-          if( response.success ){
-  
-            const pending = pendingRequests.current.get( requestId );
-            if (pending) {
-              pendingRequests.current.delete(requestId);
-              pending.resolve({ success: true, data: response.data });
-            }
-  
-          } else {
-            const pending = pendingRequests.current.get( requestId );
-            if (pending) {
-              pendingRequests.current.delete(requestId);
-              pending.resolve({ success: false, error: response.message || 'Ошибка сервера' });
-            }
-          }
-  
-          socket.off(responseEvent, onSuccess);
-        
-        };
-        
-        // Подписываемся на события
-        socket.on(responseEvent, onSuccess);
-        
-        // Таймаут
-        setTimeout(() => {
-          const pending = pendingRequests.current.get(requestId);
-          if (pending) {
-            pendingRequests.current.delete(requestId);
-            socket.off(responseEvent, onSuccess);
-            pending.resolve({ success: false, error: 'Время ожидания истекло' });
-          }
-        }, 10000); // 10 сек таймаут
-        
-        // Отправляем запрос
-        console.log(event + " emit...")
-        socket.emit(event, { ...data, requestId });
-      });
-    }, []);
-  
+            pendingRequests.current.set(requestId, { resolve, reject });
 
-    const set_insurance                     = async (data: any): Promise<any> => {
-      setLoading( true )
-  
-      try {
-        
-        const result = await socketRequest(
-          'set_document', 
-          { token, ...data },
-          'set_document'
-        );
-              
-        if(result.success) {
-            console.log('insurance', data )
-            cargo.insurance = data.prepayment; 
-            updateCargo( cargo.guid, cargo)
-            onBack()
-        } else toast.error("Ошибка сохранения страховки")
-        
-        
-      } catch (err: any) {
-        toast.error('Неизвестная ошибка:' + err.message )
-      } finally {
-        setLoading( false );
-      }
+            const onSuccess = (response: any) => {
+                if (response.success) {
+                    const pending = pendingRequests.current.get(requestId);
+                    if (pending) {
+                        pendingRequests.current.delete(requestId);
+                        pending.resolve({ success: true, data: response.data });
+                    }
+                } else {
+                    const pending = pendingRequests.current.get(requestId);
+                    if (pending) {
+                        pendingRequests.current.delete(requestId);
+                        pending.resolve({ success: false, error: response.message || 'Ошибка сервера' });
+                    }
+                }
+
+                socket.off(responseEvent, onSuccess);
+            };
+
+            socket.on(responseEvent, onSuccess);
+
+            setTimeout(() => {
+                const pending = pendingRequests.current.get(requestId);
+                if (pending) {
+                    pendingRequests.current.delete(requestId);
+                    socket.off(responseEvent, onSuccess);
+                    pending.resolve({ success: false, error: 'Время ожидания истекло' });
+                }
+            }, 10000);
+
+            socket.emit(event, { ...data, requestId });
+        });
+    }, [socket]);
+
+    const set_insurance = async (data: any): Promise<any> => {
+        setLoading(true);
+
+        try {
+            const result = await socketRequest(
+                'set_document',
+                { token, ...data },
+                'set_document',
+            );
+
+            if (result.success) {
+                cargo.insurance = data.prepayment;
+                updateCargo(cargo.guid, cargo);
+                onBack();
+            } else toast.error('Ошибка сохранения страховки');
+        } catch (err: any) {
+            toast.error('Неизвестная ошибка:' + err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const set_payment                       = async (data: any): Promise<any> => {
-      setLoading( true )
-  
-      try {
-        
-        const result = await socketRequest(
-          'create_payment_sbp', 
-          { token, ...data },
-          'create_payment_sbp'
-        );
-              
-        return result;
-        
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Неизвестная ошибка';
-        return { success: false, data: null, message: errorMsg };
-      } finally {
-        setLoading( false );
-      }
+    const set_payment = async (data: any): Promise<any> => {
+        setLoading(true);
+
+        try {
+            const result = await socketRequest(
+                'create_payment_sbp',
+                { token, ...data },
+                'create_payment_sbp',
+            );
+
+            return result;
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : 'Неизвестная ошибка';
+            return { success: false, data: null, message: errorMsg };
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const del_insurance                     = async (data: any): Promise<any> => {
-      setLoading( true )
-  
-      try {
-        
-        const result = await socketRequest(
-          'del_document', 
-          { token, ...data },
-          'del_document'
-        );
-              
-        if(result.success) {
-            console.log('insurance', data )
-            cargo.insurance = 0; 
-            updateCargo( cargo.guid, cargo)
-            onBack()
-        } else toast.error("Ошибка сохранения страховки")
-        
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Неизвестная ошибка';
-        return { success: false, data: null, message: errorMsg };
-      } finally {
-        setLoading( false );
-      }
+    const del_insurance = async (data: any): Promise<any> => {
+        setLoading(true);
+
+        try {
+            const result = await socketRequest(
+                'del_document',
+                { token, ...data },
+                'del_document',
+            );
+
+            if (result.success) {
+                cargo.insurance = 0;
+                updateCargo(cargo.guid, cargo);
+                onBack();
+            } else toast.error('Ошибка сохранения страховки');
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : 'Неизвестная ошибка';
+            return { success: false, data: null, message: errorMsg };
+        } finally {
+            setLoading(false);
+        }
     };
 
-
-  return {
-    id,
-    accountData,
-    isLoading,
-    set_insurance,
-    del_insurance,
-    set_payment
-  }
-}
+    return {
+        id,
+        accountData,
+        isLoading,
+        set_insurance,
+        del_insurance,
+        set_payment,
+    };
+};

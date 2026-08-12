@@ -3,6 +3,7 @@ import { IonIcon, IonText } from '@ionic/react';
 import { locationOutline } from 'ionicons/icons';
 import { formatters, statusUtils } from '../../../utils/utils';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
+import { normalizeCargoStatus } from '../cargoStatusFlow';
 import styles from './CargoCard.module.css';
 
 interface CargoCardProps {
@@ -15,10 +16,16 @@ const SURFACE_BY_STATUS: Record<CargoStatus, string> = {
     [CargoStatus.NEW]: styles.surfaceNew,
     [CargoStatus.WAITING]: styles.surfaceWaiting,
     [CargoStatus.HAS_ORDERS]: styles.surfaceHasOrders,
-    [CargoStatus.NEGOTIATION]: styles.surfaceNegotiation,
-    [CargoStatus.IN_WORK]: styles.surfaceInWork,
-    [CargoStatus.DELIVERED]: styles.surfaceDelivered,
+    [CargoStatus.ACCEPTED]: styles.surfaceAccepted,
+    [CargoStatus.WAIT_LOAD]: styles.surfaceWaitLoad,
+    [CargoStatus.LOADING]: styles.surfaceLoading,
+    [CargoStatus.HAS_LOADED]: styles.surfaceHasLoaded,
+    [CargoStatus.IN_TRANSIT]: styles.surfaceInTransit,
+    [CargoStatus.HAS_DELIVERED]: styles.surfaceHasDelivered,
+    [CargoStatus.UNLOADING]: styles.surfaceUnloading,
+    [CargoStatus.WAIT_COMPLETE]: styles.surfaceWaitComplete,
     [CargoStatus.COMPLETED]: styles.surfaceCompleted,
+    [CargoStatus.PROBLEMS]: styles.surfaceProblems,
 };
 
 export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', onClick }) => {
@@ -28,6 +35,8 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', onCl
             onClick();
         }
     };
+
+    const publishedAt = cargo.publish_date || '';
 
     // Теги под статусом (используются и в view, и в list)
     const tags: Array<{ text: string; className: string }> = [];
@@ -59,10 +68,9 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', onCl
         });
     }
 
-    // Торг
-    if (cargo.status === CargoStatus.NEGOTIATION) {
+    if (cargo.status === CargoStatus.PROBLEMS) {
         tags.push({
-            text: 'Торг',
+            text: 'Проблемы',
             className: `${styles.tag} ${styles.tagBargain}`
         });
     }
@@ -74,7 +82,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', onCl
                 <div className={styles.topLeft}>
                     <div className={getCircle(cargo)}></div>
                     <div className={'ml-05 ' + statusUtils.getClassName(cargo.status)}>
-                        {cargo.status}
+                        {normalizeCargoStatus(cargo.status)}
                     </div>
                     <IonText className="ml-1 fs-07 cl-gray">
                         {'ID: ' + formatters.shortId(cargo.guid)}
@@ -91,6 +99,16 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', onCl
                     )}
                 </div>
             </div>
+
+            {publishedAt && (
+                <div className={styles.publishedRow} title={formatters.date(publishedAt)}>
+                    <span className={styles.publishedLabel}>Опубликовано</span>
+                    <span className={styles.publishedValue}>{formatters.date(publishedAt)}</span>
+                    {formatters.published(publishedAt) !== formatters.date(publishedAt) && (
+                        <span className={styles.publishedRel}>{formatters.published(publishedAt)}</span>
+                    )}
+                </div>
+            )}
 
             {/* Вторая строка: теги */}
             {tags.length > 0 && (
@@ -178,7 +196,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', onCl
         </>
     );
 
-    const surfaceClass = `${styles.cardSurface} ${SURFACE_BY_STATUS[cargo.status] ?? styles.surfaceNew}`;
+    const surfaceClass = `${styles.cardSurface} ${SURFACE_BY_STATUS[normalizeCargoStatus(cargo.status)] ?? styles.surfaceNew}`;
 
     // Обёртка для разных режимов
     if (mode === 'view') {
@@ -192,7 +210,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', onCl
     // Режим для списка (новый компактный дизайн по образцу WorkCard)
     return (
         <div
-            className={`cr-card mt-1 cargo-card-list ${surfaceClass}`}
+            className={`cr-card cargo-card-list ${surfaceClass}`}
             onClick={handleClick}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
         >

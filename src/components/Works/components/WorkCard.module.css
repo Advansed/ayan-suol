@@ -113,6 +113,38 @@
   text-overflow: ellipsis;
 }
 
+.publishedRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35em 0.5em;
+  margin: -0.15em 0 0.55em;
+  font-size: 0.78em;
+  line-height: 1.3;
+  color: var(--gvr-text-muted, #8b93a7);
+}
+
+.publishedLabel {
+  font-weight: 500;
+  color: var(--gvr-text-secondary, #5c6578);
+}
+
+.publishedValue {
+  font-weight: 600;
+  color: var(--gvr-text, #1a1f2e);
+  font-variant-numeric: tabular-nums;
+}
+
+.publishedRel {
+  color: var(--gvr-text-muted, #8b93a7);
+}
+
+.publishedRel::before {
+  content: '·';
+  margin-right: 0.5em;
+  opacity: 0.55;
+}
+
 .topRowPrice {
   justify-self: end;
   text-align: right;

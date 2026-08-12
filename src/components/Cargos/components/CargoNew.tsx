@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IonIcon, IonButton, IonCheckbox, IonInput } from '@ionic/react';
 import { locationOutline, calendarOutline } from 'ionicons/icons';
-import { WizardHeader } from '../../Header/WizardHeader';
+import { ChevronLeft } from 'lucide-react';
 import { CargoInfo, EMPTY_CARGO, CargoAddress } from '../../../Store/cargoStore';
 import { useLoginStore } from '../../../Store/loginStore';
 import { CityField } from '../../DataEditor/fields/СityField';
@@ -129,10 +129,16 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
 
   return (
     <div className={styles.container}>
-      <WizardHeader title={isEdit ? 'Редактировать груз' : 'Добавить груз'} 
-        onBack  = { onBack }  
-        onSave  = { handleNext }
-      />
+      <div className={styles.topBar}>
+        <button type="button" className={styles.backBtn} onClick={onBack}>
+          <ChevronLeft size={20} strokeWidth={2} />
+          {isEdit ? 'К заказу' : 'Мои заказы'}
+        </button>
+      </div>
+
+      <h1 className={styles.pageTitle}>
+        {isEdit ? 'Редактировать груз' : 'Добавить груз'}
+      </h1>
 
       <div className={styles.content}>
         {/* Информация о грузе */}

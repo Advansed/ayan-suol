@@ -1,12 +1,12 @@
 // URL базовый адрес API
-export const URL = "https://gruzreis.ru";
+export const URL = "https://paitza.com/node";
 
 export const version = '1.0.1'
 
 interface FetchResponse {
-  error: boolean;
-  data?: any;
-  message: string;
+  error:        boolean;
+  data?:        any;
+  message?:     string;
 }
 
 export const api = async (endpoint: string, data: any) => {

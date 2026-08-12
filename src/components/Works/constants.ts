@@ -135,7 +135,7 @@ export const WORK_DEFAULT_SETTINGS = {
     pageSize: 20,
     autoRefresh: 30000, // 30 секунд
     showOnlyAvailable: false,
-    sortBy: 'createdAt' as const,
+    sortBy: 'publish_date' as const,
     sortDirection: 'desc' as const
 };
 

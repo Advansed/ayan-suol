@@ -61,18 +61,24 @@ export interface  CargoInfo {
     status:         CargoStatus;
     invoices?:      DriverInfo[];
     priority?:      CargoPriority;
-    createdAt?:     string;
+    publish_date?:  string;
     updatedAt?:     string;
 }
 
 export enum       CargoStatus {
-    NEW           = "Новый",
-    WAITING       = "В ожидании",
-    HAS_ORDERS    = "Есть заказы",
-    NEGOTIATION   = "Торг",
-    IN_WORK       = "В работе",
-    DELIVERED     = "Доставлено",
-    COMPLETED     = "Выполнено"
+    NEW             = "Новый",
+    WAITING         = "В ожидании",
+    HAS_ORDERS      = "Есть заказы",
+    ACCEPTED        = "Принято",
+    WAIT_LOAD       = "Ждет загрузку",
+    LOADING         = "Загружается",
+    HAS_LOADED      = "Есть загруженные",
+    IN_TRANSIT      = "В Пути",
+    HAS_DELIVERED   = "Есть доставленные",
+    UNLOADING       = "Разгружается",
+    WAIT_COMPLETE   = "Ждут завершения",
+    COMPLETED       = "Завершено",
+    PROBLEMS        = "Проблемы",
 }
 
 export enum       CargoPriority {
@@ -243,9 +249,20 @@ export const cargoSocketHandlers = {
     onGetCargos: (response: any) => {
         console.log('onGetCargos response:', response)
         useCargoStore.getState().setLoading(false)
-        
-        if (response.success && Array.isArray(response.data)) {
-            useCargoStore.getState().setCargos(response.data)
+
+        // Нормализация push/response: массив, { success, data }, или один cargo
+        const raw = Array.isArray(response)
+            ? response
+            : Array.isArray(response?.data)
+              ? response.data
+              : response?.data && typeof response.data === 'object' && response.data.guid
+                ? [response.data]
+                : null
+
+        const ok = response?.success !== false
+
+        if (ok && raw) {
+            useCargoStore.getState().setCargos(raw)
         } else {
             console.error('Invalid cargos response:', response)
         }
@@ -313,6 +330,8 @@ export const cargoSocketHandlers = {
 // ============================================
 export const initCargoSocketHandlers = (socket: any) => {
     if (!socket) return
+
+    console.log( "init cargo socket handlers" )
     
     socket.on('get_cargos',           cargoSocketHandlers.onGetCargos)
     socket.on('get_cargo_archives',   cargoSocketHandlers.onGetCargoArchives)

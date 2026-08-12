@@ -4,9 +4,10 @@ import { useNavigateStore } from '../../../Store/navigateStore'
 import type { CargoInfo } from '../../../Store/cargoStore'
 
 export const useCargoNavigation = () => {
-    const currentPage   = useNavigateStore(state => state.currentPage)
-    const navigateTo    = useNavigateStore(state => state.navigateTo)
-    const goBack        = useNavigateStore(state => state.goBack)
+    const currentPage         = useNavigateStore(state => state.currentPage)
+    const navigateTo          = useNavigateStore(state => state.navigateTo)
+    const replaceCurrentPage  = useNavigateStore(state => state.replaceCurrentPage)
+    const goBack              = useNavigateStore(state => state.goBack)
 
     const handleCreateNew = useCallback(() => {
 
@@ -29,6 +30,7 @@ export const useCargoNavigation = () => {
     return {
         currentPage,
         navigateTo,
+        replaceCurrentPage,
         goBack,
         handleCreateNew,
         handleEdit,

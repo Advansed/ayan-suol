@@ -1,11 +1,11 @@
 import React from 'react';
 import { MapPin, Package, Calendar, User, Phone, Shield, Wallet } from 'lucide-react';
-import { WorkInfo } from '../../types';
-import { workFormatters } from '../../utils';
-import styles from './WorkOrderInfo.module.css';
+import { CargoInfo } from '../../../Store/cargoStore';
+import { formatters } from '../../../utils/utils';
+import styles from './CargoOrderInfo.module.css';
 
-type WorkOrderInfoProps = {
-  work: WorkInfo;
+type CargoOrderInfoProps = {
+  cargo: CargoInfo;
 };
 
 function Row({
@@ -29,24 +29,21 @@ function Row({
   );
 }
 
-export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work }) => {
-  const price = work.currentOffer?.price ?? work.price;
-  const weight = work.currentOffer?.weight ?? work.weight;
-  const volume = work.currentOffer?.volume ?? work.volume;
-  const fromCity = work.address?.city?.city || 'Не указано';
-  const toCity = work.destiny?.city?.city || 'Не указано';
-  const fromAddress = work.address?.address || '';
-  const toAddress = work.destiny?.address || '';
-  const publishedAt = work.publish_date || '';
+export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo }) => {
+  const fromCity = cargo.address?.city?.city || 'Не указано';
+  const toCity = cargo.destiny?.city?.city || 'Не указано';
+  const fromAddress = cargo.address?.address || '';
+  const toAddress = cargo.destiny?.address || '';
+  const publishedAt = cargo.publish_date || '';
 
   return (
     <section className={styles.card} aria-label="Информация о заказе">
       <div className={styles.head}>
         <div>
           <div className={styles.kicker}>Информация о заказе</div>
-          <h2 className={styles.title}>{work.name || 'Без названия'}</h2>
+          <h2 className={styles.title}>{cargo.name || 'Без названия'}</h2>
         </div>
-        <div className={styles.price}>{workFormatters.currency(price)}</div>
+        <div className={styles.price}>{formatters.currency(cargo.price)}</div>
       </div>
 
       <div className={styles.route}>
@@ -73,42 +70,42 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work }) => {
         <Row
           icon={<Package size={16} strokeWidth={1.75} />}
           label="Вес / объём"
-          value={`${weight} т · ${volume} м³`}
+          value={`${cargo.weight} т · ${cargo.volume} м³`}
         />
         <Row
           icon={<Calendar size={16} strokeWidth={1.75} />}
           label="Загрузка"
-          value={workFormatters.date(work.pickup_date || '')}
+          value={formatters.date(cargo.pickup_date || '')}
         />
         <Row
           icon={<Calendar size={16} strokeWidth={1.75} />}
           label="Доставка"
-          value={workFormatters.date(work.delivery_date || '')}
+          value={formatters.date(cargo.delivery_date || '')}
         />
         <Row
           icon={<Calendar size={16} strokeWidth={1.75} />}
           label="Опубликовано"
-          value={publishedAt ? workFormatters.date(publishedAt) : null}
+          value={publishedAt ? formatters.date(publishedAt) : null}
         />
         <Row
           icon={<User size={16} strokeWidth={1.75} />}
-          label="Заказчик"
-          value={work.client || work.face}
+          label="Контакт"
+          value={cargo.face || cargo.client}
         />
         <Row
           icon={<Phone size={16} strokeWidth={1.75} />}
           label="Телефон"
-          value={work.phone}
+          value={cargo.phone}
         />
         <Row
           icon={<Wallet size={16} strokeWidth={1.75} />}
           label="Аванс"
-          value={work.advance > 0 ? workFormatters.currency(work.advance) : null}
+          value={cargo.advance > 0 ? formatters.currency(cargo.advance) : null}
         />
         <Row
           icon={<Shield size={16} strokeWidth={1.75} />}
           label="Страховка"
-          value={work.insurance > 0 ? workFormatters.currency(work.insurance) : null}
+          value={cargo.insurance > 0 ? formatters.currency(cargo.insurance) : null}
         />
         <Row
           icon={<MapPin size={16} strokeWidth={1.75} />}
@@ -117,10 +114,10 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work }) => {
         />
       </div>
 
-      {work.description && (
+      {cargo.description && (
         <div className={styles.desc}>
           <div className={styles.label}>Описание</div>
-          <p>{work.description}</p>
+          <p>{cargo.description}</p>
         </div>
       )}
     </section>

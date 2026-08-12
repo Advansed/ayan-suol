@@ -29,15 +29,20 @@ interface FormErrors {
 // УТИЛИТЫ ВАЛИДАЦИИ
 // ============================================
 
-const validateField = (field: string, value: string): string | null => {
+const normalizeString = (value: unknown): string => {
+  return typeof value === 'string' ? value : (value ?? '').toString()
+}
+
+const validateField = (field: string, value: unknown): string | null => {
+  const v = normalizeString(value)
   switch (field) {
     case 'phone':
-      if (!value || value.trim() === '') return 'Заполните телефон'
-      return validateLoginPhoneRaw(value)
+      if (!v || v.trim() === '') return 'Заполните телефон'
+      return validateLoginPhoneRaw(v)
       
     case 'password':
-      if (!value || value.trim() === '') return 'Заполните пароль'
-      return value.length < 4 ? 'Пароль должен содержать минимум 4 символа' : null
+      if (!v || v.trim() === '') return 'Заполните пароль'
+      return v.length < 4 ? 'Пароль должен содержать минимум 4 символа' : null
       
     default:
       return null
@@ -66,7 +71,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   useEffect(()=>{
     const login = localStorage.getItem("gvrs.login")
     if(login){
-      setFormData({phone: login, password: localStorage.getItem("gvrs.password") as string })
+      setFormData({
+        phone: login,
+        password: localStorage.getItem("gvrs.password") ?? '',
+      })
     }
   },[])
 
@@ -74,8 +82,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   // ОБРАБОТЧИКИ
   // ============================================
 
-  const updateFormData = useCallback((field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+  const updateFormData = useCallback((field: keyof FormData, value: unknown) => {
+    const safeValue = normalizeString(value)
+    setFormData(prev => ({ ...prev, [field]: safeValue }))
     
     // Очищаем ошибку при изменении поля
     if (formErrors[field]) {
@@ -83,7 +92,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     }
   }, [formErrors])
 
-  const validateFormField = useCallback((field: keyof FormData, value: string) => {
+  const validateFormField = useCallback((field: keyof FormData, value: unknown) => {
     const error = validateField(field, value)
     setFormErrors(prev => ({ ...prev, [field]: error || undefined }))
     return !error
@@ -152,8 +161,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   ]
 
   // Проверка заполненности формы
-  const isFormValid = formData.phone.trim() && formData.password.trim() && 
-                     !formErrors.phone && !formErrors.password
+  const phone = normalizeString(formData.phone)
+  const password = normalizeString(formData.password)
+  const isFormValid =
+    phone.trim() &&
+    password.trim() &&
+    !formErrors.phone &&
+    !formErrors.password
 
   // ============================================
   // РЕНДЕР

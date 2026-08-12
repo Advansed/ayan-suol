@@ -88,7 +88,7 @@ export interface WorkInfo {
     currentOffer?: OfferInfo;  // Текущее предложение водителя
 
     // Метаданные
-    createdAt?: string;
+    publish_date?: string;
     updatedAt?: string;
 
     signed: boolean;
@@ -206,7 +206,7 @@ export interface DriverTransport {
 
 // Параметры сортировки работ
 export interface WorkSortOptions {
-    field: 'createdAt' | 'price' | 'weight' | 'distance';
+    field: 'publish_date' | 'createdAt' | 'price' | 'weight' | 'distance';
     direction: 'asc' | 'desc';
 }
 

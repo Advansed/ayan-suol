@@ -367,7 +367,13 @@ body {
 
 #root,
 #root ion-app,
-#root .ion-page,
+#root .ion-page {
+    background-color: #fff !important;
+    --ion-background-color: #fff !important;
+}
+
+/* Не ставим --background на ion-app: переменная наследуется ion-card/ion-item
+   и в части Chromium-форков (Comet) перекрывает локальный фон компонентов */
 #root ion-content {
     background-color: #fff !important;
     --background: #fff !important;
@@ -390,7 +396,6 @@ body {
     .cargos-module,
     .a-container {
         background-color: #fff !important;
-        --background: #fff !important;
         --ion-background-color: #fff !important;
     }
     ion-content {
@@ -404,7 +409,6 @@ body.ion-palette-dark,
 html.ion-palette-dark,
 ion-app.ion-palette-dark {
     background-color: #fff !important;
-    --background: #fff !important;
     --ion-background-color: #fff !important;
 }
 

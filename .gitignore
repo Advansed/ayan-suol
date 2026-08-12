@@ -18,6 +18,8 @@
 .env.development.local
 .env.test.local
 .env.production.local
+work_key
+work_key.pub
 /.nx
 /.nx/cache
 /.vscode/*

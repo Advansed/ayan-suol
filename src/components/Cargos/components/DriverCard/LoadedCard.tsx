@@ -5,6 +5,7 @@ import { DriverInfo } from '../../../../Store/cargoStore';
 import { useChats } from '../../../../Store/useChats';
 import offerStyles from './OfferCard.module.css';
 import { PhotoPreview } from '../../../Chats/PhotoPreview';
+import { resolveImageSrc } from '../../../../utils/fileUpload';
 
 interface LoadedCardProps {
     info: DriverInfo;
@@ -81,10 +82,11 @@ export const LoadedCard: React.FC<LoadedCardProps> = ({ info, onChat, onSend, is
                     <label className={offerStyles.label}>Фотографии от водителя</label>
                     <div className="flex flex-wrap mt-02">
                         {fotos.map((item: any, index: number) => {
-                            const src =
+                            const raw =
                                 typeof item === 'string'
                                     ? item
                                     : item?.url || item?.image || item?.path || item?.filePath;
+                            const src = resolveImageSrc(raw);
 
                             if (!src) return null;
 

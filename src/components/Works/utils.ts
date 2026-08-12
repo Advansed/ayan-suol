@@ -221,8 +221,9 @@ export const workDataUtils = {
 
             switch (field) {
                 case 'createdAt':
-                    valueA = new Date(a.createdAt || '').getTime();
-                    valueB = new Date(b.createdAt || '').getTime();
+                case 'publish_date':
+                    valueA = new Date(a.publish_date || '').getTime();
+                    valueB = new Date(b.publish_date || '').getTime();
                     break;
                 case 'price':
                     valueA = a.price;

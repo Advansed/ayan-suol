@@ -199,7 +199,7 @@ export const useChats = (): UseChatsReturn => {
     })
   }, [isConnected, token, emit, once])
 
-  // Отправка изображения через MinIO (Presigned URL)
+  // Отправка изображения через uploadFotos (ключ cargo/recipient/filename)
   const sendImage = useCallback(async (
     recipient: string,
     cargo: string,
@@ -212,15 +212,10 @@ export const useChats = (): UseChatsReturn => {
     }
 
     try {
-      const { uploadFileToMinIO, dataUrlToFile } = await import('../utils/fileUpload')
-      const file = typeof imageFile === 'string'
-        ? dataUrlToFile(imageFile)
-        : imageFile
-
-      const { filePath, url } = await uploadFileToMinIO(file, {
+      const { uploadOrderPhoto } = await import('../utils/fileUpload')
+      const { filePath } = await uploadOrderPhoto(imageFile, {
         cargo_id: cargo,
         recipient_id: recipient,
-        token,
       })
 
       emit(SOCKET_EVENTS.SEND_MESSAGE, {
@@ -228,7 +223,7 @@ export const useChats = (): UseChatsReturn => {
         recipient,
         cargo,
         message: '',
-        image: url || filePath,
+        image: filePath,
         status: status || null
       })
       emit(SOCKET_EVENTS.GET_CHATS, { token })

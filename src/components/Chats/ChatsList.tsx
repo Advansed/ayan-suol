@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useHistory } from 'react-router'
 import styles           from './ChatList.module.css'
 import { useChats } from '../../Store/useChats'
+import { useSocketStore } from '../../Store/socketStore'
 import { WizardHeader } from '../Header/WizardHeader'
 
 // Инициалы из имени
@@ -50,16 +51,22 @@ export function ChatsList() {
   } = useChats()
   
   const history = useHistory()
+  const isConnected = useSocketStore((state) => state.isConnected)
 
   const handleChatClick = (chat: any) => {
     setCurrentChat(chat.recipient, chat.cargo)
-    history.push(`/chats/${chat.recipient}:${chat.cargo}:${chat.rec_name}`)
+    history.push(`/chats/${chat.recipient}:${chat.cargo}:${encodeURIComponent(chat.rec_name || '')}`)
   }
 
   const handleRefresh = () => {
     loadChats()
   }
 
+  useEffect(() => {
+    if (isConnected) {
+      loadChats()
+    }
+  }, [isConnected, loadChats])
 
   return (
     <div className={styles.pageRoot}>

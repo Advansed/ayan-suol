@@ -1,5 +1,5 @@
 {
-  "name": "ayan-suol",
+  "name": "gvr-site",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "build:web": "vite build",
     "preview": "vite preview",
+    "deploy": "scp -i ~/.ssh/id_kz_work -r dist/. ubuntu@paitza.com:/var/www/html/",
     "test.e2e": "cypress run",
     "test.unit": "vitest",
     "lint": "eslint"

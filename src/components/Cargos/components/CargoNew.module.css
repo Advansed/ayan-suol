@@ -7,6 +7,39 @@
   height: 100%;
 }
 
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px 0;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: none;
+  background: transparent;
+  color: var(--gvr-primary, #2b5adc);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.backBtn:hover {
+  opacity: 0.85;
+}
+
+.pageTitle {
+  margin: 0;
+  padding: 8px 12px 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gvr-text, #1a1f2e);
+  line-height: 1.3;
+}
+
 .content {
   padding: 0 0.75em;
   padding-bottom: 2em;

@@ -9,6 +9,7 @@ import {
   OfferInfo,
   WorkPriority
 } from './types'
+import { normalizeWorkStatus, findWorkByRef, workIdsMatch } from './statusFlow'
 
 // ============================================
 // ТИПЫ
@@ -31,6 +32,7 @@ interface WorkActions {
   setLoading: (loading: boolean) => void
   setArchiveLoading: (loading: boolean) => void
   setCurrentPage: (page: WorkPageType) => void
+  replaceCurrentPage: (page: WorkPageType) => void
   setFilters: (filters: WorkFilters) => void
   setSearchQuery: (query: string) => void
   setNavigationHistory: (history: WorkPageType[]) => void
@@ -111,6 +113,18 @@ export const useWorkStore = create<WorkStore>()(
       setLoading: (isLoading) => set({ isLoading }),
       setArchiveLoading: (isArchiveLoading) => set({ isArchiveLoading }),
       setCurrentPage: (currentPage) => set({ currentPage }),
+      /** Обновить текущий экран без записи в history (sync из стора) */
+      replaceCurrentPage: (page) => {
+        const { navigationHistory } = get()
+        const nextHistory =
+          navigationHistory.length > 0
+            ? [...navigationHistory.slice(0, -1), page]
+            : [page]
+        set({
+          currentPage: page,
+          navigationHistory: nextHistory,
+        })
+      },
       setFilters: (filters) => set({ filters }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
       setNavigationHistory: (navigationHistory) => set({ navigationHistory }),
@@ -118,9 +132,17 @@ export const useWorkStore = create<WorkStore>()(
 
       updateWork: (guid, data) => {
         const { works } = get()
-        const updated = works.map(w =>
-          w.guid === guid ? { ...w, ...data } : w
-        )
+        const updated = works.map(w => {
+          if (!workIdsMatch(w, guid)) return w
+          const next = { ...w, ...data }
+          if (data.status !== undefined) {
+            next.status = normalizeWorkStatus(data.status)
+          }
+          if (data.signed !== undefined) {
+            next.signed = Boolean(data.signed)
+          }
+          return next
+        })
         set({ works: updated })
       },
 
@@ -205,6 +227,7 @@ export const workActions = {
   setLoading: (loading: boolean) => useWorkStore.getState().setLoading(loading),
   setArchiveLoading: (loading: boolean) => useWorkStore.getState().setArchiveLoading(loading),
   setCurrentPage: (page: WorkPageType) => useWorkStore.getState().setCurrentPage(page),
+  replaceCurrentPage: (page: WorkPageType) => useWorkStore.getState().replaceCurrentPage(page),
   setFilters: (filters: WorkFilters) => useWorkStore.getState().setFilters(filters),
   setSearchQuery: (query: string) => useWorkStore.getState().setSearchQuery(query),
   setNavigationHistory: (history: WorkPageType[]) => useWorkStore.getState().setNavigationHistory(history),
@@ -219,18 +242,71 @@ export const workActions = {
 // ============================================
 // SOCKET ОБРАБОТЧИКИ
 // ============================================
+const normalizeWork = (w: WorkInfo): WorkInfo => ({
+  ...w,
+  status: normalizeWorkStatus(w.status),
+  signed: Boolean(w.signed),
+})
+
 export const workSocketHandlers = {
   onGetWorks: (response: any) => {
     console.log('onGetWorks response:', response)
 
     workActions.setLoading(false)
 
-    if (response.success && Array.isArray(response.data)) {
-      workActions.setWorks(response.data)
-    } else {
-      console.error('Invalid works response:', response)
-      workActions.setError(response.message || 'Failed to load works')
+    const ok = response?.success !== false
+
+    // Полный список
+    if (Array.isArray(response)) {
+      if (!ok) {
+        console.error('Invalid works response:', response)
+        workActions.setError('Failed to load works')
+        return
+      }
+      workActions.setWorks(response.map(normalizeWork))
+      return
     }
+
+    if (Array.isArray(response?.data)) {
+      if (!ok) {
+        console.error('Invalid works response:', response)
+        workActions.setError(response?.message || 'Failed to load works')
+        return
+      }
+      workActions.setWorks(response.data.map(normalizeWork))
+      return
+    }
+
+    // Одиночный work — upsert по guid, не затирая список
+    const single =
+      response?.data && typeof response.data === 'object' && response.data.guid
+        ? response.data
+        : response && typeof response === 'object' && response.guid
+          ? response
+          : null
+
+    if (ok && single) {
+      const normalized = normalizeWork(single as WorkInfo)
+      const { works } = useWorkStore.getState()
+      const idx = works.findIndex((w) => workIdsMatch(w, normalized))
+      if (idx >= 0) {
+        const next = [...works]
+        // Сохраняем исходный guid из стора, чтобы открытый экран не «терял» запись
+        next[idx] = {
+          ...works[idx],
+          ...normalized,
+          guid: works[idx].guid || normalized.guid,
+          cargo: normalized.cargo || works[idx].cargo,
+        }
+        workActions.setWorks(next)
+      } else {
+        workActions.setWorks([...works, normalized])
+      }
+      return
+    }
+
+    console.error('Invalid works response:', response)
+    workActions.setError(response?.message || 'Failed to load works')
   },
 
   onGetArchive: (response: any) => {
@@ -239,7 +315,7 @@ export const workSocketHandlers = {
     workActions.setArchiveLoading(false)
 
     if (response.success && Array.isArray(response.data)) {
-      workActions.setArchiveWorks(response.data)
+      workActions.setArchiveWorks(response.data.map(normalizeWork))
     } else {
       console.error('Invalid archive response:', response)
       workActions.setError(response.message || 'Failed to load archive')

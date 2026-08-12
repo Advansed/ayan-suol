@@ -10,8 +10,9 @@ export interface NavigateState {
 }
 
 interface NavigateActions {
-    navigateTo:   (page: PageType) => void
-    goBack:       () => void
+    navigateTo:          (page: PageType) => void
+    replaceCurrentPage:  (page: PageType) => void
+    goBack:              () => void
 }
 
 type NavigateStore = NavigateState & NavigateActions
@@ -32,6 +33,19 @@ export const useNavigateStore = create<NavigateStore>()(
         set({
           currentPage: page,
           navigationHistory: capped,
+        })
+      },
+
+      /** Обновить текущий экран без записи в history (sync из стора) */
+      replaceCurrentPage: (page) => {
+        const { navigationHistory } = get()
+        const nextHistory =
+          navigationHistory.length > 0
+            ? [...navigationHistory.slice(0, -1), page]
+            : [page]
+        set({
+          currentPage: page,
+          navigationHistory: nextHistory,
         })
       },
 
