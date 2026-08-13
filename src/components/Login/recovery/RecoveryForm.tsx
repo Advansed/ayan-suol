@@ -1,109 +1,132 @@
-import React from 'react'
-import { IonCard } from '@ionic/react'
+/**
+ * Восстановление пароля — тот же auth-стиль, что вход / регистрация
+ */
+
+import React, { useRef, useState } from 'react'
+import { MessageSquare, Send } from 'lucide-react'
 import { useRecovery } from './hooks/useRecovery'
 import type { OtpTransport } from '../otpTransport'
-import {
-  MaskedInput,
-  PasswordInput,
-  FormButtons,
-  NavigationLinks,
-  ProgressBar
-} from '../SharedComponents'
+import { PhoneCountryField } from '../PhoneCountryField'
+import '../Login.css'
 
 interface RecoveryFormProps {
   onSwitchToLogin: () => void
   onSwitchToRegister: () => void
 }
 
+type RecoveryApi = ReturnType<typeof useRecovery>
+
 // ======================
-// ШАГ 1: ВВОД ТЕЛЕФОНА
+// ШАГ 0: ТЕЛЕФОН
 // ======================
 
 const StepPhone: React.FC<{
-  recovery: ReturnType<typeof useRecovery>
+  recovery: RecoveryApi
   onSwitchToLogin: () => void
   onSwitchToRegister: () => void
 }> = ({ recovery, onSwitchToLogin, onSwitchToRegister }) => {
   const otpTransport: OtpTransport =
     recovery.formData.transport === 'telegram' ? 'telegram' : 'sms'
 
-  const handleSubmit = () => {
-    recovery.submitRecoveryStep()
-  }
-
-  const handlePhoneBlur = () => {
-    if (recovery.formData.phone) {
-      recovery.validateField('phone', recovery.formData.phone)
-    }
-  }
+  const canSubmit = Boolean(recovery.formData.phone?.trim()) && !recovery.isLoading
 
   return (
-    <>
-      <div className="a-center">
-        <h2>Восстановление пароля</h2>
-      </div>
+    <form
+      className="auth-form auth-form-relaxed"
+      onSubmit={(e) => {
+        e.preventDefault()
+        void recovery.submitRecoveryStep()
+      }}
+    >
+      <p className="auth-step-lead">
+        Введите номер телефона, привязанный к аккаунту
+      </p>
 
-      <div className="fs-11 a-center mb-2">
-        Введите номер телефона, привязанный к вашему аккаунту
-      </div>
+      <div className="auth-fields auth-fields-relaxed">
+        <div className="auth-field">
+          <PhoneCountryField
+            id="recovery-phone"
+            value={recovery.formData.phone || ''}
+            onChange={(value) => recovery.updateFormData('phone', value)}
+            onBlur={() => {
+              if (recovery.formData.phone) {
+                recovery.validateField('phone', recovery.formData.phone)
+              }
+            }}
+            error={recovery.errors.phone}
+          />
+        </div>
 
-      <MaskedInput
-        placeholder="Телефон: +7… или международный +…"
-        value={recovery.formData.phone || ''}
-        onChange={(value) => recovery.updateFormData('phone', value)}
-        onBlur={handlePhoneBlur}
-        error={recovery.errors.phone}
-      />
-
-      <div className="mt-2">
-        <div className="fs-11 a-center mb-1">Как получить код?</div>
-        <div className="role-selection-buttons">
-          <button
-            type="button"
-            className={`role-button ${otpTransport === 'sms' ? 'selected' : ''}`}
-            onClick={() => recovery.updateFormData('transport', 'sms')}
-          >
-            <div className="role-icon">💬</div>
-            <div>SMS</div>
-          </button>
-          <button
-            type="button"
-            className={`role-button ${otpTransport === 'telegram' ? 'selected' : ''}`}
-            onClick={() => recovery.updateFormData('transport', 'telegram')}
-          >
-            <div className="role-icon">✈️</div>
-            <div>Telegram</div>
-          </button>
+        <div className="auth-field">
+          <div className="auth-label" id="recovery-otp-label">
+            Куда отправить код
+          </div>
+          <div className="auth-otp-tabs" role="tablist" aria-labelledby="recovery-otp-label">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={otpTransport === 'sms'}
+              className={otpTransport === 'sms' ? 'auth-otp-tab is-active' : 'auth-otp-tab'}
+              onClick={() => recovery.updateFormData('transport', 'sms')}
+            >
+              <MessageSquare size={18} strokeWidth={2} aria-hidden />
+              SMS
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={otpTransport === 'telegram'}
+              className={otpTransport === 'telegram' ? 'auth-otp-tab is-active' : 'auth-otp-tab'}
+              onClick={() => recovery.updateFormData('transport', 'telegram')}
+            >
+              <Send size={18} strokeWidth={2} aria-hidden />
+              Telegram
+            </button>
+          </div>
+          <p className="auth-hint">
+            {otpTransport === 'telegram'
+              ? 'Код придёт в Telegram на указанный номер'
+              : 'Код придёт в текстовом сообщении на номер телефона'}
+          </p>
         </div>
       </div>
 
-      <FormButtons
-        onNext={handleSubmit}
-        nextText="Далее"
-        loading={recovery.isLoading}
-        disabled={!recovery.formData.phone?.trim()}
-      />
+      {recovery.error && (
+        <div className="auth-error auth-error-block">{recovery.error}</div>
+      )}
 
-      <NavigationLinks
-        links={[
-          { text: 'Вспомнили пароль? Авторизироваться', onClick: onSwitchToLogin },
-          { text: 'Нет аккаунта? Регистрация', onClick: onSwitchToRegister }
-        ]}
-      />
-    </>
+      <div className="auth-form-actions">
+        <button type="submit" className="auth-btn-primary" disabled={!canSubmit}>
+          {recovery.isLoading ? 'Отправка…' : 'Получить код'}
+        </button>
+      </div>
+
+      <p className="auth-footer-text">
+        — Вспомнили пароль?{' '}
+        <button type="button" className="auth-footer-action" onClick={onSwitchToLogin}>
+          Войти
+        </button>
+      </p>
+      <p className="auth-footer-text">
+        — Нет аккаунта?{' '}
+        <button type="button" className="auth-footer-action" onClick={onSwitchToRegister}>
+          Регистрация
+        </button>
+      </p>
+    </form>
   )
 }
 
 // ======================
-// ШАГ 2: КОД ИЗ SMS / TELEGRAM
+// ШАГ 1: КОД
 // ======================
 
 const StepOtp: React.FC<{
-  recovery: ReturnType<typeof useRecovery>
+  recovery: RecoveryApi
   onSwitchToLogin: () => void
 }> = ({ recovery, onSwitchToLogin }) => {
-  const [pin, setPin] = React.useState(['', '', '', ''])
-  const pinRefs = React.useRef<(HTMLInputElement | null)[]>([])
+  const [pin, setPin] = useState(['', '', '', ''])
+  const pinRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const handlePinChange = (value: string, index: number) => {
     const digits = value.replace(/\D/g, '')
@@ -125,11 +148,8 @@ const StepOtp: React.FC<{
     if (digits.length > 0) {
       const firstEmpty = newPin.findIndex((c) => c === '')
       requestAnimationFrame(() => {
-        if (firstEmpty >= 0) {
-          pinRefs.current[firstEmpty]?.focus()
-        } else {
-          pinRefs.current[3]?.focus()
-        }
+        if (firstEmpty >= 0) pinRefs.current[firstEmpty]?.focus()
+        else pinRefs.current[3]?.focus()
       })
     }
   }
@@ -140,165 +160,211 @@ const StepOtp: React.FC<{
     }
   }
 
-  const handleSubmit = () => {
-    recovery.submitRecoveryStep()
-  }
-
   return (
-    <>
-      <div className="a-center">
-        <h2>Восстановление пароля</h2>
-      </div>
-
-      <div className="fs-11 a-center mb-2">
+    <form
+      className="auth-form auth-form-relaxed auth-form-verify"
+      onSubmit={(e) => {
+        e.preventDefault()
+        void recovery.submitRecoveryStep()
+      }}
+    >
+      <p className="auth-step-lead">
         {recovery.otpTransport === 'telegram'
           ? 'Введите код из Telegram'
           : 'Введите код из SMS'}
+      </p>
+      <p className="auth-hint auth-hint-center">{recovery.formData.phone || ''}</p>
+
+      <div className="auth-pin-row">
+        {[0, 1, 2, 3].map((index) => (
+          <input
+            key={index}
+            ref={(el) => {
+              pinRefs.current[index] = el
+            }}
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete={index === 0 ? 'one-time-code' : 'off'}
+            autoCapitalize="off"
+            spellCheck={false}
+            maxLength={1}
+            value={pin[index] || ''}
+            onChange={(e) => handlePinChange(e.target.value, index)}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            className="auth-pin-input"
+          />
+        ))}
       </div>
 
-      <div className="mt-1">
-        <div className="pin-input-container">
-          {[0, 1, 2, 3].map((index) => (
-            <input
-              key={index}
-              ref={(el) => {
-                pinRefs.current[index] = el
-              }}
-              type="tel"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              autoComplete={index === 0 ? 'one-time-code' : 'off'}
-              autoCapitalize="off"
-              spellCheck={false}
-              maxLength={1}
-              value={pin[index] || ''}
-              onChange={(e) => handlePinChange(e.target.value, index)}
-              onKeyDown={(e) => handleKeyDown(e, index)}
-              className="pin-input"
-            />
-          ))}
+      {(recovery.error || recovery.errors.sms) && (
+        <div className="auth-error auth-error-block">
+          {recovery.error || recovery.errors.sms}
         </div>
-        {recovery.errors.sms && (
-          <div className="text-red-500 text-xs mt-2 text-center">{recovery.errors.sms}</div>
-        )}
+      )}
+
+      <div className="auth-form-actions">
+        <button
+          type="submit"
+          className="auth-btn-primary"
+          disabled={pin.join('').length !== 4 || recovery.isLoading}
+        >
+          {recovery.isLoading ? 'Проверка…' : 'Подтвердить'}
+        </button>
+        <button
+          type="button"
+          className="auth-btn-secondary auth-btn-spaced"
+          onClick={recovery.prevStep}
+        >
+          Изменить номер
+        </button>
       </div>
 
-      <FormButtons
-        onNext={handleSubmit}
-        onBack={recovery.prevStep}
-        nextText="Проверить"
-        disabled={pin.join('').length !== 4}
-        loading={recovery.isLoading}
-      />
-
-      <NavigationLinks
-        links={[{ text: 'Вспомнили пароль? Авторизироваться', onClick: onSwitchToLogin }]}
-      />
-    </>
+      <p className="auth-footer-text">
+        — Вспомнили пароль?{' '}
+        <button type="button" className="auth-footer-action" onClick={onSwitchToLogin}>
+          Войти
+        </button>
+      </p>
+    </form>
   )
 }
 
 // ======================
-// ШАГ 3: НОВЫЙ ПАРОЛЬ
+// ШАГ 2: НОВЫЙ ПАРОЛЬ
 // ======================
 
 const StepNewPassword: React.FC<{
-  recovery: ReturnType<typeof useRecovery>
+  recovery: RecoveryApi
   onSwitchToLogin: () => void
 }> = ({ recovery, onSwitchToLogin }) => {
-  const handleSubmit = () => {
-    recovery.submitRecoveryStep()
-  }
-
-  const handlePasswordBlur = () => {
-    if (recovery.formData.password) {
-      recovery.validateField('password', recovery.formData.password)
-    }
-  }
-
-  const handlePassword1Blur = () => {
-    if (recovery.formData.password1) {
-      recovery.validateField('password1', recovery.formData.password1)
-    }
-  }
-
   const match =
     recovery.formData.password &&
     recovery.formData.password1 &&
     recovery.formData.password === recovery.formData.password1
 
   return (
-    <>
-      <div className="a-center">
-        <h2>Новый пароль</h2>
+    <form
+      className="auth-form auth-form-relaxed"
+      onSubmit={(e) => {
+        e.preventDefault()
+        void recovery.submitRecoveryStep()
+      }}
+    >
+      <p className="auth-step-lead">Придумайте новый пароль для входа</p>
+
+      <div className="auth-fields auth-fields-relaxed">
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="recovery-password">
+            Новый пароль
+          </label>
+          <input
+            id="recovery-password"
+            className="auth-input"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••"
+            value={recovery.formData.password || ''}
+            onChange={(e) => recovery.updateFormData('password', e.target.value)}
+            onBlur={() => {
+              if (recovery.formData.password) {
+                recovery.validateField('password', recovery.formData.password)
+              }
+            }}
+          />
+          {recovery.errors.password && (
+            <div className="auth-error">{recovery.errors.password}</div>
+          )}
+        </div>
+
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="recovery-password1">
+            Подтверждение
+          </label>
+          <input
+            id="recovery-password1"
+            className="auth-input"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••"
+            value={recovery.formData.password1 || ''}
+            onChange={(e) => recovery.updateFormData('password1', e.target.value)}
+            onBlur={() => {
+              if (recovery.formData.password1) {
+                recovery.validateField('password1', recovery.formData.password1)
+              }
+            }}
+          />
+          {recovery.errors.password1 && (
+            <div className="auth-error">{recovery.errors.password1}</div>
+          )}
+        </div>
       </div>
 
-      <div className="fs-11 a-center mb-2">Придумайте новый пароль для входа</div>
+      {recovery.error && <div className="auth-error auth-error-block">{recovery.error}</div>}
 
-      <div className="mt-1">
-        <PasswordInput
-          placeholder="Новый пароль"
-          value={recovery.formData.password || ''}
-          onChange={(value) => recovery.updateFormData('password', value)}
-          onBlur={handlePasswordBlur}
-          error={recovery.errors.password}
-          autocomplete="new-password"
-        />
+      <div className="auth-form-actions">
+        <button
+          type="submit"
+          className="auth-btn-primary"
+          disabled={!match || recovery.isLoading}
+        >
+          {recovery.isLoading ? 'Сохранение…' : 'Сохранить пароль'}
+        </button>
+        <button
+          type="button"
+          className="auth-btn-secondary auth-btn-spaced"
+          onClick={recovery.prevStep}
+        >
+          Назад
+        </button>
       </div>
 
-      <div className="mt-1">
-        <PasswordInput
-          placeholder="Подтверждение пароля"
-          value={recovery.formData.password1 || ''}
-          onChange={(value) => recovery.updateFormData('password1', value)}
-          onBlur={handlePassword1Blur}
-          error={recovery.errors.password1}
-          autocomplete="new-password"
-        />
-      </div>
-
-      <FormButtons
-        onNext={handleSubmit}
-        onBack={recovery.prevStep}
-        nextText="Сохранить пароль"
-        disabled={!match}
-        loading={recovery.isLoading}
-      />
-
-      <NavigationLinks
-        links={[{ text: 'Вспомнили пароль? Авторизироваться', onClick: onSwitchToLogin }]}
-      />
-    </>
+      <p className="auth-footer-text">
+        — Вспомнили пароль?{' '}
+        <button type="button" className="auth-footer-action" onClick={onSwitchToLogin}>
+          Войти
+        </button>
+      </p>
+    </form>
   )
 }
 
 // ======================
-// ГЛАВНЫЙ КОМПОНЕНТ
+// КОРЕНЬ
 // ======================
 
 export const RecoveryForm: React.FC<RecoveryFormProps> = ({
   onSwitchToLogin,
-  onSwitchToRegister
+  onSwitchToRegister,
 }) => {
   const recovery = useRecovery(onSwitchToLogin)
 
-  const steps = [
-    <StepPhone
-      key="phone"
-      recovery={recovery}
-      onSwitchToLogin={onSwitchToLogin}
-      onSwitchToRegister={onSwitchToRegister}
-    />,
-    <StepOtp key="otp" recovery={recovery} onSwitchToLogin={onSwitchToLogin} />,
-    <StepNewPassword key="password" recovery={recovery} onSwitchToLogin={onSwitchToLogin} />
-  ]
+  const titles = ['Восстановление пароля', 'Подтверждение', 'Новый пароль'] as const
+  const title = titles[recovery.recoveryStep] ?? 'Восстановление пароля'
 
   return (
-    <div className="container">
-      <IonCard className="login-container">
-        <ProgressBar current={recovery.recoveryStep} total={3} />
-        {steps[recovery.recoveryStep]}
-      </IonCard>
+    <div className="auth-page auth-page-reg auth-page-relaxed auth-page-recovery">
+      <header className="auth-hero">
+        <h1 className="auth-hero-title">{title}</h1>
+        <p className="auth-hero-sub">Груз в Рейс / PAITZA</p>
+      </header>
+
+      <div className="auth-card auth-card-reg auth-card-relaxed auth-card-recovery">
+        {recovery.recoveryStep === 0 && (
+          <StepPhone
+            recovery={recovery}
+            onSwitchToLogin={onSwitchToLogin}
+            onSwitchToRegister={onSwitchToRegister}
+          />
+        )}
+        {recovery.recoveryStep === 1 && (
+          <StepOtp recovery={recovery} onSwitchToLogin={onSwitchToLogin} />
+        )}
+        {recovery.recoveryStep === 2 && (
+          <StepNewPassword recovery={recovery} onSwitchToLogin={onSwitchToLogin} />
+        )}
+      </div>
     </div>
   )
 }

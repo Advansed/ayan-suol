@@ -1,20 +1,18 @@
 /**
- * Форма регистрации + все шаги в одном файле
+ * Регистрация: 0 — данные, 1 — SMS, 2 — пароль
  */
 
 import React, { useCallback, memo, lazy, Suspense, useState, useRef } from 'react'
-import { IonCard } from '@ionic/react'
-import {
-  MaskedInput,
-  TextInput,
-  PasswordInput,
-  FormButtons,
-  NavigationLinks
-} from '../SharedComponents'
+import { MessageSquare, Send, Calendar } from 'lucide-react'
+import { FioSuggestions, type DaDataFioSuggestion } from 'react-dadata'
+import 'react-dadata/dist/react-dadata.css'
+import { PhoneCountryField } from '../PhoneCountryField'
 import { useReg, UseRegReturn } from './hooks/useReg'
-import { loginActions } from '../../../Store/loginStore'
-import { useEULA, UseEULAReturn } from './hooks/useEULA'
+import { useEULA } from './hooks/useEULA'
+import { splitFioString } from './registrationPayload'
 import type { OtpTransport } from '../otpTransport'
+import { DADATA_TOKEN } from '../../../utils/dadata'
+import '../Login.css'
 
 const EULA = lazy(() => import('./eula'))
 
@@ -23,429 +21,563 @@ interface RegistrationFormProps {
   onSwitchToRecovery?: () => void
 }
 
-// ======================
-// ШАГ 0: ВЫБОР РОЛИ
-// ======================
-
-const RoleSelector: React.FC<{
-  reg: UseRegReturn,
-  eula: UseEULAReturn
-}> = memo(({ reg, eula }) => {
-
-  const handleNext = () => {
-    // Проверяем соглашение перед переходом
-    const eulaError = eula.validateEULA()
-    if (eulaError) {
-      reg.updateFormData('agreementError', eulaError)
-      return
-    }
-
-    if (reg.formData.userType) {
-      loginActions.updateUser({ user_type: Number(reg.formData.userType) })
-      reg.updateFormData('agreementAccepted', eula.isEULAAccepted)
-      reg.nextStep()
-    }
-  }
-
-  return (
-    <div className="login-container">
-      <div className="a-center">
-        <h2>Кто вы?</h2>
-      </div>
-
-      <div className="fs-11 a-center mb-2">
-        Выберите ваш тип аккаунта
-      </div>
-
-      <div className="mt-1">
-        <div className="role-selection-buttons">
-          <button
-            type="button"
-            className={`role-button ${reg.formData.userType === '1' ? 'selected' : ''}`}
-            onClick={() => reg.updateFormData('userType', '1')}
-          >
-            <div className="role-icon">📦</div>
-            <div>Заказчик</div>
-          </button>
-          <button
-            type="button"
-            className={`role-button ${reg.formData.userType === '2' ? 'selected' : ''}`}
-            onClick={() => reg.updateFormData('userType', '2')}
-          >
-            <div className="role-icon">🚛</div>
-            <div>Водитель</div>
-          </button>
-        </div>
-      </div>
-
-      {/* Чекбокс согласия с пользовательским соглашением */}
-      <div className="mt-3">
-        <label className="flex items-start gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={eula.isEULAAccepted}
-            onChange={(e) => {
-              eula.setEULAAccepted(e.target.checked)
-              reg.updateFormData('agreementAccepted', e.target.checked)
-              reg.updateFormData('agreementError', '')
-            }}
-            className="mt-1 flex-shrink-0"
-          />
-          <span>
-            Я принимаю условия{' '}
-            <button
-              type="button"
-              className="ml-05 t-underline text-blue-600 hover:text-blue-800"
-              onClick={eula.openEULA}
-            >
-              Пользовательского соглашения
-            </button>
-          </span>
-        </label>
-        {reg.formData.agreementError && (
-          <div className="text-red-500 text-xs mt-1">{reg.formData.agreementError}</div>
-        )}
-      </div>
-
-      <FormButtons
-        onNext={handleNext}
-        nextText="Далее"
-        disabled={!reg.formData.userType || !eula.isEULAAccepted}
-        loading={reg.isLoading}
-      />
-    </div>
-  )
-})
+function formatBirthDateInput(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 8)
+  const p1 = digits.slice(0, 2)
+  const p2 = digits.slice(2, 4)
+  const p3 = digits.slice(4, 8)
+  if (digits.length <= 2) return p1
+  if (digits.length <= 4) return `${p1}.${p2}`
+  return `${p1}.${p2}.${p3}`
+}
 
 // ======================
-// ШАГ 1: ЛИЧНЫЕ ДАННЫЕ
+// ШАГ 0: ДАННЫЕ
 // ======================
 
-const StepPersonalInfo: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
+const StepPersonalInfo: React.FC<{
+  reg: UseRegReturn
+  onOpenEula: () => void
+}> = memo(({ reg, onOpenEula }) => {
   const otpTransport: OtpTransport =
     reg.formData.otpTransport === 'telegram' ? 'telegram' : 'sms'
 
-  const handleNext = useCallback(() => {
-    reg.submitStep()
-  }, [reg])
+  const f = reg.formData
+  const err = reg.formErrors
 
-  const handlePhoneBlur = useCallback(() => {
-    if (reg.formData.phone) {
-      reg.validateField('phone', reg.formData.phone)
-    }
-  }, [reg])
+  const canSubmit =
+    Boolean(f.name?.trim()) &&
+    f.name.trim().split(/\s+/).length >= 2 &&
+    Boolean(f.birthDate?.trim()) &&
+    Boolean(f.birthPlace?.trim()) &&
+    (f.gender === 'male' || f.gender === 'female') &&
+    Boolean(f.phone?.trim()) &&
+    Boolean(f.consentPersonalData) &&
+    Boolean(f.consentUserAgreement) &&
+    !reg.isLoading
 
-  const handleNameBlur = useCallback(() => {
-    if (reg.formData.name) {
-      reg.validateField('name', reg.formData.name)
-    }
-  }, [reg])
+  const applyFio = useCallback(
+    (
+      full: string,
+      parts?: {
+        surname?: string | null
+        name?: string | null
+        patronymic?: string | null
+        gender?: string
+      }
+    ) => {
+      // Не trim'им full — иначе пробел при наборе сразу съедается controlled value
+      const split = splitFioString(full)
+      const lastName = (parts?.surname ?? split.lastName).trim()
+      const firstName = (parts?.name ?? split.firstName).trim()
+      const middleName = (parts?.patronymic ?? split.middleName).trim()
+      reg.updateFormData('name', full)
+      reg.updateFormData('lastName', lastName)
+      reg.updateFormData('firstName', firstName)
+      reg.updateFormData('middleName', middleName)
+      if (parts?.gender === 'MALE') reg.updateFormData('gender', 'male')
+      if (parts?.gender === 'FEMALE') reg.updateFormData('gender', 'female')
+    },
+    [reg]
+  )
 
-  const handleEmailBlur = useCallback(() => {
-    if (reg.formData.email) {
-      reg.validateField('email', reg.formData.email)
-    }
-  }, [reg])
+  const fioValue: DaDataFioSuggestion | undefined = f.name
+    ? ({
+        value: f.name,
+        unrestricted_value: f.name,
+        data: {
+          surname: f.lastName || null,
+          name: f.firstName || null,
+          patronymic: f.middleName || null,
+          gender: f.gender === 'male' ? 'MALE' : f.gender === 'female' ? 'FEMALE' : 'UNKNOWN',
+          qc: '0',
+          source: null,
+        },
+      } as DaDataFioSuggestion)
+    : undefined
 
   return (
-    <div className="login-container">
-      <div className="a-center">
-        <h2>Регистрация</h2>
-      </div>
+    <form
+      className="auth-form"
+      onSubmit={(e) => {
+        e.preventDefault()
+        void reg.submitStep()
+      }}
+    >
+      <section className="auth-section" aria-labelledby="reg-sec-personal">
+        <h2 id="reg-sec-personal" className="auth-section-title">
+          Личные данные
+        </h2>
 
-      <div className="fs-11 a-center mb-2">
-        Заполните ваши данные для регистрации
-      </div>
+        <div className="auth-fields">
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="reg-fio">
+              ФИО
+            </label>
+            <div className="auth-dadata">
+              <FioSuggestions
+                token={DADATA_TOKEN}
+                value={fioValue}
+                onChange={(suggestion) => {
+                  if (!suggestion) return
+                  applyFio(suggestion.value, suggestion.data)
+                }}
+                inputProps={{
+                  id: 'reg-fio',
+                  className: 'auth-input',
+                  placeholder: 'Иванов Иван Иванович',
+                  autoComplete: 'name',
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                    applyFio(e.target.value)
+                  },
+                }}
+              />
+            </div>
+            {err.name && <div className="auth-error">{err.name}</div>}
+          </div>
 
-      {/* Телефон */}
-      <div className="mt-1">
-        <MaskedInput
-          placeholder="Телефон: +7… или международный +…"
-          value={reg.formData.phone || ''}
-          onChange={(value) => reg.updateFormData('phone', value)}
-          onBlur={handlePhoneBlur}
-          error={reg.formErrors.phone}
-        />
-      </div>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="reg-birthDate">
+              Дата рождения
+            </label>
+            <div className="auth-input-icon-wrap">
+              <input
+                id="reg-birthDate"
+                className="auth-input auth-input-with-icon"
+                placeholder="дд.мм.гггг"
+                inputMode="numeric"
+                value={f.birthDate || ''}
+                onChange={(e) =>
+                  reg.updateFormData('birthDate', formatBirthDateInput(e.target.value))
+                }
+                autoComplete="bday"
+              />
+              <Calendar className="auth-input-icon" size={18} strokeWidth={2} aria-hidden />
+            </div>
+            {err.birthDate && <div className="auth-error">{err.birthDate}</div>}
+          </div>
 
-      {/* ФИО */}
-      <div className="mt-1">
-        <TextInput
-          placeholder="ФИО"
-          value={reg.formData.name || ''}
-          onChange={(value) => reg.updateFormData('name', value)}
-          onBlur={handleNameBlur}
-          error={reg.formErrors.name}
-        />
-      </div>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="reg-birthPlace">
+              Место рождения
+            </label>
+            <input
+              id="reg-birthPlace"
+              className="auth-input"
+              placeholder="г. Якутск"
+              value={f.birthPlace || ''}
+              onChange={(e) => reg.updateFormData('birthPlace', e.target.value)}
+            />
+            {err.birthPlace && <div className="auth-error">{err.birthPlace}</div>}
+          </div>
 
-      {/* Email (необязательно) */}
-      <div className="mt-1">
-        <TextInput
-          placeholder="Email (необязательно)"
-          value={reg.formData.email || ''}
-          onChange={(value) => reg.updateFormData('email', value)}
-          onBlur={handleEmailBlur}
-          error={reg.formErrors.email}
-        />
-      </div>
-
-      <div className="mt-2">
-        <div className="fs-11 a-center mb-1">Как получить код подтверждения?</div>
-        <div className="role-selection-buttons">
-          <button
-            type="button"
-            className={`role-button ${otpTransport === 'sms' ? 'selected' : ''}`}
-            onClick={() => reg.updateFormData('otpTransport', 'sms')}
-          >
-            <div className="role-icon">💬</div>
-            <div>SMS</div>
-          </button>
-          <button
-            type="button"
-            className={`role-button ${otpTransport === 'telegram' ? 'selected' : ''}`}
-            onClick={() => reg.updateFormData('otpTransport', 'telegram')}
-          >
-            <div className="role-icon">✈️</div>
-            <div>Telegram</div>
-          </button>
+          <div className="auth-field">
+            <div className="auth-label" id="reg-gender-label">
+              Пол
+            </div>
+            <div
+              className="auth-gender-tabs"
+              role="radiogroup"
+              aria-labelledby="reg-gender-label"
+            >
+              <button
+                type="button"
+                role="radio"
+                aria-checked={f.gender === 'male'}
+                className={
+                  f.gender === 'male' ? 'auth-gender-tab is-active' : 'auth-gender-tab'
+                }
+                onClick={() => reg.updateFormData('gender', 'male')}
+              >
+                Мужской
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={f.gender === 'female'}
+                className={
+                  f.gender === 'female' ? 'auth-gender-tab is-active' : 'auth-gender-tab'
+                }
+                onClick={() => reg.updateFormData('gender', 'female')}
+              >
+                Женский
+              </button>
+            </div>
+            {err.gender && <div className="auth-error">{err.gender}</div>}
+          </div>
         </div>
+      </section>
+
+      <section className="auth-section" aria-labelledby="reg-sec-contacts">
+        <h2 id="reg-sec-contacts" className="auth-section-title">
+          Контакты
+        </h2>
+
+        <div className="auth-fields">
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="reg-email">
+              Email (необязательно)
+            </label>
+            <input
+              id="reg-email"
+              className="auth-input"
+              type="email"
+              placeholder="name@example.com"
+              value={f.email || ''}
+              onChange={(e) => reg.updateFormData('email', e.target.value)}
+              autoComplete="email"
+            />
+            {err.email && <div className="auth-error">{err.email}</div>}
+          </div>
+
+          <div className="auth-field">
+            <PhoneCountryField
+              id="reg-phone"
+              value={f.phone || ''}
+              onChange={(value) => reg.updateFormData('phone', value)}
+              onBlur={() => {
+                if (f.phone) reg.validateField('phone', f.phone)
+              }}
+              error={err.phone}
+            />
+          </div>
+
+          <div className="auth-field">
+            <div className="auth-label" id="reg-otp-label">
+              Куда отправить код
+            </div>
+            <div className="auth-otp-tabs" role="tablist" aria-labelledby="reg-otp-label">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={otpTransport === 'sms'}
+                className={otpTransport === 'sms' ? 'auth-otp-tab is-active' : 'auth-otp-tab'}
+                onClick={() => reg.updateFormData('otpTransport', 'sms')}
+              >
+                <MessageSquare size={18} strokeWidth={2} aria-hidden />
+                SMS
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={otpTransport === 'telegram'}
+                className={
+                  otpTransport === 'telegram' ? 'auth-otp-tab is-active' : 'auth-otp-tab'
+                }
+                onClick={() => reg.updateFormData('otpTransport', 'telegram')}
+              >
+                <Send size={18} strokeWidth={2} aria-hidden />
+                Telegram
+              </button>
+            </div>
+            <p className="auth-hint">
+              {otpTransport === 'telegram'
+                ? 'Код придёт в Telegram на указанный номер'
+                : 'Код придёт в текстовом сообщении на номер телефона'}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="auth-section auth-section-last" aria-labelledby="reg-sec-consents">
+        <h2 id="reg-sec-consents" className="auth-section-title">
+          Согласия
+        </h2>
+
+        <div className="auth-consents">
+          <label className="auth-consent">
+            <input
+              type="checkbox"
+              checked={Boolean(f.consentPersonalData)}
+              onChange={(e) => reg.updateFormData('consentPersonalData', e.target.checked)}
+            />
+            <span>
+              Я принимаю{' '}
+              <span className="auth-consent-link">Согласие на обработку персональных данных</span>
+            </span>
+          </label>
+          {err.consentPersonalData && <div className="auth-error">{err.consentPersonalData}</div>}
+
+          <label className="auth-consent">
+            <input
+              type="checkbox"
+              checked={Boolean(f.consentUserAgreement)}
+              onChange={(e) => reg.updateFormData('consentUserAgreement', e.target.checked)}
+            />
+            <span>
+              Я принимаю{' '}
+              <button type="button" className="auth-inline-link" onClick={onOpenEula}>
+                Пользовательское соглашение
+              </button>
+            </span>
+          </label>
+          {err.consentUserAgreement && <div className="auth-error">{err.consentUserAgreement}</div>}
+
+          <label className="auth-consent">
+            <input
+              type="checkbox"
+              checked={Boolean(f.consentMarketing)}
+              onChange={(e) => reg.updateFormData('consentMarketing', e.target.checked)}
+            />
+            <span>
+              Я согласен(на) на{' '}
+              <span className="auth-consent-link">Согласие на рекламные рассылки</span>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      {reg.error && <div className="auth-error auth-error-block">{reg.error}</div>}
+
+      <div className="auth-form-actions">
+        <button type="submit" className="auth-btn-primary" disabled={!canSubmit}>
+          {reg.isLoading ? 'Отправка…' : 'Получить код'}
+        </button>
       </div>
-
-      <FormButtons
-        onNext={handleNext}
-        onBack={reg.prevStep}
-        nextText="Зарегистрироваться"
-        disabled={!reg.formData.phone?.trim() || !reg.formData.name?.trim()}
-        loading={reg.isLoading}
-      />
-
-    </div>
+    </form>
   )
 })
 
 // ======================
-// ШАГ 2: ПОДТВЕРЖДЕНИЕ SMS
+// ШАГ 1: SMS
 // ======================
 
 const StepVerification: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
   const otpTransport: OtpTransport =
     reg.formData.otpTransport === 'telegram' ? 'telegram' : 'sms'
 
-  const [pin, setPin] = useState(['', '', '', '']);
+  const [pin, setPin] = useState(['', '', '', ''])
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  // Создаем массив рефов для прямого управления фокусом без поиска по DOM
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const handlePinChange = useCallback(
+    (value: string, index: number) => {
+      const digits = value.replace(/\D/g, '')
+      const newPin = [...pin]
 
-  const handlePinChange = useCallback((value: string, index: number) => {
-    const digits = value.replace(/\D/g, '')
-    const newPin = [...pin]
-
-    if (digits.length === 0) {
-      newPin[index] = ''
-    } else if (digits.length === 1) {
-      newPin[index] = digits
-    } else {
-      for (let i = 0; i < digits.length && index + i < 4; i++) {
-        newPin[index + i] = digits[i]!
-      }
-    }
-
-    setPin(newPin)
-    reg.updateFormData('pincode', newPin.join(''))
-
-    if (digits.length > 0) {
-      const firstEmpty = newPin.findIndex((c) => c === '')
-      requestAnimationFrame(() => {
-        if (firstEmpty >= 0) {
-          inputRefs.current[firstEmpty]?.focus()
-        } else {
-          inputRefs.current[3]?.focus()
+      if (digits.length === 0) {
+        newPin[index] = ''
+      } else if (digits.length === 1) {
+        newPin[index] = digits
+      } else {
+        for (let i = 0; i < digits.length && index + i < 4; i++) {
+          newPin[index + i] = digits[i]!
         }
-      })
-    }
-  }, [reg, pin])
+      }
+
+      setPin(newPin)
+      reg.updateFormData('pincode', newPin.join(''))
+
+      if (digits.length > 0) {
+        const firstEmpty = newPin.findIndex((c) => c === '')
+        requestAnimationFrame(() => {
+          if (firstEmpty >= 0) inputRefs.current[firstEmpty]?.focus()
+          else inputRefs.current[3]?.focus()
+        })
+      }
+    },
+    [reg, pin]
+  )
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
-    // Возврат на предыдущее поле при удалении
     if (e.key === 'Backspace' && !pin[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  return (
-    <div className="login-container">
-      <div className="a-center">
-        <h2>Подтверждение</h2>
-      </div>
-
-      <div className="fs-11 a-center mb-2">
-        {otpTransport === 'telegram'
-          ? 'Введите код из Telegram'
-          : 'Введите код из SMS'}
-      </div>
-
-      <div className="mt-1">
-        <div className="pin-input-container" style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-          {[0, 1, 2, 3].map((index) => (
-            <input
-              key={index}
-              ref={(el) => (inputRefs.current[index] = el)} // Привязка рефа
-              type="tel" // Вызываем цифровую клавиатуру на мобильных
-              inputMode="numeric"
-              pattern="[0-9]*"
-              autoComplete={index === 0 ? 'one-time-code' : 'off'}
-              autoCapitalize="off"
-              spellCheck={false}
-              maxLength={1}
-              value={pin[index]}
-              onChange={(e) => handlePinChange(e.target.value, index)}
-              onKeyDown={(e) => handleKeyDown(e, index)}
-              className="pin-input"
-              style={{
-                width: '45px',
-                height: '50px',
-                textAlign: 'center',
-                fontSize: '20px',
-                borderRadius: '8px',
-                border: '1px solid #ccc'
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      <FormButtons
-        onNext={() => reg.submitStep()}
-        onBack={reg.prevStep}
-        nextText="Проверить"
-        loading={reg.isLoading}
-        disabled={pin.some(d => d === '')} // Кнопка активна только при полном заполнении
-      />
-    </div>
-  );
-});
-
-// ======================
-// ШАГ 3: УСТАНОВКА ПАРОЛЯ
-// ======================
-
-const StepSetPassword: React.FC<{ reg: UseRegReturn, toLogin: (() => void) | undefined }> = memo(({ reg, toLogin }) => {
-  const handleSave = useCallback(() => {
-    reg.submitStep()
-    toLogin?.()
-  }, [reg, toLogin])
-
-  const handlePasswordBlur = useCallback(() => {
-    if (reg.formData.password) {
-      reg.validateField('password', reg.formData.password)
-    }
-  }, [reg])
-
-  const handlePassword1Blur = useCallback(() => {
-    if (reg.formData.password1) {
-      reg.validateField('password1', reg.formData.password1)
-
-      if (reg.formData.password && reg.formData.password1) {
-        if (reg.formData.password !== reg.formData.password1) {
-          reg.updateFormData('password1Error', 'Пароли не совпадают')
-        } else {
-          reg.updateFormData('password1Error', '')
-        }
-      }
-    }
-  }, [reg])
-
-  const passwordsMatch = reg.formData.password && reg.formData.password1 &&
-    reg.formData.password === reg.formData.password1
-
-  return (
-    <div className="login-container">
-      <div className="a-center">
-        <h2>Создание пароля</h2>
-      </div>
-
-      <div className="fs-11 a-center mb-2">
-        Создайте пароль и подтвердите его
-      </div>
-
-      {/* Пароль */}
-      <div className="mt-1">
-        <PasswordInput
-          placeholder="Пароль"
-          value={reg.formData.password || ''}
-          onChange={(value) => reg.updateFormData('password', value)}
-          onBlur={handlePasswordBlur}
-          error={reg.formErrors.password}
-          autocomplete="new-password"
-        />
-      </div>
-
-      {/* Подтверждение пароля */}
-      <div className="mt-1">
-        <PasswordInput
-          placeholder="Подтверждение"
-          value={reg.formData.password1 || ''}
-          onChange={(value) => reg.updateFormData('password1', value)}
-          onBlur={handlePassword1Blur}
-          error={reg.formErrors.password1 || reg.formData.password1Error}
-          autocomplete="new-password"
-        />
-      </div>
-
-      <FormButtons
-        onNext={handleSave}
-        onBack={reg.prevStep}
-        nextText="Сохранить"
-        disabled={!passwordsMatch}
-        loading={reg.isLoading}
-      />
-    </div>
-  )
-})
-
-// ======================
-// ГЛАВНЫЙ КОМПОНЕНТ РЕГИСТРАЦИИ
-// ======================
-
-const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin, onSwitchToRecovery }) => {
-  const reg = useReg()
-  const eula = useEULA(false)
-
-  const navigationLinks = [
-    ...(onSwitchToLogin ? [{ text: 'Есть аккаунт? Авторизироваться', onClick: onSwitchToLogin }] : []),
-    ...(onSwitchToRecovery ? [{ text: 'Забыли пароль? Восстановить', onClick: onSwitchToRecovery }] : [])
-  ]
-
-  const renderStep = () => {
-    switch (reg.registrationStep) {
-      case 0: return <RoleSelector reg={reg} eula={eula} />
-      case 1: return <StepPersonalInfo reg={reg} />
-      case 2: return <StepVerification reg={reg} />
-      case 3: return <StepSetPassword reg={reg} toLogin={onSwitchToLogin} />
-      default: return null
+      inputRefs.current[index - 1]?.focus()
     }
   }
 
   return (
-    <div className="container">
-      <IonCard className="login-container">
-        {renderStep()}
-        {reg.registrationStep === 3 && navigationLinks.length > 0 && (
-          <NavigationLinks links={navigationLinks} />
+    <form
+      className="auth-form auth-form-relaxed auth-form-verify"
+      onSubmit={(e) => {
+        e.preventDefault()
+        void reg.submitStep()
+      }}
+    >
+      <p className="auth-step-lead">
+        {otpTransport === 'telegram' ? 'Введите код из Telegram' : 'Введите код из SMS'}
+      </p>
+      <p className="auth-hint auth-hint-center">{reg.formData.phone || ''}</p>
+
+      <div className="auth-pin-row">
+        {[0, 1, 2, 3].map((index) => (
+          <input
+            key={index}
+            ref={(el) => {
+              inputRefs.current[index] = el
+            }}
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete={index === 0 ? 'one-time-code' : 'off'}
+            maxLength={1}
+            value={pin[index]}
+            onChange={(e) => handlePinChange(e.target.value, index)}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            className="auth-pin-input"
+          />
+        ))}
+      </div>
+
+      {reg.error && <div className="auth-error auth-error-block">{reg.error}</div>}
+
+      <div className="auth-form-actions">
+        <button
+          type="submit"
+          className="auth-btn-primary"
+          disabled={pin.some((d) => d === '') || reg.isLoading}
+        >
+          {reg.isLoading ? 'Проверка…' : 'Подтвердить'}
+        </button>
+
+        <button type="button" className="auth-btn-secondary auth-btn-spaced" onClick={reg.prevStep}>
+          Изменить данные
+        </button>
+      </div>
+    </form>
+  )
+})
+
+// ======================
+// ШАГ 2: ПАРОЛЬ
+// ======================
+
+const StepSetPassword: React.FC<{
+  reg: UseRegReturn
+  toLogin?: () => void
+}> = memo(({ reg, toLogin }) => {
+  const passwordsMatch =
+    reg.formData.password &&
+    reg.formData.password1 &&
+    reg.formData.password === reg.formData.password1
+
+  return (
+    <form
+      className="auth-form auth-form-relaxed"
+      onSubmit={(e) => {
+        e.preventDefault()
+        void reg.submitStep().then(() => {
+          /* после успешного ответа сокета reset; toLogin — по желанию */
+        })
+      }}
+    >
+      <p className="auth-step-lead">Придумайте пароль для входа</p>
+
+      <div className="auth-fields auth-fields-relaxed">
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="reg-password">
+            Пароль
+          </label>
+          <input
+            id="reg-password"
+            className="auth-input"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••"
+            value={reg.formData.password || ''}
+            onChange={(e) => reg.updateFormData('password', e.target.value)}
+          />
+          {reg.formErrors.password && <div className="auth-error">{reg.formErrors.password}</div>}
+        </div>
+
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="reg-password1">
+            Подтверждение
+          </label>
+          <input
+            id="reg-password1"
+            className="auth-input"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••"
+            value={reg.formData.password1 || ''}
+            onChange={(e) => reg.updateFormData('password1', e.target.value)}
+          />
+          {reg.formErrors.password1 && <div className="auth-error">{reg.formErrors.password1}</div>}
+        </div>
+      </div>
+
+      {reg.error && <div className="auth-error auth-error-block">{reg.error}</div>}
+
+      <div className="auth-form-actions">
+        <button
+          type="submit"
+          className="auth-btn-primary"
+          disabled={!passwordsMatch || reg.isLoading}
+        >
+          {reg.isLoading ? 'Сохранение…' : 'Сохранить'}
+        </button>
+      </div>
+
+      {toLogin && (
+        <p className="auth-footer-text">
+          — Уже есть аккаунт?{' '}
+          <button type="button" className="auth-footer-action" onClick={toLogin}>
+            Войти
+          </button>
+        </p>
+      )}
+    </form>
+  )
+})
+
+// ======================
+// КОРЕНЬ
+// ======================
+
+const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin }) => {
+  const reg = useReg({ onRegistered: onSwitchToLogin })
+  const eula = useEULA(false)
+
+  const titles = ['Данные для регистрации', 'Подтверждение', 'Пароль'] as const
+  const title = titles[reg.registrationStep] ?? 'Данные для регистрации'
+  const isRelaxedStep = reg.registrationStep === 1 || reg.registrationStep === 2
+
+  return (
+    <div
+      className={
+        isRelaxedStep
+          ? 'auth-page auth-page-reg auth-page-relaxed'
+          : 'auth-page auth-page-reg'
+      }
+    >
+      <header className="auth-hero">
+        <h1 className="auth-hero-title">{title}</h1>
+        <p className="auth-hero-sub">Груз в Рейс / PAITZA</p>
+      </header>
+
+      <div
+        className={
+          isRelaxedStep
+            ? 'auth-card auth-card-reg auth-card-relaxed'
+            : 'auth-card auth-card-reg'
+        }
+      >
+        {reg.registrationStep === 0 && (
+          <StepPersonalInfo reg={reg} onOpenEula={eula.openEULA} />
         )}
-        {reg.registrationStep !== 3 && onSwitchToLogin && (
-          <div className="ml-3 pb-1" onClick={onSwitchToLogin} role="button" tabIndex={0}>
-            Есть аккаунт? Авторизироваться
-          </div>
+        {reg.registrationStep === 1 && <StepVerification reg={reg} />}
+        {reg.registrationStep === 2 && (
+          <StepSetPassword reg={reg} toLogin={onSwitchToLogin} />
         )}
-      </IonCard>
+
+        {reg.registrationStep === 0 && onSwitchToLogin && (
+          <p className="auth-footer-text">
+            — Уже есть аккаунт?{' '}
+            <button type="button" className="auth-footer-action" onClick={onSwitchToLogin}>
+              Войти
+            </button>
+          </p>
+        )}
+      </div>
+
       <Suspense fallback={null}>
         <EULA
           check={eula.isEULAAccepted}
           onClose={eula.closeEULA}
           isOpen={eula.isEULAOpen}
-          setCheck={eula.setEULAAccepted}
+          setCheck={(v) => {
+            eula.setEULAAccepted(v)
+            reg.updateFormData('consentUserAgreement', v)
+          }}
         />
       </Suspense>
     </div>

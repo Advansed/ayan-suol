@@ -8,7 +8,7 @@
     "build": "tsc && vite build",
     "build:web": "vite build",
     "preview": "vite preview",
-    "deploy": "scp -i ~/.ssh/id_kz_work -r dist/. ubuntu@paitza.com:/var/www/html/",
+    "deploy": "scp -i ~/.ssh/id_kz_work -o ServerAliveInterval=60 -o ServerAliveCountMax=20 -o ConnectTimeout=300 -o TCPKeepAlive=yes -r dist/. ubuntu@paitza.com:/var/www/html/",
     "test.e2e": "cypress run",
     "test.unit": "vitest",
     "lint": "eslint"

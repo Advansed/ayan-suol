@@ -1,13 +1,9 @@
 // src/components/Login/LoginForm.tsx
 
 import React, { useState, useCallback, useEffect } from 'react'
-import { IonCard } from '@ionic/react'
-import { MaskedInput, PasswordInput, FormButtons, NavigationLinks } from './SharedComponents'
-import { validateLoginPhoneRaw } from './phone'
-
-// ============================================
-// ТИПЫ
-// ============================================
+import { parseLoginPhone, validateLoginPhoneRaw } from './phone'
+import { PhoneCountryField } from './PhoneCountryField'
+import './Login.css'
 
 interface LoginFormProps {
   onLogin: (phone: string, password: string) => Promise<boolean>
@@ -15,207 +11,145 @@ interface LoginFormProps {
   onSwitchToRecovery: () => void
 }
 
-interface FormData {
-  phone: string
-  password: string
-}
-
 interface FormErrors {
   phone?: string
   password?: string
 }
 
-// ============================================
-// УТИЛИТЫ ВАЛИДАЦИИ
-// ============================================
-
 const normalizeString = (value: unknown): string => {
   return typeof value === 'string' ? value : (value ?? '').toString()
 }
 
-const validateField = (field: string, value: unknown): string | null => {
-  const v = normalizeString(value)
-  switch (field) {
-    case 'phone':
-      if (!v || v.trim() === '') return 'Заполните телефон'
-      return validateLoginPhoneRaw(v)
-      
-    case 'password':
-      if (!v || v.trim() === '') return 'Заполните пароль'
-      return v.length < 4 ? 'Пароль должен содержать минимум 4 символа' : null
-      
-    default:
-      return null
-  }
-}
-
-// ============================================
-// КОМПОНЕНТ
-// ============================================
-
-export const LoginForm: React.FC<LoginFormProps> = ({ 
-  onLogin, 
-  onSwitchToRegister, 
-  onSwitchToRecovery 
+export const LoginForm: React.FC<LoginFormProps> = ({
+  onLogin,
+  onSwitchToRegister,
+  onSwitchToRecovery,
 }) => {
-  
-  // Локальное состояние формы
-  const [formData, setFormData] = useState<FormData>({
-    phone: '',
-    password: ''
-  })
-  
+  const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
   const [formErrors, setFormErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(()=>{
-    const login = localStorage.getItem("gvrs.login")
-    if(login){
-      setFormData({
-        phone: login,
-        password: localStorage.getItem("gvrs.password") ?? '',
-      })
+  useEffect(() => {
+    const login = localStorage.getItem('gvrs.login')
+    if (login) {
+      setPhone(login)
+      setPassword(localStorage.getItem('gvrs.password') ?? '')
     }
-  },[])
-
-  // ============================================
-  // ОБРАБОТЧИКИ
-  // ============================================
-
-  const updateFormData = useCallback((field: keyof FormData, value: unknown) => {
-    const safeValue = normalizeString(value)
-    setFormData(prev => ({ ...prev, [field]: safeValue }))
-    
-    // Очищаем ошибку при изменении поля
-    if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: undefined }))
-    }
-  }, [formErrors])
-
-  const validateFormField = useCallback((field: keyof FormData, value: unknown) => {
-    const error = validateField(field, value)
-    setFormErrors(prev => ({ ...prev, [field]: error || undefined }))
-    return !error
   }, [])
 
-  // Обработчик отправки формы
-  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault()
-    }
-    
-    // Валидация всех полей
-    const phoneValid = validateFormField('phone', formData.phone)
-    const passwordValid = validateFormField('password', formData.password)
-    
-    if (!phoneValid || !passwordValid) {
-      return
-    }
-    
-    setIsSubmitting(true)
-    
-    try {
-      await onLogin(formData.phone, formData.password)
-      // Успех обрабатывается через Toast в useLogin
-    } catch (error) {
-      // Ошибки обрабатываются через Toast в useLogin
-    } finally {
-      setIsSubmitting(false)
-    }
-  }, [formData, onLogin, validateFormField])
+  const clearError = (field: keyof FormErrors) => {
+    setFormErrors((prev) => ({ ...prev, [field]: undefined }))
+  }
 
-  // Обработчик нажатия Enter
-  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSubmit()
-    }
-  }, [handleSubmit])
+  const handlePhoneChange = (value: string) => {
+    setPhone(value)
+    clearError('phone')
+  }
 
-  // Валидация полей при потере фокуса
-  const handlePhoneBlur = useCallback(() => {
-    if (formData.phone) {
-      validateFormField('phone', formData.phone)
-    }
-  }, [formData.phone, validateFormField])
+  const handlePasswordChange = (value: string) => {
+    setPassword(normalizeString(value))
+    clearError('password')
+  }
 
-  const handlePasswordBlur = useCallback(() => {
-    if (formData.password) {
-      validateFormField('password', formData.password)
-    }
-  }, [formData.password, validateFormField])
+  const validate = useCallback(() => {
+    const phoneErr = validateLoginPhoneRaw(phone) || undefined
+    const pass = normalizeString(password)
+    let passwordErr: string | undefined
+    if (!pass.trim()) passwordErr = 'Заполните пароль'
+    else if (pass.length < 4) passwordErr = 'Пароль должен содержать минимум 4 символа'
 
-  // ============================================
-  // КОНФИГУРАЦИЯ
-  // ============================================
+    setFormErrors({
+      phone: phoneErr,
+      password: passwordErr,
+    })
+    return !phoneErr && !passwordErr
+  }, [phone, password])
 
-  // Навигационные ссылки
-  const navigationLinks = [
-    {
-      text: 'Забыли пароль? Восстановить',
-      onClick: onSwitchToRecovery
+  const handleSubmit = useCallback(
+    async (e?: React.FormEvent) => {
+      e?.preventDefault()
+      if (!validate()) return
+
+      const parsed = parseLoginPhone(phone)
+      if (!parsed.ok) {
+        setFormErrors((prev) => ({ ...prev, phone: parsed.error }))
+        return
+      }
+
+      setIsSubmitting(true)
+      try {
+        await onLogin(parsed.e164, normalizeString(password))
+      } finally {
+        setIsSubmitting(false)
+      }
     },
-    {
-      text: 'Нет аккаунта? Регистрация',
-      onClick: onSwitchToRegister
-    }
-  ]
+    [validate, phone, password, onLogin]
+  )
 
-  // Проверка заполненности формы
-  const phone = normalizeString(formData.phone)
-  const password = normalizeString(formData.password)
-  const isFormValid =
-    phone.trim() &&
-    password.trim() &&
-    !formErrors.phone &&
-    !formErrors.password
-
-  // ============================================
-  // РЕНДЕР
-  // ============================================
+  const phoneOk = phone.trim().length > 0 && !formErrors.phone
+  const passwordOk = normalizeString(password).trim().length > 0 && !formErrors.password
+  const canSubmit = phoneOk && passwordOk && !isSubmitting
 
   return (
-    <div className="container">
-      <IonCard className="login-container">
-        <div className="a-center">
-          <h2>Авторизация</h2>
-        </div>
+    <div className="auth-page">
+      <header className="auth-hero">
+        <h1 className="auth-hero-title">Вход в платформу</h1>
+        <p className="auth-hero-sub">Груз в Рейс / PAITZA</p>
+      </header>
 
-        <form onSubmit={handleSubmit} onKeyPress={handleKeyPress}>
-          {/* Поле телефона */}
-          <div className="mt-1">
-            <MaskedInput
-              placeholder="Телефон: +7… или международный +…"
-              value={formData.phone}
-              onChange={(value) => updateFormData('phone', value)}
-              onBlur={handlePhoneBlur}
-              error={formErrors.phone}
-            />
-          </div>
-
-          {/* Поле пароля */}
-          <div className="mt-1">
-            <PasswordInput
-              placeholder="Пароль"
-              value={formData.password}
-              onChange={(value) => updateFormData('password', value)}
-              onBlur={handlePasswordBlur}
-              error={formErrors.password}
-              autocomplete="current-password"
-            />
-          </div>
-
-          {/* Кнопка входа */}
-          <FormButtons
-            onNext={handleSubmit}
-            nextText="Войти"
-            disabled={!isFormValid}
-            loading={isSubmitting}
+      <div className="auth-card">
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <PhoneCountryField
+            id="login-phone"
+            value={phone}
+            onChange={handlePhoneChange}
+            error={formErrors.phone}
+            onBlur={() => {
+              if (phone) {
+                const err = validateLoginPhoneRaw(phone)
+                setFormErrors((p) => ({ ...p, phone: err || undefined }))
+              }
+            }}
           />
-        </form>
 
-        {/* Навигационные ссылки */}
-        <NavigationLinks links={navigationLinks} />
-      </IonCard>
+          <label className="auth-label auth-label-spaced" htmlFor="login-password">
+            Пароль
+          </label>
+          <input
+            id="login-password"
+            className="auth-input"
+            type="password"
+            autoComplete="current-password"
+            placeholder="••••"
+            value={password}
+            onChange={(e) => handlePasswordChange(e.target.value)}
+            onBlur={() => {
+              const pass = normalizeString(password)
+              if (!pass.trim()) setFormErrors((p) => ({ ...p, password: 'Заполните пароль' }))
+              else if (pass.length < 4)
+                setFormErrors((p) => ({ ...p, password: 'Пароль должен содержать минимум 4 символа' }))
+            }}
+          />
+          {formErrors.password && <div className="auth-error">{formErrors.password}</div>}
+
+          <button type="button" className="auth-link" onClick={onSwitchToRecovery}>
+            Забыли пароль?
+          </button>
+
+          <button type="submit" className="auth-btn-primary" disabled={!canSubmit}>
+            {isSubmitting ? 'Вход…' : 'Войти'}
+          </button>
+
+          <div className="auth-divider" role="separator">
+            <span>или</span>
+          </div>
+
+          <button type="button" className="auth-btn-secondary" onClick={onSwitchToRegister}>
+            Создать аккаунт
+          </button>
+        </form>
+      </div>
     </div>
   )
 }

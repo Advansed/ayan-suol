@@ -1,285 +1,276 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigation } from './useNavigation';
-import { useValidate } from './useValidate';
-import { useSocket } from '../../../../Store/useSocket';
-import { loginActions, useLoginStore } from '../../../../Store/loginStore';
-import { useToast } from '../../../Toast';
-import type { OtpTransport } from '../../otpTransport';
-import { normalizeOtpTransport } from '../../otpTransport';
-import { parseLoginPhone } from '../../phone';
-import { tokenFromCheckSmsResponse } from '../../tokenFromOtpResponse';
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useNavigation } from './useNavigation'
+import { useValidate } from './useValidate'
+import { useSocket } from '../../../../Store/useSocket'
+import { loginActions, useLoginStore } from '../../../../Store/loginStore'
+import { useToast } from '../../../Toast'
+import type { OtpTransport } from '../../otpTransport'
+import { normalizeOtpTransport } from '../../otpTransport'
+import { parseLoginPhone } from '../../phone'
+import { tokenFromCheckSmsResponse } from '../../tokenFromOtpResponse'
+import {
+  buildCheckRegistrationPayload,
+  type CheckRegistrationPayload,
+} from '../registrationPayload'
 
-// ======================
-// ТИПЫ РЕГИСТРАЦИИ
-// ======================
-
-/** Поля формы шага «данные» + канал OTP для `check_registration` */
-export interface RegistrationData {
-  phone: string;
-  name: string;
-  email?: string;
-  userType: '0' | '1' | '2';
-  transport?: OtpTransport;
-}
+export type RegistrationData = CheckRegistrationPayload
 
 export interface RegistrationLocalState {
-  formData: Record<string, any>;
-  isLoading: boolean;
-  error: string;
+  formData: Record<string, any>
+  isLoading: boolean
+  error: string
 }
 
 export interface UseRegReturn extends RegistrationLocalState {
-  registrationStep: number;
-  nextStep: () => void;
-  prevStep: () => void;
+  registrationStep: number
+  nextStep: () => void
+  prevStep: () => void
 
-  formErrors: Record<string, string>;
-  validateField: (field: string, value: any) => string | null;
-  clearErrors: () => void;
+  formErrors: Record<string, string>
+  validateField: (field: string, value: any) => string | null
+  clearErrors: () => void
 
-  register: (data: RegistrationData) => Promise<void>;
-  submitStep: () => Promise<void>;
+  register: (data: RegistrationData) => Promise<void>
+  submitStep: () => Promise<void>
 
-  updateFormData: (field: string, value: any) => void;
+  updateFormData: (field: string, value: any) => void
 }
 
 export interface SocketResponse {
-  success: boolean;
-  data?: any;
-  message?: string;
+  success: boolean
+  data?: any
+  message?: string
 }
 
 export interface PasswordData {
-  token: string;
-  password: string;
-  password1: string;
-  userType?: string;
+  token: string
+  password: string
+  password1: string
 }
 
-// ======================
-// ХУК РЕГИСТРАЦИИ
-// ======================
-
 const INITIAL_REG_STATE: RegistrationLocalState = {
-  formData: {},
+  formData: {
+    otpTransport: 'sms',
+    consentPersonalData: false,
+    consentUserAgreement: false,
+    consentMarketing: false,
+    gender: '',
+  },
   isLoading: false,
-  error: ''
-};
+  error: '',
+}
 
-export const useReg = (): UseRegReturn => {
-  const navigation = useNavigation(4);
-  const validation = useValidate();
+/** 0 — данные, 1 — SMS, 2 — пароль */
+const TOTAL_STEPS = 3
 
-  const [state, setState] = useState<RegistrationLocalState>(INITIAL_REG_STATE);
-  const isMountedRef = useRef(true);
-  const { socket, emit } = useSocket();
-  const toast = useToast();
+export const useReg = (opts?: { onRegistered?: () => void }): UseRegReturn => {
+  const navigation = useNavigation(TOTAL_STEPS)
+  const validation = useValidate()
+  const onRegisteredRef = useRef(opts?.onRegistered)
+  onRegisteredRef.current = opts?.onRegistered
+
+  const [state, setState] = useState<RegistrationLocalState>(INITIAL_REG_STATE)
+  const isMountedRef = useRef(true)
+  const { socket, emit } = useSocket()
+  const toast = useToast()
 
   const updateState = useCallback((updates: Partial<RegistrationLocalState>) => {
     if (isMountedRef.current) {
-      setState((prev) => ({ ...prev, ...updates }));
+      setState((prev) => ({ ...prev, ...updates }))
     }
-  }, []);
+  }, [])
 
   const updateFormData = useCallback(
     (field: string, value: any) => {
       setState((prev) => ({
         ...prev,
-        formData: { ...prev.formData, [field]: value }
-      }));
-      validation.clearFieldError(field);
+        formData: { ...prev.formData, [field]: value },
+      }))
+      validation.clearFieldError(field)
     },
     [validation]
-  );
+  )
 
   const register = useCallback(
-    async (userData: RegistrationData) => {
-      updateState({ isLoading: true, error: '' });
-      validation.clearErrors();
+    async (payload: CheckRegistrationPayload) => {
+      updateState({ isLoading: true, error: '' })
+      validation.clearErrors()
 
       try {
-        const parsedPhone = parseLoginPhone(userData.phone);
+        const parsedPhone = parseLoginPhone(payload.code)
         if (!parsedPhone.ok) {
-          updateState({ error: parsedPhone.error, isLoading: false });
-          return;
+          updateState({ error: parsedPhone.error, isLoading: false })
+          return
         }
-        if (userData.name.length === 0) {
-          updateState({ error: 'Заполните ФИО', isLoading: false });
-          return;
+        if (!payload.name) {
+          updateState({ error: 'Заполните ФИО', isLoading: false })
+          return
         }
 
-        const transport = normalizeOtpTransport(userData.transport);
+        const body: CheckRegistrationPayload = {
+          ...payload,
+          code: parsedPhone.e164,
+        }
 
         loginActions.updateUser({
-          phone: parsedPhone.e164,
-          name: userData.name.trim(),
-          email: userData.email?.trim() || '',
-          user_type: Number(userData.userType),
-          transport
-        });
+          phone: body.code,
+          name: body.name,
+          email: body.email || '',
+          user_type: body.userType,
+          transport: body.transport,
+        })
 
-        const success = emit('check_registration', {
-          code: parsedPhone.e164,
-          name: userData.name.trim(),
-          email: userData.email?.trim() || '',
-          userType: userData.userType,
-          transport
-        });
+        // JSON под OPENJSON: name, email, birth_date, birth_place, gender, userType
+        const success = emit('check_registration', body)
 
         if (!success) {
-          throw new Error('Нет подключения к серверу');
+          throw new Error('Нет подключения к серверу')
         }
       } catch (error) {
-        console.error('Registration error:', error);
+        console.error('Registration error:', error)
         updateState({
           error: error instanceof Error ? error.message : 'Ошибка регистрации',
-          isLoading: false
-        });
+          isLoading: false,
+        })
       }
     },
     [updateState, validation, emit]
-  );
+  )
 
   const checkSMS = useCallback(
     async (data: { phone: string; pincode?: string; transport?: OtpTransport }) => {
-      updateState({ isLoading: true, error: '' });
-      validation.clearErrors();
+      updateState({ isLoading: true, error: '' })
+      validation.clearErrors()
 
       try {
-        const transport = normalizeOtpTransport(data.transport);
-        const success = emit('check_sms', {
+        const transport = normalizeOtpTransport(data.transport)
+        const body = {
           phone: data.phone,
           pincode: data.pincode,
-          transport
-        });
+          transport,
+        }
+        const success = emit('check_sms', body)
 
         if (!success) {
-          throw new Error('Нет подключения к серверу');
+          throw new Error('Нет подключения к серверу')
         }
       } catch (error) {
-        console.error('SMS check error:', error);
+        console.error('SMS check error:', error)
         updateState({
           error: error instanceof Error ? error.message : 'Ошибка проверки SMS',
-          isLoading: false
-        });
+          isLoading: false,
+        })
       }
     },
     [updateState, validation, emit]
-  );
+  )
 
   const submitStep = useCallback(async () => {
-    const login = useLoginStore.getState();
+    const login = useLoginStore.getState()
 
     switch (navigation.currentStep) {
-      case 0:
-        if (!validation.validateForm('agreement', state.formData)) {
-          return;
+      case 0: {
+        if (!validation.validateForm('register', state.formData)) {
+          return
         }
-        navigation.nextStep();
-        break;
+        const payload = buildCheckRegistrationPayload(state.formData)
+        await register(payload)
+        break
+      }
 
       case 1:
-        if (validation.validateForm('register', state.formData)) {
-          await register({
-            phone: state.formData.phone,
-            name: state.formData.name,
-            email: state.formData.email,
-            userType: state.formData.userType as RegistrationData['userType'],
-            transport: normalizeOtpTransport(state.formData.otpTransport)
-          });
-        }
-        break;
-
-      case 2:
         await checkSMS({
           phone: login.phone,
           pincode: state.formData.pincode,
-          transport: login.transport as OtpTransport | undefined
-        });
-        break;
+          transport: login.transport as OtpTransport | undefined,
+        })
+        break
 
-      case 3: {
-        const token = (login.token || '').trim();
+      case 2: {
+        const token = (login.token || '').trim()
         if (!token) {
-          toast.error('Сессия истекла или код не подтверждён. Пройдите проверку SMS снова.');
-          return;
+          toast.error('Сессия истекла или код не подтверждён. Пройдите проверку SMS снова.')
+          return
         }
         const passwordData: PasswordData = {
           token,
           password: state.formData.password || '',
           password1: state.formData.password1 || '',
-          userType: String(login.user_type)
-        };
+        }
 
         if (validation.validateForm('password', passwordData)) {
-          emit('save_password', passwordData);
+          emit('save_password', passwordData)
         }
-        break;
+        break
       }
     }
-  }, [navigation, validation, state.formData, register, checkSMS, emit, toast]);
+  }, [navigation, validation, state.formData, register, checkSMS, emit, toast])
 
   useEffect(() => {
-    isMountedRef.current = true;
+    isMountedRef.current = true
 
-    if (!socket) return;
+    if (!socket) return
 
     const handleRegistration = (response: SocketResponse) => {
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) return
 
-      updateState({ isLoading: false });
+      updateState({ isLoading: false })
 
       if (response.success) {
-        navigation.nextStep();
+        navigation.nextStep()
       } else {
-        updateState({ error: response.message || 'Ошибка регистрации' });
-        toast.error(response.message || 'Ошибка регистрации');
+        updateState({ error: response.message || 'Ошибка регистрации' })
+        toast.error(response.message || 'Ошибка регистрации')
       }
-    };
+    }
 
     const handleSMSCheck = (response: SocketResponse) => {
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) return
 
-      updateState({ isLoading: false });
+      updateState({ isLoading: false })
 
       if (response.success) {
-        const token = tokenFromCheckSmsResponse(response.data);
+        const token = tokenFromCheckSmsResponse(response.data)
         if (token) {
-          loginActions.setToken(token);
+          loginActions.setToken(token)
         }
-        navigation.nextStep();
+        navigation.nextStep()
       } else {
-        updateState({ error: response.message || 'Неверный код' });
+        updateState({ error: response.message || 'Неверный код' })
+        toast.error(response.message || 'Неверный код')
       }
-    };
+    }
 
     const handleSavePassword = (response: SocketResponse) => {
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) return
 
-      updateState({ isLoading: false });
+      updateState({ isLoading: false })
 
       if (response.success) {
-        updateState({ error: '' });
-        navigation.reset();
+        updateState({ error: '' })
+        toast.success('Регистрация завершена')
+        navigation.reset()
+        onRegisteredRef.current?.()
       } else {
-        updateState({ error: response.message || 'Ошибка сохранения пароля' });
+        updateState({ error: response.message || 'Ошибка сохранения пароля' })
+        toast.error(response.message || 'Ошибка сохранения пароля')
       }
-    };
+    }
 
-    socket.on('check_registration', handleRegistration);
-    socket.on('check_sms', handleSMSCheck);
-    socket.on('save_password', handleSavePassword);
+    socket.on('check_registration', handleRegistration)
+    socket.on('check_sms', handleSMSCheck)
+    socket.on('save_password', handleSavePassword)
 
     return () => {
-      isMountedRef.current = false;
+      isMountedRef.current = false
 
       if (socket) {
-        socket.off('check_registration', handleRegistration);
-        socket.off('check_sms', handleSMSCheck);
-        socket.off('save_password', handleSavePassword);
+        socket.off('check_registration', handleRegistration)
+        socket.off('check_sms', handleSMSCheck)
+        socket.off('save_password', handleSavePassword)
       }
-    };
-  }, [socket, updateState, navigation, toast]);
+    }
+  }, [socket, updateState, navigation, toast])
 
   return {
     ...state,
@@ -291,6 +282,6 @@ export const useReg = (): UseRegReturn => {
     clearErrors: validation.clearErrors,
     register,
     submitStep,
-    updateFormData
-  };
-};
+    updateFormData,
+  }
+}

@@ -56,9 +56,22 @@ const toAddressFieldValue                                                 = (val
   };
 }
 
-const isViewableUrl                                                       = (value?: string | null): boolean => {
-  if (!value) return false;
-  return /^https?:\/\//i.test(value) || value.startsWith('data:');
+const isViewableUrl                                                       = (value?: unknown): boolean => {
+  if (value == null) return false;
+  const s = typeof value === 'string' ? value : String(value);
+  if (!s || s === '[object Object]') return false;
+  return /^https?:\/\//i.test(s) || s.startsWith('data:');
+}
+
+const toPhotoPath                                                         = (value?: unknown): string => {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    const o = value as Record<string, unknown>;
+    const candidate = o.filePath ?? o.path ?? o.url ?? o.src ?? o.value;
+    return typeof candidate === 'string' ? candidate : '';
+  }
+  return String(value);
 }
 
 export const PassportVerification: React.FC<PassportVerificationProps>    = ({ onBack }) => {
@@ -91,21 +104,19 @@ export const PassportVerification: React.FC<PassportVerificationProps>    = ({ o
       birth_place: passportData.birth_place || '',
       reg_address: normalizeAddress(passportData.reg_address),
       act_address: normalizeAddress(passportData.act_address),
-      main_photo: passportData.main_photo || '',
-      reg_photo: passportData.reg_photo || '',
+      main_photo: toPhotoPath(passportData.main_photo),
+      reg_photo: toPhotoPath(passportData.reg_photo),
       isVerified: passportData.isVerified,
     });
     // Превью через getFotos по filePath (не через signed URL)
+    const mainPath = toPhotoPath(passportData.main_photo);
+    const regPath = toPhotoPath(passportData.reg_photo);
     setPhotoPreview({
-      main: passportData.main_photo
-        ? (isViewableUrl(passportData.main_photo)
-            ? passportData.main_photo
-            : getFotosUrl(passportData.main_photo))
+      main: mainPath
+        ? (isViewableUrl(mainPath) ? mainPath : getFotosUrl(mainPath))
         : '',
-      reg: passportData.reg_photo
-        ? (isViewableUrl(passportData.reg_photo)
-            ? passportData.reg_photo
-            : getFotosUrl(passportData.reg_photo))
+      reg: regPath
+        ? (isViewableUrl(regPath) ? regPath : getFotosUrl(regPath))
         : '',
     });
   }, [passportData]);
@@ -167,7 +178,7 @@ export const PassportVerification: React.FC<PassportVerificationProps>    = ({ o
     }
   }, [setField, toast]);
 
-  const checkFrontPhoto = useCallback(async () => {
+  const checkFrontPhoto           = useCallback(async () => {
     if (!form.main_photo) {
       toast.error('Сначала загрузите фото лицевой стороны');
       return;
