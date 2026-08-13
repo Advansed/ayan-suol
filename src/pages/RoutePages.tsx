@@ -110,23 +110,42 @@ export const ArchivePage: React.FC = () => {
 
 export const ChatsPage: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
+  const chatOpen = Boolean(id);
+
   return (
-    <PanelFrame title="Чат" subtitle="Переписка по заказам">
-      <div className="web-chats-layout">
-        {id === undefined ? <ChatsList /> : <Chats name={id} />}
+    <PanelFrame title="Чаты" subtitle="Переписка по заказам" bare>
+      <div
+        className={`web-chats-layout ${chatOpen ? 'web-chats-open' : 'web-chats-list'}`}
+      >
+        <aside className="web-chats-sidebar">
+          <ChatsList activeId={id} />
+        </aside>
+        <main className="web-chats-main">
+          {id ? (
+            <Chats name={id} />
+          ) : (
+            <div className="web-chats-empty">
+              <div className="web-chats-empty-icon" aria-hidden>
+                💬
+              </div>
+              <p>Выберите чат</p>
+              <span>Переписка по заказу появится здесь</span>
+            </div>
+          )}
+        </main>
       </div>
     </PanelFrame>
   );
 };
 
 export const SettingsRoutePage: React.FC = () => (
-  <PanelFrame title="Настройки" subtitle="Параметры аккаунта и уведомлений">
+  <PanelFrame title="Настройки" subtitle="Параметры аккаунта и уведомлений" bare>
     <Settings />
   </PanelFrame>
 );
 
 export const ProfileRoutePage: React.FC = () => (
-  <PanelFrame title="Профиль" subtitle="Персональные данные">
+  <PanelFrame title="Профиль" subtitle="Персональные данные и организация">
     <Profile />
   </PanelFrame>
 );
@@ -138,7 +157,11 @@ export const FinancePage: React.FC = () => {
   const initialAmount = location.state?.amount ?? queryAmount;
 
   return (
-    <PanelFrame title="Финансы" subtitle="Баланс, операции и счета" bare>
+    <PanelFrame
+      title="Финансы"
+      subtitle="Баланс счёта, пополнение и история операций"
+      bare
+    >
       <div className="web-finance-layout">
         <WalletPage
           onBack={() => history.push('/')}
@@ -150,10 +173,9 @@ export const FinancePage: React.FC = () => {
 };
 
 export const VehiclesPage: React.FC = () => {
-  const history = useHistory();
   return (
     <PanelFrame title="Мои машины" subtitle="Транспорт и документы" bare>
-      <TransportEditPage onBack={() => history.push('/')} />
+      <TransportEditPage />
     </PanelFrame>
   );
 };

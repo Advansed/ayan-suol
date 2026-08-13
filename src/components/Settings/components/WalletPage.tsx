@@ -2,12 +2,15 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { IonButton, IonIcon, IonInput, IonSpinner } from '@ionic/react';
 import {
   addOutline,
-  arrowDown,
-  arrowUp,
-  ellipsisHorizontal,
-  printOutline,
+  arrowDownOutline,
+  arrowUpOutline,
+  businessOutline,
+  cardOutline,
+  documentTextOutline,
+  phonePortraitOutline,
   receiptOutline,
-  walletOutline
+  timeOutline,
+  walletOutline,
 } from 'ionicons/icons';
 import { useWallet } from '../hooks/useWallet';
 import walletStyles from './WalletPage.module.css';
@@ -23,10 +26,66 @@ export interface WalletPageProps {
   initialAmount?: number | string | null;
 }
 
-/** Периодическое обновление баланса и операций, пока открыт экран кошелька */
 const WALLET_POLL_MS = 12_000;
 
-export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initialAmount }) => {
+type TxFilter = 'all' | 'income' | 'expense' | 'inv';
+
+const TX_FILTERS: { id: TxFilter; label: string }[] = [
+  { id: 'all', label: 'Все' },
+  { id: 'income', label: 'Поступления' },
+  { id: 'expense', label: 'Списания' },
+  { id: 'inv', label: 'Счета' },
+];
+
+function txMeta(t: Transaction): {
+  icon: string;
+  iconClass: string;
+  badge: string;
+  badgeClass: string;
+} {
+  switch (t.type) {
+    case 'inv':
+      return {
+        icon: documentTextOutline,
+        iconClass: walletStyles.txIconInv,
+        badge: 'Счёт',
+        badgeClass: walletStyles.badgeInv,
+      };
+    case 'new':
+      return {
+        icon: timeOutline,
+        iconClass: walletStyles.txIconPending,
+        badge: 'В обработке',
+        badgeClass: walletStyles.badgePending,
+      };
+    case 'income':
+      return {
+        icon: arrowDownOutline,
+        iconClass: walletStyles.txIconIncome,
+        badge: 'Поступление',
+        badgeClass: walletStyles.badgeIncome,
+      };
+    case 'expense':
+      return {
+        icon: arrowUpOutline,
+        iconClass: walletStyles.txIconExpense,
+        badge: 'Списание',
+        badgeClass: walletStyles.badgeExpense,
+      };
+    default:
+      return {
+        icon: receiptOutline,
+        iconClass: walletStyles.txIconNeutral,
+        badge: 'Операция',
+        badgeClass: walletStyles.badgeNeutral,
+      };
+  }
+}
+
+export const WalletPage: React.FC<WalletPageProps> = ({
+  onBack: _onBack,
+  initialAmount,
+}) => {
   const toast = useToast();
   const { user } = useLogin();
   const {
@@ -39,8 +98,9 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
     set_payment,
     set_invoice,
     get_invoice,
-    seller_id
+    seller_id,
   } = useWallet();
+
   const [amount, setAmount] = useState(() => {
     const n = Number(initialAmount);
     return Number.isFinite(n) && n > 0 ? String(Math.ceil(n)) : '';
@@ -49,6 +109,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [invoiceModalData, setInvoiceModalData] = useState<unknown>();
   const [invoiceLoadingId, setInvoiceLoadingId] = useState<string | null>(null);
+  const [txFilter, setTxFilter] = useState<TxFilter>('all');
 
   useEffect(() => {
     const n = Number(initialAmount);
@@ -71,9 +132,33 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
     return () => window.clearInterval(id);
   }, [refreshWallet]);
 
-  const topUpOperations = useMemo(() => {
-    return (transactions || []).slice(0, 30);
+  const stats = useMemo(() => {
+    const list = transactions || [];
+    let income = 0;
+    let expense = 0;
+    let pendingInv = 0;
+    for (const t of list) {
+      if (t.type === 'inv' || t.type === 'new') pendingInv += 1;
+      if (t.type === 'income' || (t.amount > 0 && t.type !== 'inv' && t.type !== 'expense')) {
+        income += Math.abs(t.amount);
+      } else if (t.type === 'expense' || t.amount < 0) {
+        expense += Math.abs(t.amount);
+      }
+    }
+    return { income, expense, pendingInv, total: list.length };
   }, [transactions]);
+
+  const filteredOps = useMemo(() => {
+    const list = (transactions || []).slice(0, 50);
+    if (txFilter === 'all') return list;
+    if (txFilter === 'income') {
+      return list.filter((t) => t.type === 'income' || (t.amount > 0 && t.type !== 'inv' && t.type !== 'expense'));
+    }
+    if (txFilter === 'expense') {
+      return list.filter((t) => t.type === 'expense' || t.amount < 0);
+    }
+    return list.filter((t) => t.type === 'inv' || t.type === 'new');
+  }, [transactions, txFilter]);
 
   const formatMoney = (n: number) => {
     if (!accountData) return `${n}`;
@@ -81,49 +166,19 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
       return n.toLocaleString('ru-RU', {
         style: 'currency',
         currency: accountData.currency || 'RUB',
-        maximumFractionDigits: 0
+        maximumFractionDigits: 0,
       });
     } catch {
       return `${n} ${accountData.currency || 'RUB'}`;
     }
   };
 
-  const canPay = useMemo(() => {
+  const amountNumber = useMemo(() => {
     const v = parseFloat(amount.replace(',', '.'));
-    return !Number.isNaN(v) && v > 0 && !isLoading;
-  }, [amount, isLoading]);
+    return Number.isFinite(v) && v > 0 ? v : 0;
+  }, [amount]);
 
-  const isInvoiceTx = (t: Transaction) => t.type === 'inv';
-
-  const txTypeIcon = (t: Transaction) => {
-    switch (t.type) {
-      case 'inv':
-        return printOutline;
-      case 'new':
-        return ellipsisHorizontal;
-      case 'income':
-        return arrowDown;
-      case 'expense':
-        return arrowUp;
-      default:
-        return ellipsisHorizontal;
-    }
-  };
-
-  const txTypeIconClass = (t: Transaction) => {
-    switch (t.type) {
-      case 'inv':
-        return walletStyles.txIconInv;
-      case 'new':
-        return walletStyles.txIconPending;
-      case 'income':
-        return walletStyles.txIconIncome;
-      case 'expense':
-        return walletStyles.txIconExpense;
-      default:
-        return walletStyles.txIconNeutral;
-    }
-  };
+  const canPay = amountNumber > 0 && !isLoading;
 
   const handleOpenInvoicePdf = async (invoiceId: string) => {
     if (invoiceLoadingId !== null) return;
@@ -138,15 +193,14 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
   };
 
   const handlePay = async (method: 'card' | 'sbp') => {
-    const v = parseFloat(amount.replace(',', '.'));
-    if (!v || Number.isNaN(v) || v <= 0) return;
+    if (amountNumber <= 0) return;
 
     setPayLoading(method);
     try {
       const res = await set_payment({
         type: 1,
-        amount: v,
-        description: `Пополнение лицевого счета ${user?.id || ''}`.trim()
+        amount: amountNumber,
+        description: `Пополнение лицевого счета ${user?.id || ''}`.trim(),
       });
 
       if (!res?.success) {
@@ -181,8 +235,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
   };
 
   const handleCreateInvoice = async () => {
-    const v = parseFloat(amount.replace(',', '.'));
-    if (!v || Number.isNaN(v) || v <= 0) return;
+    if (amountNumber <= 0) return;
 
     setInvoiceLoading(true);
     try {
@@ -192,9 +245,17 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
         payment_due: '10 дней',
         payment_purpose: `Пополнение счета от ${new Date().toLocaleDateString()}`,
         signer: 'Егоров Д.Н.',
-        total_amount: v,
+        total_amount: amountNumber,
         vat_amount: 0,
-        items: [{ item_name: 'Пополнение баланса', qty: 1, unit: 'шт.', price: v, total: v }]
+        items: [
+          {
+            item_name: 'Пополнение баланса',
+            qty: 1,
+            unit: 'шт.',
+            price: amountNumber,
+            total: amountNumber,
+          },
+        ],
       };
 
       const res = await set_invoice(payload);
@@ -203,7 +264,8 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
         return;
       }
 
-      toast.success('Счет для юр. лиц сформирован');
+      toast.success('Счёт для юр. лиц сформирован — появится в истории');
+      setTxFilter('inv');
       void refreshWallet({ silent: true });
     } finally {
       setInvoiceLoading(false);
@@ -222,100 +284,201 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
         />
       )}
 
-      <div className={walletStyles.financeGrid}>
-        <div className={walletStyles.leftCol}>
-          <section className={walletStyles.balanceCard}>
-            <div className={walletStyles.balanceTop}>
-              <div className={walletStyles.balanceIcon} aria-hidden>
-                <IonIcon icon={walletOutline} />
-              </div>
-              <div>
-                <div className={walletStyles.kicker}>Доступный баланс</div>
-                <div className={walletStyles.balanceValue}>{formattedBalance}</div>
-              </div>
-            </div>
+      {/* Баланс + сводка */}
+      <section className={walletStyles.hero}>
+        <div className={walletStyles.heroMain}>
+          <div className={walletStyles.heroIcon} aria-hidden>
+            <IonIcon icon={walletOutline} />
+          </div>
+          <div className={walletStyles.heroText}>
+            <div className={walletStyles.kicker}>Доступно к оплате</div>
+            <div className={walletStyles.balanceValue}>{formattedBalance}</div>
             <p className={walletStyles.balanceHint}>
-              Средства на счёте для оплаты услуг платформы
+              Лицевой счёт для предоплаты заказов, страховки и услуг платформы
             </p>
-          </section>
+          </div>
+        </div>
 
-          <section className={walletStyles.topUpCard}>
-            <div className={walletStyles.cardHead}>
-              <IonIcon icon={addOutline} className={walletStyles.cardHeadIcon} />
-              <h3 className={walletStyles.cardTitle}>Пополнение</h3>
+        <div className={walletStyles.statGrid}>
+          <div className={walletStyles.statCard}>
+            <span className={walletStyles.statLabel}>Поступления</span>
+            <span className={`${walletStyles.statValue} ${walletStyles.statPositive}`}>
+              {formatMoney(stats.income)}
+            </span>
+          </div>
+          <div className={walletStyles.statCard}>
+            <span className={walletStyles.statLabel}>Списания</span>
+            <span className={`${walletStyles.statValue} ${walletStyles.statNegative}`}>
+              {formatMoney(stats.expense)}
+            </span>
+          </div>
+          <div className={walletStyles.statCard}>
+            <span className={walletStyles.statLabel}>Счета и ожидание</span>
+            <span className={walletStyles.statValue}>
+              {stats.pendingInv}
+              <span className={walletStyles.statUnit}> шт.</span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <div className={walletStyles.financeGrid}>
+        {/* Пополнение */}
+        <section className={walletStyles.topUpCard}>
+          <div className={walletStyles.cardHead}>
+            <div className={walletStyles.cardIcon} aria-hidden>
+              <IonIcon icon={addOutline} />
             </div>
+            <div>
+              <h3 className={walletStyles.cardTitle}>Пополнить счёт</h3>
+              <p className={walletStyles.cardSub}>
+                Укажите сумму и выберите способ оплаты
+              </p>
+            </div>
+          </div>
 
-            <div className={walletStyles.topUpForm}>
-              <label className={walletStyles.fieldLabel}>Сумма, ₽</label>
+          <div className={walletStyles.topUpForm}>
+            <label className={walletStyles.fieldLabel} htmlFor="wallet-amount">
+              Сумма пополнения
+            </label>
+            <div className={walletStyles.amountWrap}>
               <IonInput
+                id="wallet-amount"
                 className={walletStyles.amountInput}
                 inputMode="decimal"
                 value={amount}
                 placeholder="0"
                 onIonChange={(e) => setAmount(String(e.detail.value ?? ''))}
               />
-
-              <div className={walletStyles.quickRow}>
-                {quickAmounts.map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    className={walletStyles.quickChip}
-                    onClick={() => setAmount(String(q))}
-                  >
-                    {q.toLocaleString('ru-RU')} ₽
-                  </button>
-                ))}
-              </div>
-
-              <div className={walletStyles.payButtonsRow}>
-                <IonButton
-                  className={walletStyles.payBtn}
-                  color="primary"
-                  disabled={!canPay || payLoading !== null}
-                  onClick={() => handlePay('card')}
-                >
-                  {payLoading === 'card' ? <IonSpinner name="bubbles" /> : 'Карта'}
-                </IonButton>
-
-                <IonButton
-                  className={walletStyles.payBtn}
-                  color="primary"
-                  disabled={!canPay || payLoading !== null}
-                  onClick={() => handlePay('sbp')}
-                >
-                  {payLoading === 'sbp' ? <IonSpinner name="bubbles" /> : 'СБП'}
-                </IonButton>
-
-                <IonButton
-                  className={walletStyles.payBtn}
-                  fill="outline"
-                  color="primary"
-                  disabled={!canPay || invoiceLoading || payLoading !== null}
-                  onClick={handleCreateInvoice}
-                >
-                  {invoiceLoading ? <IonSpinner name="bubbles" /> : 'Счёт (юр.)'}
-                </IonButton>
-              </div>
-
-              <p className={walletStyles.hintTextCompact}>
-                После оплаты список операций обновится автоматически.
-              </p>
+              <span className={walletStyles.amountCurrency}>₽</span>
             </div>
-          </section>
-        </div>
 
+            <div className={walletStyles.quickRow}>
+              {quickAmounts.map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  className={`${walletStyles.quickChip} ${
+                    amountNumber === q ? walletStyles.quickChipActive : ''
+                  }`}
+                  onClick={() => setAmount(String(q))}
+                >
+                  {q.toLocaleString('ru-RU')} ₽
+                </button>
+              ))}
+            </div>
+
+            <p className={walletStyles.methodsLabel}>Как оплатить</p>
+            <div className={walletStyles.methodList}>
+              <button
+                type="button"
+                className={walletStyles.methodCard}
+                disabled={!canPay || payLoading !== null}
+                onClick={() => void handlePay('card')}
+              >
+                <div className={`${walletStyles.methodIcon} ${walletStyles.methodIconCard}`}>
+                  {payLoading === 'card' ? (
+                    <IonSpinner name="bubbles" />
+                  ) : (
+                    <IonIcon icon={cardOutline} />
+                  )}
+                </div>
+                <div className={walletStyles.methodText}>
+                  <span className={walletStyles.methodTitle}>Банковская карта</span>
+                  <span className={walletStyles.methodDesc}>
+                    Visa, Mastercard, Мир — зачисление сразу после оплаты
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className={walletStyles.methodCard}
+                disabled={!canPay || payLoading !== null}
+                onClick={() => void handlePay('sbp')}
+              >
+                <div className={`${walletStyles.methodIcon} ${walletStyles.methodIconSbp}`}>
+                  {payLoading === 'sbp' ? (
+                    <IonSpinner name="bubbles" />
+                  ) : (
+                    <IonIcon icon={phonePortraitOutline} />
+                  )}
+                </div>
+                <div className={walletStyles.methodText}>
+                  <span className={walletStyles.methodTitle}>СБП</span>
+                  <span className={walletStyles.methodDesc}>
+                    Оплата через приложение вашего банка по QR / ссылке
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className={walletStyles.methodCard}
+                disabled={!canPay || invoiceLoading || payLoading !== null}
+                onClick={() => void handleCreateInvoice()}
+              >
+                <div className={`${walletStyles.methodIcon} ${walletStyles.methodIconInv}`}>
+                  {invoiceLoading ? (
+                    <IonSpinner name="bubbles" />
+                  ) : (
+                    <IonIcon icon={businessOutline} />
+                  )}
+                </div>
+                <div className={walletStyles.methodText}>
+                  <span className={walletStyles.methodTitle}>Счёт для юрлица</span>
+                  <span className={walletStyles.methodDesc}>
+                    Сформируем PDF-счёт — оплатите по реквизитам с расчётного счёта
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {!canPay && (
+              <p className={walletStyles.hintTextCompact}>
+                Введите сумму больше нуля, чтобы выбрать способ оплаты
+              </p>
+            )}
+            {canPay && (
+              <p className={walletStyles.hintTextCompact}>
+                К зачислению: <strong>{formatMoney(amountNumber)}</strong>. История обновится
+                автоматически после оплаты.
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* История */}
         <section className={walletStyles.txCard}>
           <div className={walletStyles.cardHead}>
-            <IonIcon icon={receiptOutline} className={walletStyles.cardHeadIcon} />
-            <div>
-              <h3 className={walletStyles.cardTitle}>Операции</h3>
-              <div className={walletStyles.txCount}>
-                {topUpOperations.length > 0
-                  ? `${topUpOperations.length} записей`
-                  : 'История пуста'}
-              </div>
+            <div className={walletStyles.cardIcon} aria-hidden>
+              <IonIcon icon={receiptOutline} />
             </div>
+            <div>
+              <h3 className={walletStyles.cardTitle}>История операций</h3>
+              <p className={walletStyles.cardSub}>
+                {stats.total > 0
+                  ? `${stats.total} записей · нажмите на счёт, чтобы открыть PDF`
+                  : 'Пополнения, списания и выставленные счета'}
+              </p>
+            </div>
+          </div>
+
+          <div className={walletStyles.filterRow} role="tablist" aria-label="Фильтр операций">
+            {TX_FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                role="tab"
+                aria-selected={txFilter === f.id}
+                className={`${walletStyles.filterChip} ${
+                  txFilter === f.id ? walletStyles.filterChipActive : ''
+                }`}
+                onClick={() => setTxFilter(f.id)}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
 
           {isLoading ? (
@@ -324,15 +487,18 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
             </div>
           ) : (
             <div className={walletStyles.txList}>
-              {topUpOperations.length > 0 ? (
-                topUpOperations.map((t) => {
-                  const inv = isInvoiceTx(t);
+              {filteredOps.length > 0 ? (
+                filteredOps.map((t) => {
+                  const inv = t.type === 'inv';
+                  const meta = txMeta(t);
                   return (
                     <div
                       key={t.id}
                       role={inv ? 'button' : undefined}
                       tabIndex={inv ? 0 : undefined}
-                      className={`${walletStyles.txItem} ${inv ? walletStyles.txItemInvClickable : ''}`}
+                      className={`${walletStyles.txItem} ${
+                        inv ? walletStyles.txItemInvClickable : ''
+                      }`}
                       onClick={inv ? () => void handleOpenInvoicePdf(t.id) : undefined}
                       onKeyDown={
                         inv
@@ -351,21 +517,31 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
                             <IonSpinner name="bubbles" className={walletStyles.txRowSpinner} />
                           ) : (
                             <IonIcon
-                              icon={txTypeIcon(t)}
-                              className={`${walletStyles.txTypeIcon} ${txTypeIconClass(t)}`}
+                              icon={meta.icon}
+                              className={`${walletStyles.txTypeIcon} ${meta.iconClass}`}
                             />
                           )}
                         </div>
                         <div className={walletStyles.txLeft}>
-                          <div className={walletStyles.txTitle}>{t.title}</div>
-                          <div className={walletStyles.txDate}>{t.date}</div>
+                          <div className={walletStyles.txTitleRow}>
+                            <span className={walletStyles.txTitle}>{t.title}</span>
+                            <span className={`${walletStyles.txBadge} ${meta.badgeClass}`}>
+                              {meta.badge}
+                            </span>
+                          </div>
+                          <div className={walletStyles.txDate}>
+                            {t.date}
+                            {inv ? ' · Открыть счёт' : ''}
+                          </div>
                         </div>
                         <div className={walletStyles.txRight}>
                           <div
                             className={
                               t.amount > 0
                                 ? walletStyles.txAmountPositive
-                                : walletStyles.txAmountNegative
+                                : t.amount < 0 || t.type === 'expense'
+                                  ? walletStyles.txAmountNegative
+                                  : walletStyles.txAmountNeutral
                             }
                           >
                             {t.amount > 0 ? '+' : ''}
@@ -373,11 +549,6 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
                           </div>
                         </div>
                       </div>
-                      {inv && (
-                        <p className={walletStyles.txInvoiceHint}>
-                          Нажмите, чтобы открыть счёт на оплату
-                        </p>
-                      )}
                     </div>
                   );
                 })
@@ -386,8 +557,28 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack: _onBack, initial
                   <div className={walletStyles.emptyIcon} aria-hidden>
                     <IonIcon icon={receiptOutline} />
                   </div>
-                  <p>Операций пока нет</p>
-                  <span>Пополните баланс — история появится здесь</span>
+                  <p>
+                    {txFilter === 'all'
+                      ? 'Операций пока нет'
+                      : 'Нет операций в этом фильтре'}
+                  </p>
+                  <span>
+                    {txFilter === 'all'
+                      ? 'Пополните баланс слева — запись появится здесь'
+                      : 'Выберите другой фильтр или пополните счёт'}
+                  </span>
+                  {txFilter === 'all' && (
+                    <IonButton
+                      fill="outline"
+                      color="primary"
+                      className={walletStyles.emptyCta}
+                      onClick={() => {
+                        document.getElementById('wallet-amount')?.focus();
+                      }}
+                    >
+                      Перейти к пополнению
+                    </IonButton>
+                  )}
                 </div>
               )}
             </div>

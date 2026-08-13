@@ -44,6 +44,43 @@ body {
   }
 }
 
+/* Чаты: мобильно — список ИЛИ переписка; десктоп — два столбца */
+.web-chats-layout {
+  display: flex;
+  width: 100%;
+  min-height: calc(100vh - 160px);
+  height: calc(100vh - 160px);
+  overflow: hidden;
+}
+
+.web-chats-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.web-chats-main {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.web-chats-open .web-chats-sidebar {
+  display: none;
+}
+
+.web-chats-open .web-chats-main {
+  display: flex;
+}
+
+.web-chats-empty {
+  display: none;
+}
+
 @media (min-width: 1024px) {
   /* Лента / списки — на всю ширину панели (2 колонки карточек) */
   .web-list-layout {
@@ -54,19 +91,99 @@ body {
     max-width: none;
   }
 
+  .web-vehicles-layout {
+    max-width: 800px;
+    width: 100%;
+  }
+
   .web-chats-layout {
-    max-width: 960px;
-    min-height: calc(100vh - var(--gvr-header-height) - 48px);
+    max-width: none;
+    width: 100%;
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    min-height: calc(100vh - var(--gvr-header-height) - 120px);
+    height: calc(100vh - var(--gvr-header-height) - 120px);
+    max-height: calc(100vh - var(--gvr-header-height) - 100px);
+    border: 1px solid var(--gvr-border);
+    border-radius: var(--gvr-radius-lg);
+    background: var(--gvr-surface);
+    box-shadow: var(--gvr-shadow-sm);
+    overflow: hidden;
+  }
+
+  .web-chats-sidebar {
+    display: flex !important;
+    flex-direction: column;
+    width: min(360px, 34%);
+    min-width: 280px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--gvr-border);
+    background: var(--gvr-surface);
+    min-height: 0;
+  }
+
+  .web-chats-main {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    background: var(--gvr-bg);
   }
 
   .web-chats-layout .pageRoot,
   .web-chats-layout .chat-container {
-    min-height: 520px;
+    min-height: 0;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .web-chats-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 6px;
+    color: var(--gvr-text-muted);
+    text-align: center;
+    padding: 24px;
+  }
+
+  .web-chats-empty-icon {
+    font-size: 48px;
+    opacity: 0.45;
+    margin-bottom: 8px;
+  }
+
+  .web-chats-empty p {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 650;
+    color: var(--gvr-text-secondary);
+  }
+
+  .web-chats-empty span {
+    font-size: 13px;
+  }
+
+  .web-chats-layout .chat-back-mobile-only {
+    display: none !important;
+  }
+
+  /* На десктопе «Назад» не нужен — список всегда слева */
+  .web-chats-layout .chat-page-header [class*='navButtonLeft'] {
+    visibility: hidden;
+    pointer-events: none;
   }
 
   .settingsContainer,
   .settings-container {
-    max-width: 720px;
+    max-width: 800px;
   }
 
   ion-page {

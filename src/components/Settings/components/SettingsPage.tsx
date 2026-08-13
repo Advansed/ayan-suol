@@ -1,11 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { IonIcon, IonToggle, IonButton } from '@ionic/react';
 import {
   personOutline,
-  businessOutline,
   carOutline,
   checkmarkCircleOutline,
-  walletOutline,
   documentTextOutline,
   notificationsOutline,
   volumeHighOutline,
@@ -15,53 +13,27 @@ import {
   logOutOutline,
   chevronForwardOutline,
 } from 'ionicons/icons';
-import { WizardHeader } from '../../Header/WizardHeader';
 import { useLogin } from '../../../Store/useLogin';
 import { useProfile } from '../../Profile/useProfile';
 import { useHistory } from 'react-router-dom';
 import styles from '../Settings.module.css';
 import { SettingsAgreementsSection } from './SettingsAgreementsSection';
-import { useWallet } from '../hooks/useWallet';
 
 export interface SettingsPageProps {
-  onOrganizationClick?: () => void;
-  onTransportClick?: () => void;
-  onWalletClick?: () => void;
   onToggleClick?: () => void;
   onBack?: () => void;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
-  onOrganizationClick,
-  onTransportClick,
-  onWalletClick,
   onToggleClick,
-  onBack
 }) => {
   const { logout } = useLogin();
-  const { user_type, companyData, transportData } = useProfile();
+  const { user_type } = useProfile();
   const history = useHistory();
-
-  const { accountData, isLoading: accountLoading, transactions, load } = useWallet();
-
-  const loadedRef = useRef(false);
-  useEffect(() => {
-    if (loadedRef.current) return;
-    loadedRef.current = true;
-    load();
-  }, [load]);
 
   const [pushNotifications, setPushNotifications] = useState(true);
   const [sound, setSound] = useState(true);
   const [vibration, setVibration] = useState(true);
-
-  const handleMenuClick = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      history.goBack();
-    }
-  };
 
   const handleLogout = () => {
     logout();
@@ -74,185 +46,74 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     }
   };
 
-  const handleOrganizationClick = () => {
-    if (onOrganizationClick) {
-      onOrganizationClick();
-    }
-  };
-
-  const handleTransportClick = () => {
-    if (onTransportClick) {
-      onTransportClick();
-    }
-  };
-
-  const handleWalletClick = () => {
-    if (onWalletClick) onWalletClick();
-  };
-
-  const organizationSubtext =
-    companyData?.name?.trim() ||
-    companyData?.inn ||
-    'Указать реквизиты';
-
-  const transportSubtext = transportData
-    ? [transportData.license_plate || transportData.number, transportData.transport_type || transportData.type]
-        .filter(Boolean)
-        .join(' · ') || 'Транспорт'
-    : 'Добавить транспорт';
-
-  const balanceText = useMemo(() => {
-    if (!accountData) return '—';
-    if (accountLoading) return 'Загрузка...';
-    try {
-      return accountData.balance.toLocaleString('ru-RU', {
-        style: 'currency',
-        currency: accountData.currency || 'RUB',
-        maximumFractionDigits: 0
-      });
-    } catch {
-      return `${accountData.balance} ${accountData.currency || 'RUB'}`;
-    }
-  }, [accountData, accountLoading]);
-
-  const transactionsText = useMemo(() => {
-    if (!transactions) return '—';
-    if (transactions.length === 0) return 'Пока нет транзакций';
-    return `${transactions.length} операций`;
-  }, [transactions]);
-
   return (
-    <div className={styles.settingsContainer}>
-      <WizardHeader title="Настройки" onMenu={handleMenuClick} />
-
-      <div className={styles.content}>
-        {/* Секция: Аккаунт */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <IonIcon icon={businessOutline} className={styles.sectionIcon} />
-            <h3 className={styles.sectionTitle}>Аккаунт</h3>
-          </div>
-
-          <div className={styles.settingsList}>
-            <div className={styles.settingItem} onClick={handleOrganizationClick}>
-              <IonIcon icon={businessOutline} className={styles.settingIcon} color="primary" />
-              <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Организация</span>
-                <span className={styles.settingSubtext}>{organizationSubtext}</span>
-              </div>
-              <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
+    <div className={styles.content}>
+        <section className={styles.section}>
+          <div className={styles.cardHead}>
+            <div className={styles.cardIcon} aria-hidden>
+              <IonIcon icon={personOutline} />
             </div>
-
-            {user_type === 2 && (
-              <div className={styles.settingItem} onClick={handleTransportClick}>
-                <IonIcon icon={carOutline} className={styles.settingIcon} color="primary" />
-                <div className={styles.settingContent}>
-                  <span className={styles.settingLabel}>Транспорт</span>
-                  <span className={styles.settingSubtext}>{transportSubtext}</span>
-                </div>
-                <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
-              </div>
-            )}
-
-            <div className={styles.settingItem}>
-              <IonIcon icon={checkmarkCircleOutline} className={styles.settingIconVerified} />
-              <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Подтверждённый аккаунт</span>
-                <span className={styles.settingSubtext}>Аккаунт верифицирован</span>
-              </div>
+            <div>
+              <h3 className={styles.cardTitle}>Режим работы</h3>
+              <p className={styles.cardSub}>Заказчик или водитель</p>
             </div>
           </div>
-        </div>
 
-        {/* Секция: Режим работы */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <IonIcon icon={personOutline} className={styles.sectionIcon} />
-            <h3 className={styles.sectionTitle}>Режим работы</h3>
+          <div className={styles.verifiedBadge}>
+            <IonIcon icon={checkmarkCircleOutline} />
+            Аккаунт подтверждён
           </div>
-          <p className={styles.sectionDescription}>
-            Переключение между ролями заказчика и водителя
-          </p>
-          <div className={styles.roleSwitcher}>
-            <div className={styles.roleContainer}>
-              <div className={`${styles.roleItem} ${user_type === 1 ? styles.roleActive : ''}`}>
-                <IonIcon icon={personOutline} className={styles.roleIcon} />
-                <span className={styles.roleText}>Заказчик</span>
-              </div>
-              <div className={styles.roleSeparator}></div>
-              <div className={`${styles.roleItem} ${user_type === 2 ? styles.roleActive : ''}`}>
-                <IonIcon icon={phonePortrait} className={styles.roleIcon} />
-                <span className={styles.roleText}>Водитель</span>
-              </div>
-            </div>
-            <IonToggle
-              checked={user_type === 2}
-              onIonChange={() => handleToggle()}
-              className={styles.toggle}
-            />
+
+          <div className={styles.roleSwitcher} role="radiogroup" aria-label="Режим работы">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={user_type === 1}
+              className={`${styles.roleItem} ${user_type === 1 ? styles.roleActive : ''}`}
+              onClick={() => {
+                if (user_type !== 1) handleToggle();
+              }}
+            >
+              <IonIcon icon={personOutline} className={styles.roleIcon} />
+              <span className={styles.roleText}>Заказчик</span>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={user_type === 2}
+              className={`${styles.roleItem} ${user_type === 2 ? styles.roleActive : ''}`}
+              onClick={() => {
+                if (user_type !== 2) handleToggle();
+              }}
+            >
+              <IonIcon icon={carOutline} className={styles.roleIcon} />
+              <span className={styles.roleText}>Водитель</span>
+            </button>
           </div>
           <p className={styles.instructionText}>
             {user_type === 1
-              ? 'Вы работаете в режиме заказчика. Можете создавать заказы и выбирать водителей.'
-              : 'Вы работаете в режиме водителя. Можете просматривать и принимать заказы.'}
+              ? 'Создаёте заказы и выбираете водителей.'
+              : 'Смотрите заказы и принимаете предложения.'}
           </p>
-        </div>
+        </section>
 
-        {/* Секция: Мой кошелёк */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <IonIcon icon={walletOutline} className={styles.sectionIcon} />
-            <h3 className={styles.sectionTitle}>Мой кошелёк</h3>
-          </div>
-
-          <div className={styles.settingsList}>
-            <div className={styles.settingItem} onClick={handleWalletClick}>
-              <IonIcon icon={walletOutline} className={styles.settingIcon} />
-              <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Баланс счёта</span>
-                <span className={styles.settingSubtext}>{balanceText}</span>
-              </div>
-              <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
+        <section className={styles.section}>
+          <div className={styles.cardHead}>
+            <div className={styles.cardIcon} aria-hidden>
+              <IonIcon icon={notificationsOutline} />
             </div>
-
-            <div className={styles.settingItem} onClick={handleWalletClick}>
-              <IonIcon icon={documentTextOutline} className={styles.settingIcon} />
-              <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>История транзакций</span>
-                <span className={styles.settingSubtext}>{transactionsText}</span>
-              </div>
-              <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
+            <div>
+              <h3 className={styles.cardTitle}>Уведомления</h3>
+              <p className={styles.cardSub}>Push, звук и вибрация</p>
             </div>
           </div>
-        </div>
 
-        {/* Секция: пользовательское соглашение и маркетинг (ProfileOld Agreements) */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <IonIcon icon={documentTextOutline} className={styles.sectionIcon} />
-            <h3 className={styles.sectionTitle}>Согласия</h3>
-          </div>
-          <p className={styles.sectionDescription}>
-            Пользовательское соглашение, документы к нему и согласие на рекламные рассылки
-          </p>
-          <SettingsAgreementsSection />
-        </div>
-
-        {/* Секция: Уведомления */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <IonIcon icon={notificationsOutline} className={styles.sectionIcon} />
-            <h3 className={styles.sectionTitle}>Уведомления</h3>
-          </div>
-          <p className={styles.sectionDescription}>
-            Управление способами получения уведомлений
-          </p>
           <div className={styles.settingsList}>
             <div className={styles.settingItem}>
               <IonIcon icon={notificationsOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Push-уведомления</span>
-                <span className={styles.settingSubtext}>Уведомления в приложении</span>
+                <span className={styles.settingLabel}>Push</span>
+                <span className={styles.settingSubtext}>В приложении</span>
               </div>
               <IonToggle
                 checked={pushNotifications}
@@ -264,7 +125,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <IonIcon icon={volumeHighOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
                 <span className={styles.settingLabel}>Звук</span>
-                <span className={styles.settingSubtext}>Звуковые уведомления</span>
               </div>
               <IonToggle
                 checked={sound}
@@ -276,7 +136,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <IonIcon icon={phonePortrait} className={styles.settingIcon} />
               <div className={styles.settingContent}>
                 <span className={styles.settingLabel}>Вибрация</span>
-                <span className={styles.settingSubtext}>Вибрация при уведомлениях</span>
               </div>
               <IonToggle
                 checked={vibration}
@@ -285,14 +144,19 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               />
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Секция: Безопасность */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <IonIcon icon={lockClosedOutline} className={styles.sectionIcon} />
-            <h3 className={styles.sectionTitle}>Безопасность</h3>
+        <section className={styles.section}>
+          <div className={styles.cardHead}>
+            <div className={styles.cardIcon} aria-hidden>
+              <IonIcon icon={lockClosedOutline} />
+            </div>
+            <div>
+              <h3 className={styles.cardTitle}>Безопасность</h3>
+              <p className={styles.cardSub}>Пароль и устройства</p>
+            </div>
           </div>
+
           <div className={styles.settingsList}>
             <div className={styles.settingItem}>
               <IonIcon icon={lockClosedOutline} className={styles.settingIcon} />
@@ -309,16 +173,27 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Кнопка выхода */}
+        <section className={`${styles.section} ${styles.spanFull}`}>
+          <div className={styles.cardHead}>
+            <div className={styles.cardIcon} aria-hidden>
+              <IonIcon icon={documentTextOutline} />
+            </div>
+            <div>
+              <h3 className={styles.cardTitle}>Согласия</h3>
+              <p className={styles.cardSub}>Документы и рекламные рассылки</p>
+            </div>
+          </div>
+          <SettingsAgreementsSection />
+        </section>
+
         <div className={styles.logoutSection}>
           <IonButton color="danger" className={styles.logoutButton} onClick={handleLogout}>
             <IonIcon icon={logOutOutline} slot="start" />
             Выйти из аккаунта
           </IonButton>
         </div>
-      </div>
     </div>
   );
 };

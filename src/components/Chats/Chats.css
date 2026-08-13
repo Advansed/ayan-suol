@@ -2,19 +2,19 @@
 .chat-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    height: 50vh; /* Поддержка dynamic viewport */
-    background-color: #f5f5f5;
+    height: 100%;
+    min-height: 0;
+    background-color: var(--gvr-bg, #f0f3f8);
 }
 
 @media (min-width: 1024px) {
   .chat-container {
-    height: calc(100vh - var(--gvr-header-height, 64px) - 64px);
-    min-height: 480px;
-    border: 1px solid var(--gvr-border, #e6ebf2);
-    border-radius: var(--gvr-radius-lg, 16px);
+    height: 100%;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
     overflow: hidden;
-    background: var(--gvr-surface, #fff);
+    background: var(--gvr-bg, #f0f3f8);
   }
 
   .chat-header {
@@ -30,6 +30,8 @@
     padding: 0;
     flex-shrink: 0;
     box-sizing: border-box;
+    border-bottom: 1px solid var(--gvr-border, #e6ebf2);
+    background: var(--gvr-surface, #fff);
 }
 
 .chat-page-content {

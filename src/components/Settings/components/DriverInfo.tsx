@@ -2,16 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { IonButton, IonIcon } from '@ionic/react';
 import { cameraOutline, imageOutline, carOutline } from 'ionicons/icons';
 import { TransportData } from '../../../Store/transportStore';
+import { resolveImageSrc } from '../../../utils/fileUpload';
 import styles from './TransportPage.module.css';
 
 interface DriverInfoProps {
   transportData: TransportData | null;
+  photoLoading?: boolean;
   onSave: (data: Partial<TransportData>) => Promise<void>;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const DriverInfo: React.FC<DriverInfoProps> = ({
   transportData,
+  photoLoading = false,
   onSave,
   onImageUpload,
 }) => {
@@ -211,7 +214,7 @@ export const DriverInfo: React.FC<DriverInfoProps> = ({
           <div className={styles.photoFrame}>
             {transportData?.image ? (
               <img
-                src={transportData.image}
+                src={resolveImageSrc(transportData.image)}
                 alt="Фото транспорта"
                 className={styles.photoImg}
               />
@@ -227,23 +230,29 @@ export const DriverInfo: React.FC<DriverInfoProps> = ({
           <div className={styles.uploadBlock}>
             <input
               type="file"
-              accept="image/png,image/jpeg,image/jpg"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
               onChange={onImageUpload}
               id="transport-photo-upload"
               className={styles.fileInput}
+              disabled={photoLoading}
             />
             <IonButton
               color="primary"
               fill="outline"
               className={styles.uploadBtn}
+              disabled={photoLoading}
               onClick={() =>
                 document.getElementById('transport-photo-upload')?.click()
               }
             >
               <IonIcon icon={cameraOutline} slot="start" />
-              {transportData?.image ? 'Заменить фото' : 'Загрузить фото'}
+              {photoLoading
+                ? 'Загрузка…'
+                : transportData?.image
+                  ? 'Заменить фото'
+                  : 'Загрузить фото'}
             </IonButton>
-            <p className={styles.uploadInfo}>PNG или JPG, не более 12 МБ</p>
+            <p className={styles.uploadInfo}>PNG, JPG или WebP, не более 12 МБ</p>
           </div>
         </section>
       </div>

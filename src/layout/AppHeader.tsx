@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Bell, Menu, Search, X } from 'lucide-react';
 import { RoleToggle } from './RoleToggle';
+import { resolveImageSrc } from '../utils/fileUpload';
 import styles from './AppHeader.module.css';
 
 type AppHeaderProps = {
@@ -83,7 +84,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           title={userName || 'Профиль'}
         >
           {userImage ? (
-            <img src={userImage} alt="" />
+            <img src={resolveImageSrc(userImage)} alt="" />
           ) : (
             <span>{initial}</span>
           )}

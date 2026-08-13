@@ -62,7 +62,7 @@ export const HomePage: React.FC = () => {
           ? Boolean(transport?.name)
           : Boolean(company?.name || company?.inn),
         icon: MapPin,
-        path: isCarrier ? '/profile' : '/settings',
+        path: '/profile',
       },
     ];
     return items.filter((i) => !i.roles || i.roles.includes(userType));

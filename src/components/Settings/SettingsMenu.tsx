@@ -4,7 +4,6 @@ import {
   personOutline, 
   phonePortraitOutline, 
   checkmarkCircleOutline,
-  walletOutline,
   documentTextOutline,
   moonOutline,
   languageOutline,
@@ -26,7 +25,7 @@ import styles from './Settings.module.css';
 
 export const SettingsMenu: React.FC = () => {
   const { user, logout } = useLogin();
-  const { user_type } = useProfile();
+  const { user_type, setUser } = useProfile();
   const history = useHistory();
 
   const [darkMode, setDarkMode] = useState(false);
@@ -37,6 +36,12 @@ export const SettingsMenu: React.FC = () => {
 
   const handleMenuClick = () => {
     history.goBack();
+  };
+
+  const handleRoleToggle = (nextType: 1 | 2) => {
+    if (user_type !== nextType) {
+      setUser({ user_type: nextType });
+    }
   };
 
   const handleLogout = () => {
@@ -97,58 +102,33 @@ export const SettingsMenu: React.FC = () => {
           <p className={styles.sectionDescription}>
             Переключение между ролями заказчика и водителя
           </p>
-          <div className={styles.roleSwitcher}>
-            <div className={styles.roleContainer}>
-              <div className={`${styles.roleItem} ${user_type === 1 ? styles.roleActive : ''}`}>
-                <IonIcon icon={personOutline} className={styles.roleIcon} />
-                <span className={styles.roleText}>Заказчик</span>
-              </div>
-              <div className={styles.roleSeparator}></div>
-              <div className={`${styles.roleItem} ${user_type === 2 ? styles.roleActive : ''}`}>
-                <IonIcon icon={phonePortrait} className={styles.roleIcon} />
-                <span className={styles.roleText}>Водитель</span>
-              </div>
-            </div>
-            <IonToggle
-              checked={user_type === 2}
-              onIonChange={(e) => {
-                history.push('/settings');
-              }}
-              className={styles.toggle}
-            />
+          <div className={styles.roleSwitcher} role="radiogroup" aria-label="Режим работы">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={user_type === 1}
+              className={`${styles.roleItem} ${user_type === 1 ? styles.roleActive : ''}`}
+              onClick={() => handleRoleToggle(1)}
+            >
+              <IonIcon icon={personOutline} className={styles.roleIcon} />
+              <span className={styles.roleText}>Заказчик</span>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={user_type === 2}
+              className={`${styles.roleItem} ${user_type === 2 ? styles.roleActive : ''}`}
+              onClick={() => handleRoleToggle(2)}
+            >
+              <IonIcon icon={phonePortrait} className={styles.roleIcon} />
+              <span className={styles.roleText}>Водитель</span>
+            </button>
           </div>
           <p className={styles.instructionText}>
-            {user_type === 1 
-              ? "Вы работаете в режиме заказчика. Можете создавать заказы и выбирать водителей."
-              : "Вы работаете в режиме водителя. Можете просматривать и принимать заказы."}
+            {user_type === 1
+              ? 'Вы работаете в режиме заказчика. Можете создавать заказы и выбирать водителей.'
+              : 'Вы работаете в режиме водителя. Можете просматривать и принимать заказы.'}
           </p>
-        </div>
-
-        {/* Секция: Мой кошелёк */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <IonIcon icon={walletOutline} className={styles.sectionIcon} />
-            <h3 className={styles.sectionTitle}>Мой кошелёк</h3>
-          </div>
-
-          <div className={styles.settingsList}>
-            <div className={styles.settingItem}>
-              <IonIcon icon={walletOutline} className={styles.settingIcon} />
-              <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Баланс счёта</span>
-                <span className={styles.settingSubtext}>125 450 ₽</span>
-              </div>
-              <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
-            </div>
-
-            <div className={styles.settingItem}>
-              <IonIcon icon={documentTextOutline} className={styles.settingIcon} />
-              <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>История транзакций</span>
-              </div>
-              <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
-            </div>
-          </div>
         </div>
 
         {/* Секция: Внешний вид */}

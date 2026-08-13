@@ -414,7 +414,7 @@ export function Chats(props: ChatsProps) {
         <div className="chat-container">
             <div className="chat-page-header">
                 <WizardHeader
-                    title={userName}
+                    title={userName || 'Чат'}
                     onBack={handleBack}
                     onRefresh={loadChatMessages}
                 />
