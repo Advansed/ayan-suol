@@ -170,6 +170,36 @@ export const uploadOrderPhoto = async (
 };
 
 /**
+ * Фото транспорта: ключ {userId}/profile/transport.{ext}
+ */
+export const uploadTransportPhoto = async (
+  imageFile: string | File
+): Promise<{ filePath: string; signUrl?: string }> => {
+  const userId = loginGetters.getUserId();
+  if (!userId) {
+    throw new Error('Нет идентификатора пользователя');
+  }
+  const ext = getImageExtension(imageFile);
+  const key = `${userId}/profile/transport.${ext}`;
+  return uploadFileToDocs(imageFile, key);
+};
+
+/**
+ * Фото профиля: ключ {userId}/profile/avatar.{ext}
+ */
+export const uploadProfilePhoto = async (
+  imageFile: string | File
+): Promise<{ filePath: string; signUrl?: string }> => {
+  const userId = loginGetters.getUserId();
+  if (!userId) {
+    throw new Error('Нет идентификатора пользователя');
+  }
+  const ext = getImageExtension(imageFile);
+  const key = `${userId}/profile/avatar.${ext}`;
+  return uploadFileToDocs(imageFile, key);
+};
+
+/**
  * URL для просмотра приватного файла через getFotos.
  */
 export const getFotosUrl = (filename: string, token?: string): string => {

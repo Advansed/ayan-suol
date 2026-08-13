@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useLoginStore } from '../Store/loginStore';
 import { useProfile } from '../components/Settings/useProfile';
 import { useIsDesktop } from '../hooks/useBreakpoint';
@@ -16,7 +16,6 @@ type AppShellProps = {
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const isDesktop = useIsDesktop();
   const location = useLocation();
-  const history = useHistory();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { name, image, user_type } = useLoginStore();
   const { setUser } = useProfile();
@@ -24,9 +23,6 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const handleRoleChange = (nextType: number) => {
     if (nextType === user_type) return;
     setUser({ user_type: nextType });
-    if (nextType === 1 && location.pathname === '/feed') {
-      history.replace('/orders');
-    }
   };
 
   const closeDrawer = () => setDrawerOpen(false);

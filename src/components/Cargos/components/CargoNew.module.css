@@ -1,10 +1,19 @@
-/* CargoNew — экран добавления груза, мобильный ~420px */
+/* CargoNew — создание и редактирование заказа: 2 столбца по 800px, по центру */
 
 .container {
   background-color: #fff;
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.header {
+  width: 100%;
+  max-width: calc(800px * 2 + 16px);
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .topBar {
@@ -41,10 +50,16 @@
 }
 
 .content {
-  padding: 0 0.75em;
-  padding-bottom: 2em;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 0 0.75em 2em;
   flex: 1;
   overflow-y: auto;
+  width: 100%;
+  max-width: calc(800px * 2 + 16px);
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .section {
@@ -52,7 +67,12 @@
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 12px;
   padding: 1em;
-  margin-bottom: 1em;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.fullSpan {
+  grid-column: 1 / -1;
 }
 
 .sectionTitle {
@@ -222,6 +242,13 @@
   min-height: 3em;
   font-weight: 600;
   margin: 0;
+}
+
+@media (min-width: 768px) {
+  .content {
+    grid-template-columns: repeat(2, minmax(0, 800px));
+    justify-content: center;
+  }
 }
 
 @media (max-width: 360px) {

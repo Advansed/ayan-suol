@@ -1,185 +1,103 @@
-/**
- * Компонент карточки работы (новый дизайн по Figma)
- */
-
 import React from 'react';
-import { IonIcon } from '@ionic/react';
-import { locationOutline } from 'ionicons/icons';
 import { WorkInfo, WorkStatus } from '../types';
-import { workFormatters, workStatusUtils } from '../utils';
+import { workFormatters } from '../utils';
+import { normalizeWorkStatus } from '../statusFlow';
 import styles from './WorkCard.module.css';
 
 interface WorkCardProps {
-    work: WorkInfo;
-    mode?: 'list' | 'view';
-    onClick?: () => void;
+  work: WorkInfo;
+  mode?: 'list' | 'view';
+  selected?: boolean;
+  onClick?: () => void;
 }
 
-const SURFACE_BY_STATUS: Record<WorkStatus, string> = {
-    [WorkStatus.NEW]: styles.surfaceNew,
-    [WorkStatus.OFFERED]: styles.surfaceOffered,
-    [WorkStatus.TO_LOAD]: styles.surfaceToLoad,
-    [WorkStatus.ON_LOAD]: styles.surfaceOnLoad,
-    [WorkStatus.LOADING]: styles.surfaceLoading,
-    [WorkStatus.LOADED]: styles.surfaceLoaded,
-    [WorkStatus.IN_WORK]: styles.surfaceInWork,
-    [WorkStatus.TO_UNLOAD]: styles.surfaceToUnload,
-    [WorkStatus.UNLOADING]: styles.surfaceUnloading,
-    [WorkStatus.UNLOADED]: styles.surfaceUnloaded,
-    [WorkStatus.COMPLETED]: styles.surfaceCompleted,
-    [WorkStatus.REJECTED]: styles.surfaceRejected,
+export const WorkCard: React.FC<WorkCardProps> = ({ work, selected, onClick }) => {
+  const status = normalizeWorkStatus(work.status);
+  const badge = feedBadge(status);
+  const fromCity = work.address?.city.city || 'Не указано';
+  const toCity = work.destiny?.city.city || 'Не указано';
+  const distance = routeDistanceKm(work);
+  const offers = work.offers?.length ?? 0;
+  const publishedAt = work.publish_date || '';
+  const payment =
+    work.advance > 0 && work.advance >= work.price
+      ? 'Полная предоплата'
+      : work.advance > 0
+        ? 'Наличный расчёт'
+        : 'Безналичный';
+  const bodyType =
+    work.transport && !looksLikeGuid(work.transport) ? work.transport : null;
+
+  return (
+    <button
+      type="button"
+      className={`${styles.feedCard} ${selected ? styles.feedCardSelected : ''}`}
+      onClick={onClick}
+    >
+      <div className={styles.feedTop}>
+        <span className={`${styles.feedBadge} ${badge.className}`}>{badge.label}</span>
+        <span className={styles.feedId}>ЗК-{workFormatters.shortId(work.guid || work.cargo)}</span>
+        <span className={styles.feedPrice}>{workFormatters.currency(work.price)}</span>
+      </div>
+
+      <h3 className={styles.feedTitle}>{work.name || 'Без названия'}</h3>
+      <div className={styles.feedPay}>
+        {payment}
+        {bodyType ? ` · ${bodyType}` : ''}
+      </div>
+
+      <div className={styles.feedRoute}>
+        <span>{fromCity}</span>
+        <span className={styles.feedArrow} aria-hidden>
+          →
+        </span>
+        <span>{toCity}</span>
+        {distance != null && <span className={styles.feedKm}>· {distance} км</span>}
+      </div>
+
+      <div className={styles.feedMeta}>
+        <span>
+          {Number(work.weight) || 0} т · {Number(work.volume) || 0} м³
+        </span>
+        <span className={styles.feedRight}>
+          {publishedAt ? workFormatters.published(publishedAt) : ''}
+          {offers > 0 && <span className={styles.feedOffers}>{offersLabel(offers)}</span>}
+        </span>
+      </div>
+    </button>
+  );
 };
 
-export const WorkCard: React.FC<WorkCardProps> = ({ 
-    work, 
-    mode = 'list',
-    onClick
-}) => {
-    
-    const handleClick = () => {
-        if (onClick) {
-            onClick();
-        }
-    };
+function feedBadge(status: WorkStatus): { label: string; className: string } {
+  if (status === WorkStatus.NEW) return { label: 'Новый', className: styles.badgeNew };
+  if (status === WorkStatus.OFFERED) return { label: 'Торги', className: styles.badgeBids };
+  if (status === WorkStatus.COMPLETED) return { label: 'Завершён', className: styles.badgeDone };
+  if (status === WorkStatus.REJECTED) return { label: 'Отказано', className: styles.badgeAlert };
+  return { label: 'В работе', className: styles.badgeWork };
+}
 
-    // Определяем теги для второй строки
-    const getBottomTags = () => {
-        const tags: Array<{ text: string; className: string }> = [];
-        
-        // Гарантированная оплата (если advance > 0)
-        if (work.advance > 0) {
-            const isFullAdvance = work.advance >= work.price;
-            tags.push({
-                text: 'Гарантированная оплата',
-                className: isFullAdvance ? styles.tagGreen : styles.tagOrange
-            });
-        }
-        
-        // Застраховано (если insurance > 0)
-        if (work.insurance > 0) {
-            const isFullAdvance = work.advance >= work.price;
-            tags.push({
-                text: 'Застраховано',
-                className: isFullAdvance ? styles.tagGreen : styles.tagOrange
-            });
-        }
-        
-        return tags;
-    };
+function offersLabel(count: number): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${count} предложение`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} предложения`;
+  return `${count} предложений`;
+}
 
-    const bottomTags = getBottomTags();
-    const publishedAt = work.publish_date || '';
+function looksLikeGuid(value: string): boolean {
+  return /^[0-9a-f-]{16,}$/i.test(value.trim());
+}
 
-    const surfaceClass = `${styles.cardSurface} ${SURFACE_BY_STATUS[work.status] ?? styles.surfaceNew}`;
-
-    // Режим для списка (новый дизайн)
-    return (
-        <div 
-            className={`${styles.workCard} ${surfaceClass}`}
-            onClick={handleClick}
-            style={{ cursor: onClick ? 'pointer' : 'default' }}
-        >
-            {/* Одна строка: статус, ID, сумма */}
-            <div className={styles.topRow}>
-                <span
-                    className={`${styles.topRowStatus} ${workStatusUtils.getClassName(work.status)}`}
-                >
-                    {work.status}
-                </span>
-                <span className={`${styles.topRowId} fs-08 cl-gray`}>
-                    ID: {workFormatters.shortId(work.guid)}
-                </span>
-                <span className={`${styles.topRowPrice} fs-09 cl-prim`}>
-                    <b>{workFormatters.currency(work.price)}</b>
-                </span>
-            </div>
-
-            {publishedAt && (
-                <div className={styles.publishedRow} title={workFormatters.date(publishedAt)}>
-                    <span className={styles.publishedLabel}>Опубликовано</span>
-                    <span className={styles.publishedValue}>{workFormatters.date(publishedAt)}</span>
-                    {workFormatters.published(publishedAt) !== workFormatters.date(publishedAt) && (
-                        <span className={styles.publishedRel}>{workFormatters.published(publishedAt)}</span>
-                    )}
-                </div>
-            )}
-
-            {/* Вторая строка: теги */}
-            {bottomTags.length > 0 && (
-                <div className={styles.tagsRow}>
-                    {bottomTags.map((tag, index) => (
-                        <span key={index} className={`${styles.tag} ${tag.className}`}>
-                            { tag.text }
-                        </span>
-                    ))}
-                </div>
-            )}
-
-            {/* Название груза */}
-            <div className={styles.cargoName}>
-                <span className={styles.cargoNameText}>
-                    <b className='fs-09'>{work.name}</b>
-                </span>
-            </div>
-
-            {/* Маршрут в две строки, как в дизайне */}
-            <div className={styles.routeSection + ' mt-05'}>
-                {/* Откуда + дата загрузки */}
-                <div className={styles.routeRow}>
-                    <div className={styles.routeLeft}>
-                        <IonIcon icon={locationOutline} className={`${styles.routeIcon} ${styles.routeIconGreen}`} />
-                        <div className={styles.routeTextGroup}>
-                            <span className={styles.routeLabel}>Откуда:</span>
-                            <span className={styles.routeCity}>
-                                {work.address?.city.city || 'Не указано'}
-                            </span>
-                        </div>
-                    </div>
-                    <div className={styles.routeRight}>
-                        <span className={styles.routeDateLabel}>Дата загрузки:</span>
-                        <span className={styles.routeDateValue}>
-                            {workFormatters.date(work.pickup_date || '')}
-                        </span>
-                    </div>
-                </div>
-
-                {/* Куда + дата загрузки (как в макете) */}
-                <div className={styles.routeRow}>
-                    <div className={styles.routeLeft}>
-                        <IonIcon icon={locationOutline} className={`${styles.routeIcon} ${styles.routeIconRed}`} />
-                        <div className={styles.routeTextGroup}>
-                            <span className={styles.routeLabel}>Куда:</span>
-                            <span className={styles.routeCity}>
-                                {work.destiny?.city.city || 'Не указано'}
-                            </span>
-                        </div>
-                    </div>
-                    <div className={styles.routeRight}>
-                        <span className={styles.routeDateLabel}>Дата загрузки:</span>
-                        <span className={styles.routeDateValue}>
-                            {workFormatters.date(work.pickup_date || '')}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Детали груза */}
-            <div className={styles.cargoDetails}>
-                <div className={styles.cargoDetailsTitle}>Детали груза:</div>
-                <div className={styles.cargoDetailsList}>
-                    <div className={styles.cargoDetailItem}>
-                        Вес (т): <span className={styles.cargoDetailValue}>{work.weight}</span>
-                    </div>
-                    <div className={styles.cargoDetailItem}>
-                        Объем (м³): <span className={styles.cargoDetailValue}>{work.volume}</span>
-                    </div>
-                </div>
-                {work.description && (
-                    <div className={styles.cargoDescription}>
-                        {work.description}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
+function routeDistanceKm(work: WorkInfo): number | null {
+  const from = work.address;
+  const to = work.destiny;
+  if (!from?.lat || !from?.lon || !to?.lat || !to?.lon) return null;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(to.lat - from.lat);
+  const dLon = toRad(to.lon - from.lon);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.sin(dLon / 2) ** 2;
+  const km = 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(a)));
+  return km > 0 ? Math.round(km) : null;
+}

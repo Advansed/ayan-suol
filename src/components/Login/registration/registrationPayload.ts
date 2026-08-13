@@ -29,6 +29,31 @@ export type CheckRegistrationPayload = {
   /** Телефон E.164 (исторически поле `code`) */
   code: string
   transport: OtpTransport
+  /** t_users.partner UNIQUEIDENTIFIER NOT NULL */
+  partner: string
+}
+
+const GUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Дефолт, если нет ?partner= / VITE_DEFAULT_PARTNER.
+ * Нулевой GUID процедура часто приводит к NULL → INSERT падает.
+ * Не-нулевой: если ошибка сменится на FK — SQL читает $.partner.
+ */
+export const DEFAULT_PARTNER_GUID = '11111111-1111-1111-1111-111111111111'
+
+export function resolveRegistrationPartner(explicit?: string): string {
+  const candidates = [
+    (explicit || '').trim(),
+    typeof window !== 'undefined'
+      ? (new URLSearchParams(window.location.search).get('partner') || '').trim()
+      : '',
+    typeof window !== 'undefined' ? (localStorage.getItem('gvrs.partner') || '').trim() : '',
+    String(import.meta.env.VITE_DEFAULT_PARTNER || '').trim(),
+  ]
+  const found = candidates.find((value) => GUID_RE.test(value))
+  return found || DEFAULT_PARTNER_GUID
 }
 
 /** Шаг 2 → событие `check_sms` */
@@ -97,6 +122,7 @@ export function buildCheckRegistrationPayload(form: {
   email?: string
   userType?: number | string
   otpTransport?: string
+  partner?: string
 }): CheckRegistrationPayload {
   const fromName = splitFioString(form.name || '')
   const name =
@@ -110,6 +136,15 @@ export function buildCheckRegistrationPayload(form: {
   const userTypeRaw = Number(form.userType)
   const userType = Number.isFinite(userTypeRaw) && userTypeRaw > 0 ? userTypeRaw : 1
 
+  const partner = resolveRegistrationPartner(form.partner)
+  if (typeof window !== 'undefined' && partner !== DEFAULT_PARTNER_GUID) {
+    localStorage.setItem('gvrs.partner', partner)
+  }
+
+  // #region agent log
+  fetch('http://127.0.0.1:7412/ingest/6e96b9fc-4299-494f-9e68-66061b55b1b7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be6ab2'},body:JSON.stringify({sessionId:'be6ab2',runId:'pre-fix',hypothesisId:'B',location:'registrationPayload.ts:build',message:'built payload partner',data:{hasPartner:Boolean(partner),partnerIsGuid:/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(partner),partnerIsDefault:partner===DEFAULT_PARTNER_GUID,hasEnvPartner:Boolean(String(import.meta.env.VITE_DEFAULT_PARTNER||'').trim())},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+
   return {
     name: name.slice(0, 24),
     email: (form.email || '').trim().slice(0, 128),
@@ -119,5 +154,6 @@ export function buildCheckRegistrationPayload(form: {
     userType,
     code: (form.phone || '').trim(),
     transport,
+    partner,
   }
 }

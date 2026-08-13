@@ -129,16 +129,18 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
 
   return (
     <div className={styles.container}>
-      <div className={styles.topBar}>
-        <button type="button" className={styles.backBtn} onClick={onBack}>
-          <ChevronLeft size={20} strokeWidth={2} />
-          {isEdit ? 'К заказу' : 'Мои заказы'}
-        </button>
-      </div>
+      <div className={styles.header}>
+        <div className={styles.topBar}>
+          <button type="button" className={styles.backBtn} onClick={onBack}>
+            <ChevronLeft size={20} strokeWidth={2} />
+            {isEdit ? 'К заказу' : 'Мои заказы'}
+          </button>
+        </div>
 
-      <h1 className={styles.pageTitle}>
-        {isEdit ? 'Редактировать груз' : 'Добавить груз'}
-      </h1>
+        <h1 className={styles.pageTitle}>
+          {isEdit ? 'Редактировать груз' : 'Добавить груз'}
+        </h1>
+      </div>
 
       <div className={styles.content}>
         {/* Информация о грузе */}
@@ -429,7 +431,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
 
 
         <IonButton
-          className = { styles.nextButton }
+          className = { `${styles.nextButton} ${styles.fullSpan}` }
           expand    = "block"
           color     = "primary"
           onClick   = { handleNext }

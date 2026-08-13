@@ -5,6 +5,7 @@ import styles from './PanelFrame.module.css';
 type PanelFrameProps = {
   title: string;
   subtitle?: string;
+  crumb?: string;
   children: React.ReactNode;
   /** Home dashboard: no single white wrapper around everything */
   bare?: boolean;
@@ -16,13 +17,14 @@ type PanelFrameProps = {
 export const PanelFrame: React.FC<PanelFrameProps> = ({
   title,
   subtitle,
+  crumb,
   children,
   bare,
   className,
   actions,
 }) => {
   const userType = useLoginStore((s) => s.user_type);
-  const panelLabel = userType === 2 ? 'Панель перевозчика' : 'Панель заказчика';
+  const panelLabel = crumb || (userType === 2 ? 'Панель перевозчика' : 'Панель заказчика');
 
   return (
     <div className={`${styles.root} ${className || ''}`}>

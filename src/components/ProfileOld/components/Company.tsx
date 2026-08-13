@@ -35,15 +35,6 @@ export const Company: React.FC<CompanyProps> = ({onBack}) => {
         default:    return ''
     }
   }
-  const fromJur = (state : String ) => {
-    switch( state ) {
-        case "Самозанятый":     return 1
-        case 'ИП':              return 2
-        case 'Компания':        return 3
-        default:                return 0
-    }
-  }
-
   const getFormData = (company?: CompanyData | null): PageData => [
     {
       title: 'Основные данные',
@@ -76,7 +67,6 @@ export const Company: React.FC<CompanyProps> = ({onBack}) => {
   const handleSave = (data: PageData) => {
     const formData: CompanyData = {
       guid:                 companyData?.guid,
-      company_type:         fromJur( data[0].data[0].data ),
       name:                 data[0].data[1].data.name,
       short_name:           data[0].data[1].data.short_name,
       basis:                data[0].data[3].data,

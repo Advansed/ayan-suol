@@ -1,20 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { IonCheckbox, IonIcon } from '@ionic/react';
-import { documentTextOutline } from 'ionicons/icons';
-import { WizardHeader } from '../../Header/WizardHeader';
+import { businessOutline } from 'ionicons/icons';
 import { CustomerInfo } from './CustomerInfo';
 import { useProfile } from '../useProfile';
-import styles from '../Settings.module.css';
-import profileStyles from '../../Profile/Profile.module.css';
+import styles from '../../Profile/Profile.module.css';
 import { useAgreements } from '../../ProfileOld/components/Agreements/useAgreements';
 import { EscrowAgreement } from '../../ProfileOld/components/Agreements/Escrow';
 import type { CompanyData } from '../../../Store/companyStore';
 
-export interface OrganizationEditPageProps {
-  onBack: () => void;
-}
-
-export const OrganizationEditPage: React.FC<OrganizationEditPageProps> = ({ onBack }) => {
+export const OrganizationEditPage: React.FC = () => {
   const { companyData, updateCompany } = useProfile();
   const { agreements, toggleAgreement, isLoading } = useAgreements();
   const [isEscrowOpen, setIsEscrowOpen] = useState(false);
@@ -38,8 +32,6 @@ export const OrganizationEditPage: React.FC<OrganizationEditPageProps> = ({ onBa
   const organizationFilled = useMemo(() => isOrganizationFilled(companyData), [companyData]);
 
   useEffect(() => {
-    // Если организация заполнена, считаем пользователя автоматически согласившимся
-    // и делаем галочку обязательной (без возможности снять).
     if (organizationFilled && !agreements.userAgreement && !isLoading) {
       toggleAgreement('userAgreement');
     }
@@ -56,51 +48,65 @@ export const OrganizationEditPage: React.FC<OrganizationEditPageProps> = ({ onBa
     await updateCompany(data);
   };
 
-  return (
-    <div className={styles.settingsContainer}>
-      <WizardHeader title="Организация" onBack={onBack} />
-      <div className={styles.content}>
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <IonIcon icon={documentTextOutline} className={styles.sectionIcon} />
-            <h3 className={styles.sectionTitle}>Договор эскроу</h3>
-          </div>
-
-          <div className={profileStyles.consentBlock}>
-            <div className={profileStyles.checkboxWrapper}>
-              <IonCheckbox
-                checked={agreements.userAgreement}
-                disabled={isLoading || organizationFilled}
-                onIonChange={() => {
-                  if (organizationFilled) return;
-                  toggleAgreement('userAgreement');
-                }}
-              />
-
-              <div className={profileStyles.consentCheckboxText}>
-                <span className={profileStyles.checkboxLabel}>
-                  Согласен(на) с договором эскроу
-                </span>
-                <button
-                  type="button"
-                  className={profileStyles.consentTextLink}
-                  onClick={() => setIsEscrowOpen(true)}
-                >
-                  Открыть договор
-                </button>
-              </div>
-            </div>
-
-            {organizationFilled && (
-              <p className={profileStyles.hintText}>
-                Организация заполнена — согласие автоматически включено и обязательно.
-              </p>
-            )}
-          </div>
+  const escrowConsent = (
+    <div className={`${styles.consentBlock} ${styles.consentBlockTop}`}>
+      <div className={styles.checkboxWrapper}>
+        <IonCheckbox
+          checked={agreements.userAgreement}
+          disabled={isLoading || organizationFilled}
+          onIonChange={() => {
+            if (organizationFilled) return;
+            toggleAgreement('userAgreement');
+          }}
+        />
+        <div className={styles.consentCheckboxText}>
+          <span className={styles.checkboxLabel}>Согласие с договором эскроу</span>
+          <button
+            type="button"
+            className={styles.consentTextLink}
+            onClick={() => setIsEscrowOpen(true)}
+          >
+            Открыть договор
+          </button>
         </div>
-
-        <CustomerInfo companyData={companyData} onSave={handleSaveCompany} />
       </div>
+      {organizationFilled && (
+        <p className={styles.hintText}>
+          После заполнения организации согласие включается автоматически.
+        </p>
+      )}
+    </div>
+  );
+
+  return (
+    <div className={styles.card}>
+      <div className={styles.cardHead}>
+        <div className={styles.cardIcon} aria-hidden>
+          <IonIcon icon={businessOutline} />
+        </div>
+        <div>
+          <h3 className={styles.cardTitle}>Организация</h3>
+          <p className={styles.cardSub}>Реквизиты компании и договор эскроу</p>
+        </div>
+      </div>
+
+      <CustomerInfo
+        embedded
+        companyData={companyData}
+        onSave={handleSaveCompany}
+        consentSlot={escrowConsent}
+        footerSlot={
+          <label className={styles.verifiedRow}>
+            <input
+              type="checkbox"
+              checked={Boolean(companyData?.is_verified)}
+              disabled
+              readOnly
+            />
+            <span>Верифицирован</span>
+          </label>
+        }
+      />
 
       <EscrowAgreement isOpen={isEscrowOpen} onClose={() => setIsEscrowOpen(false)} />
     </div>

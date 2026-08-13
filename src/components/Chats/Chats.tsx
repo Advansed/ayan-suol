@@ -7,8 +7,8 @@ import { chatActions } from "../../Store/chatStore";
 import { loginGetters } from "../../Store/loginStore";
 import { takePicture } from "../Files";
 import { PhotoPreview } from "./PhotoPreview";
-import { WizardHeader } from "../Header/WizardHeader";
 import { resolveImageSrc } from "../../utils/fileUpload";
+import { useChatStore } from "../../Store/chatStore";
 
 interface ChatsProps {
     name: string;
@@ -52,31 +52,12 @@ const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessa
         );
     };
 
-    if (isSent) {
-        return (
-            <div className="flex fl-space mt-05">
-                <div></div>
-                <div className="chat-sent">
-                    <div className="flex fl-space">
-                        <div className="chat-avatar chat-avatar-sent">Я</div>
-                        <div className="chat-time">{message.time}</div>
-                    </div>
-                    {renderContent()}
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="flex fl-space mt-05">
-            <div className="chat-receipt">
-                <div className="flex fl-space">
-                    <div className="chat-avatar chat-avatar-receipt">{userInitials}</div>
-                    <div className="chat-time">{message.time}</div>
-                </div>
+        <div className={`chat-row ${isSent ? 'chat-row-sent' : 'chat-row-in'}`}>
+            <div className={isSent ? 'chat-sent' : 'chat-receipt'}>
                 {renderContent()}
+                {message.time && <div className="chat-time">{message.time}</div>}
             </div>
-            <div></div>
         </div>
     );
 });
@@ -188,21 +169,21 @@ const EmptyState = React.memo(() => {
 });
 
 // Мемоизированный заголовок чата
-const ChatHeader = React.memo(({ onBack, userName, userInitials }: {
+const ChatHeader = React.memo(({ onBack, userName, userInitials, subtitle }: {
     onBack: () => void;
     userName: string;
     userInitials: string;
+    subtitle?: string;
 }) => {
     return (
-        <div className="chat-header">
-            <div className="chat-header-content">
-                <div className="chat-header-back" onClick={onBack}>
-                    <IonIcon icon={arrowBackOutline} />
-                </div>
-                <div className="chat-header-user">
-                    <div className="chat-header-avatar">{userInitials}</div>
-                    <div className="chat-header-name">{userName}</div>
-                </div>
+        <div className="chat-thread-header">
+            <button type="button" className="chat-header-back chat-back-mobile-only" onClick={onBack} aria-label="Назад">
+                <IonIcon icon={arrowBackOutline} />
+            </button>
+            <div className="chat-header-avatar">{userInitials}</div>
+            <div className="chat-header-meta">
+                <div className="chat-header-name">{userName || 'Чат'}</div>
+                {subtitle && <div className="chat-header-sub">{subtitle}</div>}
             </div>
         </div>
     );
@@ -285,20 +266,27 @@ export function Chats(props: ChatsProps) {
     } = useChats();
 
     // Мемоизируем разбор имени
-    const { recipient, cargo, userName, userInitials } = useMemo(() => {
+    const chats = useChatStore((s) => s.chats);
+
+    const { recipient, cargo, userName, userInitials, orderLine } = useMemo(() => {
         const arr       = props.name.split(":");
         const recipient = arr[0] || '';
         const cargo     = arr[1] || '';
         const userName  = decodeURIComponent(arr.slice(2).join(':') || '');
+        const stored = chats.find((c) => c.recipient === recipient && c.cargo === cargo);
+        const cargoName = stored?.cargo_name || '';
+        const orderId = cargo ? `ЗК-${String(cargo).slice(0, 6).toUpperCase()}` : '';
+        const orderLine = orderId && cargoName ? `${orderId} · ${cargoName}` : cargoName || orderId;
+        const initial = (userName || stored?.rec_name || '?').trim().charAt(0).toUpperCase();
 
-        const jarr      = userName.split(" ");
-        let initials    = "";
-        jarr.forEach(elem => {
-            initials = initials + elem.substring(0, 1);
-        });
-        
-        return { recipient, cargo, userName, userInitials: initials };
-    }, [props.name]);
+        return {
+            recipient,
+            cargo,
+            userName: userName || stored?.rec_name || '',
+            userInitials: initial,
+            orderLine,
+        };
+    }, [props.name, chats]);
 
     // Установка текущего чата при монтировании
     useEffect(() => {
@@ -355,10 +343,6 @@ export function Chats(props: ChatsProps) {
     }, [selectedImage]);
     
     // Загрузка сообщений (ручное обновление в шапке)
-    const loadChatMessages = useCallback(() => {
-        loadMessages(recipient, cargo);
-    }, [recipient, cargo, loadMessages]);
-
     // Загрузка при смене чата. loadMessages должен быть стабильным (useChats + useToast), иначе
     // после каждого ответа get_messages эффект срабатывает снова и уходит в цикл emit.
     useEffect(() => {
@@ -412,13 +396,15 @@ export function Chats(props: ChatsProps) {
 
     return (
         <div className="chat-container">
-            <div className="chat-page-header">
-                <WizardHeader
-                    title={userName}
-                    onBack={handleBack}
-                    onRefresh={loadChatMessages}
-                />
-            </div>
+            <ChatHeader
+                onBack={handleBack}
+                userName={userName}
+                userInitials={userInitials}
+                subtitle={orderLine ? `В сети · ${orderLine}` : undefined}
+            />
+            {orderLine && (
+                <div className="chat-order-banner">Заказ {orderLine}</div>
+            )}
 
             <div className="chat-page-content">
                 <div className="chat-body">

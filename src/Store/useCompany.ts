@@ -6,7 +6,8 @@ import { useSocketStore } from './socketStore'
 import { 
   useCompanyStore, 
   companyActions, 
-  CompanyData 
+  CompanyData,
+  toSetCompanyPayload,
 } from './companyStore'
 
 // ============================================
@@ -65,19 +66,27 @@ export const useCompany = () => {
 
     companyActions.setSaving(true)
 
+    const payload = toSetCompanyPayload(data)
+
     once('set_company', (response) => {
       companyActions.setSaving(false)
       
       if (response.success) {
         toast.success('Данные компании сохранены')
-        // Обновляем данные в сторе
-        companyActions.setData(response.data || data)
+        const current = useCompanyStore.getState().data
+        const guid = response.guid || response.data?.guid || payload.guid || current?.guid
+        companyActions.setData({
+          ...(current || {}),
+          ...payload,
+          ...(response.data || {}),
+          guid,
+        })
       } else {
         toast.error(response.message || 'Ошибка сохранения данных')
       }
     })
 
-    emit('set_company', { token, ...data })
+    emit('set_company', { token, ...payload })
     toast.info("Данные компании сохраняются...")
     
   }, [token, isConnected, once, emit, toast])

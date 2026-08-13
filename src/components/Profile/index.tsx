@@ -1,40 +1,51 @@
-import React from 'react';
-import { useHistory } from 'react-router-dom';
-import { WizardHeader } from '../Header/WizardHeader';
+import React, { useState } from 'react';
 import styles from './Profile.module.css';
 import { useProfile } from './useProfile';
 import { GeneralInfo } from '../Settings/components/GeneralInfo';
+import { OrganizationEditPage } from '../Settings/components/OrganizationEditPage';
 import { useLoginStore } from '../../Store/loginStore';
+import { useToast } from '../Toast';
+import { uploadProfilePhoto } from '../../utils/fileUpload';
 
-/** Профиль — только персональные данные. Организация и транспорт — в Настройках. */
+/** Профиль — персональные данные и организация. Транспорт — в /vehicles. */
 export const Profile: React.FC = () => {
-  const history = useHistory();
   const { image, name, phone, email, setUser } = useProfile();
   const personalDataConsent = useLoginStore((s) => s.agreements.personalData);
+  const toast = useToast();
+  const [photoLoading, setPhotoLoading] = useState(false);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!personalDataConsent) {
       e.target.value = '';
       return;
     }
+
     const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.match(/^image\/(png|jpg|jpeg)$/)) {
-        alert('Формат файла должен быть PNG или JPG');
-        return;
-      }
+    e.target.value = '';
+    if (!file) return;
 
-      if (file.size > 12 * 1024 * 1024) {
-        alert('Размер файла не должен превышать 12 МБ');
-        return;
-      }
+    if (!file.type.match(/^image\/(png|jpg|jpeg|webp)$/)) {
+      toast.error('Формат файла должен быть PNG, JPG или WebP');
+      return;
+    }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setUser({ image: base64String });
-      };
-      reader.readAsDataURL(file);
+    if (file.size > 12 * 1024 * 1024) {
+      toast.error('Размер файла не должен превышать 12 МБ');
+      return;
+    }
+
+    setPhotoLoading(true);
+    try {
+      const { filePath } = await uploadProfilePhoto(file);
+      if (!filePath) {
+        throw new Error('Сервер не вернул filePath');
+      }
+      await setUser({ image: filePath });
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Не удалось загрузить фото');
+    } finally {
+      setPhotoLoading(false);
     }
   };
 
@@ -55,17 +66,17 @@ export const Profile: React.FC = () => {
 
   return (
     <div className={styles.profileContainer}>
-      <WizardHeader title="Профиль" onBack={() => history.push('/')} />
-
       <div className={styles.content}>
         <GeneralInfo
           image={image}
           name={name}
           phone={phone}
           email={email}
+          photoLoading={photoLoading}
           onImageUpload={handleImageUpload}
           onSave={handleGeneralInfoSave}
         />
+        <OrganizationEditPage />
       </div>
     </div>
   );

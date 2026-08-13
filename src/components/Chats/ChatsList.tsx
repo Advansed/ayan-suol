@@ -1,65 +1,82 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useHistory } from 'react-router'
-import styles           from './ChatList.module.css'
+import styles from './ChatList.module.css'
 import { useChats } from '../../Store/useChats'
 import { useSocketStore } from '../../Store/socketStore'
-import { WizardHeader } from '../Header/WizardHeader'
 
-// Инициалы из имени
-const getInitials = (name: string): string => {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase()
+const getInitial = (name: string): string => {
+  const letter = (name || '').trim().charAt(0)
+  return letter ? letter.toUpperCase() : '?'
 }
 
-// Мемоизированный элемент чата
-const ChatItem = React.memo(({ chat, onClick }: { 
-  chat: any
-  onClick: () => void 
-}) => (
-  <div className={styles.chatCard} onClick={onClick}>
-    <div className={styles.chatContent}>
-      <div className={styles.chatInfo}>
-        <div className={styles.cargoName}>Груз: {chat.cargo_name}</div>
-        <div className={styles.driverLabel}>Водитель</div>
-        <div className={styles.driverName}>{chat.rec_name}</div>
-        {chat.last_message && (
-          <div className={styles.lastMessage}>{chat.last_message}</div>
-        )}
-      </div>
-      <div className={styles.chatMeta}>
-        <div className={styles.avatar}>
-          {getInitials(chat.rec_name)}
-        </div>
-        {chat.unread_count && chat.unread_count > 0 && (
-          <div className={styles.unreadBadge}>{chat.unread_count}</div>
-        )}
-        {chat.last_time && (
-          <div className={styles.timestamp}>{chat.last_time}</div>
-        )}
-      </div>
-    </div>
-  </div>
-))
+const chatKey = (chat: { recipient: string; cargo: string }) =>
+  `${chat.recipient}:${chat.cargo}`
 
-export function ChatsList() {
-  const { 
-    filteredChats, 
-    isLoading, 
-    searchQuery,
-    setSearchQuery,
-    loadChats,
-    setCurrentChat
-  } = useChats()
-  
+const orderLabel = (cargo: string, cargoName?: string) => {
+  const id = cargo ? `ЗК-${String(cargo).slice(0, 6).toUpperCase()}` : ''
+  if (id && cargoName) return `${id} · ${cargoName}`
+  return cargoName || id || 'Заказ'
+}
+
+const ChatItem = React.memo(
+  ({
+    chat,
+    active,
+    onClick,
+  }: {
+    chat: any
+    active: boolean
+    onClick: () => void
+  }) => (
+    <button
+      type="button"
+      className={`${styles.chatCard} ${active ? styles.chatCardActive : ''}`}
+      onClick={onClick}
+    >
+      <div className={styles.avatar}>{getInitial(chat.rec_name)}</div>
+      <div className={styles.chatBody}>
+        <div className={styles.chatTop}>
+          <span className={styles.driverName}>{chat.rec_name || 'Без имени'}</span>
+          {chat.last_time && (
+            <span className={styles.timestamp}>{chat.last_time}</span>
+          )}
+        </div>
+        <div className={styles.cargoName}>{orderLabel(chat.cargo, chat.cargo_name)}</div>
+        <div className={styles.chatBottom}>
+          <span className={styles.lastMessage}>
+            {chat.last_message || 'Нет сообщений'}
+          </span>
+          {chat.unread_count > 0 && (
+            <span className={styles.unreadBadge}>{chat.unread_count}</span>
+          )}
+        </div>
+      </div>
+    </button>
+  )
+)
+
+type ChatsListProps = {
+  activeId?: string
+}
+
+export function ChatsList({ activeId }: ChatsListProps) {
+  const { filteredChats, isLoading, loadChats, setCurrentChat } = useChats()
+
   const history = useHistory()
   const isConnected = useSocketStore((state) => state.isConnected)
 
+  const activeKey = useMemo(() => {
+    if (!activeId) return ''
+    const parts = activeId.split(':')
+    if (parts.length < 2) return activeId
+    return `${parts[0]}:${parts[1]}`
+  }, [activeId])
+
   const handleChatClick = (chat: any) => {
     setCurrentChat(chat.recipient, chat.cargo)
-    history.push(`/chats/${chat.recipient}:${chat.cargo}:${encodeURIComponent(chat.rec_name || '')}`)
-  }
-
-  const handleRefresh = () => {
-    loadChats()
+    history.push(
+      `/chats/${chat.recipient}:${chat.cargo}:${encodeURIComponent(chat.rec_name || '')}`
+    )
   }
 
   useEffect(() => {
@@ -70,10 +87,6 @@ export function ChatsList() {
 
   return (
     <div className={styles.pageRoot}>
-      <div className={styles.pageHeader}>
-        <WizardHeader title="Чаты" onRefresh={handleRefresh} />
-      </div>
-
       <div className={styles.pageContent}>
         {isLoading ? (
           <div className={styles.skeleton}>
@@ -85,8 +98,9 @@ export function ChatsList() {
           <div className={styles.chatList}>
             {filteredChats.map((chat) => (
               <ChatItem
-                key={`${chat.recipient}-${chat.cargo}`}
+                key={chatKey(chat)}
                 chat={chat}
+                active={activeKey === chatKey(chat)}
                 onClick={() => handleChatClick(chat)}
               />
             ))}

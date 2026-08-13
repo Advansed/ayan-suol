@@ -61,6 +61,16 @@ export const Cargos: React.FC = () => {
     );
 
 
+    const renderList = () => (
+        <CargosList
+            cargos={cargos}
+            isLoading={isLoading}
+            onCargoClick={handleCargoClick}
+            onCreateNew={handleCreateNew}
+            onRefresh={refreshCargos}
+        />
+    );
+
     const renderContent = () => {
         if (currentPage.cargo) {
             switch (currentPage.type) {
@@ -138,25 +148,7 @@ export const Cargos: React.FC = () => {
                     );
 
                 case 'list':
-                    return <>
-                        {
-                            currentPage.cargo ? (
-                                <CargosList
-                                    cargos          = { cargos }
-                                    onCargoClick    = { handleCargoClick }
-                                    onCreateNew     = { handleCreateNew }
-                                    onRefresh       = { refreshCargos }
-                                />
-                            ): (
-                                <CargosList
-                                    cargos={cargos}
-                                    onCargoClick={handleCargoClick}
-                                    onCreateNew={handleCreateNew}
-                                    onRefresh={refreshCargos}
-                                />    
-                            )                               
-                        }
-                    </>
+                    return renderList();
 
                 case 'create':
                     return <>
@@ -169,14 +161,7 @@ export const Cargos: React.FC = () => {
                     </>
     
                 default:
-                    return (
-                        <CargosList
-                            cargos={cargos}
-                            onCargoClick={handleCargoClick}
-                            onCreateNew={handleCreateNew}
-                            onRefresh={refreshCargos}
-                        />
-                    );
+                    return renderList();
             }
         } else {
             switch (currentPage.type) {
@@ -191,14 +176,7 @@ export const Cargos: React.FC = () => {
                     );
 
                 default:
-                    return (
-                        <CargosList
-                            cargos={cargos}
-                            onCargoClick={handleCargoClick}
-                            onCreateNew={handleCreateNew}
-                            onRefresh={refreshCargos}
-                        />
-                    );
+                    return renderList();
             }
         }
     };

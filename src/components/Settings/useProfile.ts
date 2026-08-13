@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useLoginStore, AuthResponse } from '../../Store/loginStore';
 import { useToast } from '../Toast';
 import { useSocket } from '../../Store/useSocket';
-import { useCompanyStore, companyActions, CompanyData } from '../../Store/companyStore';
+import { useCompanyStore, companyActions, CompanyData, toSetCompanyPayload } from '../../Store/companyStore';
 import { useTransportStore, transportActions, TransportData } from '../../Store/transportStore';
 
 
@@ -79,13 +79,21 @@ export const useProfile = () => {
 
         companyActions.setSaving(true)
 
-        const handleOnce = (response: { success: boolean; data?: CompanyData; message?: string }) => {
+        const payload = toSetCompanyPayload(companyData)
+        const handleOnce = (response: { success: boolean; data?: CompanyData; message?: string; guid?: string }) => {
           clearTimeout(timeoutId)
           companyActions.setSaving(false)
           console.log('set_company', response)
           
           if ( response.success ) {
-            companyActions.setData(response.data || companyData as CompanyData)
+            const current = useCompanyStore.getState().data
+            const guid = response.guid || response.data?.guid || payload.guid || current?.guid
+            companyActions.setData({
+              ...(current || {}),
+              ...payload,
+              ...(response.data || {}),
+              guid,
+            })
             toast.success('Данные компании обновлены')
             resolve(true)
           } else {
@@ -95,7 +103,7 @@ export const useProfile = () => {
         }
         
         once("set_company", handleOnce)
-        emit("set_company", { token, ...companyData })
+        emit("set_company", { token, ...payload })
       })
     } catch (error) {
       console.error('Ошибка при обновлении компании:', error)

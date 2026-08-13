@@ -348,6 +348,7 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
                         onRefresh                 = { refreshWorks }
                         emptyTitle                = { emptyTitle }
                         emptyHint                 = { emptyHint }
+                        variant                   = { mode === 'feed' ? 'feed' : 'simple' }
                     />
                 );
 
@@ -404,6 +405,7 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
                         onWorkClick              = { handleWorkClick }
                         emptyTitle               = { emptyTitle }
                         emptyHint                = { emptyHint }
+                        variant                  = { mode === 'feed' ? 'feed' : 'simple' }
                     />
                 );
         }

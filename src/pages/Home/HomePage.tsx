@@ -1,22 +1,61 @@
 import React, { useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
-  Activity,
+  Banknote,
+  Check,
   ChevronRight,
   FileText,
   IdCard,
   LifeBuoy,
   MapPin,
+  MessageCircle,
+  PackageCheck,
   Search,
+  Send,
   Star,
   Truck,
   Wallet,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useLoginStore } from '../../Store/loginStore';
 import { useTransportData } from '../../Store/transportStore';
 import { useCompanyData } from '../../Store/companyStore';
 import { PanelFrame } from '../../layout/PanelFrame';
 import styles from './HomePage.module.css';
+
+type ActivityItem = {
+  id: string;
+  title: string;
+  time: string;
+  icon: LucideIcon;
+};
+
+const DEMO_ACTIVITY: ActivityItem[] = [
+  {
+    id: 'delivered',
+    title: 'Рейс ЗК-10468 доставлен в Екатеринбург',
+    time: '2 часа назад',
+    icon: PackageCheck,
+  },
+  {
+    id: 'payout',
+    title: 'Выплата 26 000 ₽ зачислена на баланс',
+    time: '3 часа назад',
+    icon: Banknote,
+  },
+  {
+    id: 'message',
+    title: 'Новое сообщение от ООО "СтройГрад"',
+    time: '5 часов назад',
+    icon: MessageCircle,
+  },
+  {
+    id: 'offer',
+    title: 'Вы откликнулись на заказ ЗК-10482',
+    time: 'Вчера, 18:24',
+    icon: Send,
+  },
+];
 
 export const HomePage: React.FC = () => {
   const history = useHistory();
@@ -62,7 +101,7 @@ export const HomePage: React.FC = () => {
           ? Boolean(transport?.name)
           : Boolean(company?.name || company?.inn),
         icon: MapPin,
-        path: isCarrier ? '/profile' : '/settings',
+        path: '/profile',
       },
     ];
     return items.filter((i) => !i.roles || i.roles.includes(userType));
@@ -75,9 +114,10 @@ export const HomePage: React.FC = () => {
   const activeOrders = ratings?.orders ?? 0;
   const earnings = ratings?.payd ?? 0;
   const rate = ratings?.rate ?? 0;
-  const reviewHint = ratings?.invoices
-    ? `На основе ${ratings.invoices} отзывов`
-    : 'Пока нет отзывов';
+  const tripCount = ratings?.invoices ?? ratings?.orders ?? 0;
+  const reviewHint = tripCount
+    ? `На основе ${tripCount} рейсов`
+    : 'Пока нет рейсов';
 
   const pendingPayout = account ? Number(account) || 0 : 15000;
 
@@ -87,7 +127,9 @@ export const HomePage: React.FC = () => {
         <div className={styles.stats}>
           <div className={styles.statCard}>
             <div className={styles.statHead}>
-              <span className={styles.statLabel}>Активные заказы</span>
+              <span className={styles.statLabel}>
+                {isCarrier ? 'Активные рейсы' : 'Активные заказы'}
+              </span>
               <span className={styles.trendBadge}>+12% за неделю</span>
             </div>
             <div className={styles.statValue}>{activeOrders}</div>
@@ -110,7 +152,9 @@ export const HomePage: React.FC = () => {
 
           <div className={styles.statCard}>
             <div className={styles.statHead}>
-              <span className={styles.statLabel}>Рейтинг</span>
+              <span className={styles.statLabel}>
+                {isCarrier ? 'Рейтинг перевозчика' : 'Рейтинг заказчика'}
+              </span>
             </div>
             <div className={styles.statValueRow}>
               <span className={styles.statValue}>{rate ? rate.toFixed(1) : '—'}</span>
@@ -133,20 +177,32 @@ export const HomePage: React.FC = () => {
         <div className={styles.grid}>
           <section className={styles.card}>
             <div className={styles.cardHead}>
-              <h2 className={styles.cardTitle}>Последние действия</h2>
-              <button type="button" className={styles.linkBtn} onClick={() => history.push(isCarrier ? '/feed' : '/orders')}>
+              <div>
+                <h2 className={styles.cardTitle}>Последние действия</h2>
+                <p className={styles.cardSub}>Недавние события по вашему аккаунту</p>
+              </div>
+              <button
+                type="button"
+                className={styles.linkBtn}
+                onClick={() => history.push('/feed')}
+              >
                 Всё
               </button>
             </div>
-            <div className={styles.empty}>
-              <div className={styles.emptyIcon}>
-                <Activity size={28} strokeWidth={1.5} />
-              </div>
-              <p>
-                Пока нет последних действий. Как только появятся новые события, они
-                отобразятся здесь.
-              </p>
-            </div>
+            <ul className={styles.activityList}>
+              {DEMO_ACTIVITY.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.id} className={styles.activityItem}>
+                    <span className={styles.activityIcon}>
+                      <Icon size={18} strokeWidth={1.75} />
+                    </span>
+                    <span className={styles.activityTitle}>{item.title}</span>
+                    <span className={styles.activityTime}>{item.time}</span>
+                  </li>
+                );
+              })}
+            </ul>
           </section>
 
           <div className={styles.sideCol}>
@@ -166,6 +222,9 @@ export const HomePage: React.FC = () => {
                 <div className={styles.progressTrack}>
                   <div className={styles.progressFill} style={{ width: `${progress}%` }} />
                 </div>
+                <p className={styles.progressHint}>
+                  Заполнено {doneCount} из {checklist.length} шагов профиля и документов
+                </p>
               </div>
 
               <ul className={styles.checkList}>
@@ -182,7 +241,14 @@ export const HomePage: React.FC = () => {
                           <Icon size={18} strokeWidth={1.75} />
                         </span>
                         <span className={styles.checkLabel}>{item.label}</span>
-                        <ChevronRight size={18} className={styles.chevron} />
+                        {item.done ? (
+                          <span className={styles.doneBadge}>
+                            <Check size={12} strokeWidth={2.5} />
+                            Готово
+                          </span>
+                        ) : (
+                          <ChevronRight size={18} className={styles.chevron} />
+                        )}
                       </button>
                     </li>
                   );
@@ -196,7 +262,7 @@ export const HomePage: React.FC = () => {
                 <button
                   type="button"
                   className={styles.primaryAction}
-                  onClick={() => history.push(isCarrier ? '/feed' : '/orders')}
+                  onClick={() => history.push('/feed')}
                 >
                   <Search size={18} strokeWidth={1.75} />
                   {isCarrier ? 'Найти груз' : 'Создать заказ'}

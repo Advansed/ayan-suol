@@ -28,7 +28,7 @@ export type NavItem = {
 
 export const MAIN_NAV: NavItem[] = [
   { id: 'home', label: 'Главная', path: '/', icon: Home },
-  { id: 'feed', label: 'Лента заказов', path: '/feed', icon: ListOrdered, roles: [2] },
+  { id: 'feed', label: 'Лента заказов', path: '/feed', icon: ListOrdered },
   { id: 'orders', label: 'Мои заказы', path: '/orders', icon: Package },
   { id: 'finance', label: 'Финансы', path: '/finance', icon: Wallet },
   { id: 'chats', label: 'Чат', path: '/chats', icon: MessageCircle },

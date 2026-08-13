@@ -17,12 +17,14 @@ import { TransportEditPage } from '../components/Settings/components/TransportEd
 import { PanelFrame } from '../layout/PanelFrame';
 import panelStyles from '../layout/PanelFrame.module.css';
 import { PassportVerification } from '../components/Verification/PassportVerification';
+import { CargoStatus } from '../Store/cargoStore';
+import { filterWorksByMode } from '../components/Works/statusFlow';
 
-/** Лента заказов — только новые */
+/** Лента заказов */
 export const FeedPage: React.FC = () => {
   const { user_type } = useUserType();
-  const { refreshWorks } = useWorks();
-  const { refreshCargos } = useCargos();
+  const { works, refreshWorks } = useWorks();
+  const { cargos, refreshCargos } = useCargos();
 
   const handleRefresh = () => {
     if (user_type === 2) {
@@ -32,10 +34,17 @@ export const FeedPage: React.FC = () => {
     }
   };
 
+  const customerActive = cargos.filter((cargo) => cargo.status !== CargoStatus.COMPLETED).length;
+  const carrierActive = filterWorksByMode(works, 'feed').length;
+  const isCustomer = user_type !== 2;
+  const activeCount = isCustomer ? customerActive : carrierActive;
+
   return (
     <PanelFrame
       title="Лента заказов"
-      subtitle={user_type === 2 ? 'Новые грузы для перевозки' : 'Ваши заказы'}
+      crumb="Биржа грузоперевозок"
+      subtitle={`${activeCount} активных заказов · обновлено только что`}
+      bare
       actions={
         <button
           type="button"
@@ -110,23 +119,39 @@ export const ArchivePage: React.FC = () => {
 
 export const ChatsPage: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
+  const chatOpen = Boolean(id);
+
   return (
-    <PanelFrame title="Чат" subtitle="Переписка по заказам">
-      <div className="web-chats-layout">
-        {id === undefined ? <ChatsList /> : <Chats name={id} />}
+    <PanelFrame title="Сообщения" bare>
+      <div
+        className={`web-chats-layout ${chatOpen ? 'web-chats-open' : 'web-chats-list'}`}
+      >
+        <aside className="web-chats-sidebar">
+          <ChatsList activeId={id} />
+        </aside>
+        <main className="web-chats-main">
+          {id ? (
+            <Chats name={id} />
+          ) : (
+            <div className="web-chats-empty">
+              <p>Выберите диалог</p>
+              <span>Переписка по заказу появится здесь</span>
+            </div>
+          )}
+        </main>
       </div>
     </PanelFrame>
   );
 };
 
 export const SettingsRoutePage: React.FC = () => (
-  <PanelFrame title="Настройки" subtitle="Параметры аккаунта и уведомлений">
+  <PanelFrame title="Настройки" subtitle="Параметры аккаунта и уведомлений" bare>
     <Settings />
   </PanelFrame>
 );
 
 export const ProfileRoutePage: React.FC = () => (
-  <PanelFrame title="Профиль" subtitle="Персональные данные">
+  <PanelFrame title="Профиль" subtitle="Персональные данные и организация">
     <Profile />
   </PanelFrame>
 );
@@ -138,7 +163,20 @@ export const FinancePage: React.FC = () => {
   const initialAmount = location.state?.amount ?? queryAmount;
 
   return (
-    <PanelFrame title="Финансы" subtitle="Баланс, операции и счета" bare>
+    <PanelFrame
+      title="Финансы"
+      crumb="Кошелёк и выплаты"
+      actions={
+        <button
+          type="button"
+          className={panelStyles.refreshBtn}
+          onClick={() => document.getElementById('statement')?.scrollIntoView({ behavior: 'smooth' })}
+        >
+          Выписка
+        </button>
+      }
+      bare
+    >
       <div className="web-finance-layout">
         <WalletPage
           onBack={() => history.push('/')}
@@ -150,10 +188,9 @@ export const FinancePage: React.FC = () => {
 };
 
 export const VehiclesPage: React.FC = () => {
-  const history = useHistory();
   return (
     <PanelFrame title="Мои машины" subtitle="Транспорт и документы" bare>
-      <TransportEditPage onBack={() => history.push('/')} />
+      <TransportEditPage />
     </PanelFrame>
   );
 };

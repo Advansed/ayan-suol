@@ -10,7 +10,7 @@ type MobileTabBarProps = {
 
 export const MobileTabBar: React.FC<MobileTabBarProps> = ({ userType, pathname }) => {
   const tabs = filterNavByRole(MOBILE_TABS, userType).map((tab) => {
-    if (tab.id === 'orders' && userType === 2) {
+    if (tab.id === 'orders') {
       return { ...tab, label: 'Лента', path: '/feed' };
     }
     return tab;
