@@ -16,9 +16,9 @@ interface ChatsProps {
 
 // Мемоизированный компонент сообщения
 const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessage }: { 
-    message: any; 
-    isSent: boolean; 
-    userInitials: string; 
+    message:       any; 
+    isSent:        boolean; 
+    userInitials:  string; 
     clickMessage: (url: string) => void
 }) => {
     const renderContent = () => {
