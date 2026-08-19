@@ -34,23 +34,16 @@ import {
   ChatsPage,
   FeedPage,
   FinancePage,
-  OrdersPage,
   ProfileRoutePage,
   SettingsRoutePage,
   VerificationPage,
   VehiclesPage,
 } from './pages/RoutePages';
-import { useLoginStore } from './Store/loginStore';
 
 setupIonicReact({
   mode: 'ios',
   statusTap: true,
 });
-
-const LegacyTab1Redirect: React.FC = () => {
-  const userType = useLoginStore((s) => s.user_type);
-  return <Redirect to={userType === 2 ? '/feed' : '/orders'} />;
-};
 
 const LegacyChatRedirect: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -76,9 +69,11 @@ const AppContent: React.FC = () => {
               <Route exact path="/" component={HomePage} />
               <Route exact path="/feed" component={FeedPage} />
               <Route exact path="/applications">
-                <Redirect to="/orders" />
+                <Redirect to="/feed" />
               </Route>
-              <Route exact path="/orders" component={OrdersPage} />
+              <Route exact path="/orders">
+                <Redirect to="/feed" />
+              </Route>
               <Route exact path="/archive" component={ArchivePage} />
               <Route exact path="/finance" component={FinancePage} />
               <Route exact path="/chats" component={ChatsPage} />
@@ -104,7 +99,9 @@ const AppContent: React.FC = () => {
               </Route>
 
               {/* Legacy tabs */}
-              <Route exact path="/tab1" component={LegacyTab1Redirect} />
+              <Route exact path="/tab1">
+                <Redirect to="/feed" />
+              </Route>
               <Route exact path="/tab2">
                 <Redirect to="/chats" />
               </Route>

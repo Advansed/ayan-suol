@@ -238,17 +238,39 @@ const StepNewPassword: React.FC<{
   recovery: RecoveryApi
   onSwitchToLogin: () => void
 }> = ({ recovery, onSwitchToLogin }) => {
-  const match =
-    recovery.formData.password &&
-    recovery.formData.password1 &&
-    recovery.formData.password === recovery.formData.password1
+  const [password, setPassword] = useState('')
+  const [password1, setPassword1] = useState('')
+
+  const canSave =
+    password.length >= 4 &&
+    password === password1 &&
+    !recovery.isLoading
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value)
+    recovery.updateFormData('password', value)
+  }
+
+  const handlePassword1Change = (value: string) => {
+    setPassword1(value)
+    recovery.updateFormData('password1', value)
+  }
 
   return (
     <form
       className="auth-form auth-form-relaxed"
       onSubmit={(e) => {
         e.preventDefault()
-        void recovery.submitRecoveryStep()
+        const form = e.currentTarget
+        const nextPassword =
+          (form.elements.namedItem('password') as HTMLInputElement | null)?.value ?? password
+        const nextPassword1 =
+          (form.elements.namedItem('password1') as HTMLInputElement | null)?.value ?? password1
+        setPassword(nextPassword)
+        setPassword1(nextPassword1)
+        recovery.updateFormData('password', nextPassword)
+        recovery.updateFormData('password1', nextPassword1)
+        void recovery.submitRecoveryStep({ password: nextPassword, password1: nextPassword1 })
       }}
     >
       <p className="auth-step-lead">Придумайте новый пароль для входа</p>
@@ -260,16 +282,16 @@ const StepNewPassword: React.FC<{
           </label>
           <input
             id="recovery-password"
+            name="password"
             className="auth-input"
             type="password"
             autoComplete="new-password"
             placeholder="••••"
-            value={recovery.formData.password || ''}
-            onChange={(e) => recovery.updateFormData('password', e.target.value)}
+            value={password}
+            onChange={(e) => handlePasswordChange(e.target.value)}
+            onInput={(e) => handlePasswordChange(e.currentTarget.value)}
             onBlur={() => {
-              if (recovery.formData.password) {
-                recovery.validateField('password', recovery.formData.password)
-              }
+              if (password) recovery.validateField('password', password)
             }}
           />
           {recovery.errors.password && (
@@ -283,16 +305,16 @@ const StepNewPassword: React.FC<{
           </label>
           <input
             id="recovery-password1"
+            name="password1"
             className="auth-input"
             type="password"
             autoComplete="new-password"
             placeholder="••••"
-            value={recovery.formData.password1 || ''}
-            onChange={(e) => recovery.updateFormData('password1', e.target.value)}
+            value={password1}
+            onChange={(e) => handlePassword1Change(e.target.value)}
+            onInput={(e) => handlePassword1Change(e.currentTarget.value)}
             onBlur={() => {
-              if (recovery.formData.password1) {
-                recovery.validateField('password1', recovery.formData.password1)
-              }
+              if (password1) recovery.validateField('password1', password1)
             }}
           />
           {recovery.errors.password1 && (
@@ -307,7 +329,7 @@ const StepNewPassword: React.FC<{
         <button
           type="submit"
           className="auth-btn-primary"
-          disabled={!match || recovery.isLoading}
+          disabled={!canSave}
         >
           {recovery.isLoading ? 'Сохранение…' : 'Сохранить пароль'}
         </button>

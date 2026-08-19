@@ -2,7 +2,6 @@ import type { LucideIcon } from 'lucide-react';
 import {
   LayoutGrid,
   ListChecks,
-  Package,
   Wallet,
   MessageSquare,
   Truck,
@@ -29,7 +28,6 @@ export type NavItem = {
 export const MAIN_NAV: NavItem[] = [
   { id: 'home', label: 'Главная', path: '/', icon: LayoutGrid },
   { id: 'feed', label: 'Лента заказов', path: '/feed', icon: ListChecks },
-  { id: 'orders', label: 'Мои заказы', path: '/orders', icon: Package },
   { id: 'finance', label: 'Финансы', path: '/finance', icon: Wallet },
   { id: 'chats', label: 'Чат', path: '/chats', icon: MessageSquare },
   { id: 'vehicles', label: 'Мои машины', path: '/vehicles', icon: Truck, roles: [2] },
@@ -46,7 +44,7 @@ export const FOOTER_NAV: NavItem[] = [
 
 export const MOBILE_TABS: NavItem[] = [
   { id: 'home', label: 'Главная', path: '/', icon: LayoutGrid },
-  { id: 'orders', label: 'Заказы', path: '/orders', icon: Package },
+  { id: 'feed', label: 'Лента', path: '/feed', icon: ListChecks },
   { id: 'chats', label: 'Чат', path: '/chats', icon: MessageSquare },
   { id: 'profile', label: 'Профиль', path: '/profile', icon: User },
 ];

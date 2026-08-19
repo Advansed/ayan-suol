@@ -15,8 +15,7 @@
 | Пункт меню | Route | Компонент / статус |
 |------------|-------|-------------------|
 | Главная | `/` | `HomePage` |
-| Лента заказов | `/feed` | `Works mode=feed` — только статус «Новый» |
-| Мои заказы | `/orders` | Заказчик: `Cargos`. Исполнитель: `Works mode=mine` — отклики + в работе |
+| Лента заказов | `/feed` | Заказчик: `Cargos`. Исполнитель: `Works mode=feed` — новые, отклики и рейсы в работе |
 | Финансы | `/finance` | `WalletPage` |
 | Чат | `/chats`, `/chats/:id` | `Chats` / `ChatsList` |
 | Мои машины | `/vehicles` | `TransportEditPage` |
@@ -31,7 +30,9 @@
 
 | Старый | Новый |
 |--------|-------|
-| `/tab1` | `/orders` или `/feed` по роли |
+| `/tab1` | `/feed` |
+| `/orders` | `/feed` |
+| `/applications` | `/feed` |
 | `/tab2` | `/chats` |
 | `/tab3` | `/settings` |
 | `/tab4` | `/orders` (архив позже) |

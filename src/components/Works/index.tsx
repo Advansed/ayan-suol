@@ -33,7 +33,7 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
         [works, mode]
     );
 
-    // Смена раздела (Лента ↔ Мои заказы) — закрыть карточку и показать список
+    // Смена режима списка — закрыть карточку и показать список
     useEffect(() => {
         useWorkStore.getState().setCurrentPage({ type: 'list' });
         useWorkStore.getState().setNavigationHistory([{ type: 'list' }]);
@@ -48,7 +48,7 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
 
     const emptyHint =
         mode === 'feed'
-            ? 'Здесь новые заказы, ваши отклики и заказы до подписи договора'
+            ? 'Здесь новые заказы, ваши отклики и перевозки в работе'
             : mode === 'mine'
               ? 'Здесь перевозки после подписания договора'
               : 'Доступные заказы появятся здесь, когда их опубликуют заказчики';

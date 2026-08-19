@@ -24,7 +24,7 @@ export interface UseRecoveryReturn extends RecoveryLocalState {
   errors: Record<string, string>;
   validateField: (field: string, value: any) => string | null;
   clearErrors: () => void;
-  submitRecoveryStep: () => Promise<void>;
+  submitRecoveryStep: (passwords?: { password: string; password1: string }) => Promise<void>;
   updateFormData: (field: string, value: any) => void;
   resetRecovery: () => void;
 }
@@ -57,25 +57,32 @@ export const useRecovery = (onSwitchToLogin?: () => void): UseRecoveryReturn => 
     }
   }, []);
 
+  const clearFieldError = validation.clearFieldError;
+  const clearErrors = validation.clearErrors;
+  const { currentStep, nextStep, prevStep, reset } = navigation;
+
   const updateFormData = useCallback(
     (field: string, value: any) => {
       setState((prev) => ({
         ...prev,
         formData: { ...prev.formData, [field]: value }
       }));
-      validation.clearFieldError(field);
-      if (field === 'pincode') validation.clearFieldError('sms');
+      clearFieldError(field);
+      if (field === 'pincode') clearFieldError('sms');
     },
-    [validation]
+    [clearFieldError]
   );
+
+  const onSwitchToLoginRef = useRef(onSwitchToLogin);
+  onSwitchToLoginRef.current = onSwitchToLogin;
 
   const resetRecovery = useCallback(() => {
     setState(INITIAL_STATE);
-    validation.clearErrors();
-    navigation.reset();
+    clearErrors();
+    reset();
     loginActions.setToken('');
-    if (onSwitchToLogin) onSwitchToLogin();
-  }, [validation, navigation, onSwitchToLogin]);
+    onSwitchToLoginRef.current?.();
+  }, [clearErrors, reset]);
 
   const emitCheckPhone = useCallback(async () => {
     updateState({ isLoading: true, error: '' });
@@ -134,7 +141,7 @@ export const useRecovery = (onSwitchToLogin?: () => void): UseRecoveryReturn => 
     }
   }, [updateState, validation, emit, state.formData.pincode]);
 
-  const emitSavePassword = useCallback(async () => {
+  const emitSavePassword = useCallback(async (passwords?: { password: string; password1: string }) => {
     const token = (useLoginStore.getState().token || '').trim();
     if (!token) {
       toast.error('Нет токена. Запросите код повторно.');
@@ -142,8 +149,8 @@ export const useRecovery = (onSwitchToLogin?: () => void): UseRecoveryReturn => 
     }
 
     const payload = {
-      password: state.formData.password || '',
-      password1: state.formData.password1 || ''
+      password: passwords?.password ?? state.formData.password ?? '',
+      password1: passwords?.password1 ?? state.formData.password1 ?? ''
     };
 
     if (!validation.validateForm('password', payload)) {
@@ -171,8 +178,8 @@ export const useRecovery = (onSwitchToLogin?: () => void): UseRecoveryReturn => 
     }
   }, [updateState, validation, emit, state.formData.password, state.formData.password1, toast]);
 
-  const submitRecoveryStep = useCallback(async () => {
-    switch (navigation.currentStep) {
+  const submitRecoveryStep = useCallback(async (passwords?: { password: string; password1: string }) => {
+    switch (currentStep) {
       case 0:
         if (validation.validateForm('recovery_phone', { phone: state.formData.phone })) {
           await emitCheckPhone();
@@ -186,11 +193,11 @@ export const useRecovery = (onSwitchToLogin?: () => void): UseRecoveryReturn => 
         }
         break;
       case 2:
-        await emitSavePassword();
+        await emitSavePassword(passwords);
         break;
     }
   }, [
-    navigation.currentStep,
+    currentStep,
     validation,
     state.formData.phone,
     state.formData.pincode,
@@ -200,7 +207,19 @@ export const useRecovery = (onSwitchToLogin?: () => void): UseRecoveryReturn => 
   ]);
 
   useEffect(() => {
+    if (currentStep === 2) {
+      setState((prev) => (prev.isLoading ? { ...prev, isLoading: false } : prev));
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
     isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!socket) return;
 
     const handleCheckPhone = (response: SocketResponse) => {
@@ -223,7 +242,7 @@ export const useRecovery = (onSwitchToLogin?: () => void): UseRecoveryReturn => 
             ? 'Код отправлен в Telegram'
             : 'SMS с кодом подтверждения отправлено на ваш телефон'
         );
-        navigation.nextStep();
+        nextStep();
       } else {
         updateState({
           isLoading: false,
@@ -244,7 +263,7 @@ export const useRecovery = (onSwitchToLogin?: () => void): UseRecoveryReturn => 
         if (token) {
           loginActions.setToken(token);
         }
-        navigation.nextStep();
+        nextStep();
       } else {
         updateState({ error: response.message || 'Неверный код' });
         toast.error(response.message || 'Неверный код');
@@ -270,22 +289,21 @@ export const useRecovery = (onSwitchToLogin?: () => void): UseRecoveryReturn => 
     socket.on('save_password', handleSavePassword);
 
     return () => {
-      isMountedRef.current = false;
       socket.off('check_phone', handleCheckPhone);
       socket.off('check_sms', handleCheckSms);
       socket.off('save_password', handleSavePassword);
     };
-  }, [socket, updateState, navigation, toast, resetRecovery]);
+  }, [socket, updateState, nextStep, toast, resetRecovery]);
 
   return {
     ...state,
-    recoveryStep: navigation.currentStep,
-    nextStep: navigation.nextStep,
-    prevStep: navigation.prevStep,
+    recoveryStep: currentStep,
+    nextStep,
+    prevStep,
     otpTransport,
     errors: validation.errors,
     validateField: validation.validateField,
-    clearErrors: validation.clearErrors,
+    clearErrors,
     submitRecoveryStep,
     updateFormData,
     resetRecovery

@@ -133,7 +133,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({ cargo: initialCargo, onBack,
         <div className={styles.topBar}>
           <button type="button" className={styles.backBtn} onClick={onBack}>
             <ChevronLeft size={20} strokeWidth={2} />
-            {isEdit ? 'К заказу' : 'Мои заказы'}
+            {isEdit ? 'К заказу' : 'К списку'}
           </button>
         </div>
 

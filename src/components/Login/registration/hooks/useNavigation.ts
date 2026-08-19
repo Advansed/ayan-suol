@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 export interface UseNavigationReturn {
   currentStep: number;
@@ -29,13 +29,16 @@ export const useNavigation = (totalSteps: number = 4): UseNavigationReturn => {
     setCurrentStep(0);
   }, []);
   
-  return {
-    currentStep,
-    nextStep,
-    prevStep,
-    goToStep,
-    reset,
-    isFirstStep: currentStep === 0,
-    isLastStep: currentStep === totalSteps - 1
-  };
+  return useMemo(
+    () => ({
+      currentStep,
+      nextStep,
+      prevStep,
+      goToStep,
+      reset,
+      isFirstStep: currentStep === 0,
+      isLastStep: currentStep === totalSteps - 1,
+    }),
+    [currentStep, nextStep, prevStep, goToStep, reset, totalSteps]
+  );
 };

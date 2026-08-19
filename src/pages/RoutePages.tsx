@@ -3,8 +3,6 @@ import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { Cargos } from '../components/Cargos';
 import { Works } from '../components/Works';
-import { useWorks } from '../components/Works/useWorks';
-import { useCargos } from '../components/Cargos/hooks/useCargos';
 import CargoArchive from '../components/Cargos/components/CargoArchive';
 import { WorkArchive } from '../components/Works/components';
 import { useUserType } from '../Store/loginStore';
@@ -25,47 +23,6 @@ export const FeedPage: React.FC = () => {
     <div className="web-list-layout web-feed-layout">
       {user_type === 2 ? <Works mode="feed" /> : <Cargos />}
     </div>
-  );
-};
-
-/** Мои заказы — отклики и перевозки в работе */
-export const OrdersPage: React.FC = () => {
-  const { user_type } = useUserType();
-  const { refreshWorks } = useWorks();
-  const { refreshCargos } = useCargos();
-
-  const handleRefresh = () => {
-    if (user_type === 2) {
-      void refreshWorks();
-    } else {
-      void refreshCargos();
-    }
-  };
-
-  return (
-    <PanelFrame
-      title="Мои заказы"
-      subtitle={
-        user_type === 2
-          ? 'Ваши отклики и заказы в работе'
-          : 'Заказы, которые вы разместили'
-      }
-      actions={
-        <button
-          type="button"
-          className={panelStyles.refreshBtn}
-          onClick={handleRefresh}
-          aria-label="Обновить"
-        >
-          <RefreshCw size={16} strokeWidth={2} />
-          Обновить
-        </button>
-      }
-    >
-      <div className={`web-list-layout ${user_type !== 2 ? 'web-feed-layout' : ''}`}>
-        {user_type === 2 ? <Works mode="mine" /> : <Cargos />}
-      </div>
-    </PanelFrame>
   );
 };
 

@@ -110,14 +110,21 @@ export function getStatusFlowIndex(status: WorkStatus | string): number {
   return idx >= 0 ? idx : 0;
 }
 
-/** Лента: до подписи договора */
+/** Лента: новые, отклики и активные рейсы (без архива) */
 export const FEED_WORK_STATUSES: WorkStatus[] = [
   WorkStatus.NEW,
   WorkStatus.OFFERED,
   WorkStatus.TO_LOAD,
+  WorkStatus.ON_LOAD,
+  WorkStatus.LOADING,
+  WorkStatus.LOADED,
+  WorkStatus.IN_WORK,
+  WorkStatus.TO_UNLOAD,
+  WorkStatus.UNLOADING,
+  WorkStatus.UNLOADED,
 ];
 
-/** Мои заказы: после подписи (TO_LOAD+signed и дальше по рейсу) */
+/** Активные перевозки после подписи (TO_LOAD+signed и дальше по рейсу) */
 export const MY_WORK_STATUSES: WorkStatus[] = [
   WorkStatus.TO_LOAD,
   WorkStatus.ON_LOAD,
@@ -138,9 +145,7 @@ export function filterWorksByMode<T extends { status: WorkStatus; signed?: boole
   if (mode === 'feed') {
     return works.filter((w) => {
       const status = normalizeWorkStatus(w.status);
-      if (status === WorkStatus.NEW || status === WorkStatus.OFFERED) return true;
-      if (status === WorkStatus.TO_LOAD && !w.signed) return true;
-      return false;
+      return FEED_WORK_STATUSES.includes(status);
     });
   }
   if (mode === 'mine') {
