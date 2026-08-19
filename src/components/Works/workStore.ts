@@ -242,10 +242,19 @@ export const workActions = {
 // ============================================
 // SOCKET ОБРАБОТЧИКИ
 // ============================================
+const normalizeWorkCompany = (company: WorkInfo['company'] | Record<string, unknown> | null | undefined): WorkInfo['company'] => {
+  if (!company || typeof company !== 'object') return undefined
+  const id = String((company as { id?: unknown }).id ?? '').trim()
+  const name = String((company as { name?: unknown }).name ?? '').trim()
+  if (!id && !name) return undefined
+  return { id, name }
+}
+
 const normalizeWork = (w: WorkInfo): WorkInfo => ({
   ...w,
   status: normalizeWorkStatus(w.status),
   signed: Boolean(w.signed),
+  company: normalizeWorkCompany(w.company),
 })
 
 export const workSocketHandlers = {

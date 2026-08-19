@@ -344,6 +344,29 @@
   line-height: 1.3;
 }
 
+.feedPublished {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.feedPublishedDate {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gvr-text-muted, #8b93a7);
+}
+
+.feedCompany {
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gvr-text-secondary, #5c6578);
+  text-align: right;
+  margin-left: auto;
+}
+
 .feedPay {
   font-size: 13px;
   color: var(--gvr-text-secondary, #5c6578);

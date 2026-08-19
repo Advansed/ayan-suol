@@ -3,7 +3,8 @@ import { ChevronLeft, SlidersHorizontal } from 'lucide-react';
 import { WorkInfo, WorkStatus } from '../types';
 import { WorkCard } from './WorkCard';
 import { WorkOrderInfo } from './WorkView/WorkOrderInfo';
-import { normalizeWorkStatus } from '../statusFlow';
+import { StatusTimeline } from './WorkView/StatusTimeline';
+import { WORK_CURRENT_ACTION, normalizeWorkStatus } from '../statusFlow';
 import styles from './WorksList.module.css';
 
 type FilterId = 'all' | 'new' | 'bids' | 'work' | 'done';
@@ -131,13 +132,18 @@ const WorksListInner: React.FC<WorksListProps> = ({
                 <ChevronLeft size={18} strokeWidth={2} />
                 К списку
               </button>
+              <StatusTimeline work={selected} />
               <WorkOrderInfo work={selected} />
               <button
                 type="button"
                 className={styles.detailAction}
                 onClick={() => onWorkClick(selected)}
               >
-                Открыть
+                <span className={styles.detailActionTitle}>Действие по статусу</span>
+                <span className={styles.detailActionHint}>
+                  {WORK_CURRENT_ACTION[normalizeWorkStatus(selected.status)] ||
+                    'Перейти к действиям по заказу'}
+                </span>
               </button>
             </>
           ) : (

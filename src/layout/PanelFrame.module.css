@@ -66,6 +66,11 @@
   transform: translateY(1px);
 }
 
+.feedLeft {
+  margin-left: 0;
+  margin-right: auto;
+}
+
 .panel {
   background: var(--gvr-surface);
   border: 1px solid var(--gvr-border);

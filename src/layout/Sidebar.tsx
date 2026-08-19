@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { Boxes } from 'lucide-react';
 import { FOOTER_NAV, MAIN_NAV, filterNavByRole, isNavActive } from './navConfig';
 import { useLoginStore } from '../Store/loginStore';
 import { resolveImageSrc } from '../utils/fileUpload';
@@ -25,13 +26,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ userType, pathname, onNavigate
     <aside className={`${styles.sidebar} ${compact ? styles.compact : ''}`}>
       <div className={styles.brand}>
         <div className={styles.logoMark} aria-hidden>
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <path
-              d="M14 2L25 8.5V19.5L14 26L3 19.5V8.5L14 2Z"
-              fill="currentColor"
-            />
-            <path d="M14 8L20 11.5V18.5L14 22L8 18.5V11.5L14 8Z" fill="#fff" fillOpacity="0.35" />
-          </svg>
+          <Boxes size={22} strokeWidth={2} color="#ffffff" />
         </div>
         <div className={styles.brandText}>
           <div className={styles.brandTitle}>ГРУЗ В РЕЙС</div>
@@ -50,8 +45,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ userType, pathname, onNavigate
               className={`${styles.navItem} ${active ? styles.active : ''}`}
               onClick={onNavigate}
             >
-              <Icon size={20} strokeWidth={1.75} />
-              <span>{item.label}</span>
+              <Icon size={19} strokeWidth={1.85} className={styles.navIcon} />
+              <span className={styles.navLabel}>{item.label}</span>
+              {active && <span className={styles.activeDot} aria-hidden />}
+              {!active && item.alert && <span className={styles.alertDot} aria-label="Требует внимания" />}
             </NavLink>
           );
         })}
@@ -68,9 +65,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ userType, pathname, onNavigate
               className={`${styles.navItem} ${active ? styles.active : ''}`}
               onClick={onNavigate}
             >
-              <Icon size={20} strokeWidth={1.75} />
-              <span>{item.label}</span>
-              {item.alert && <span className={styles.alertDot} aria-label="Требует внимания" />}
+              <Icon size={19} strokeWidth={1.85} className={styles.navIcon} />
+              <span className={styles.navLabel}>{item.label}</span>
+              {active && <span className={styles.activeDot} aria-hidden />}
+              {!active && item.alert && <span className={styles.alertDot} aria-label="Требует внимания" />}
             </NavLink>
           );
         })}

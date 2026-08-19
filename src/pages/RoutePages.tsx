@@ -17,50 +17,14 @@ import { TransportEditPage } from '../components/Settings/components/TransportEd
 import { PanelFrame } from '../layout/PanelFrame';
 import panelStyles from '../layout/PanelFrame.module.css';
 import { PassportVerification } from '../components/Verification/PassportVerification';
-import { CargoStatus } from '../Store/cargoStore';
-import { filterWorksByMode } from '../components/Works/statusFlow';
-
 /** Лента заказов */
 export const FeedPage: React.FC = () => {
   const { user_type } = useUserType();
-  const { works, refreshWorks } = useWorks();
-  const { cargos, refreshCargos } = useCargos();
-
-  const handleRefresh = () => {
-    if (user_type === 2) {
-      void refreshWorks();
-    } else {
-      void refreshCargos();
-    }
-  };
-
-  const customerActive = cargos.filter((cargo) => cargo.status !== CargoStatus.COMPLETED).length;
-  const carrierActive = filterWorksByMode(works, 'feed').length;
-  const isCustomer = user_type !== 2;
-  const activeCount = isCustomer ? customerActive : carrierActive;
 
   return (
-    <PanelFrame
-      title="Лента заказов"
-      crumb="Биржа грузоперевозок"
-      subtitle={`${activeCount} активных заказов · обновлено только что`}
-      bare
-      actions={
-        <button
-          type="button"
-          className={panelStyles.refreshBtn}
-          onClick={handleRefresh}
-          aria-label="Обновить"
-        >
-          <RefreshCw size={16} strokeWidth={2} />
-          Обновить
-        </button>
-      }
-    >
-      <div className="web-list-layout">
-        {user_type === 2 ? <Works mode="feed" /> : <Cargos />}
-      </div>
-    </PanelFrame>
+    <div className="web-list-layout web-feed-layout">
+      {user_type === 2 ? <Works mode="feed" /> : <Cargos />}
+    </div>
   );
 };
 
@@ -98,7 +62,7 @@ export const OrdersPage: React.FC = () => {
         </button>
       }
     >
-      <div className="web-list-layout">
+      <div className={`web-list-layout ${user_type !== 2 ? 'web-feed-layout' : ''}`}>
         {user_type === 2 ? <Works mode="mine" /> : <Cargos />}
       </div>
     </PanelFrame>

@@ -1,6 +1,7 @@
 import React from 'react';
-import { MapPin, Package, Calendar, User, Phone, Shield, Wallet } from 'lucide-react';
+import { MapPin, Package, Calendar, User, Phone, Shield, Wallet, Building2 } from 'lucide-react';
 import { CargoInfo } from '../../../Store/cargoStore';
+import { useCompanyData } from '../../../Store/companyStore';
 import { formatters } from '../../../utils/utils';
 import styles from './CargoOrderInfo.module.css';
 
@@ -30,11 +31,14 @@ function Row({
 }
 
 export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo }) => {
+  const companyData = useCompanyData();
   const fromCity = cargo.address?.city?.city || 'Не указано';
   const toCity = cargo.destiny?.city?.city || 'Не указано';
   const fromAddress = cargo.address?.address || '';
   const toAddress = cargo.destiny?.address || '';
   const publishedAt = cargo.publish_date || '';
+  const companyName = cargo.company?.name || companyData?.name || companyData?.short_name || cargo.client;
+  const contactName = cargo.face && cargo.face !== companyName ? cargo.face : '';
 
   return (
     <section className={styles.card} aria-label="Информация о заказе">
@@ -49,16 +53,18 @@ export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo }) => {
       <div className={styles.route}>
         <div className={styles.routePoint}>
           <span className={`${styles.dot} ${styles.dotFrom}`} />
-          <div>
+          <div className={styles.routeBody}>
             <div className={styles.routeLabel}>Откуда</div>
             <div className={styles.routeCity}>{fromCity}</div>
             {fromAddress && <div className={styles.routeAddr}>{fromAddress}</div>}
           </div>
         </div>
-        <div className={styles.routeLine} aria-hidden />
+        <span className={styles.routeArrow} aria-hidden>
+          →
+        </span>
         <div className={styles.routePoint}>
           <span className={`${styles.dot} ${styles.dotTo}`} />
-          <div>
+          <div className={styles.routeBody}>
             <div className={styles.routeLabel}>Куда</div>
             <div className={styles.routeCity}>{toCity}</div>
             {toAddress && <div className={styles.routeAddr}>{toAddress}</div>}
@@ -88,9 +94,14 @@ export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo }) => {
           value={publishedAt ? formatters.date(publishedAt) : null}
         />
         <Row
+          icon={<Building2 size={16} strokeWidth={1.75} />}
+          label="Заказчик"
+          value={companyName || cargo.face}
+        />
+        <Row
           icon={<User size={16} strokeWidth={1.75} />}
           label="Контакт"
-          value={cargo.face || cargo.client}
+          value={companyName ? contactName : null}
         />
         <Row
           icon={<Phone size={16} strokeWidth={1.75} />}

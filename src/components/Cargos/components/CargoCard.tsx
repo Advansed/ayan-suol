@@ -3,8 +3,13 @@ import { IonIcon, IonText } from '@ionic/react';
 import { locationOutline } from 'ionicons/icons';
 import { formatters, statusUtils } from '../../../utils/utils';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
+import { useCompanyData } from '../../../Store/companyStore';
 import { normalizeCargoStatus } from '../cargoStatusFlow';
 import styles from './CargoCard.module.css';
+
+function getCargoCompanyName(cargo: CargoInfo, companyName?: string | null): string {
+    return cargo.company?.name || companyName || cargo.client || '';
+}
 
 interface CargoCardProps {
     cargo: CargoInfo;
@@ -30,6 +35,7 @@ const SURFACE_BY_STATUS: Record<CargoStatus, string> = {
 };
 
 export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', selected, onClick }) => {
+    const companyData = useCompanyData();
     
     const handleClick = () => {
         if (onClick) {
@@ -213,6 +219,8 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
     const toCity = cargo.destiny?.city.city || 'Не указано';
     const distance = routeDistanceKm(cargo);
     const offers = cargo.invoices?.length ?? 0;
+    const companyName = getCargoCompanyName(cargo, companyData?.name || companyData?.short_name);
+    const publishedDate = publishedAt ? formatters.date(publishedAt) : '';
     const payment =
       cargo.advance > 0 && cargo.advance >= cargo.price
         ? 'Полная предоплата'
@@ -233,6 +241,14 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
             </div>
 
             <h3 className={styles.feedTitle}>{cargo.name || 'Без названия'}</h3>
+            {(publishedDate || companyName) && (
+                <div className={styles.feedPublished}>
+                    <span className={styles.feedPublishedDate}>
+                        {publishedDate ? `Дата ${publishedDate}` : ''}
+                    </span>
+                    {companyName && <span className={styles.feedCompany}>{companyName}</span>}
+                </div>
+            )}
             <div className={styles.feedPay}>{payment}</div>
 
             <div className={styles.feedRoute}>
@@ -249,7 +265,6 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
                     {Number(cargo.weight) || 0} т · {Number(cargo.volume) || 0} м³
                 </span>
                 <span className={styles.feedRight}>
-                    {publishedAt ? formatters.published(publishedAt) : ''}
                     {offers > 0 && (
                         <span className={styles.feedOffers}>{offersLabel(offers)}</span>
                     )}

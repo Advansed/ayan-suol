@@ -41,8 +41,9 @@
 
 .route {
   display: flex;
-  flex-direction: column;
-  gap: 0;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
   padding: 12px 14px;
   margin-bottom: 16px;
   background: #f7f9fc;
@@ -54,14 +55,21 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
-.routeLine {
-  width: 2px;
-  height: 14px;
-  margin: 2px 0 2px 7px;
-  background: #d0d7e2;
-  border-radius: 2px;
+.routeBody {
+  min-width: 0;
+}
+
+.routeArrow {
+  flex-shrink: 0;
+  align-self: center;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--gvr-text-muted, #8b93a7);
+  line-height: 1;
 }
 
 .dot {

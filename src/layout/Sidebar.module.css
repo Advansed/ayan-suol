@@ -82,9 +82,9 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  border-radius: var(--gvr-radius-sm);
-  color: var(--gvr-text-secondary);
+  padding: 10px 14px;
+  border-radius: var(--gvr-radius, 12px);
+  color: #374151;
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -92,34 +92,52 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+.navIcon {
+  flex-shrink: 0;
+  color: #4b5563;
+  transition: color 0.15s ease;
+}
+
+.navLabel {
+  flex: 1;
+  min-width: 0;
+}
+
 .navItem:hover {
-  background: var(--gvr-bg);
-  color: var(--gvr-text);
+  background: var(--gvr-bg, #f0f3f8);
+  color: var(--gvr-text, #1a1f2e);
+}
+
+.navItem:hover .navIcon {
+  color: var(--gvr-text, #1a1f2e);
 }
 
 .navItem.active {
-  background: var(--gvr-primary-soft);
-  color: var(--gvr-primary);
+  background: var(--gvr-primary-soft, #e8eefc);
+  color: var(--gvr-primary, #2b5adc);
   font-weight: 600;
 }
 
-.navItem.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 10px;
-  bottom: 10px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--gvr-primary);
+.navItem.active .navIcon {
+  color: var(--gvr-primary, #2b5adc);
+}
+
+.activeDot {
+  margin-left: auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gvr-primary, #2b5adc);
+  flex-shrink: 0;
 }
 
 .alertDot {
   margin-left: auto;
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--gvr-warning);
+  background: #f59e0b;
+  flex-shrink: 0;
 }
 
 .userCard {

@@ -51,12 +51,19 @@ export enum OfferStatus {
     REJECTED = "Отклонен"
 }
 
+/** Компания заказчика, приходит с заказом */
+export interface WorkCompany {
+    id: string;
+    name: string;
+}
+
 // Основная информация о работе (адаптированная CargoInfo)
 export interface WorkInfo {
     guid: string;
     cargo: string;           // ID исходного груза
     recipient: string;       // ID заказчика
     client: string;          // Имя заказчика
+    company?: WorkCompany;
     name: string;
     transport: string;
     description: string;

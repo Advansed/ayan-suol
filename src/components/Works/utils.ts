@@ -16,6 +16,10 @@ import {
 // Переиспользуем базовые форматтеры из Cargos
 import { formatters as cargoFormatters } from '../../utils/utils';
 
+export function getWorkCustomerName(work: WorkInfo): string {
+    return work.company?.name || work.client || work.face || '';
+}
+
 // ======================
 // УТИЛИТЫ ВАЛИДАЦИИ
 // ======================
@@ -209,7 +213,8 @@ export const workDataUtils = {
             work.name.toLowerCase().includes(lowerQuery) ||
             work.address?.city.city.toLowerCase().includes(lowerQuery) ||
             work.destiny?.city.city.toLowerCase().includes(lowerQuery) ||
-            work.client.toLowerCase().includes(lowerQuery)
+            (work.client || '').toLowerCase().includes(lowerQuery) ||
+            (work.company?.name || '').toLowerCase().includes(lowerQuery)
         );
     },
 

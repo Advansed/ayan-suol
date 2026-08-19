@@ -2,8 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { ChevronLeft, Plus, SlidersHorizontal } from 'lucide-react';
 import { CargoCard } from './CargoCard';
 import { CargoOrderInfo } from './CargoOrderInfo';
+import { CargoStatusTimeline } from './CargoStatusTimeline';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
-import { normalizeCargoStatus } from '../cargoStatusFlow';
+import { getCargoActionHint, normalizeCargoStatus, resolveCargoProgressStatus } from '../cargoStatusFlow';
 import styles from './CargosList.module.css';
 
 type FilterId = 'all' | 'new' | 'bids' | 'work' | 'done';
@@ -126,13 +127,17 @@ export const CargosList: React.FC<CargosListProps> = ({
                 <ChevronLeft size={18} strokeWidth={2} />
                 К списку
               </button>
+              <CargoStatusTimeline cargo={selected} />
               <CargoOrderInfo cargo={selected} />
               <button
                 type="button"
                 className={styles.detailAction}
                 onClick={() => onCargoClick(selected)}
               >
-                Открыть
+                <span className={styles.detailActionTitle}>Действие по статусу</span>
+                <span className={styles.detailActionHint}>
+                  {getCargoActionHint(resolveCargoProgressStatus(selected))}
+                </span>
               </button>
             </>
           ) : (

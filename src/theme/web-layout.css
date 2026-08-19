@@ -81,11 +81,47 @@ body {
   display: none;
 }
 
+/* Лента заказов — слева, ограничение ширины двух колонок, фиксированная высота без общего скролла */
+.web-feed-layout {
+  width: 100%;
+  max-width: calc(340px + 16px + 800px + 1em);
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  margin-left: 0;
+  margin-right: auto;
+  padding-left: 1em;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.web-feed-layout > * {
+  min-height: 0;
+  height: 100%;
+  flex: 1;
+}
+
 @media (min-width: 1024px) {
   /* Лента / списки — на всю ширину панели (2 колонки карточек) */
   .web-list-layout {
     max-width: none;
   }
+
+  .web-feed-layout {
+    max-width: calc(340px + 16px + 800px + 1em);
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    margin-left: 0;
+    margin-right: auto;
+    padding-left: 1em;
+    overflow: hidden;
+  }
+}
 
   .web-finance-layout {
     max-width: none;

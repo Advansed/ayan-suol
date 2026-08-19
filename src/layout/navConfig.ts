@@ -1,16 +1,16 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Home,
-  ListOrdered,
+  LayoutGrid,
+  ListChecks,
   Package,
   Wallet,
-  MessageCircle,
+  MessageSquare,
   Truck,
   LifeBuoy,
   FileText,
   Settings,
   User,
-  BadgeCheck,
+  ShieldCheck,
   Handshake,
 } from 'lucide-react';
 
@@ -27,11 +27,11 @@ export type NavItem = {
 };
 
 export const MAIN_NAV: NavItem[] = [
-  { id: 'home', label: 'Главная', path: '/', icon: Home },
-  { id: 'feed', label: 'Лента заказов', path: '/feed', icon: ListOrdered },
+  { id: 'home', label: 'Главная', path: '/', icon: LayoutGrid },
+  { id: 'feed', label: 'Лента заказов', path: '/feed', icon: ListChecks },
   { id: 'orders', label: 'Мои заказы', path: '/orders', icon: Package },
   { id: 'finance', label: 'Финансы', path: '/finance', icon: Wallet },
-  { id: 'chats', label: 'Чат', path: '/chats', icon: MessageCircle },
+  { id: 'chats', label: 'Чат', path: '/chats', icon: MessageSquare },
   { id: 'vehicles', label: 'Мои машины', path: '/vehicles', icon: Truck, roles: [2] },
   { id: 'support', label: 'Поддержка', path: '/support', icon: LifeBuoy, stub: true },
   { id: 'documents', label: 'Документы', path: '/documents', icon: FileText, stub: true },
@@ -40,14 +40,14 @@ export const MAIN_NAV: NavItem[] = [
 ];
 
 export const FOOTER_NAV: NavItem[] = [
-  { id: 'verification', label: 'Верификация', path: '/verification', icon: BadgeCheck, footer: true, alert: true, stub: true },
+  { id: 'verification', label: 'Верификация', path: '/verification', icon: ShieldCheck, footer: true, alert: true, stub: true },
   { id: 'partners', label: 'Партнёрам', path: '/partners', icon: Handshake, footer: true, stub: true },
 ];
 
 export const MOBILE_TABS: NavItem[] = [
-  { id: 'home', label: 'Главная', path: '/', icon: Home },
+  { id: 'home', label: 'Главная', path: '/', icon: LayoutGrid },
   { id: 'orders', label: 'Заказы', path: '/orders', icon: Package },
-  { id: 'chats', label: 'Чат', path: '/chats', icon: MessageCircle },
+  { id: 'chats', label: 'Чат', path: '/chats', icon: MessageSquare },
   { id: 'profile', label: 'Профиль', path: '/profile', icon: User },
 ];
 

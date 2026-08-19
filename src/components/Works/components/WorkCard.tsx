@@ -1,6 +1,6 @@
 import React from 'react';
 import { WorkInfo, WorkStatus } from '../types';
-import { workFormatters } from '../utils';
+import { getWorkCustomerName, workFormatters } from '../utils';
 import { normalizeWorkStatus } from '../statusFlow';
 import styles from './WorkCard.module.css';
 
@@ -27,6 +27,8 @@ export const WorkCard: React.FC<WorkCardProps> = ({ work, selected, onClick }) =
         : 'Безналичный';
   const bodyType =
     work.transport && !looksLikeGuid(work.transport) ? work.transport : null;
+  const customerName = getWorkCustomerName(work);
+  const publishedDate = publishedAt ? workFormatters.date(publishedAt) : '';
 
   return (
     <button
@@ -41,6 +43,14 @@ export const WorkCard: React.FC<WorkCardProps> = ({ work, selected, onClick }) =
       </div>
 
       <h3 className={styles.feedTitle}>{work.name || 'Без названия'}</h3>
+      {(publishedDate || customerName) && (
+        <div className={styles.feedPublished}>
+          <span className={styles.feedPublishedDate}>
+            {publishedDate ? `Дата ${publishedDate}` : ''}
+          </span>
+          {customerName && <span className={styles.feedCompany}>{customerName}</span>}
+        </div>
+      )}
       <div className={styles.feedPay}>
         {payment}
         {bodyType ? ` · ${bodyType}` : ''}
@@ -60,7 +70,6 @@ export const WorkCard: React.FC<WorkCardProps> = ({ work, selected, onClick }) =
           {Number(work.weight) || 0} т · {Number(work.volume) || 0} м³
         </span>
         <span className={styles.feedRight}>
-          {publishedAt ? workFormatters.published(publishedAt) : ''}
           {offers > 0 && <span className={styles.feedOffers}>{offersLabel(offers)}</span>}
         </span>
       </div>

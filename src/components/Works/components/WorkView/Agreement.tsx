@@ -9,6 +9,7 @@ import {
 import styles from './Agreement.module.css';
 import { SignField } from '../../../DataEditor/fields/SignField';
 import { WorkInfo, OfferInfo, WorkStatus } from '../../types';
+import { getWorkCustomerName } from '../../utils';
 import { WizardHeader } from '../../../Header/WizardHeader';
 import { companyGetters } from '../../../../Store/companyStore';
 import { transportGetters } from '../../../../Store/transportStore';
@@ -94,7 +95,7 @@ export const Agreement: React.FC<AgreementProps> = ({
         year
       },
       customer: {
-        name: work.client || 'Заказчик',
+        name: getWorkCustomerName(work) || 'Заказчик',
         representative: work.face || 'Представитель заказчика',
         basis: 'Договор'
       },
@@ -111,7 +112,7 @@ export const Agreement: React.FC<AgreementProps> = ({
         cargo_name: work.name || work.description || 'Груз',
         cargo_quantity: cargoQuantity,
         sender_details: JSON.stringify({
-          company_name: work.client || '',
+          company_name: getWorkCustomerName(work) || '',
           representative: work.face || '',
           inn: '',
           ogrn: '',

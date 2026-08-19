@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Package, Calendar, User, Phone, Shield, Wallet } from 'lucide-react';
+import { MapPin, Package, Calendar, User, Phone, Shield, Wallet, Building2 } from 'lucide-react';
 import { WorkInfo } from '../../types';
 import { workFormatters } from '../../utils';
 import styles from './WorkOrderInfo.module.css';
@@ -38,6 +38,8 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work }) => {
   const fromAddress = work.address?.address || '';
   const toAddress = work.destiny?.address || '';
   const publishedAt = work.publish_date || '';
+  const customerName = work.company?.name || work.client;
+  const contactName = work.face && work.face !== customerName ? work.face : '';
 
   return (
     <section className={styles.card} aria-label="Информация о заказе">
@@ -52,16 +54,18 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work }) => {
       <div className={styles.route}>
         <div className={styles.routePoint}>
           <span className={`${styles.dot} ${styles.dotFrom}`} />
-          <div>
+          <div className={styles.routeBody}>
             <div className={styles.routeLabel}>Откуда</div>
             <div className={styles.routeCity}>{fromCity}</div>
             {fromAddress && <div className={styles.routeAddr}>{fromAddress}</div>}
           </div>
         </div>
-        <div className={styles.routeLine} aria-hidden />
+        <span className={styles.routeArrow} aria-hidden>
+          →
+        </span>
         <div className={styles.routePoint}>
           <span className={`${styles.dot} ${styles.dotTo}`} />
-          <div>
+          <div className={styles.routeBody}>
             <div className={styles.routeLabel}>Куда</div>
             <div className={styles.routeCity}>{toCity}</div>
             {toAddress && <div className={styles.routeAddr}>{toAddress}</div>}
@@ -91,9 +95,14 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work }) => {
           value={publishedAt ? workFormatters.date(publishedAt) : null}
         />
         <Row
-          icon={<User size={16} strokeWidth={1.75} />}
+          icon={<Building2 size={16} strokeWidth={1.75} />}
           label="Заказчик"
-          value={work.client || work.face}
+          value={customerName || work.face}
+        />
+        <Row
+          icon={<User size={16} strokeWidth={1.75} />}
+          label="Контакт"
+          value={customerName ? contactName : null}
         />
         <Row
           icon={<Phone size={16} strokeWidth={1.75} />}

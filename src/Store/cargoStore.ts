@@ -25,7 +25,6 @@ export type       DriverCardMode  = 'offered'   | 'assigned'  | 'to_load'       
 
 
 export interface  DriverInfo {
-    
     guid:           string;
     cargo:          string;
     recipient:      string;
@@ -40,11 +39,17 @@ export interface  DriverInfo {
 
 }
 
+export interface CargoCompany {
+    id: string;
+    name: string;
+}
+
 export interface  CargoInfo {
     guid:           string;
     name:           string;
     description:    string;
     client:         string;
+    company?:       CargoCompany;
     address:        CargoAddress;
     destiny:        CargoAddress;
     pickup_date:    string;

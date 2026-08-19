@@ -10,6 +10,7 @@ import { transportGetters } from '../../../../Store/transportStore';
 import { useToast } from '../../../Toast';
 import { useChats } from '../../../../Store/useChats';
 import { WORK_CURRENT_ACTION, findWorkByRef, normalizeWorkStatus } from '../../statusFlow';
+import { getWorkCustomerName } from '../../utils';
 import { CounterOfferCard } from './OfferCard';
 import { ContractCard } from './ContractCard';
 import { ArrivedCard } from './ArrivedCard';
@@ -141,7 +142,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
     const handleOpenChat = () => {
         const recipient = workInfo.recipient;
         const cargo = workInfo.cargo || workInfo.guid;
-        const name = workInfo.client || workInfo.face || 'Заказчик';
+        const name = getWorkCustomerName(workInfo) || 'Заказчик';
         if (!recipient || !cargo) {
             toast.error('Не удалось открыть чат по этому заказу');
             return;
