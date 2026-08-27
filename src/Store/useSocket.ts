@@ -40,7 +40,9 @@ export function useSocket() {
   }, [])
 
   const emit        = useCallback((event: string, data?: any) => {
-    console.log("emit... " + event, data)
+    if (event !== 'get_balance') {
+      console.log("emit... " + event, data)
+    }
     return socketService.emit(event, data)
   }, [])
 

@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
-import { IonLoading } from '@ionic/react';
-import { ChevronLeft, MessageCircle } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { IonLoading, IonModal } from '@ionic/react';
+import { ChevronLeft, MessageCircle, X } from 'lucide-react';
 import { CargoInfo, DriverInfo, useCargoStore } from '../../../Store/cargoStore';
 import { DriverCard } from './DriverCard';
 import type { UseInvoicesReturn } from '../hooks/useInvoices';
@@ -9,6 +9,9 @@ import { useToken } from '../../../Store/loginStore';
 import { useChats } from '../../../Store/useChats';
 import { CargoStatusTimeline } from './CargoStatusTimeline';
 import { InvoiceOfferCard } from './InvoiceOfferCard';
+import { LicAccountPanel } from './LicAccountPanel';
+import { useLicAccount } from '../hooks/useLicAccount';
+import { formatters } from '../../../utils/utils';
 import styles from './CargoInvoices.module.css';
 
 interface CargoInvoiceProps {
@@ -37,6 +40,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({
   const token = useToken();
   const { sendImage } = useChats();
   const cargos = useCargoStore((state) => state.cargos);
+  const [openGuid, setOpenGuid] = useState<string | null>(null);
 
   const liveCargo = useMemo(() => {
     return cargos.find((item) => item.guid === cargo.guid) ?? cargo;
@@ -51,6 +55,20 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({
       return fresh ? { ...invoice, ...fresh } : invoice;
     });
   }, [invoices, liveCargo.invoices]);
+
+  const openInvoice = useMemo(
+    () => liveInvoices.find((item) => item.guid === openGuid) ?? null,
+    [liveInvoices, openGuid]
+  );
+
+  const lic = useLicAccount(openInvoice?.recipient ?? null, {
+    guid: openInvoice?.guid,
+    cargo: openInvoice?.cargo,
+  });
+
+  useEffect(() => {
+    if (openGuid && !openInvoice) setOpenGuid(null);
+  }, [openGuid, openInvoice]);
 
   const AcceptClick = async (
     invoice: DriverInfo,
@@ -108,6 +126,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({
   const handleClick = async (invoice: DriverInfo) => {
     const contractData = await get_contract(invoice);
     if (onOpenAgreement && contractData) {
+      setOpenGuid(null);
       onOpenAgreement(invoice, contractData);
     }
   };
@@ -115,6 +134,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({
   const handleRejectAndMaybeBack = async (invoice: DriverInfo) => {
     const success = await handleReject(invoice);
     if (success && liveInvoices.length <= 1) {
+      setOpenGuid(null);
       onBack();
     }
   };
@@ -137,53 +157,104 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({
         )}
 
         {liveInvoices.map((invoice) => (
-          <section key={invoice.guid} className={styles.invoiceBlock}>
-            <CargoStatusTimeline cargo={{ ...liveCargo, invoices: [invoice] }} />
-
-            <div className={styles.cardsRow}>
-              <InvoiceOfferCard invoice={invoice} />
-
-              <aside className={styles.actionPanel} aria-label="Текущее действие">
-                <div className={styles.actionPanelHead}>
-                  <div className={styles.actionPanelKicker}>Текущее действие</div>
-                  <h2 className={styles.actionPanelTitle}>{invoice.status}</h2>
-                </div>
-                <DriverCard
-                  info={invoice}
-                  onReject={handleRejectAndMaybeBack}
-                  onAccept={handleClick}
-                  onChat={handleChat}
-                  onStartLoading={(info) => handleAccept(info, 14)}
-                  onSend={(info) => handleAccept(info, 16)}
-                  onStartUnloading={(info) =>
-                    AcceptClick(info, { sealPhotos: [] }, 18)
-                  }
-                  onComplete={(info, rating, completed) => {
-                    handleComplete(info, rating, {
-                      delivered: completed,
-                      documents: completed,
-                    });
-                    AcceptClick(info, {}, 20);
-                  }}
-                  isLoading={isLoading}
-                />
-              </aside>
+          <button
+            key={invoice.guid}
+            type="button"
+            className={`${styles.invoiceRow} ${openGuid === invoice.guid ? styles.invoiceRowActive : ''}`}
+            onClick={() => setOpenGuid(invoice.guid)}
+          >
+            <div className={styles.invoiceRowMain}>
+              <div className={styles.invoiceRowName}>{invoice.client || 'Водитель'}</div>
+              <div className={styles.invoiceRowMeta}>
+                {invoice.status}
+                {invoice.transport ? ` · ${invoice.transport}` : ''}
+              </div>
             </div>
-
-            <button
-              type="button"
-              className={styles.chatCta}
-              onClick={() => handleChat(invoice)}
-            >
-              <MessageCircle size={20} strokeWidth={1.75} />
-              <span>
-                <span className={styles.chatCtaTitle}>Чат</span>
-                <span className={styles.chatCtaHint}>Написать водителю</span>
-              </span>
-            </button>
-          </section>
+            <div className={styles.invoiceRowPrice}>{formatters.currency(invoice.price)}</div>
+          </button>
         ))}
       </div>
+
+      <IonModal
+        isOpen={Boolean(openInvoice)}
+        onDidDismiss={() => setOpenGuid(null)}
+        className={styles.invoiceModal}
+      >
+        {openInvoice && (
+          <div className={styles.modalShell}>
+            <div className={styles.modalHead}>
+              <div>
+                <div className={styles.modalKicker}>Заявка водителя</div>
+                <h2 className={styles.modalTitle}>{openInvoice.client || 'Водитель'}</h2>
+              </div>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setOpenGuid(null)}
+                aria-label="Закрыть"
+              >
+                <X size={20} strokeWidth={2} />
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <CargoStatusTimeline cargo={{ ...liveCargo, invoices: [openInvoice] }} />
+
+              <div className={styles.modalSplit}>
+                <div className={styles.modalLeft}>
+                  <InvoiceOfferCard invoice={openInvoice} />
+
+                  <aside className={styles.actionPanel} aria-label="Текущее действие">
+                    <div className={styles.actionPanelHead}>
+                      <div className={styles.actionPanelKicker}>Текущее действие</div>
+                      <h2 className={styles.actionPanelTitle}>{openInvoice.status}</h2>
+                    </div>
+                    <DriverCard
+                      info={openInvoice}
+                      onReject={handleRejectAndMaybeBack}
+                      onAccept={handleClick}
+                      onChat={handleChat}
+                      onStartLoading={(info) => handleAccept(info, 14)}
+                      onSend={(info) => handleAccept(info, 16)}
+                      onStartUnloading={(info) =>
+                        AcceptClick(info, { sealPhotos: [] }, 18)
+                      }
+                      onComplete={(info, rating, completed) => {
+                        handleComplete(info, rating, {
+                          delivered: completed,
+                          documents: completed,
+                        });
+                        AcceptClick(info, {}, 20);
+                      }}
+                      isLoading={isLoading}
+                    />
+                  </aside>
+
+                  <button
+                    type="button"
+                    className={styles.chatCta}
+                    onClick={() => handleChat(openInvoice)}
+                  >
+                    <MessageCircle size={20} strokeWidth={1.75} />
+                    <span>
+                      <span className={styles.chatCtaTitle}>Чат</span>
+                      <span className={styles.chatCtaHint}>Написать водителю</span>
+                    </span>
+                  </button>
+                </div>
+
+                <div className={styles.modalRight}>
+                  <LicAccountPanel
+                    data={lic.data}
+                    isLoading={lic.isLoading}
+                    error={lic.error}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </IonModal>
     </div>
   );
 };

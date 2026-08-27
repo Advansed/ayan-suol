@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { IonButton, IonIcon } from '@ionic/react';
 import { cameraOutline, imageOutline, carOutline } from 'ionicons/icons';
-import { TransportData } from '../../../Store/transportStore';
+import {
+  TransportData,
+  useTransportTypes,
+  resolveTransportTypeId,
+  transportTypeName,
+  asTransportType,
+  toTransportTypeId,
+  transportDisplayName,
+} from '../../../Store/transportStore';
 import { resolveImageSrc } from '../../../utils/fileUpload';
 import styles from './TransportPage.module.css';
 
@@ -19,6 +27,7 @@ export const DriverInfo: React.FC<DriverInfoProps> = ({
   onImageUpload,
 }) => {
   const [formData, setFormData] = useState({
+    name: '',
     transportType: '',
     licensePlate: '',
     vin: '',
@@ -27,28 +36,32 @@ export const DriverInfo: React.FC<DriverInfoProps> = ({
     experience: '',
   });
   const [saving, setSaving] = useState(false);
+  const types = useTransportTypes();
 
   useEffect(() => {
-    if (transportData) {
-      setFormData({
-        transportType: transportData.transport_type || transportData.type || '',
-        licensePlate: transportData.license_plate || transportData.number || '',
-        vin: transportData.vin || '',
-        manufactureYear:
-          transportData.manufacture_year?.toString() ||
-          transportData.year?.toString() ||
-          '',
-        loadCapacity:
-          transportData.load_capacity?.toString() ||
-          transportData.capacity?.toString() ||
-          '',
-        experience:
-          transportData.experience?.toString() ||
-          transportData.exp?.toString() ||
-          '',
-      });
-    }
-  }, [transportData]);
+    setFormData({
+      name: transportDisplayName(transportData),
+      transportType: resolveTransportTypeId(
+        transportData?.transport_type,
+        types,
+        transportData?.type
+      ),
+      licensePlate: transportData?.license_plate || transportData?.number || '',
+      vin: transportData?.vin || '',
+      manufactureYear:
+        transportData?.manufacture_year?.toString() ||
+        transportData?.year?.toString() ||
+        '',
+      loadCapacity:
+        transportData?.load_capacity?.toString() ||
+        transportData?.capacity?.toString() ||
+        '',
+      experience:
+        transportData?.experience?.toString() ||
+        transportData?.exp?.toString() ||
+        '',
+    });
+  }, [transportData, types]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -57,8 +70,11 @@ export const DriverInfo: React.FC<DriverInfoProps> = ({
   const handleSave = async () => {
     const saveData: Partial<TransportData> = {};
 
+    if (formData.name.trim()) {
+      saveData.name = formData.name.trim();
+    }
     if (formData.transportType.trim()) {
-      saveData.transport_type = formData.transportType.trim();
+      saveData.transport_type = toTransportTypeId(formData.transportType);
     }
     if (formData.licensePlate.trim()) {
       saveData.license_plate = formData.licensePlate.trim();
@@ -92,10 +108,11 @@ export const DriverInfo: React.FC<DriverInfoProps> = ({
     transportData?.license_plate ||
     transportData?.number ||
     '';
+  const currentType = asTransportType(transportData?.transport_type);
   const typeLabel =
-    formData.transportType ||
-    transportData?.transport_type ||
-    transportData?.type ||
+    transportTypeName(formData.transportType, types) ||
+    currentType?.name ||
+    transportTypeName(transportData?.transport_type, types) ||
     'Транспорт';
 
   return (
@@ -114,14 +131,36 @@ export const DriverInfo: React.FC<DriverInfoProps> = ({
 
           <div className={styles.fields}>
             <div className={styles.field}>
-              <label className={styles.label}>Тип транспорта</label>
+              <label className={styles.label}>Наименование</label>
               <input
                 type="text"
                 className={styles.input}
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Газель Next"
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Тип кузова</label>
+              <select
+                className={`${styles.input} ${styles.select}`}
                 value={formData.transportType}
                 onChange={(e) => handleInputChange('transportType', e.target.value)}
-                placeholder="Фура, Газель…"
-              />
+              >
+                <option value="">Выберите тип кузова</option>
+                {formData.transportType &&
+                  !types.some((type) => type.id === formData.transportType) && (
+                    <option value={formData.transportType}>
+                      {currentType?.name || currentType?.description || 'Текущий тип'}
+                    </option>
+                  )}
+                {types.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className={styles.field}>

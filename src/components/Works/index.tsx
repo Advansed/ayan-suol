@@ -412,7 +412,7 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
     };
 
     return (
-        <div className="w-100 h-100">
+        <div className="w-100">
             <IonLoading isOpen={isLoading} message={"Подождите..."} />
             {
                 renderPage()

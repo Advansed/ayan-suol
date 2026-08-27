@@ -92,8 +92,6 @@ export const Cargos: React.FC = () => {
                             onDelete    = { deleteCargo }
                             onPublish   = { publishCargo }
                             onInvoices  = { (cargo) => navigateTo({ type: 'invoices', cargo }) }
-                            onPayment   = { (cargo) => navigateTo({ type: 'prepayment', cargo }) }
-                            onInsurance = { (cargo) => navigateTo({ type: 'insurance', cargo }) }
                             onBack      = { handleBack }
                         />
                     );

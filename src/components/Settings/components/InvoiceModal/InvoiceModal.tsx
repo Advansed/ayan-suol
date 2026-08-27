@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { IonModal, IonHeader, IonToolbar, IonButtons, IonButton, IonContent, IonIcon, IonLoading } from '@ionic/react';
 import { closeOutline, downloadOutline, printOutline, sendOutline, shareOutline } from 'ionicons/icons';
 import { formatters } from '../../../../utils/utils';
@@ -14,17 +14,17 @@ import { useToken } from '../../../../Store/loginStore';
 import { useToast } from '../../../Toast';
 
 interface SellerData {
-  name: '';
-  address: '';
-  inn: '';
-  kpp: '';
-  ogrn: '';
-  account: '';
-  bank: '';
-  bankInn: '';
-  bik: '';
-  korAccount: '';
-  bankAddress: '';
+  name?: string;
+  address?: string;
+  inn?: string;
+  kpp?: string;
+  ogrn?: string;
+  account?: string;
+  bank?: string;
+  bankInn?: string;
+  bik?: string;
+  korAccount?: string;
+  bankAddress?: string;
 }
 
 interface InvoiceItem {
@@ -36,9 +36,9 @@ interface InvoiceItem {
 }
 
 interface CustomerData {
-  name: string;
-  address: number;
-  inn: string;
+  name?: string;
+  address?: string | number;
+  inn?: string;
 }
 
 export interface InvoiceModalProps {
@@ -60,12 +60,141 @@ export interface InvoiceData {
   signer: string;
 }
 
+const ONES = [
+  '',
+  'один',
+  'два',
+  'три',
+  'четыре',
+  'пять',
+  'шесть',
+  'семь',
+  'восемь',
+  'девять',
+];
+const ONES_FEM = [
+  '',
+  'одна',
+  'две',
+  'три',
+  'четыре',
+  'пять',
+  'шесть',
+  'семь',
+  'восемь',
+  'девять',
+];
+const TEENS = [
+  'десять',
+  'одиннадцать',
+  'двенадцать',
+  'тринадцать',
+  'четырнадцать',
+  'пятнадцать',
+  'шестнадцать',
+  'семнадцать',
+  'восемнадцать',
+  'девятнадцать',
+];
+const TENS = [
+  '',
+  '',
+  'двадцать',
+  'тридцать',
+  'сорок',
+  'пятьдесят',
+  'шестьдесят',
+  'семьдесят',
+  'восемьдесят',
+  'девяносто',
+];
+const HUNDREDS = [
+  '',
+  'сто',
+  'двести',
+  'триста',
+  'четыреста',
+  'пятьсот',
+  'шестьсот',
+  'семьсот',
+  'восемьсот',
+  'девятьсот',
+];
+
+function triadToWords(n: number, female = false): string {
+  const h = Math.floor(n / 100);
+  const t = Math.floor((n % 100) / 10);
+  const o = n % 10;
+  const parts: string[] = [];
+  if (h) parts.push(HUNDREDS[h]);
+  if (t > 1) {
+    parts.push(TENS[t]);
+    if (o) parts.push(female ? ONES_FEM[o] : ONES[o]);
+  } else if (t === 1) {
+    parts.push(TEENS[o]);
+  } else if (o) {
+    parts.push(female ? ONES_FEM[o] : ONES[o]);
+  }
+  return parts.join(' ');
+}
+
+function pluralForm(n: number, one: string, few: string, many: string): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
+}
+
+function amountInWords(value: number): string {
+  const amount = Math.max(0, Math.round(Number(value) || 0));
+  if (amount === 0) return 'Ноль рублей 00 копеек';
+
+  const rub = Math.floor(amount);
+  const kop = Math.round((Number(value) - rub) * 100) || 0;
+  const millions = Math.floor(rub / 1_000_000);
+  const thousands = Math.floor((rub % 1_000_000) / 1000);
+  const rest = rub % 1000;
+  const parts: string[] = [];
+
+  if (millions) {
+    parts.push(
+      `${triadToWords(millions)} ${pluralForm(millions, 'миллион', 'миллиона', 'миллионов')}`
+    );
+  }
+  if (thousands) {
+    parts.push(
+      `${triadToWords(thousands, true)} ${pluralForm(thousands, 'тысяча', 'тысячи', 'тысяч')}`
+    );
+  }
+  if (rest || (!millions && !thousands)) {
+    parts.push(triadToWords(rest));
+  }
+
+  const rubWord = pluralForm(rub, 'рубль', 'рубля', 'рублей');
+  const kopWord = pluralForm(kop, 'копейка', 'копейки', 'копеек');
+  const text = `${parts.join(' ').replace(/\s+/g, ' ').trim()} ${rubWord} ${String(kop).padStart(2, '0')} ${kopWord}`;
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function dash(value?: string | number | null): string {
+  const text = value == null ? '' : String(value).trim();
+  return text || '—';
+}
+
 export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, inv }) => {
   const [load, setLoad] = useState(false);
-  const hasSellerData = inv.seller && inv.seller.name;
+  const seller = inv.seller || {};
+  const customer = inv.customer || {};
+  const items = inv.items?.length
+    ? inv.items
+    : [{ item_name: '', qty: 0, unit: '', price: 0, total: 0 }];
   const email = useCompanyStore((state) => state.data?.email);
   const token = useToken();
   const toast = useToast();
+
+  const totalWords = useMemo(() => amountInWords(inv.total || 0), [inv.total]);
+  const itemsCount = inv.items?.length || 0;
 
   const handlePrint = () => {
     window.print();
@@ -84,44 +213,42 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, inv
     blob: Blob;
     fileName: string;
   } | null> => {
-    const invoiceEl = document.querySelector(`.${styles.invoiceContainer}`) as HTMLElement;
+    const invoiceEl = document.querySelector(`.${styles.sheet}`) as HTMLElement;
     if (!invoiceEl) return null;
 
-    const originalWidth = invoiceEl.style.width;
-    const originalHeight = invoiceEl.style.height;
-    const originalMargin = invoiceEl.style.margin;
-    const originalFontSize = invoiceEl.style.fontSize;
-
-    invoiceEl.style.width = '800px';
-    invoiceEl.style.height = 'auto';
-    invoiceEl.style.margin = '0 auto';
-    invoiceEl.style.fontSize = '14px';
-
     const pdf = new jsPDF('p', 'mm', 'a4');
-
     const canvas = await html2canvas(invoiceEl, {
       useCORS: true,
       backgroundColor: '#ffffff',
-      width: 800,
+      scale: 2,
+      width: invoiceEl.scrollWidth,
       height: invoiceEl.scrollHeight,
-      scale: 2
     });
 
-    invoiceEl.style.width = originalWidth;
-    invoiceEl.style.height = originalHeight;
-    invoiceEl.style.margin = originalMargin;
-    invoiceEl.style.fontSize = originalFontSize;
-
     const imgData = canvas.toDataURL('image/png');
-    const imgWidth = 210;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 8;
+    const usableWidth = pageWidth - margin * 2;
+    const imgHeight = (canvas.height * usableWidth) / canvas.width;
 
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    let heightLeft = imgHeight;
+    let position = margin;
+
+    pdf.addImage(imgData, 'PNG', margin, position, usableWidth, imgHeight);
+    heightLeft -= pageHeight - margin * 2;
+
+    while (heightLeft > 0) {
+      position = margin - (imgHeight - heightLeft);
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', margin, position, usableWidth, imgHeight);
+      heightLeft -= pageHeight - margin * 2;
+    }
 
     const dataUri = pdf.output('datauristring');
     const base64 = dataUri.split(',')[1];
     const blob = await fetch(dataUri).then((r) => r.blob());
-    const fileName = `invoice_${inv.invoiceNumber}.pdf`;
+    const fileName = `invoice_${inv.invoiceNumber || 'document'}.pdf`;
 
     return { base64, blob, fileName };
   }, [inv.invoiceNumber]);
@@ -130,12 +257,13 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, inv
     try {
       const built = await buildInvoicePdf();
       if (!built) {
-        console.warn('Invoice element not found');
+        toast.error('Не удалось подготовить PDF');
         return;
       }
       send_email({ token, email, pdf: built.base64 });
     } catch (err) {
       console.error('Ошибка при сохранении PDF:', err);
+      toast.error('Ошибка при подготовке счёта');
     }
   };
 
@@ -143,7 +271,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, inv
     try {
       const built = await buildInvoicePdf();
       if (!built) {
-        console.warn('Invoice element not found');
+        toast.error('Не удалось подготовить PDF');
         return;
       }
 
@@ -156,20 +284,19 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, inv
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
-        toast.success(`Счёт скачан: ${built.fileName}`);
+        toast.success(`Счёт сохранён: ${built.fileName}`);
         return;
       }
 
-      const result = await Filesystem.writeFile({
+      await Filesystem.writeFile({
         path: built.fileName,
         data: built.base64,
-        directory: Directory.Library
+        directory: Directory.Library,
       });
-
-      console.log('PDF сохранён:', result.uri);
-      alert(`Счёт сохранён как ${built.fileName}`);
+      toast.success(`Счёт сохранён как ${built.fileName}`);
     } catch (err) {
       console.error('Ошибка при сохранении PDF:', err);
+      toast.error('Не удалось сохранить счёт');
     }
   };
 
@@ -194,14 +321,14 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, inv
             const { uri } = await Filesystem.writeFile({
               path: fileName,
               data: base64,
-              directory: Directory.Cache
+              directory: Directory.Cache,
             });
 
             await Share.share({
               title,
               text: shareSummaryText,
               files: [uri],
-              dialogTitle: 'Поделиться'
+              dialogTitle: 'Поделиться',
             });
             return;
           } catch (shareErr) {
@@ -212,7 +339,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, inv
         await Share.share({
           title,
           text: shareSummaryText,
-          dialogTitle: 'Поделиться'
+          dialogTitle: 'Поделиться',
         });
         return;
       }
@@ -251,20 +378,24 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, inv
     <IonModal isOpen={isOpen} onDidDismiss={onClose} className={styles.modal}>
       <IonHeader>
         <IonToolbar className={styles.toolbar}>
-          <IonButtons slot="end">
-            <IonButton onClick={handleEmail} size="small" title="На почту">
-              <IonIcon icon={sendOutline} slot="icon-only" />
+          <IonButtons slot="start">
+            <IonButton onClick={handleDownload} size="small" title="Сохранить">
+              <IonIcon icon={downloadOutline} slot="start" />
+              Сохранить
             </IonButton>
+            <IonButton onClick={handleEmail} size="small" title="На почту">
+              <IonIcon icon={sendOutline} slot="start" />
+              На почту
+            </IonButton>
+          </IonButtons>
+          <IonButtons slot="end">
             <IonButton onClick={handleShare} size="small" title="Поделиться">
               <IonIcon icon={shareOutline} slot="icon-only" />
-            </IonButton>
-            <IonButton onClick={handleDownload} size="small" title="Скачать">
-               <IonIcon icon={downloadOutline} slot="icon-only" />
             </IonButton>
             <IonButton onClick={handlePrint} size="small" title="Печать">
               <IonIcon icon={printOutline} slot="icon-only" />
             </IonButton>
-            <IonButton onClick={onClose} size="small">
+            <IonButton onClick={onClose} size="small" title="Закрыть">
               <IonIcon icon={closeOutline} slot="icon-only" />
             </IonButton>
           </IonButtons>
@@ -272,198 +403,154 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, inv
       </IonHeader>
       <IonLoading isOpen={load} message={'Подождите...'} />
       <IonContent className={styles.content}>
-        <div className={styles.invoiceContainer}>
-          <div className={styles.header}>
-            <div className={styles.headerTitle}>Счет на оплату</div>
-            <div className={styles.headerDetails}>
-              <div>№ {inv.invoiceNumber}</div>
-              <div>от {inv.invoiceDate}</div>
-            </div>
-          </div>
+        <div className={styles.page}>
+          <article className={styles.sheet}>
+            <table className={styles.bankTable}>
+              <tbody>
+                <tr>
+                  <td className={styles.bankCell} colSpan={2} rowSpan={2}>
+                    <div className={styles.bankLabel}>Банк получателя</div>
+                    <div className={styles.bankValue}>{dash(seller.bank)}</div>
+                  </td>
+                  <td className={styles.bankCellNarrow}>
+                    <div className={styles.bankLabel}>БИК</div>
+                  </td>
+                  <td className={styles.bankCell}>
+                    <div className={styles.bankValue}>{dash(seller.bik)}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className={styles.bankCellNarrow}>
+                    <div className={styles.bankLabel}>Сч. №</div>
+                  </td>
+                  <td className={styles.bankCell}>
+                    <div className={styles.bankValue}>{dash(seller.korAccount)}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className={styles.bankCell}>
+                    <div className={styles.bankLabel}>ИНН</div>
+                    <div className={styles.bankValue}>{dash(seller.inn)}</div>
+                  </td>
+                  <td className={styles.bankCell}>
+                    <div className={styles.bankLabel}>КПП</div>
+                    <div className={styles.bankValue}>{dash(seller.kpp)}</div>
+                  </td>
+                  <td className={styles.bankCellNarrow} rowSpan={2}>
+                    <div className={styles.bankLabel}>Сч. №</div>
+                  </td>
+                  <td className={styles.bankCell} rowSpan={2}>
+                    <div className={styles.bankValue}>{dash(seller.account)}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className={styles.bankCell} colSpan={2}>
+                    <div className={styles.bankLabel}>Получатель</div>
+                    <div className={styles.bankValue}>{dash(seller.name)}</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>Поставщик:</div>
-            <div className={styles.sectionContent}>
-              <div className={styles.dataRow}>
-                <span className={styles.dataLabel}>Название:</span>
-                <span className={styles.dataValue}>
-                  {hasSellerData ? inv.seller.name : <span className={styles.emptyData}>________________________</span>}
+            <h1 className={styles.title}>
+              Счёт на оплату № {dash(inv.invoiceNumber)} от {dash(inv.invoiceDate)}
+            </h1>
+
+            <div className={styles.parties}>
+              <div className={styles.partyRow}>
+                <span className={styles.partyLabel}>Поставщик:</span>
+                <span className={styles.partyValue}>
+                  {dash(seller.name)}
+                  {seller.inn ? `, ИНН ${seller.inn}` : ''}
+                  {seller.kpp ? `, КПП ${seller.kpp}` : ''}
+                  {seller.address ? `, ${seller.address}` : ''}
                 </span>
               </div>
-
-              {hasSellerData && inv.seller.address && (
-                <div className={styles.dataRow}>
-                  <span className={styles.dataLabel}>Адрес:</span>
-                  <span className={styles.dataValue}>{inv.seller.address}</span>
-                </div>
-              )}
-
-              {hasSellerData && inv.seller.inn && (
-                <div className={styles.dataRow}>
-                  <span className={styles.dataLabel}>ИНН:</span>
-                  <span className={styles.dataValue}>
-                    {inv.seller.inn}
-                    {inv.seller.kpp ? ` КПП: ${inv.seller.kpp}` : ''}
-                  </span>
-                </div>
-              )}
-
-              {hasSellerData && inv.seller.account && inv.seller.bank && (
-                <div className={styles.dataRow}>
-                  <span className={styles.dataLabel}>Банковские реквизиты:</span>
-                  <span className={styles.dataValue}>
-                    р/с {inv.seller.account} в {inv.seller.bank}
-                    {inv.seller.bik && (
-                      <>
-                        <br />
-                        БИК: {inv.seller.bik}
-                      </>
-                    )}
-                    {inv.seller.korAccount && (
-                      <>
-                        <br />
-                        к/с: {inv.seller.korAccount}
-                      </>
-                    )}
-                  </span>
-                </div>
-              )}
-
-              {!hasSellerData && <div className={styles.emptyData}>Данные поставщика не заполнены</div>}
-            </div>
-          </div>
-
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>Покупатель:</div>
-            <div className={styles.sectionContent}>
-              <div className={styles.dataRow}>
-                <span className={styles.dataLabel}>Название:</span>
-                <span className={styles.dataValue}>
-                  {inv.customer.name || <span className={styles.emptyData}>________________________</span>}
+              <div className={styles.partyRow}>
+                <span className={styles.partyLabel}>Покупатель:</span>
+                <span className={styles.partyValue}>
+                  {dash(customer.name)}
+                  {customer.inn ? `, ИНН ${customer.inn}` : ''}
+                  {customer.address ? `, ${customer.address}` : ''}
                 </span>
               </div>
-
-              {inv.customer.inn && (
-                <div className={styles.dataRow}>
-                  <span className={styles.dataLabel}>ИНН:</span>
-                  <span className={styles.dataValue}>{inv.customer.inn}</span>
-                </div>
-              )}
-
-              {inv.customer.address && (
-                <div className={styles.dataRow}>
-                  <span className={styles.dataLabel}>Адрес:</span>
-                  <span className={styles.dataValue}>{inv.customer.address}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.itemsSection}>
-            <div className={styles.itemsTitle}>Товары/услуги:</div>
-
-            {inv.items?.length > 0 ? (
-              inv.items.map((item, idx) => (
-                <div key={idx} className={styles.itemCard}>
-                  <div className={styles.itemHeader}>
-                    <span className={styles.itemNumber}>{idx + 1}.</span>
-                    <span className={styles.itemName}>{item.item_name}</span>
-                  </div>
-
-                  <div className={styles.itemDetails}>
-                    <div className={styles.itemDetailRow}>
-                      <span className={styles.itemDetailLabel}>Количество:</span>
-                      <span className={styles.itemDetailValue}>
-                        {item.qty} {item.unit}
-                      </span>
-                    </div>
-
-                    <div className={styles.itemDetailRow}>
-                      <span className={styles.itemDetailLabel}>Цена:</span>
-                      <span className={styles.itemDetailValue}>{formatters.currency(item.price)}</span>
-                    </div>
-
-                    <div className={styles.itemDetailRow}>
-                      <span className={styles.itemDetailLabel}>Сумма:</span>
-                      <span className={styles.itemDetailValue}>{formatters.currency(item.total)}</span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className={styles.itemCard}>
-                <div className={styles.itemHeader}>
-                  <span className={styles.itemNumber}>1.</span>
-                  <span className={styles.itemName}>
-                    <span className={styles.emptyData}>________________________</span>
+              {(inv.paymentPurpose || inv.paymentDue) && (
+                <div className={styles.partyRow}>
+                  <span className={styles.partyLabel}>Основание:</span>
+                  <span className={styles.partyValue}>
+                    {inv.paymentPurpose || `Оплата по счёту №${inv.invoiceNumber}`}
+                    {inv.paymentDue ? `. Срок оплаты: ${inv.paymentDue}` : ''}
                   </span>
                 </div>
-
-                <div className={styles.itemDetails}>
-                  <div className={styles.itemDetailRow}>
-                    <span className={styles.itemDetailLabel}>Количество:</span>
-                    <span className={styles.itemDetailValue}>
-                      <span className={styles.emptyData}>___</span>
-                    </span>
-                  </div>
-
-                  <div className={styles.itemDetailRow}>
-                    <span className={styles.itemDetailLabel}>Цена:</span>
-                    <span className={styles.itemDetailValue}>
-                      <span className={styles.emptyData}>___</span>
-                    </span>
-                  </div>
-
-                  <div className={styles.itemDetailRow}>
-                    <span className={styles.itemDetailLabel}>Сумма:</span>
-                    <span className={styles.itemDetailValue}>
-                      <span className={styles.emptyData}>___</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className={styles.totalSection}>
-            <div className={styles.totalRow}>
-              <span className={styles.totalLabel}>Итого:</span>
-              <span className={styles.totalValue}>{formatters.currency(inv.total)}</span>
+              )}
             </div>
 
-            {inv.vat > 0 && (
+            <table className={styles.itemsTable}>
+              <thead>
+                <tr>
+                  <th className={styles.colNum}>№</th>
+                  <th className={styles.colName}>Товары (работы, услуги)</th>
+                  <th className={styles.colQty}>Кол-во</th>
+                  <th className={styles.colUnit}>Ед.</th>
+                  <th className={styles.colPrice}>Цена</th>
+                  <th className={styles.colSum}>Сумма</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, idx) => (
+                  <tr key={idx}>
+                    <td className={styles.colNum}>{idx + 1}</td>
+                    <td className={styles.colName}>{dash(item.item_name)}</td>
+                    <td className={styles.colQty}>{item.qty || '—'}</td>
+                    <td className={styles.colUnit}>{dash(item.unit)}</td>
+                    <td className={styles.colPrice}>
+                      {item.price ? formatters.currency(item.price) : '—'}
+                    </td>
+                    <td className={styles.colSum}>
+                      {item.total ? formatters.currency(item.total) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className={styles.totals}>
               <div className={styles.totalRow}>
-                <span className={styles.totalLabel}>В том числе НДС:</span>
-                <span className={styles.totalValue}>{formatters.currency(inv.vat)}</span>
+                <span>Итого:</span>
+                <strong>{formatters.currency(inv.total || 0)}</strong>
               </div>
-            )}
-          </div>
-
-          <div className={styles.paymentSection}>
-            <div className={styles.paymentTitle}>Условия оплаты:</div>
-
-            {inv.paymentDue && (
-              <div className={styles.paymentRow}>
-                <span className={styles.paymentLabel}>Срок оплаты:</span>
-                <span className={styles.paymentValue}>{inv.paymentDue}</span>
+              <div className={styles.totalRow}>
+                <span>В том числе НДС:</span>
+                <strong>
+                  {inv.vat > 0 ? formatters.currency(inv.vat) : 'Без НДС'}
+                </strong>
               </div>
-            )}
-
-            <div className={styles.paymentRow}>
-              <span className={styles.paymentLabel}>Назначение платежа:</span>
-              <span className={styles.paymentValue}>
-                {inv.paymentPurpose || `Оплата по счету №${inv.invoiceNumber} от ${inv.invoiceDate}`}
-              </span>
+              <div className={styles.totalRow}>
+                <span>Всего к оплате:</span>
+                <strong>{formatters.currency(inv.total || 0)}</strong>
+              </div>
             </div>
-          </div>
 
-          <div className={styles.signatureSection}>
-            <div className={styles.signatureLine}>________________________</div>
-            <div className={styles.signatureName}>
-              {inv.signer || (hasSellerData ? 'Генеральный директор' : 'ФИО, должность')}
+            <p className={styles.summary}>
+              Всего наименований {itemsCount}, на сумму {formatters.currency(inv.total || 0)}
+            </p>
+            <p className={styles.words}>
+              <strong>{totalWords}</strong>
+            </p>
+
+            <div className={styles.signs}>
+              <div className={styles.signBlock}>
+                <span className={styles.signRole}>Руководитель</span>
+                <span className={styles.signLine} />
+                <span className={styles.signName}>{dash(inv.signer)}</span>
+              </div>
+              <div className={styles.signBlock}>
+                <span className={styles.signRole}>Бухгалтер</span>
+                <span className={styles.signLine} />
+                <span className={styles.signName} />
+              </div>
             </div>
-            <div className={styles.signatureNote}>(подпись и расшифровка)</div>
-          </div>
+          </article>
         </div>
       </IonContent>
     </IonModal>

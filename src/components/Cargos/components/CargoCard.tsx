@@ -1,11 +1,33 @@
 import React from 'react';
 import { IonIcon, IonText } from '@ionic/react';
 import { locationOutline } from 'ionicons/icons';
+import {
+  BadgeCheck,
+  Building2,
+  Calendar,
+  Clock,
+  MapPin,
+  Truck,
+  Users,
+} from 'lucide-react';
 import { formatters, statusUtils } from '../../../utils/utils';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 import { useCompanyData } from '../../../Store/companyStore';
-import { normalizeCargoStatus } from '../cargoStatusFlow';
+import { cargoFeedKind, cargoFeedLabel, normalizeCargoStatus } from '../cargoStatusFlow';
+import {
+  PAYMENT_LABEL,
+  fleetHint,
+  formatQty,
+  getPaymentLevel,
+  offersLabel,
+  resolveBodyType,
+  routeDistanceKm,
+  shortDate,
+  timeAgo,
+  type PaymentLevel,
+} from '../../Works/feedFormat';
 import styles from './CargoCard.module.css';
+import feedStyles from '../../Works/components/WorkCard.module.css';
 
 function getCargoCompanyName(cargo: CargoInfo, companyName?: string | null): string {
     return cargo.company?.name || companyName || cargo.client || '';
@@ -33,6 +55,37 @@ const SURFACE_BY_STATUS: Record<CargoStatus, string> = {
     [CargoStatus.COMPLETED]: styles.surfaceCompleted,
     [CargoStatus.PROBLEMS]: styles.surfaceProblems,
 };
+
+const LIGHT_CLASS: Record<PaymentLevel, string> = {
+    full: feedStyles.light_full,
+    partial: feedStyles.light_partial,
+    none: feedStyles.light_none,
+};
+
+const PAY_CLASS: Record<PaymentLevel, string> = {
+    full: feedStyles.pay_full,
+    partial: feedStyles.pay_partial,
+    none: feedStyles.pay_none,
+};
+
+const BADGE_CLASS: Record<ReturnType<typeof cargoFeedKind>, string> = {
+    new: feedStyles.badgeNew,
+    bids: feedStyles.badgeBids,
+    work: feedStyles.badgeWork,
+    done: feedStyles.badgeDone,
+    alert: feedStyles.badgeAlert,
+};
+
+function cargoFleet(cargo: CargoInfo): string | null {
+    const invoices = cargo.invoices ?? [];
+    const total = Number(cargo.vehicles_total) || (invoices.length > 1 ? invoices.length : 0);
+    if (total <= 1) return null;
+    const busy =
+        cargo.vehicles_busy != null
+            ? Number(cargo.vehicles_busy)
+            : invoices.filter((invoice) => invoice.status && invoice.status !== 'Заказано').length;
+    return fleetHint({ vehicles_total: total, vehicles_busy: busy });
+}
 
 export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', selected, onClick }) => {
     const companyData = useCompanyData();
@@ -214,104 +267,117 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
     }
 
     const status = normalizeCargoStatus(cargo.status);
-    const badge = feedBadge(status);
-    const fromCity = cargo.address?.city.city || 'Не указано';
-    const toCity = cargo.destiny?.city.city || 'Не указано';
+    const kind = cargoFeedKind(status);
+    const fromCity = cargo.address?.city?.city || 'Не указано';
+    const toCity = cargo.destiny?.city?.city || 'Не указано';
     const distance = routeDistanceKm(cargo);
     const offers = cargo.invoices?.length ?? 0;
+    const payment = getPaymentLevel(cargo);
+    const bodyType = resolveBodyType(cargo);
     const companyName = getCargoCompanyName(cargo, companyData?.name || companyData?.short_name);
-    const publishedDate = publishedAt ? formatters.date(publishedAt) : '';
-    const payment =
-      cargo.advance > 0 && cargo.advance >= cargo.price
-        ? 'Полная предоплата'
-        : cargo.advance > 0
-          ? 'Предоплата'
-          : 'Безналичный';
+    const publishedAgo = cargo.publish_date || cargo.updatedAt || '';
+    const pickup = shortDate(cargo.pickup_date);
+    const delivery = shortDate(cargo.delivery_date);
+    const fleet = cargoFleet(cargo);
 
     return (
         <button
             type="button"
-            className={`${styles.feedCard} ${selected ? styles.feedCardSelected : ''}`}
+            className={`${feedStyles.feedCard} ${selected ? feedStyles.feedCardSelected : ''}`}
             onClick={handleClick}
         >
-            <div className={styles.feedTop}>
-                <span className={`${styles.feedBadge} ${badge.className}`}>{badge.label}</span>
-                <span className={styles.feedId}>ЗК-{formatters.shortId(cargo.guid)}</span>
-                <span className={styles.feedPrice}>{formatters.currency(cargo.price)}</span>
+            <div className={`${feedStyles.light} ${LIGHT_CLASS[payment]}`} aria-hidden>
+                <span className={feedStyles.lamp} />
+                <span className={feedStyles.lamp} />
+                <span className={feedStyles.lamp} />
             </div>
 
-            <h3 className={styles.feedTitle}>{cargo.name || 'Без названия'}</h3>
-            {(publishedDate || companyName) && (
-                <div className={styles.feedPublished}>
-                    <span className={styles.feedPublishedDate}>
-                        {publishedDate ? `Дата ${publishedDate}` : ''}
+            <div className={feedStyles.feedBody}>
+                <div className={feedStyles.feedTop}>
+                    <span className={`${feedStyles.feedBadge} ${BADGE_CLASS[kind]}`}>
+                        {cargoFeedLabel(status)}
                     </span>
-                    {companyName && <span className={styles.feedCompany}>{companyName}</span>}
+                    <span className={feedStyles.feedId}>ЗК-{formatters.shortId(cargo.guid)}</span>
+                    <div className={feedStyles.feedPriceCol}>
+                        <span className={feedStyles.feedPrice}>{formatters.currency(cargo.price)}</span>
+                        <span className={`${feedStyles.payBadge} ${PAY_CLASS[payment]}`}>
+                            <span className={feedStyles.payDot} />
+                            {PAYMENT_LABEL[payment]}
+                        </span>
+                    </div>
                 </div>
-            )}
-            <div className={styles.feedPay}>{payment}</div>
 
-            <div className={styles.feedRoute}>
-                <span>{fromCity}</span>
-                <span className={styles.feedArrow} aria-hidden>→</span>
-                <span>{toCity}</span>
-                {distance != null && (
-                    <span className={styles.feedKm}>· {distance} км</span>
+                <h3 className={feedStyles.feedTitle}>{cargo.name || 'Без названия'}</h3>
+
+                {companyName && (
+                    <div className={feedStyles.feedCompany}>
+                        <Building2 size={15} strokeWidth={1.75} aria-hidden />
+                        <span className={feedStyles.feedCompanyName}>{companyName}</span>
+                        {(Boolean(cargo.company) || Boolean(companyData)) && (
+                            <BadgeCheck size={15} strokeWidth={2} className={feedStyles.verified} aria-label="Проверено" />
+                        )}
+                    </div>
                 )}
-            </div>
 
-            <div className={styles.feedMeta}>
-                <span>
-                    {Number(cargo.weight) || 0} т · {Number(cargo.volume) || 0} м³
-                </span>
-                <span className={styles.feedRight}>
-                    {offers > 0 && (
-                        <span className={styles.feedOffers}>{offersLabel(offers)}</span>
+                <div className={feedStyles.feedRoute}>
+                    <MapPin size={15} strokeWidth={1.75} aria-hidden />
+                    <span>
+                        {fromCity} → {toCity}
+                    </span>
+                    {distance != null && <span className={feedStyles.feedKm}>· {distance} км</span>}
+                </div>
+
+                {(pickup || delivery) && (
+                    <div className={feedStyles.feedDates}>
+                        {pickup && (
+                            <span>
+                                <Calendar size={14} strokeWidth={1.75} aria-hidden />
+                                Отправление: {pickup}
+                            </span>
+                        )}
+                        {delivery && (
+                            <span>
+                                <Calendar size={14} strokeWidth={1.75} aria-hidden />
+                                Доставка: {delivery}
+                            </span>
+                        )}
+                    </div>
+                )}
+
+                {fleet && (
+                    <div className={feedStyles.fleet}>
+                        <Truck size={14} strokeWidth={1.75} aria-hidden />
+                        {fleet}
+                    </div>
+                )}
+
+                <div className={feedStyles.feedMeta}>
+                    {bodyType && (
+                        <span>
+                            <Truck size={14} strokeWidth={1.75} aria-hidden />
+                            {bodyType}
+                        </span>
                     )}
-                </span>
+                    <span>
+                        {formatQty(cargo.weight)} т · {formatQty(cargo.volume)} м³
+                    </span>
+                    {publishedAgo && (
+                        <span>
+                            <Clock size={14} strokeWidth={1.75} aria-hidden />
+                            {timeAgo(publishedAgo)}
+                        </span>
+                    )}
+                    {offers > 0 && (
+                        <span className={feedStyles.feedOffers}>
+                            <Users size={14} strokeWidth={1.75} aria-hidden />
+                            {offersLabel(offers)}
+                        </span>
+                    )}
+                </div>
             </div>
         </button>
     );
 };
-
-function feedBadge(status: CargoStatus): { label: string; className: string } {
-    if (status === CargoStatus.NEW || status === CargoStatus.WAITING) {
-        return { label: 'Новый', className: styles.badgeNew };
-    }
-    if (status === CargoStatus.HAS_ORDERS) {
-        return { label: 'Торги', className: styles.badgeBids };
-    }
-    if (status === CargoStatus.COMPLETED) {
-        return { label: 'Завершён', className: styles.badgeDone };
-    }
-    if (status === CargoStatus.PROBLEMS) {
-        return { label: 'Проблемы', className: styles.badgeAlert };
-    }
-    return { label: 'В работе', className: styles.badgeWork };
-}
-
-function offersLabel(count: number): string {
-    const mod10 = count % 10;
-    const mod100 = count % 100;
-    if (mod10 === 1 && mod100 !== 11) return `${count} предложение`;
-    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} предложения`;
-    return `${count} предложений`;
-}
-
-function routeDistanceKm(cargo: CargoInfo): number | null {
-    const from = cargo.address;
-    const to = cargo.destiny;
-    if (!from?.lat || !from?.lon || !to?.lat || !to?.lon) return null;
-    const toRad = (deg: number) => (deg * Math.PI) / 180;
-    const dLat = toRad(to.lat - from.lat);
-    const dLon = toRad(to.lon - from.lon);
-    const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.sin(dLon / 2) ** 2;
-    const km = 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(a)));
-    return km > 0 ? Math.round(km) : null;
-}
-
 
 function getCircle( cargo: CargoInfo) {
    if(cargo.advance === cargo.price) return 'circle-1'

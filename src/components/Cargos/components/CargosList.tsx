@@ -1,32 +1,34 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronLeft, Plus, SlidersHorizontal } from 'lucide-react';
+import { Plus, SlidersHorizontal } from 'lucide-react';
 import { CargoCard } from './CargoCard';
-import { CargoOrderInfo } from './CargoOrderInfo';
-import { CargoStatusTimeline } from './CargoStatusTimeline';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
-import { getCargoActionHint, normalizeCargoStatus, resolveCargoProgressStatus } from '../cargoStatusFlow';
+import { cargoFeedKind, normalizeCargoStatus } from '../cargoStatusFlow';
 import styles from './CargosList.module.css';
 
 type FilterId = 'all' | 'new' | 'bids' | 'work' | 'done';
 
 const FILTERS: { id: FilterId; label: string }[] = [
   { id: 'all', label: 'Все' },
-  { id: 'new', label: 'Новые' },
+  { id: 'new', label: 'Новый' },
   { id: 'bids', label: 'Торги' },
   { id: 'work', label: 'В работе' },
-  { id: 'done', label: 'Завершённые' },
+  { id: 'done', label: 'Завершён' },
 ];
-
-const NEW_STATUSES = new Set<CargoStatus>([CargoStatus.NEW, CargoStatus.WAITING]);
-const BID_STATUSES = new Set<CargoStatus>([CargoStatus.HAS_ORDERS]);
-const DONE_STATUSES = new Set<CargoStatus>([CargoStatus.COMPLETED]);
 
 function matchesFilter(status: CargoStatus, filter: FilterId): boolean {
   if (filter === 'all') return true;
-  if (filter === 'new') return NEW_STATUSES.has(status);
-  if (filter === 'bids') return BID_STATUSES.has(status);
-  if (filter === 'done') return DONE_STATUSES.has(status);
-  return !NEW_STATUSES.has(status) && !BID_STATUSES.has(status) && !DONE_STATUSES.has(status);
+  const kind = cargoFeedKind(status);
+  if (filter === 'work') return kind === 'work' || kind === 'alert';
+  return kind === filter;
+}
+
+function activeOrdersLabel(count: number): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (count === 0) return 'нет активных заказов';
+  if (mod10 === 1 && mod100 !== 11) return `${count} активный заказ`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} активных заказа`;
+  return `${count} активных заказов`;
 }
 
 interface CargosListProps {
@@ -44,7 +46,6 @@ export const CargosList: React.FC<CargosListProps> = ({
   onCargoClick,
 }) => {
   const [filter, setFilter] = useState<FilterId>('all');
-  const [selectedGuid, setSelectedGuid] = useState<string | null>(null);
 
   const visible = useMemo(
     () =>
@@ -54,13 +55,37 @@ export const CargosList: React.FC<CargosListProps> = ({
     [cargos, filter]
   );
 
-  const selected = useMemo(
-    () => (selectedGuid ? cargos.find((cargo) => cargo.guid === selectedGuid) ?? null : null),
-    [cargos, selectedGuid]
-  );
-
   return (
     <div className={styles.feed}>
+      <header className={styles.pageHead}>
+        <div className={styles.pageHeadText}>
+          <h1 className={styles.pageTitle}>Лента заказов</h1>
+          <p className={styles.pageSub}>
+            {activeOrdersLabel(cargos.length)} · обновлено только что
+          </p>
+        </div>
+        <button type="button" className={styles.createBtn} onClick={onCreateNew}>
+          <Plus size={16} strokeWidth={2.25} />
+          Новый груз
+        </button>
+      </header>
+
+      <div className={styles.legend} aria-label="Светофор безопасной оплаты">
+        <span className={styles.legendTitle}>Светофор безопасной оплаты</span>
+        <span className={styles.legendItem}>
+          <span className={`${styles.legendDot} ${styles.dotFull}`} />
+          Полная оплата на эскроу
+        </span>
+        <span className={styles.legendItem}>
+          <span className={`${styles.legendDot} ${styles.dotPartial}`} />
+          Частичная оплата
+        </span>
+        <span className={styles.legendItem}>
+          <span className={`${styles.legendDot} ${styles.dotNone}`} />
+          Без безопасной оплаты
+        </span>
+      </div>
+
       <div className={styles.toolbar}>
         <div className={styles.tabs} role="tablist" aria-label="Фильтр заказов">
           {FILTERS.map((item) => (
@@ -76,79 +101,36 @@ export const CargosList: React.FC<CargosListProps> = ({
             </button>
           ))}
         </div>
-        <div className={styles.toolbarActions}>
-          <button type="button" className={styles.filterBtn}>
-            <SlidersHorizontal size={15} strokeWidth={2} />
-            Фильтры
-          </button>
-          <button type="button" className={styles.createBtn} onClick={onCreateNew}>
-            <Plus size={16} strokeWidth={2.25} />
-            Новый груз
-          </button>
-        </div>
+        <button type="button" className={styles.filterBtn}>
+          <SlidersHorizontal size={15} strokeWidth={2} />
+          Фильтры
+        </button>
       </div>
 
-      <div className={`${styles.split} ${selected ? styles.splitSelected : ''}`}>
-        <div className={styles.list}>
-          {isLoading ? (
-            <div className={styles.loading}>Загрузка грузов…</div>
-          ) : visible.length === 0 ? (
-            <div className={styles.empty}>
-              <p className={styles.emptyTitle}>
-                {cargos.length === 0 ? 'Грузы не найдены' : 'Нет заказов в этом фильтре'}
-              </p>
-              <p className={styles.emptyHint}>
-                {cargos.length === 0
-                  ? 'Создайте первый груз для перевозки'
-                  : 'Переключите фильтр или создайте новый заказ'}
-              </p>
-            </div>
-          ) : (
-            visible.map((cargo) => (
-              <CargoCard
-                key={cargo.guid}
-                cargo={cargo}
-                mode="list"
-                selected={cargo.guid === selectedGuid}
-                onClick={() => setSelectedGuid(cargo.guid)}
-              />
-            ))
-          )}
-        </div>
-
-        <aside className={`${styles.detail} ${selected ? styles.detailOpen : ''}`}>
-          {selected ? (
-            <>
-              <button
-                type="button"
-                className={styles.detailBack}
-                onClick={() => setSelectedGuid(null)}
-              >
-                <ChevronLeft size={18} strokeWidth={2} />
-                К списку
-              </button>
-              <CargoStatusTimeline cargo={selected} />
-              <CargoOrderInfo cargo={selected} />
-              <button
-                type="button"
-                className={styles.detailAction}
-                onClick={() => onCargoClick(selected)}
-              >
-                <span className={styles.detailActionTitle}>Действие по статусу</span>
-                <span className={styles.detailActionHint}>
-                  {getCargoActionHint(resolveCargoProgressStatus(selected))}
-                </span>
-              </button>
-            </>
-          ) : (
-            <>
-              <h3 className={styles.detailTitle}>Выберите заказ</h3>
-              <p className={styles.detailHint}>
-                Нажмите на любой заказ, чтобы увидеть все детали и отклики
-              </p>
-            </>
-          )}
-        </aside>
+      <div className={styles.list}>
+        {isLoading ? (
+          <div className={styles.loading}>Загрузка грузов…</div>
+        ) : visible.length === 0 ? (
+          <div className={styles.empty}>
+            <p className={styles.emptyTitle}>
+              {cargos.length === 0 ? 'Грузы не найдены' : 'Нет заказов в этом фильтре'}
+            </p>
+            <p className={styles.emptyHint}>
+              {cargos.length === 0
+                ? 'Создайте первый груз для перевозки'
+                : 'Переключите фильтр или создайте новый заказ'}
+            </p>
+          </div>
+        ) : (
+          visible.map((cargo) => (
+            <CargoCard
+              key={cargo.guid}
+              cargo={cargo}
+              mode="list"
+              onClick={() => onCargoClick(cargo)}
+            />
+          ))
+        )}
       </div>
     </div>
   );

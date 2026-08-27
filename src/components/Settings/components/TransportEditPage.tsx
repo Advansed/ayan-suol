@@ -1,54 +1,47 @@
-import React, { useState } from 'react';
-import { DriverInfo } from './DriverInfo';
+import React, { useEffect, useMemo, useState } from 'react';
+import { FleetPage } from './FleetPage';
+import { VehicleModal } from './VehicleModal';
 import { useProfile } from '../useProfile';
-import { useToast } from '../../Toast';
-import { uploadTransportPhoto } from '../../../utils/fileUpload';
+import { TransportData } from '../../../Store/transportStore';
+import { useTransport } from '../../../Store/useTransport';
 
 export const TransportEditPage: React.FC = () => {
-  const { transportData, updateTransport } = useProfile();
-  const toast = useToast();
-  const [photoLoading, setPhotoLoading] = useState(false);
+  const { transportData, transportItems, updateTransport, isTransportSaving } = useProfile();
+  const { loadTypes } = useTransport();
+  const [editing, setEditing] = useState<TransportData | null | undefined>(undefined);
 
-  const handleTransportImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  useEffect(() => {
+    loadTypes();
+  }, [loadTypes]);
 
-    if (!file.type.match(/^image\/(png|jpg|jpeg|webp)$/)) {
-      toast.error('Формат файла должен быть PNG, JPG или WebP');
-      return;
-    }
+  const vehicles = useMemo(() => {
+    if (transportItems?.length) return transportItems;
+    return transportData ? [transportData] : [];
+  }, [transportItems, transportData]);
 
-    if (file.size > 12 * 1024 * 1024) {
-      toast.error('Размер файла не должен превышать 12 МБ');
-      return;
-    }
-
-    setPhotoLoading(true);
-    try {
-      const { filePath } = await uploadTransportPhoto(file);
-      if (!filePath) {
-        throw new Error('Сервер не вернул filePath');
-      }
-      await updateTransport({ image: filePath });
-    } catch (error) {
-      console.error(error);
-      toast.error(error instanceof Error ? error.message : 'Не удалось загрузить фото');
-    } finally {
-      setPhotoLoading(false);
-    }
-  };
+  const modalOpen = editing !== undefined;
 
   return (
-    <div className="web-vehicles-layout">
-      <DriverInfo
-        transportData={transportData}
-        photoLoading={photoLoading}
-        onSave={async (data) => {
-          await updateTransport(data);
-        }}
-        onImageUpload={handleTransportImageUpload}
+    <div className="web-vehicles-page">
+      <FleetPage
+        vehicles={vehicles}
+        onAdd={() => setEditing(null)}
+        onOpen={(vehicle) => setEditing(vehicle)}
       />
+      {modalOpen && (
+        <VehicleModal
+          vehicle={editing}
+          saving={isTransportSaving}
+          onClose={() => setEditing(undefined)}
+          onSave={async (data) => {
+            const ok = await updateTransport({
+              guid: editing?.guid,
+              ...data,
+            });
+            if (ok) setEditing(undefined);
+          }}
+        />
+      )}
     </div>
   );
 };

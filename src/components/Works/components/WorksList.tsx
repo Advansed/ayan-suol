@@ -1,20 +1,18 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronLeft, SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import { WorkInfo, WorkStatus } from '../types';
 import { WorkCard } from './WorkCard';
-import { WorkOrderInfo } from './WorkView/WorkOrderInfo';
-import { StatusTimeline } from './WorkView/StatusTimeline';
-import { WORK_CURRENT_ACTION, normalizeWorkStatus } from '../statusFlow';
+import { normalizeWorkStatus } from '../statusFlow';
 import styles from './WorksList.module.css';
 
 type FilterId = 'all' | 'new' | 'bids' | 'work' | 'done';
 
 const FILTERS: { id: FilterId; label: string }[] = [
   { id: 'all', label: 'Все' },
-  { id: 'new', label: 'Новые' },
+  { id: 'new', label: 'Новый' },
   { id: 'bids', label: 'Торги' },
   { id: 'work', label: 'В работе' },
-  { id: 'done', label: 'Завершённые' },
+  { id: 'done', label: 'Завершён' },
 ];
 
 function matchesFilter(status: WorkStatus, filter: FilterId): boolean {
@@ -27,6 +25,15 @@ function matchesFilter(status: WorkStatus, filter: FilterId): boolean {
 
 function workKey(work: WorkInfo): string {
   return work.guid || work.cargo;
+}
+
+function activeOrdersLabel(count: number): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (count === 0) return 'нет активных заказов';
+  if (mod10 === 1 && mod100 !== 11) return `${count} активный заказ`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} активных заказа`;
+  return `${count} активных заказов`;
 }
 
 interface WorksListProps {
@@ -48,7 +55,6 @@ const WorksListInner: React.FC<WorksListProps> = ({
   variant = 'simple',
 }) => {
   const [filter, setFilter] = useState<FilterId>('all');
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const visible = useMemo(
     () =>
@@ -58,19 +64,18 @@ const WorksListInner: React.FC<WorksListProps> = ({
     [works, filter, variant]
   );
 
-  const selected = useMemo(
-    () => (selectedKey ? works.find((work) => workKey(work) === selectedKey) ?? null : null),
-    [works, selectedKey]
-  );
-
   const list = (
     <>
       {isLoading ? (
         <div className={styles.loading}>Загрузка заказов…</div>
       ) : visible.length === 0 ? (
         <div className={styles.empty}>
-          <p className={styles.emptyTitle}>{emptyTitle}</p>
-          <p className={styles.emptyHint}>{emptyHint}</p>
+          <p className={styles.emptyTitle}>
+            {works.length === 0 ? emptyTitle : 'Нет заказов в этом фильтре'}
+          </p>
+          <p className={styles.emptyHint}>
+            {works.length === 0 ? emptyHint : 'Переключите фильтр, чтобы увидеть другие заказы'}
+          </p>
         </div>
       ) : (
         visible.map((work) => (
@@ -78,14 +83,7 @@ const WorksListInner: React.FC<WorksListProps> = ({
             key={workKey(work)}
             work={work}
             mode="list"
-            selected={variant === 'feed' && workKey(work) === selectedKey}
-            onClick={() => {
-              if (variant === 'feed') {
-                setSelectedKey(workKey(work));
-                return;
-              }
-              onWorkClick(work);
-            }}
+            onClick={() => onWorkClick(work)}
           />
         ))
       )}
@@ -98,6 +96,29 @@ const WorksListInner: React.FC<WorksListProps> = ({
 
   return (
     <div className={styles.feed}>
+      <header className={styles.pageHead}>
+        <h1 className={styles.pageTitle}>Лента заказов</h1>
+        <p className={styles.pageSub}>
+          {activeOrdersLabel(works.length)} · обновлено только что
+        </p>
+      </header>
+
+      <div className={styles.legend} aria-label="Светофор безопасной оплаты">
+        <span className={styles.legendTitle}>Светофор безопасной оплаты</span>
+        <span className={styles.legendItem}>
+          <span className={`${styles.legendDot} ${styles.dotFull}`} />
+          Полная оплата на эскроу
+        </span>
+        <span className={styles.legendItem}>
+          <span className={`${styles.legendDot} ${styles.dotPartial}`} />
+          Частичная оплата
+        </span>
+        <span className={styles.legendItem}>
+          <span className={`${styles.legendDot} ${styles.dotNone}`} />
+          Без безопасной оплаты
+        </span>
+      </div>
+
       <div className={styles.toolbar}>
         <div className={styles.tabs} role="tablist" aria-label="Фильтр заказов">
           {FILTERS.map((item) => (
@@ -119,43 +140,7 @@ const WorksListInner: React.FC<WorksListProps> = ({
         </button>
       </div>
 
-      <div className={`${styles.split} ${selected ? styles.splitSelected : ''}`}>
-        <div className={styles.list}>{list}</div>
-        <aside className={`${styles.detail} ${selected ? styles.detailOpen : ''}`}>
-          {selected ? (
-            <>
-              <button
-                type="button"
-                className={styles.detailBack}
-                onClick={() => setSelectedKey(null)}
-              >
-                <ChevronLeft size={18} strokeWidth={2} />
-                К списку
-              </button>
-              <StatusTimeline work={selected} />
-              <WorkOrderInfo work={selected} />
-              <button
-                type="button"
-                className={styles.detailAction}
-                onClick={() => onWorkClick(selected)}
-              >
-                <span className={styles.detailActionTitle}>Действие по статусу</span>
-                <span className={styles.detailActionHint}>
-                  {WORK_CURRENT_ACTION[normalizeWorkStatus(selected.status)] ||
-                    'Перейти к действиям по заказу'}
-                </span>
-              </button>
-            </>
-          ) : (
-            <>
-              <h3 className={styles.detailTitle}>Выберите заказ</h3>
-              <p className={styles.detailHint}>
-                Нажмите на любой заказ, чтобы увидеть все детали и откликнуться
-              </p>
-            </>
-          )}
-        </aside>
-      </div>
+      <div className={styles.list}>{list}</div>
     </div>
   );
 };

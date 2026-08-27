@@ -7,6 +7,7 @@ import { useSocketStore } from './socketStore'
 import { 
   useTransportStore, 
   transportActions, 
+  asTransportList,
   TransportData 
 } from './transportStore'
 
@@ -20,6 +21,7 @@ export const useTransport = () => {
   
   // Используем хуки из нового transportStore
   const transportData = useTransportStore(state => state.data)
+  const types = useTransportStore(state => state.types)
   const isLoading = useTransportStore(state => state.isLoading)
   const isSaving = useTransportStore(state => state.isSaving)
   const isConnected = useSocketStore(state => state.isConnected)
@@ -43,8 +45,7 @@ export const useTransport = () => {
       transportActions.setLoading(false)
       
       if (response.success) {
-        const data = Array.isArray(response.data) ? response.data[0] : response.data
-        transportActions.setData(data)
+        transportActions.setItems(asTransportList(response.data))
       } else {
         toast.error(response.message || 'Ошибка загрузки данных транспорта')
       }
@@ -53,6 +54,11 @@ export const useTransport = () => {
     emit('get_transport', { token })
     
   }, [token, isConnected, once, emit, toast])
+
+  const loadTypes = useCallback(() => {
+    if (!isConnected || !token) return
+    emit('get_transport_types', { token })
+  }, [token, isConnected, emit])
 
   const saveData = useCallback((data: TransportData) => {
     if (!isConnected) {
@@ -72,7 +78,9 @@ export const useTransport = () => {
       
       if (response.success) {
         toast.success('Данные транспорта сохранены')
-        transportActions.setData(response.data || data)
+        const list = asTransportList(response.data)
+        if (list.length > 1) transportActions.setItems(list)
+        else transportActions.setData(list[0] || response.data || data)
       } else {
         toast.error(response.message || 'Ошибка сохранения данных транспорта')
       }
@@ -90,9 +98,11 @@ export const useTransport = () => {
 
   return {
     transportData,
+    types,
     isLoading,
     isSaving,
     loadData,
+    loadTypes,
     saveData,
     // Для совместимости со старым API
     load,

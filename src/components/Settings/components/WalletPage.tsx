@@ -7,6 +7,15 @@ import {
   phonePortraitOutline,
   receiptOutline,
 } from 'ionicons/icons';
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Clock,
+  Lock,
+  Plus,
+  TrendingUp,
+  X,
+} from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import walletStyles from './WalletPage.module.css';
 import { useToast } from '../../Toast';
@@ -14,27 +23,56 @@ import { useLogin } from '../../../Store/useLogin';
 import { openUrlInApp } from '../../../utils/openUrlInApp';
 import { InvoiceModal } from './InvoiceModal/InvoiceModal';
 import type { Transaction } from '../../../Store/accountStore';
+import { plural } from '../../Works/feedFormat';
 
 export interface WalletPageProps {
   onBack: () => void;
   initialAmount?: number | string | null;
 }
 
+type PayMethod = 'invoice' | 'sbp' | 'acquiring';
+
+const formatAmountInput = (value: number | string): string => {
+  if (value === '' || value === null || value === undefined) return '';
+  const digits = String(value).replace(/\D/g, '');
+  if (!digits) return '';
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+};
+
+const parseAmountInput = (value: string): number => {
+  const digits = String(value).replace(/\D/g, '');
+  return digits ? Number(digits) : 0;
+};
+
 const WALLET_POLL_MS = 12_000;
-const MONTHS_SHORT = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
-const MONTHS_GEN = [
-  'января',
-  'февраля',
-  'марта',
-  'апреля',
-  'мая',
-  'июня',
-  'июля',
-  'августа',
-  'сентября',
-  'октября',
-  'ноября',
-  'декабря',
+const MONTHS_SHORT = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+const MONTHS_NOM = [
+  'январь',
+  'февраль',
+  'март',
+  'апрель',
+  'май',
+  'июнь',
+  'июль',
+  'август',
+  'сентябрь',
+  'октябрь',
+  'ноябрь',
+  'декабрь',
+];
+const MONTHS_DAT = [
+  'январю',
+  'февралю',
+  'марту',
+  'апрелю',
+  'маю',
+  'июню',
+  'июлю',
+  'августу',
+  'сентябрю',
+  'октябрю',
+  'ноябрю',
+  'декабрю',
 ];
 
 function parseTxDate(raw: string): Date | null {
@@ -52,6 +90,59 @@ function isIncome(t: Transaction): boolean {
 
 function isExpense(t: Transaction): boolean {
   return t.type === 'expense' || t.amount < 0;
+}
+
+function formatTxWhen(raw: string): string {
+  const date = parseTxDate(raw);
+  if (!date) return raw || '';
+  const now = new Date();
+  const sameDay =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+  const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  if (sameDay && time !== '00:00') return `Сегодня, ${time}`;
+  if (sameDay) return 'Сегодня';
+  return date.toLocaleDateString('ru-RU');
+}
+
+function MonthChart({ bars }: { bars: { key: string; label: string; value: number }[] }) {
+  const width = 560;
+  const height = 168;
+  const padX = 18;
+  const padTop = 12;
+  const padBottom = 28;
+  const max = Math.max(...bars.map((bar) => bar.value), 1);
+  const points = bars.map((bar, i) => {
+    const x = padX + (i / Math.max(bars.length - 1, 1)) * (width - padX * 2);
+    const y = padTop + (1 - bar.value / max) * (height - padTop - padBottom);
+    return { ...bar, x, y };
+  });
+  const line = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const last = points[points.length - 1];
+  const first = points[0];
+  const area = `${line} L${last.x.toFixed(1)} ${height - padBottom} L${first.x.toFixed(1)} ${height - padBottom} Z`;
+
+  return (
+    <svg className={walletStyles.chartSvg} viewBox={`0 0 ${width} ${height}`} role="img" aria-hidden>
+      <defs>
+        <linearGradient id="incomeArea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2b5adc" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#2b5adc" stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill="url(#incomeArea)" />
+      <path d={line} fill="none" stroke="#2b5adc" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+      {points.map((p) => (
+        <circle key={p.key} cx={p.x} cy={p.y} r="3.5" fill="#fff" stroke="#2b5adc" strokeWidth="2" />
+      ))}
+      {points.map((p) => (
+        <text key={`${p.key}-l`} x={p.x} y={height - 8} textAnchor="middle" className={walletStyles.chartSvgLabel}>
+          {p.label}
+        </text>
+      ))}
+    </svg>
+  );
 }
 
 export const WalletPage: React.FC<WalletPageProps> = ({
@@ -75,21 +166,29 @@ export const WalletPage: React.FC<WalletPageProps> = ({
 
   const [amount, setAmount] = useState(() => {
     const n = Number(initialAmount);
-    return Number.isFinite(n) && n > 0 ? String(Math.ceil(n)) : '';
+    return Number.isFinite(n) && n > 0 ? formatAmountInput(Math.ceil(n)) : '';
   });
-  const [payLoading, setPayLoading] = useState<'card' | 'sbp' | null>(null);
-  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [showTopUp, setShowTopUp] = useState(() => Number(initialAmount) > 0);
+  const [payLoading, setPayLoading] = useState<PayMethod | null>(null);
   const [invoiceModalData, setInvoiceModalData] = useState<unknown>();
   const [invoiceLoadingId, setInvoiceLoadingId] = useState<string | null>(null);
-  const [showTopUp, setShowTopUp] = useState(() => Number(initialAmount) > 0);
 
   useEffect(() => {
     const n = Number(initialAmount);
     if (Number.isFinite(n) && n > 0) {
-      setAmount(String(Math.ceil(n)));
+      setAmount(formatAmountInput(Math.ceil(n)));
       setShowTopUp(true);
     }
   }, [initialAmount]);
+
+  useEffect(() => {
+    if (!showTopUp) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !payLoading) setShowTopUp(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showTopUp, payLoading]);
 
   const loadedRef = useRef(false);
   useEffect(() => {
@@ -161,15 +260,18 @@ export const WalletPage: React.FC<WalletPageProps> = ({
     return { monthIncome, pending, pendingCount, bars, trend };
   }, [transactions, thisMonth, thisYear]);
 
-  const maxBar = Math.max(...stats.bars.map((b) => b.value), 1);
+  const amountNumber = useMemo(() => parseAmountInput(amount), [amount]);
 
-  const amountNumber = useMemo(() => {
-    const v = parseFloat(amount.replace(',', '.'));
-    return Number.isFinite(v) && v > 0 ? v : 0;
-  }, [amount]);
-
-  const canPay = amountNumber > 0 && !isLoading;
+  const canPay = amountNumber > 0 && !isLoading && !payLoading;
   const displayName = user?.name?.trim() || 'Пользователь';
+
+  const deposit = Number(accountData?.deposit ?? 0);
+  const depositPaid = deposit > 0;
+
+  const closeTopUp = () => {
+    if (payLoading) return;
+    setShowTopUp(false);
+  };
 
   const handleOpenInvoicePdf = async (invoiceId: string) => {
     if (invoiceLoadingId !== null) return;
@@ -183,7 +285,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
     }
   };
 
-  const handlePay = async (method: 'card' | 'sbp') => {
+  const handlePayOnline = async (method: 'sbp' | 'acquiring') => {
     if (amountNumber <= 0) return;
     setPayLoading(method);
     try {
@@ -196,26 +298,33 @@ export const WalletPage: React.FC<WalletPageProps> = ({
         toast.error(res?.error || 'Ошибка пополнения');
         return;
       }
-      if (method === 'card') {
+
+      if (method === 'acquiring') {
         const url = res?.data?.payment_url || res?.data?.paymentUrl;
         if (url) {
           try {
             await openUrlInApp(url);
+            setShowTopUp(false);
             void refreshWallet({ silent: true });
           } catch {
             toast.error('Не удалось открыть страницу оплаты');
           }
-        } else toast.info('Ссылка на оплату не найдена в ответе сервера');
+        } else {
+          toast.info('Ссылка на оплату не найдена в ответе сервера');
+        }
       } else {
         const payload = res?.data?.sbp_payload || res?.data?.sbpPayload;
         if (payload) {
           try {
             await openUrlInApp(payload);
+            setShowTopUp(false);
             void refreshWallet({ silent: true });
           } catch {
             toast.error('Не удалось открыть СБП');
           }
-        } else toast.info('SBP-пейлоад не найден в ответе сервера');
+        } else {
+          toast.info('SBP-пейлоад не найден в ответе сервера');
+        }
       }
     } finally {
       setPayLoading(null);
@@ -224,7 +333,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
 
   const handleCreateInvoice = async () => {
     if (amountNumber <= 0) return;
-    setInvoiceLoading(true);
+    setPayLoading('invoice');
     try {
       const payload = {
         invoice_date: new Date().toISOString().split('T')[0],
@@ -246,20 +355,40 @@ export const WalletPage: React.FC<WalletPageProps> = ({
       };
       const res = await set_invoice(payload);
       if (!res?.success) {
-        toast.error(res?.error || 'Не удалось сформировать счет');
+        toast.error(res?.error || 'Не удалось сформировать счёт');
         return;
       }
-      toast.success('Счёт для юр. лиц сформирован — появится в истории');
+
+      let invoice = res.data;
+      const invoiceId =
+        invoice?.invoiceNumber ||
+        invoice?.id ||
+        invoice?.guid ||
+        invoice?.invoice_id;
+
+      if ((!invoice?.items || !invoice?.invoiceNumber) && invoiceId) {
+        const loaded = await get_invoice(String(invoiceId), { silent: true });
+        if (loaded?.success && loaded.data) invoice = loaded.data;
+      }
+
+      if (!invoice) {
+        toast.error('Счёт создан, но данные для просмотра не получены');
+        void refreshWallet({ silent: true });
+        return;
+      }
+
+      setShowTopUp(false);
+      setInvoiceModalData(invoice);
       void refreshWallet({ silent: true });
     } finally {
-      setInvoiceLoading(false);
+      setPayLoading(null);
     }
   };
 
-  const txStatus = (t: Transaction) => {
-    if (t.type === 'new') return { label: 'В обработке', className: walletStyles.statusPending };
-    if (t.type === 'inv') return { label: 'Счёт', className: walletStyles.statusInv };
-    return { label: 'Исполнено', className: walletStyles.statusDone };
+  const txIcon = (t: Transaction) => {
+    if (isIncome(t)) return { className: walletStyles.txIconIn, icon: <ArrowDownLeft size={18} strokeWidth={2.25} /> };
+    if (t.type === 'inv') return { className: walletStyles.txIconInv, icon: <ArrowUpRight size={18} strokeWidth={2.25} /> };
+    return { className: walletStyles.txIconOut, icon: <ArrowUpRight size={18} strokeWidth={2.25} /> };
   };
 
   return (
@@ -272,51 +401,186 @@ export const WalletPage: React.FC<WalletPageProps> = ({
         />
       )}
 
-      <div className={walletStyles.stats}>
-        <section className={walletStyles.statCard}>
-          <div className={walletStyles.statLabel}>Доступно к выводу</div>
-          <div className={walletStyles.statValue}>{formattedBalance}</div>
-          <div className={walletStyles.statSub}>
-            В обработке: {formatMoney(stats.pending)}
+      {showTopUp && (
+        <div className={walletStyles.modalOverlay} role="presentation" onClick={closeTopUp}>
+          <div
+            className={walletStyles.modalDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="topup-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={walletStyles.modalHead}>
+              <div>
+                <h2 id="topup-title" className={walletStyles.modalTitle}>
+                  Пополнить баланс
+                </h2>
+                <p className={walletStyles.modalSub}>Укажите сумму и способ оплаты</p>
+              </div>
+              <button
+                type="button"
+                className={walletStyles.modalClose}
+                onClick={closeTopUp}
+                aria-label="Закрыть"
+                disabled={Boolean(payLoading)}
+              >
+                <X size={18} strokeWidth={2} />
+              </button>
+            </div>
+
+            <div className={walletStyles.amountWrap}>
+              <IonInput
+                id="wallet-amount"
+                className={walletStyles.amountInput}
+                inputMode="numeric"
+                value={amount}
+                placeholder="0"
+                onIonInput={(e) => setAmount(formatAmountInput(String(e.detail.value ?? '')))}
+              />
+              <span className={walletStyles.amountCurrency}>₽</span>
+            </div>
+
+            <div className={walletStyles.quickRow}>
+              {[1000, 5000, 10000, 25000].map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  className={`${walletStyles.quickChip} ${amountNumber === q ? walletStyles.quickChipActive : ''}`}
+                  onClick={() => setAmount(formatAmountInput(q))}
+                  disabled={Boolean(payLoading)}
+                >
+                  {q.toLocaleString('ru-RU')} ₽
+                </button>
+              ))}
+            </div>
+
+            <div className={walletStyles.payMethods}>
+              <button
+                type="button"
+                className={walletStyles.payMethod}
+                disabled={!canPay}
+                onClick={() => void handleCreateInvoice()}
+              >
+                <span className={walletStyles.payMethodIcon}>
+                  {payLoading === 'invoice' ? <IonSpinner name="bubbles" /> : <IonIcon icon={businessOutline} />}
+                </span>
+                <span className={walletStyles.payMethodText}>
+                  <strong>Счёт на оплату</strong>
+                  <span>Для юридических лиц</span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className={walletStyles.payMethod}
+                disabled={!canPay}
+                onClick={() => void handlePayOnline('sbp')}
+              >
+                <span className={walletStyles.payMethodIcon}>
+                  {payLoading === 'sbp' ? <IonSpinner name="bubbles" /> : <IonIcon icon={phonePortraitOutline} />}
+                </span>
+                <span className={walletStyles.payMethodText}>
+                  <strong>СБП</strong>
+                  <span>Система быстрых платежей</span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className={walletStyles.payMethod}
+                disabled={!canPay}
+                onClick={() => void handlePayOnline('acquiring')}
+              >
+                <span className={walletStyles.payMethodIcon}>
+                  {payLoading === 'acquiring' ? <IonSpinner name="bubbles" /> : <IonIcon icon={cardOutline} />}
+                </span>
+                <span className={walletStyles.payMethodText}>
+                  <strong>Эквайринг</strong>
+                  <span>Банковская карта</span>
+                </span>
+              </button>
+            </div>
           </div>
+        </div>
+      )}
+
+      <div className={walletStyles.stats}>
+        <section className={`${walletStyles.statCard} ${walletStyles.statHero}`}>
+          <div className={walletStyles.statHead}>
+            <span className={walletStyles.statIconHero} aria-hidden>
+              <ArrowUpRight size={18} strokeWidth={2.25} />
+            </span>
+            <span className={walletStyles.statLabel}>Доступно к выводу</span>
+          </div>
+          <div className={walletStyles.statValue}>{formattedBalance}</div>
+          <div className={walletStyles.statSub}>В обработке: {formatMoney(stats.pending)}</div>
           <div className={walletStyles.statActions}>
             <button
               type="button"
-              className={walletStyles.ghostBtn}
+              className={walletStyles.heroGhost}
               onClick={() => toast.info('Вывод средств скоро будет доступен')}
             >
+              <ArrowUpRight size={16} strokeWidth={2.25} />
               Вывести
             </button>
             <button
               type="button"
-              className={walletStyles.primaryBtn}
+              className={walletStyles.heroPrimary}
               onClick={() => {
                 setShowTopUp(true);
                 window.setTimeout(() => document.getElementById('wallet-amount')?.focus(), 50);
               }}
             >
+              <Plus size={16} strokeWidth={2.25} />
               Пополнить
             </button>
           </div>
         </section>
 
         <section className={walletStyles.statCard}>
-          <div className={walletStyles.statLabel}>Доход за {MONTHS_GEN[thisMonth]}</div>
+          <div className={walletStyles.statHead}>
+            <span className={`${walletStyles.statIcon} ${walletStyles.statIconGreen}`} aria-hidden>
+              <TrendingUp size={16} strokeWidth={2.25} />
+            </span>
+            <span className={walletStyles.statLabel}>Доход за {MONTHS_NOM[thisMonth]}</span>
+          </div>
           <div className={walletStyles.statValue}>{formatMoney(stats.monthIncome)}</div>
           {stats.trend != null && (
             <div className={stats.trend >= 0 ? walletStyles.trendUp : walletStyles.trendDown}>
               {stats.trend >= 0 ? '+' : ''}
-              {stats.trend}% к {MONTHS_GEN[(thisMonth + 11) % 12]}
+              {stats.trend}% к {MONTHS_DAT[(thisMonth + 11) % 12]}
             </div>
           )}
         </section>
 
         <section className={walletStyles.statCard}>
-          <div className={walletStyles.statLabel}>Ожидает выплаты</div>
+          <div className={walletStyles.statHead}>
+            <span className={`${walletStyles.statIcon} ${walletStyles.statIconOrange}`} aria-hidden>
+              <Clock size={16} strokeWidth={2.25} />
+            </span>
+            <span className={walletStyles.statLabel}>Ожидает выплаты</span>
+          </div>
           <div className={walletStyles.statValue}>{formatMoney(stats.pending)}</div>
           <div className={walletStyles.statSub}>
-            {stats.pendingCount} {stats.pendingCount === 1 ? 'рейс' : 'рейсов'} в обработке
+            {stats.pendingCount} {plural(stats.pendingCount, 'рейс', 'рейса', 'рейсов')} в обработке
           </div>
+        </section>
+
+        <section className={walletStyles.statCard}>
+          <div className={walletStyles.statHead}>
+            <span className={`${walletStyles.statIcon} ${walletStyles.statIconBlue}`} aria-hidden>
+              <Lock size={16} strokeWidth={2.25} />
+            </span>
+            <span className={walletStyles.statLabel}>Гарантийный депозит</span>
+            <span className={`${walletStyles.depositBadge} ${depositPaid ? walletStyles.depositOn : walletStyles.depositOff}`}>
+              {depositPaid ? 'Внесён' : 'Не внесён'}
+            </span>
+          </div>
+          <div className={walletStyles.statValue}>{formatMoney(deposit)}</div>
+          <p className={walletStyles.depositHint}>
+            Заблокирован на кошельке — требуется для верификации и покрытия ущерба, если рейс
+            срывается или груз повреждён по вашей вине.
+          </p>
         </section>
       </div>
 
@@ -324,105 +588,29 @@ export const WalletPage: React.FC<WalletPageProps> = ({
         <section className={walletStyles.card}>
           <h2 className={walletStyles.cardTitle}>Доход по месяцам</h2>
           <p className={walletStyles.cardSub}>Последние 6 месяцев, тыс. ₽</p>
-          <div className={walletStyles.chart} aria-hidden>
-            {stats.bars.map((bar) => (
-              <div key={bar.key} className={walletStyles.chartCol}>
-                <div className={walletStyles.chartTrack}>
-                  <div
-                    className={walletStyles.chartBar}
-                    style={{ height: `${Math.max(6, (bar.value / maxBar) * 100)}%` }}
-                  />
-                </div>
-                <span className={walletStyles.chartLabel}>{bar.label}</span>
-              </div>
-            ))}
-          </div>
+          <MonthChart bars={stats.bars} />
         </section>
 
         <section className={walletStyles.card}>
           <h2 className={walletStyles.cardTitle}>Способ выплаты</h2>
-          <div className={walletStyles.payMethod}>
-            <div className={walletStyles.payIcon} aria-hidden>
-              <IonIcon icon={cardOutline} />
+          <div className={walletStyles.bankCard} aria-label="Карта для выплат">
+            <div className={walletStyles.bankCardTop}>
+              <span className={walletStyles.chip} aria-hidden />
+              <span className={walletStyles.bankBadge}>Основная</span>
             </div>
-            <div className={walletStyles.payMeta}>
-              <span className={walletStyles.payBadge}>Основная</span>
-              <div className={walletStyles.payNumber}>•••• •••• •••• ———</div>
-              <div className={walletStyles.payWho}>{displayName} · карта</div>
-            </div>
+            <div className={walletStyles.bankNumber}>•• •• •• 4417</div>
+            <div className={walletStyles.bankWho}>{displayName} · МИР</div>
           </div>
           <button
             type="button"
             className={walletStyles.addCardBtn}
-            onClick={() => {
-              setShowTopUp(true);
-              toast.info('Привязка карты для выплат появится позже. Сейчас можно пополнить баланс.');
-            }}
+            onClick={() => toast.info('Привязка карты для выплат появится позже')}
           >
             <IonIcon icon={addOutline} />
             Добавить карту
           </button>
         </section>
       </div>
-
-      {showTopUp && (
-        <section className={walletStyles.card} id="top-up">
-          <h2 className={walletStyles.cardTitle}>Пополнить баланс</h2>
-          <p className={walletStyles.cardSub}>Укажите сумму и способ оплаты</p>
-          <div className={walletStyles.amountWrap}>
-            <IonInput
-              id="wallet-amount"
-              className={walletStyles.amountInput}
-              inputMode="decimal"
-              value={amount}
-              placeholder="0"
-              onIonChange={(e) => setAmount(String(e.detail.value ?? ''))}
-            />
-            <span className={walletStyles.amountCurrency}>₽</span>
-          </div>
-          <div className={walletStyles.quickRow}>
-            {[1000, 5000, 10000, 25000].map((q) => (
-              <button
-                key={q}
-                type="button"
-                className={`${walletStyles.quickChip} ${amountNumber === q ? walletStyles.quickChipActive : ''}`}
-                onClick={() => setAmount(String(q))}
-              >
-                {q.toLocaleString('ru-RU')} ₽
-              </button>
-            ))}
-          </div>
-          <div className={walletStyles.methodList}>
-            <button
-              type="button"
-              className={walletStyles.methodBtn}
-              disabled={!canPay || payLoading !== null}
-              onClick={() => void handlePay('card')}
-            >
-              {payLoading === 'card' ? <IonSpinner name="bubbles" /> : <IonIcon icon={cardOutline} />}
-              Банковская карта
-            </button>
-            <button
-              type="button"
-              className={walletStyles.methodBtn}
-              disabled={!canPay || payLoading !== null}
-              onClick={() => void handlePay('sbp')}
-            >
-              {payLoading === 'sbp' ? <IonSpinner name="bubbles" /> : <IonIcon icon={phonePortraitOutline} />}
-              СБП
-            </button>
-            <button
-              type="button"
-              className={walletStyles.methodBtn}
-              disabled={!canPay || invoiceLoading || payLoading !== null}
-              onClick={() => void handleCreateInvoice()}
-            >
-              {invoiceLoading ? <IonSpinner name="bubbles" /> : <IonIcon icon={businessOutline} />}
-              Счёт для юрлица
-            </button>
-          </div>
-        </section>
-      )}
 
       <section className={walletStyles.card} id="statement">
         <h2 className={walletStyles.cardTitle}>История операций</h2>
@@ -434,13 +622,13 @@ export const WalletPage: React.FC<WalletPageProps> = ({
           <div className={walletStyles.empty}>
             <IonIcon icon={receiptOutline} />
             <p>Операций пока нет</p>
-            <span>Пополните баланс — запись появится здесь</span>
+            <span>Здесь появятся поступления и списания</span>
           </div>
         ) : (
           <ul className={walletStyles.txList}>
             {(transactions || []).slice(0, 50).map((t) => {
-              const status = txStatus(t);
               const inv = t.type === 'inv';
+              const icon = txIcon(t);
               return (
                 <li key={t.id}>
                   <button
@@ -449,9 +637,14 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                     disabled={!inv}
                     onClick={inv ? () => void handleOpenInvoicePdf(t.id) : undefined}
                   >
+                    <span className={`${walletStyles.txIcon} ${icon.className}`} aria-hidden>
+                      {icon.icon}
+                    </span>
                     <div className={walletStyles.txText}>
                       <div className={walletStyles.txTitle}>{t.title || 'Операция'}</div>
-                      <div className={walletStyles.txSub}>{t.date}</div>
+                      {(t.subtitle || '').trim() ? (
+                        <div className={walletStyles.txSub}>{t.subtitle}</div>
+                      ) : null}
                     </div>
                     <div className={walletStyles.txRight}>
                       <div
@@ -466,8 +659,8 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                         {t.amount > 0 ? '+' : ''}
                         {formatMoney(t.amount)}
                       </div>
-                      <span className={`${walletStyles.status} ${status.className}`}>
-                        {inv && invoiceLoadingId === t.id ? 'Загрузка…' : status.label}
+                      <span className={walletStyles.txWhen}>
+                        {inv && invoiceLoadingId === t.id ? 'Загрузка…' : formatTxWhen(t.date)}
                       </span>
                     </div>
                   </button>

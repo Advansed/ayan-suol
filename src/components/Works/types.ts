@@ -55,6 +55,9 @@ export enum OfferStatus {
 export interface WorkCompany {
     id: string;
     name: string;
+    verified?: boolean;
+    rating?: number;
+    deals?: number;
 }
 
 // Основная информация о работе (адаптированная CargoInfo)
@@ -99,6 +102,17 @@ export interface WorkInfo {
     updatedAt?: string;
 
     signed: boolean;
+
+    /** Тип кузова, если приходит строкой (тент, рефрижератор) */
+    body_type?: string;
+    loading_type?: string;
+    category?: string;
+    /** Сколько машин нужно на заказ (мультирейс) */
+    vehicles_total?: number;
+    /** Сколько машин уже в работе */
+    vehicles_busy?: number;
+    /** Имена файлов по заказу, если приходят с сервера */
+    documents?: string[];
 }
 
 // Данные для создания предложения

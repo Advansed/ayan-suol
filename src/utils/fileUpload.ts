@@ -170,17 +170,21 @@ export const uploadOrderPhoto = async (
 };
 
 /**
- * Фото транспорта: ключ {userId}/profile/transport.{ext}
+ * Фото транспорта: ключ {userId}/profile/transport/{vehicleId}.{ext}
  */
 export const uploadTransportPhoto = async (
-  imageFile: string | File
+  imageFile: string | File,
+  vehicleId?: string
 ): Promise<{ filePath: string; signUrl?: string }> => {
   const userId = loginGetters.getUserId();
   if (!userId) {
     throw new Error('Нет идентификатора пользователя');
   }
   const ext = getImageExtension(imageFile);
-  const key = `${userId}/profile/transport.${ext}`;
+  const slug = String(vehicleId || `new_${Date.now()}`)
+    .replace(/[^a-zA-Z0-9_-]/g, '')
+    .slice(0, 48) || `new_${Date.now()}`;
+  const key = `${userId}/profile/transport/${slug}.${ext}`;
   return uploadFileToDocs(imageFile, key);
 };
 

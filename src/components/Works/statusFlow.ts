@@ -110,6 +110,39 @@ export function getStatusFlowIndex(status: WorkStatus | string): number {
   return idx >= 0 ? idx : 0;
 }
 
+export type OrderProgressSlot =
+  | { type: 'status'; status: WorkStatus; role: 'prev' | 'current' | 'next' | 'last' }
+  | { type: 'ellipsis' };
+
+/** Предыдущий, текущий, следующий и последний статус; «…» если между следующим и последним есть этапы. */
+export function getOrderProgressSlots(status: WorkStatus | string): OrderProgressSlot[] {
+  const currentIndex = getStatusFlowIndex(status);
+  if (currentIndex < 0) return [];
+
+  const lastIndex = WORK_STATUS_FLOW.length - 1;
+  const slots: OrderProgressSlot[] = [];
+
+  if (currentIndex > 0) {
+    slots.push({ type: 'status', status: WORK_STATUS_FLOW[currentIndex - 1], role: 'prev' });
+  }
+  slots.push({ type: 'status', status: WORK_STATUS_FLOW[currentIndex], role: 'current' });
+
+  const nextIndex = currentIndex + 1;
+  if (nextIndex > lastIndex) return slots;
+
+  if (nextIndex === lastIndex) {
+    slots.push({ type: 'status', status: WORK_STATUS_FLOW[lastIndex], role: 'last' });
+    return slots;
+  }
+
+  slots.push({ type: 'status', status: WORK_STATUS_FLOW[nextIndex], role: 'next' });
+  if (nextIndex < lastIndex - 1) {
+    slots.push({ type: 'ellipsis' });
+  }
+  slots.push({ type: 'status', status: WORK_STATUS_FLOW[lastIndex], role: 'last' });
+  return slots;
+}
+
 /** Лента: новые, отклики и активные рейсы (без архива) */
 export const FEED_WORK_STATUSES: WorkStatus[] = [
   WorkStatus.NEW,

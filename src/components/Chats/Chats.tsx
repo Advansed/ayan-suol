@@ -1,11 +1,11 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { IonIcon, useIonRouter } from "@ionic/react";
-import { arrowBackOutline, cameraSharp, sendSharp } from "ionicons/icons";
+import { arrowBackOutline } from "ionicons/icons";
+import { BadgeCheck, MoreVertical, Paperclip, Phone, Send } from "lucide-react";
 import "./Chats.css";
 import { useChats } from "../../Store/useChats";
 import { chatActions } from "../../Store/chatStore";
 import { loginGetters } from "../../Store/loginStore";
-import { takePicture } from "../Files";
 import { PhotoPreview } from "./PhotoPreview";
 import { resolveImageSrc } from "../../utils/fileUpload";
 import { useChatStore } from "../../Store/chatStore";
@@ -54,8 +54,10 @@ const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessa
 
     return (
         <div className={`chat-row ${isSent ? 'chat-row-sent' : 'chat-row-in'}`}>
-            <div className={isSent ? 'chat-sent' : 'chat-receipt'}>
-                {renderContent()}
+            <div className="chat-bubble-wrap">
+                <div className={isSent ? 'chat-sent' : 'chat-receipt'}>
+                    {renderContent()}
+                </div>
                 {message.time && <div className="chat-time">{message.time}</div>}
             </div>
         </div>
@@ -66,28 +68,37 @@ const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessa
 const ImageUploadButton = React.memo(({ onImageSelect }: { 
     onImageSelect: (image: any) => void; 
 }) => {
-    const handleTakePicture = useCallback(async () => {
-        try {
-            const image = await takePicture();
-            
-            if( image)
-                onImageSelect( image.dataUrl );
-            
-        } catch (error) {
-            console.error('Ошибка при создании фотографии:', error);
-            alert('Не удалось создать фотографию');
-        }
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const handleFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file || !file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (typeof reader.result === 'string') onImageSelect(reader.result);
+        };
+        reader.readAsDataURL(file);
     }, [onImageSelect]);
 
     return (
-        <button 
-            type        = "button"
-            className   = "chat-send-button"
-            onClick     = { handleTakePicture }
-            title       = "Сделать фото"
-        >
-            <IonIcon icon={ cameraSharp } className="chat-icon-2" color = "light" />
-        </button>
+        <>
+            <button
+                type="button"
+                className="chat-attach-button"
+                onClick={() => inputRef.current?.click()}
+                title="Прикрепить файл"
+            >
+                <Paperclip size={18} strokeWidth={2} />
+            </button>
+            <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={handleFile}
+            />
+        </>
     );
 });
 
@@ -182,8 +193,19 @@ const ChatHeader = React.memo(({ onBack, userName, userInitials, subtitle }: {
             </button>
             <div className="chat-header-avatar">{userInitials}</div>
             <div className="chat-header-meta">
-                <div className="chat-header-name">{userName || 'Чат'}</div>
+                <div className="chat-header-name">
+                    {userName || 'Чат'}
+                    <BadgeCheck size={16} strokeWidth={2.25} className="chat-header-verified" />
+                </div>
                 {subtitle && <div className="chat-header-sub">{subtitle}</div>}
+            </div>
+            <div className="chat-header-actions">
+                <button type="button" className="chat-header-icon" aria-label="Позвонить" disabled>
+                    <Phone size={18} strokeWidth={2} />
+                </button>
+                <button type="button" className="chat-header-icon" aria-label="Ещё" disabled>
+                    <MoreVertical size={18} strokeWidth={2} />
+                </button>
             </div>
         </div>
     );
@@ -222,13 +244,13 @@ const ChatFooter = React.memo(({
     return (
         <div className="chat-footer">
             <div className="chat-input-container">
-                {/* <ImageUploadButton onImageSelect={onImageSelect} /> */}
+                <ImageUploadButton onImageSelect={onImageSelect} />
                 
                 <div className="chat-input-wrapper">
                     <textarea
                         ref={textareaRef}
                         className="chat-input"
-                        placeholder="Введите сообщение..."
+                        placeholder="Введите сообщение…"
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
                         onKeyPress={onKeyPress}
@@ -240,8 +262,9 @@ const ChatFooter = React.memo(({
                     className   = { `chat-send-button ${!value.trim() && !selectedImage ? 'chat-send-disabled' : ''}` }
                     onClick     = { onSend}
                     disabled    = { !value.trim() && !selectedImage }
+                    aria-label="Отправить"
                 >
-                    <IonIcon icon={sendSharp}  className="chat-icon-1" />
+                    <Send size={16} strokeWidth={2.25} />
                 </button>
             </div>
         </div>
@@ -352,15 +375,21 @@ export function Chats(props: ChatsProps) {
     // Отправка сообщения
     const handleSendMessage = useCallback(async () => {
         if (!value.trim() && !selectedImage) return;
-        
-        const success = await sendMessage( recipient, cargo, value.trim() || '', '');
+
+        let success = true;
+        if (selectedImage) {
+            success = await sendImage(recipient, cargo, selectedImage);
+        }
+        if (success && value.trim()) {
+            success = await sendMessage(recipient, cargo, value.trim(), '');
+        }
 
         if (success) {
             setValue("");
             setSelectedImage(null);
             setTimeout(scrollToBottom, 100);
         }
-    }, [value, selectedImage, recipient, cargo, sendMessage, scrollToBottom]);
+    }, [value, selectedImage, recipient, cargo, sendMessage, sendImage, scrollToBottom]);
 
     // Обработчик нажатия клавиш
     const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
@@ -400,11 +429,8 @@ export function Chats(props: ChatsProps) {
                 onBack={handleBack}
                 userName={userName}
                 userInitials={userInitials}
-                subtitle={orderLine ? `В сети · ${orderLine}` : undefined}
+                subtitle={orderLine ? `В сети · ${orderLine}` : 'В сети'}
             />
-            {orderLine && (
-                <div className="chat-order-banner">Заказ {orderLine}</div>
-            )}
 
             <div className="chat-page-content">
                 <div className="chat-body">

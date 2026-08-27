@@ -3,7 +3,7 @@ import { useLoginStore } from '../Store/loginStore';
 import styles from './PanelFrame.module.css';
 
 type PanelFrameProps = {
-  title: string;
+  title?: string;
   subtitle?: string;
   crumb?: string;
   children: React.ReactNode;
@@ -29,13 +29,15 @@ export const PanelFrame: React.FC<PanelFrameProps> = ({
   return (
     <div className={`${styles.root} ${className || ''}`}>
       <div className={styles.crumb}>{panelLabel}</div>
-      <div className={styles.titleRow}>
-        <div>
-          <h1 className={styles.title}>{title}</h1>
-          {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+      {(title || subtitle || actions) && (
+        <div className={styles.titleRow}>
+          <div>
+            {title && <h1 className={styles.title}>{title}</h1>}
+            {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+          </div>
+          {actions && <div className={styles.actions}>{actions}</div>}
         </div>
-        {actions && <div className={styles.actions}>{actions}</div>}
-      </div>
+      )}
 
       {bare ? (
         children

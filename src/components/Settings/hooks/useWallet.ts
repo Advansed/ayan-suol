@@ -25,7 +25,8 @@ function normalizeTransactions(raw: unknown): Transaction[] {
     date: item.date ?? '',
     type: mapTransactionType(item.type),
     amount: Number(item.amount ?? item.summ ?? 0),
-    title: item.title ?? item.description ?? item.message ?? ''
+    title: item.title ?? item.description ?? item.message ?? '',
+    subtitle: item.subtitle ?? item.route ?? item.details ?? ''
   }));
 }
 

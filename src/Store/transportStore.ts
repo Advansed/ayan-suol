@@ -2,9 +2,14 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
-// ============================================
-// ТИПЫ
-// ============================================
+export interface TransportType {
+  id: string
+  name: string
+  description?: string
+}
+
+export type TransportTypeField = TransportType | TransportType[] | string | number | null | undefined
+
 export interface TransportData {
   guid?: string
   name?: string
@@ -12,10 +17,16 @@ export interface TransportData {
   vin?: string
   manufacture_year?: number
   image?: string
-  transport_type?: string
+  transport_type?: TransportTypeField
   experience?: number
   load_capacity?: number
-  // Альтернативные поля для совместимости
+  volume?: number
+  driver?: string | { phone?: string; fio?: string }
+  driver_phone?: string
+  driver_fio?: string
+  mileage?: number
+  verified?: boolean
+  status?: 'free' | 'trip' | 'service'
   type?: string
   capacity?: number
   year?: number
@@ -25,6 +36,8 @@ export interface TransportData {
 
 export interface TransportState {
   data: TransportData | null
+  items: TransportData[]
+  types: TransportType[]
   isLoading: boolean
   isSaving: boolean
   error: string | null
@@ -32,6 +45,8 @@ export interface TransportState {
 
 interface TransportActions {
   setData: (data: TransportData | null) => void
+  setItems: (items: TransportData[]) => void
+  setTypes: (types: TransportType[]) => void
   setLoading: (loading: boolean) => void
   setSaving: (saving: boolean) => void
   setError: (error: string | null) => void
@@ -42,49 +57,194 @@ interface TransportActions {
 
 type TransportStore = TransportState & TransportActions
 
-// ============================================
-// ZUSTAND STORE
-// ============================================
-export const useTransportData = () => useTransportStore(state => state.data)
+function parseMaybeJson(value: unknown): unknown {
+  if (typeof value !== 'string') return value
+  const text = value.trim()
+  if (!text || (text[0] !== '{' && text[0] !== '[')) return value
+  try {
+    return JSON.parse(text)
+  } catch {
+    return value
+  }
+}
+
+export function asTransportType(value: unknown): TransportType | undefined {
+  const parsed = parseMaybeJson(value)
+  const item = Array.isArray(parsed) ? parsed[0] : parsed
+  if (item == null || item === '') return undefined
+  if (typeof item === 'string' || typeof item === 'number') {
+    return { id: String(item), name: String(item) }
+  }
+  if (typeof item !== 'object') return undefined
+  const rec = item as Record<string, unknown>
+  const id = rec.id ?? rec.guid ?? rec._id
+  const name = rec.name ?? rec.title ?? rec.label
+  if (id == null && (name == null || name === '')) return undefined
+  return {
+    id: id != null ? String(id) : '',
+    name: name != null && name !== '' ? String(name) : String(id ?? ''),
+    description: rec.description != null && rec.description !== '' ? String(rec.description) : undefined,
+  }
+}
+
+export function asTransportList(raw: unknown): TransportData[] {
+  const list = Array.isArray(raw)
+    ? raw.filter(Boolean)
+    : raw && typeof raw === 'object'
+      ? [raw]
+      : []
+
+  return list.map((item) => {
+    const transport = { ...(item as TransportData) }
+    const type = asTransportType(transport.transport_type)
+    if (type) transport.transport_type = type
+
+    const driver = transport.driver
+    if (driver && typeof driver === 'object' && !Array.isArray(driver)) {
+      if (driver.phone && !transport.driver_phone) transport.driver_phone = String(driver.phone)
+      if (driver.fio && !transport.driver_fio) transport.driver_fio = String(driver.fio)
+    }
+
+    return transport
+  })
+}
+
+function unwrapList(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw
+  if (!raw || typeof raw !== 'object') return []
+  const rec = raw as Record<string, unknown>
+  for (const key of ['data', 'items', 'types', 'result']) {
+    if (Array.isArray(rec[key])) return rec[key] as unknown[]
+  }
+  return []
+}
+
+export function asTransportTypes(raw: unknown): TransportType[] {
+  return unwrapList(raw)
+    .map((item) => asTransportType(item))
+    .filter((item): item is TransportType => Boolean(item))
+}
+
+export function transportDriverName(transport?: TransportData | null): string {
+  const fio = String(transport?.driver_fio ?? '').trim()
+  if (fio) return fio
+  const driver = transport?.driver
+  if (driver && typeof driver === 'object' && !Array.isArray(driver)) {
+    return String(driver.fio ?? '').trim()
+  }
+  if (typeof driver === 'string') return driver.trim()
+  return ''
+}
+
+export function transportDisplayName(transport?: TransportData | null): string {
+  const name = String(transport?.name ?? '').trim()
+  const guid = String(transport?.guid ?? '').trim()
+  if (!name || (guid && name === guid)) return ''
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(name)) return ''
+  if (/^[0-9a-f-]{16,}$/i.test(name)) return ''
+  return name
+}
+
+export function transportTypeName(
+  value: unknown,
+  types: TransportType[] = [],
+  fallback = ''
+): string {
+  const parsed = asTransportType(value)
+  if (parsed?.name && parsed.name !== parsed.id) return parsed.name
+  if (parsed?.id) {
+    const fromDict = types.find((type) => type.id === parsed.id)?.name
+    if (fromDict) return fromDict
+    if (parsed.name) return parsed.name
+  }
+  return fallback
+}
+
+export function resolveTransportTypeId(
+  value: unknown,
+  types: TransportType[] = [],
+  fallbackName?: string
+): string {
+  const parsed = asTransportType(value)
+  if (parsed?.id) {
+    if (types.some((type) => type.id === parsed.id)) return parsed.id
+    return parsed.id
+  }
+  if (fallbackName) {
+    return types.find((type) => type.name === fallbackName)?.id || ''
+  }
+  return ''
+}
+
+export function toTransportTypeId(value: string): string | number {
+  const id = value.trim()
+  return /^\d+$/.test(id) ? Number(id) : id
+}
+
+function sameTransport(a: TransportData, b: TransportData): boolean {
+  if (a.guid && b.guid) return a.guid === b.guid
+  const plateA = a.license_plate || a.number
+  const plateB = b.license_plate || b.number
+  return Boolean(plateA && plateB && plateA === plateB)
+}
+
+function mergeItems(items: TransportData[], data: TransportData): TransportData[] {
+  const idx = items.findIndex((item) => sameTransport(item, data))
+  if (idx >= 0) return items.map((item, i) => (i === idx ? { ...item, ...data } : item))
+  return items.length ? items : [data]
+}
+
+export const useTransportData = () => useTransportStore((state) => state.data)
+export const useTransportItems = () => useTransportStore((state) => state.items)
+export const useTransportTypes = () => useTransportStore((state) => state.types)
 
 export const useTransportStore = create<TransportStore>()(
   devtools(
     (set) => ({
-      // STATE
       data: null,
+      items: [],
+      types: [],
       isLoading: false,
       isSaving: false,
       error: null,
 
-      // ACTIONS
-      setData: (data) => set({ data }),
+      setData: (data) =>
+        set((state) => {
+          if (!data) return { data: null, items: [] }
+          return { data, items: mergeItems(state.items, data) }
+        }),
+      setItems: (items) => set({ items, data: items[0] ?? null }),
+      setTypes: (types) => set({ types }),
       setLoading: (isLoading) => set({ isLoading }),
       setSaving: (isSaving) => set({ isSaving }),
       setError: (error) => set({ error }),
-      
-      updateData: (updates) => 
-        set((state) => ({ 
-          data: state.data ? { ...state.data, ...updates } : updates
-        })),
-      
+
+      updateData: (updates) =>
+        set((state) => {
+          const next = state.data ? { ...state.data, ...updates } : { ...updates }
+          return { data: next, items: mergeItems(state.items, next) }
+        }),
+
       clearError: () => set({ error: null }),
-      
-      reset: () => set({
-        data: null,
-        isLoading: false,
-        isSaving: false,
-        error: null
-      })
+
+      reset: () =>
+        set({
+          data: null,
+          items: [],
+          types: [],
+          isLoading: false,
+          isSaving: false,
+          error: null,
+        }),
     }),
     { name: 'transport-store' }
   )
 )
 
-// ============================================
-// GETTERS
-// ============================================
 export const transportGetters = {
   getData: (): TransportData | null => useTransportStore.getState().data,
+  getItems: (): TransportData[] => useTransportStore.getState().items,
+  getTypes: (): TransportType[] => useTransportStore.getState().types,
   isLoading: (): boolean => useTransportStore.getState().isLoading,
   isSaving: (): boolean => useTransportStore.getState().isSaving,
   getError: (): string | null => useTransportStore.getState().error,
@@ -92,88 +252,83 @@ export const transportGetters = {
   getCompletionPercentage: (): number => {
     const data = useTransportStore.getState().data
     if (!data) return 0
-    
+
     const requiredFields = ['name', 'license_plate', 'transport_type'] as const
     const optionalFields = ['vin', 'manufacture_year', 'image', 'experience', 'load_capacity'] as const
-    
     const totalFields = requiredFields.length + optionalFields.length
     let filledCount = 0
-    
-    // Обязательные поля
-    requiredFields.forEach(field => {
+
+    requiredFields.forEach((field) => {
       if (data[field]) filledCount++
     })
-    
-    // Опциональные поля  
-    optionalFields.forEach(field => {
+    optionalFields.forEach((field) => {
       if (data[field]) filledCount++
     })
-    
+
     return Math.round((filledCount / totalFields) * 100)
-  }
+  },
 }
 
-// ============================================
-// ACTIONS
-// ============================================
 export const transportActions = {
   setData: (data: TransportData | null) => useTransportStore.getState().setData(data),
+  setItems: (items: TransportData[]) => useTransportStore.getState().setItems(items),
+  setTypes: (types: TransportType[]) => useTransportStore.getState().setTypes(types),
   setLoading: (loading: boolean) => useTransportStore.getState().setLoading(loading),
   setSaving: (saving: boolean) => useTransportStore.getState().setSaving(saving),
   setError: (error: string | null) => useTransportStore.getState().setError(error),
   updateData: (updates: Partial<TransportData>) => useTransportStore.getState().updateData(updates),
   clearError: () => useTransportStore.getState().clearError(),
-  reset: () => useTransportStore.getState().reset()
+  reset: () => useTransportStore.getState().reset(),
 }
 
-// ============================================
-// SOCKET HANDLERS
-// ============================================
 export const transportSocketHandlers = {
   onGetTransport: (response: any) => {
     console.log('onGetTransport response:', response)
-    
     transportActions.setLoading(false)
-    
+
     if (response.success) {
-      const data = Array.isArray(response.data) ? response.data[0] : response.data
-      transportActions.setData(data)
+      transportActions.setItems(asTransportList(response.data))
     } else {
       console.error('Invalid transport response:', response)
       transportActions.setError(response.message || 'Failed to load transport data')
     }
   },
 
+  onGetTransportTypes: (response: any) => {
+    console.log('onGetTransportTypes response:', response)
+    if (response?.success === false) {
+      console.error('Invalid transport types response:', response)
+      return
+    }
+    transportActions.setTypes(asTransportTypes(response?.data ?? response))
+  },
+
   onSaveTransport: (response: any) => {
     console.log('onSaveTransport response:', response)
-    
     transportActions.setSaving(false)
-    
+
     if (response.success && response.data) {
-      transportActions.setData(response.data)
+      const list = asTransportList(response.data)
+      if (list.length > 1) transportActions.setItems(list)
+      else transportActions.setData(list[0] || response.data)
     } else {
       transportActions.setError(response.message || 'Failed to save transport data')
     }
-  }
+  },
 }
 
-// ============================================
-// ИНИЦИАЛИЗАЦИЯ SOCKET ОБРАБОТЧИКОВ
-// ============================================
 export const initTransportSocketHandlers = (socket: any) => {
   if (!socket) return
-  
   socket.on('get_transport', transportSocketHandlers.onGetTransport)
+  socket.on('get_transport_types', transportSocketHandlers.onGetTransportTypes)
   socket.on('set_transport', transportSocketHandlers.onSaveTransport)
-  
   console.log('Transport socket handlers initialized')
 }
 
 export const destroyTransportSocketHandlers = (socket: any) => {
   if (!socket) return
-  
   socket.off('get_transport', transportSocketHandlers.onGetTransport)
+  socket.off('get_transport_types', transportSocketHandlers.onGetTransportTypes)
   socket.off('set_transport', transportSocketHandlers.onSaveTransport)
-
   console.log('Transport socket handlers destroyed')
 }

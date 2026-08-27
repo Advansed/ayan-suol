@@ -1,16 +1,22 @@
 import React, { useMemo, useState } from 'react';
 import { IonAlert, IonLoading, IonModal } from '@ionic/react';
 import {
-  ChevronLeft,
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
   CloudUpload,
-  CreditCard,
   FileText,
+  MessageSquare,
   Pencil,
-  Shield,
+  ShieldCheck,
+  Star,
   Trash2,
+  Truck,
   X,
+  XCircle,
 } from 'lucide-react';
-import { CargoInfo, CargoStatus, useCargoStore } from '../../../Store/cargoStore';
+import { CargoInfo, CargoStatus, DriverInfo, useCargoStore } from '../../../Store/cargoStore';
+import { accountGetters } from '../../../Store/accountStore';
 import { statusUtils, formatters } from '../../../utils/utils';
 import {
   getCargoActionHint,
@@ -31,9 +37,33 @@ interface CargoViewProps {
   onDelete: (guid: string) => Promise<boolean>;
   onPublish: (guid: string) => Promise<boolean>;
   onInvoices: (cargo: CargoInfo) => void;
-  onPayment: (cargo: CargoInfo) => void;
-  onInsurance: (cargo: CargoInfo) => void;
   isLoading?: boolean;
+}
+
+function invoiceStatusMeta(status: DriverInfo['status']) {
+  if (status === 'Заказано') {
+    return {
+      label: 'Ожидает решения',
+      kind: 'pending' as const,
+      Icon: Clock,
+    };
+  }
+  if (status === 'Завершено' || status === 'Доставлено' || status === 'Разгружено') {
+    return {
+      label: 'Принят',
+      kind: 'accepted' as const,
+      Icon: CheckCircle2,
+    };
+  }
+  return {
+    label: 'Принят',
+    kind: 'accepted' as const,
+    Icon: CheckCircle2,
+  };
+}
+
+function isAssignedInvoice(invoice: DriverInfo) {
+  return invoice.status !== 'Заказано';
 }
 
 export const CargoView: React.FC<CargoViewProps> = ({
@@ -43,8 +73,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
   onDelete,
   onPublish,
   onInvoices,
-  onPayment,
-  onInsurance,
   isLoading = false,
 }) => {
   const cargos = useCargoStore((state) => state.cargos);
@@ -52,7 +80,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showPublishAlert, setShowPublishAlert] = useState(false);
 
-  // Всегда приоритет стора — prop может быть устаревшим снимком навигации
   const cargoInfo = useMemo(() => {
     const found = cargos.find((item) => item.guid === cargo.guid);
     return found ?? cargo;
@@ -63,33 +90,40 @@ export const CargoView: React.FC<CargoViewProps> = ({
   const canPublish = status === CargoStatus.NEW;
   const canEdit = statusUtils.canEdit(status);
   const canDelete = statusUtils.canDelete(status);
-  const totalInvoices = cargoInfo.invoices?.length || 0;
-  const hasAdvance = cargoInfo.advance > 0;
-  const hasInsurance = cargoInfo.insurance > 0;
-  const hasAdditionalServices = hasAdvance || hasInsurance;
+  const invoices = cargoInfo.invoices ?? [];
+  const totalInvoices = invoices.length;
   const advanceAmount = Number(cargoInfo.advance) || 0;
-  const cargoPrice = Number(cargoInfo.price) || 0;
-  const isFullAdvance = advanceAmount > 0 && cargoPrice > 0 && advanceAmount >= cargoPrice;
-  const advancePercent =
-    cargoPrice > 0 && advanceAmount > 0
-      ? Math.min(100, Math.round((advanceAmount / cargoPrice) * 100))
-      : 0;
-  const prepaymentTitle = isFullAdvance
-    ? 'Полная предоплата'
-    : hasAdvance
-      ? `${advancePercent}% предоплаты`
-      : 'Спецсчёт';
-  const prepaymentTitleClass = isFullAdvance
-    ? styles.prepaymentTitleFull
-    : hasAdvance
-      ? styles.prepaymentTitlePartial
-      : styles.prepaymentTitleNone;
+  const insuranceAmount = Number(cargoInfo.insurance) || 0;
+  const publishCost = advanceAmount + insuranceAmount;
+  const balance = accountGetters.getBalance();
   const actionHint = getCargoActionHint(progressStatus);
+  const publishAlertMessage = (() => {
+    if (publishCost <= 0) return 'Опубликовать груз для поиска водителей?';
+    const parts: string[] = [];
+    if (advanceAmount > 0) parts.push(`спецсчёт ${formatters.currency(advanceAmount)}`);
+    if (insuranceAmount > 0) parts.push(`страховка ${formatters.currency(insuranceAmount)}`);
+    return `К списанию с баланса: ${formatters.currency(publishCost)} (${parts.join(' + ')}). Доступно: ${formatters.currency(balance)}. Опубликовать заказ?`;
+  })();
   const completed = isCargoCompleted(progressStatus);
   const problems = isCargoProblems(progressStatus);
+  const inExecution = isCargoInExecution(progressStatus);
+  const showTracker = inExecution || completed;
   const hasInteractiveAction = !completed;
   const invoicesAsPrimary =
     status === CargoStatus.HAS_ORDERS || isCargoInExecution(progressStatus);
+
+  const selectedInvoice = useMemo(
+    () => invoices.find(isAssignedInvoice) ?? null,
+    [invoices]
+  );
+  const pendingInvoices = useMemo(
+    () => invoices.filter((item) => item.status === 'Заказано'),
+    [invoices]
+  );
+  const otherInvoices = useMemo(
+    () => invoices.filter((item) => item.status !== 'Заказано'),
+    [invoices]
+  );
 
   const handleDelete = async () => {
     setShowDeleteAlert(false);
@@ -146,42 +180,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
             </button>
           )}
 
-          <button
-            type="button"
-            className={styles.actionItem}
-            onClick={() => closeAnd(() => onPayment(cargoInfo))}
-          >
-            <CreditCard size={18} strokeWidth={1.75} />
-            <span>
-              <span className={`${styles.actionItemTitle} ${prepaymentTitleClass}`}>
-                {prepaymentTitle}
-              </span>
-              <span className={styles.actionItemHint}>
-                {isFullAdvance
-                  ? `Внесено ${formatters.currency(advanceAmount)}`
-                  : hasAdvance
-                    ? `Внесено ${formatters.currency(cargoInfo.advance)}`
-                    : 'Предоплата по заказу'}
-              </span>
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className={styles.actionItem}
-            onClick={() => closeAnd(() => onInsurance(cargoInfo))}
-          >
-            <Shield size={18} strokeWidth={1.75} />
-            <span>
-              <span className={styles.actionItemTitle}>Страховка</span>
-              <span className={styles.actionItemHint}>
-                {hasInsurance
-                  ? `Оформлено на ${formatters.currency(cargoInfo.insurance)}`
-                  : 'Оформить страхование груза'}
-              </span>
-            </span>
-          </button>
-
           {canDelete && (
             <button
               type="button"
@@ -237,50 +235,177 @@ export const CargoView: React.FC<CargoViewProps> = ({
     </>
   );
 
+  const renderBid = (invoice: DriverInfo, actionable: boolean) => {
+    const meta = invoiceStatusMeta(invoice.status);
+    const StatusIcon = meta.Icon;
+    const truckLine = [invoice.transport, invoice.capacity].filter(Boolean).join(' · ') || 'Транспорт не указан';
+
+    return (
+      <article key={invoice.guid} className={styles.bidCard}>
+        <div className={styles.bidRow}>
+          <span className={styles.bidAvatar} aria-hidden>
+            <Truck size={20} strokeWidth={1.75} />
+          </span>
+          <div className={styles.bidBody}>
+            <div className={styles.bidTop}>
+              <div className={styles.bidIdentity}>
+                <div className={styles.bidNameRow}>
+                  <p className={styles.bidName}>{invoice.client || 'Исполнитель'}</p>
+                  <ShieldCheck size={14} strokeWidth={2} className={styles.bidVerified} />
+                </div>
+                <p className={styles.bidTruck}>{truckLine}</p>
+              </div>
+              <div className={styles.bidPriceCol}>
+                <p className={styles.bidPrice}>{formatters.currency(invoice.price)}</p>
+                <span className={`${styles.bidStatus} ${styles[`bidStatus_${meta.kind}`]}`}>
+                  <StatusIcon size={12} strokeWidth={2} />
+                  {meta.label}
+                </span>
+              </div>
+            </div>
+
+            <div className={styles.bidMeta}>
+              <span className={styles.bidRating}>
+                <Star size={14} strokeWidth={1.75} className={styles.bidStar} />
+                {invoice.rating || '—'}
+              </span>
+              <span>
+                {invoice.weight} т · {invoice.volume} м³
+              </span>
+            </div>
+
+            {actionable && (
+              <div className={styles.bidActions}>
+                <button
+                  type="button"
+                  className={styles.bidPrimary}
+                  onClick={() => onInvoices(cargoInfo)}
+                >
+                  Выбрать исполнителя
+                </button>
+                <button
+                  type="button"
+                  className={styles.bidSecondary}
+                  onClick={() => onInvoices(cargoInfo)}
+                >
+                  <MessageSquare size={14} strokeWidth={1.75} />
+                  Написать
+                </button>
+                <button
+                  type="button"
+                  className={styles.bidGhost}
+                  onClick={() => onInvoices(cargoInfo)}
+                >
+                  <XCircle size={14} strokeWidth={1.75} />
+                  Отклонить
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </article>
+    );
+  };
+
   return (
     <div className={styles.view}>
       <IonLoading isOpen={isLoading} message="Подождите..." />
 
-      <div className={styles.topBar}>
-        <button type="button" className={styles.backBtn} onClick={onBack}>
-          <ChevronLeft size={20} strokeWidth={2} />
-          К заказам
-        </button>
-        <div className={styles.topId}>ID {cargoInfo.guid.substr(0, 8)}</div>
-      </div>
+      <button type="button" className={styles.backBtn} onClick={onBack}>
+        <ArrowLeft size={16} strokeWidth={2} />
+        Назад к моим заказам
+      </button>
 
-      <div className={styles.body}>
-        <CargoStatusTimeline cargo={cargoInfo} />
+      <div className={styles.stack}>
+        {showTracker && <CargoStatusTimeline cargo={cargoInfo} />}
+
         <CargoOrderInfo cargo={cargoInfo} />
 
-        <div className={styles.ctaRow}>
-          {hasInteractiveAction && (
-            <button
-              type="button"
-              className={styles.actionCta}
-              onClick={handlePrimaryAction}
-            >
-              <span className={styles.actionCtaTitle}>Действие по заказу</span>
-              <span className={styles.actionCtaHint}>{actionHint}</span>
-            </button>
-          )}
-
-          {!canPublish && (
-            <button
-              type="button"
-              className={styles.chatCta}
-              onClick={() => onInvoices(cargoInfo)}
-            >
-              <FileText size={20} strokeWidth={1.75} />
-              <span>
-                <span className={styles.chatCtaTitle}>Заявки</span>
-                <span className={styles.chatCtaHint}>
-                  {totalInvoices > 0 ? `${totalInvoices} от водителей` : 'Пока нет заявок'}
-                </span>
+        {selectedInvoice && (
+          <section className={styles.carrierCard}>
+            <p className={styles.carrierKicker}>
+              <ShieldCheck size={14} strokeWidth={2} />
+              {completed ? 'Рейс выполнен исполнителем' : 'Выбранный исполнитель'}
+            </p>
+            <div className={styles.carrierRow}>
+              <span className={styles.carrierAvatar} aria-hidden>
+                <Truck size={20} strokeWidth={1.75} />
               </span>
-            </button>
+              <p className={styles.carrierName}>
+                {[selectedInvoice.client, selectedInvoice.transport].filter(Boolean).join(' · ') ||
+                  'Исполнитель'}
+              </p>
+              <button
+                type="button"
+                className={styles.carrierChat}
+                onClick={() => onInvoices(cargoInfo)}
+                aria-label="Написать исполнителю"
+              >
+                <MessageSquare size={16} strokeWidth={1.75} />
+              </button>
+            </div>
+          </section>
+        )}
+
+        <section className={styles.bidsSection}>
+          <div className={styles.bidsHead}>
+            <h3 className={styles.bidsTitle}>
+              {inExecution || completed
+                ? 'Все отклики по заказу'
+                : `Отклики исполнителей (${totalInvoices})`}
+            </h3>
+            {!canPublish && (
+              <button
+                type="button"
+                className={styles.bidsLink}
+                onClick={() => onInvoices(cargoInfo)}
+              >
+                Открыть
+              </button>
+            )}
+          </div>
+
+          {totalInvoices === 0 ? (
+            <div className={styles.bidsEmpty}>
+              Пока никто не откликнулся на этот заказ.
+            </div>
+          ) : (
+            <div className={styles.bidsList}>
+              {pendingInvoices.map((invoice) =>
+                renderBid(invoice, !inExecution && !completed)
+              )}
+              {otherInvoices.map((invoice) => renderBid(invoice, false))}
+            </div>
           )}
-        </div>
+        </section>
+
+        {(canPublish || hasInteractiveAction) && (
+          <div className={styles.ctaRow}>
+            {canPublish && (
+              <button
+                type="button"
+                className={styles.actionCta}
+                onClick={() => setActionOpen(true)}
+              >
+                <span className={styles.actionCtaTitle}>Действие по заказу</span>
+                <span className={styles.actionCtaHint}>{actionHint}</span>
+              </button>
+            )}
+
+            {!canPublish && hasInteractiveAction && (
+              <button
+                type="button"
+                className={styles.actionCta}
+                onClick={handlePrimaryAction}
+              >
+                <span className={styles.actionCtaTitle}>
+                  {invoicesAsPrimary ? 'Управление заявками' : 'Действие по заказу'}
+                </span>
+                <span className={styles.actionCtaHint}>{actionHint}</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <IonModal
@@ -329,11 +454,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
         isOpen={showPublishAlert}
         onDidDismiss={() => setShowPublishAlert(false)}
         header="Публикация груза"
-        message={
-          hasAdditionalServices
-            ? 'Для публикации потребуется оплата дополнительных услуг. Продолжить?'
-            : 'Опубликовать груз для поиска водителей?'
-        }
+        message={publishAlertMessage}
         buttons={[
           {
             text: 'Отмена',

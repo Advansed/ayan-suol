@@ -1,15 +1,12 @@
-import React, { useMemo } from 'react';
-import { AlertTriangle, Check, CircleDot } from 'lucide-react';
+import React from 'react';
+import { AlertTriangle, Check } from 'lucide-react';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 import {
-  CARGO_STATUS_FLOW,
   CARGO_STATUS_SHORT,
-  getCargoStatusFlowIndex,
+  getCargoProgressSlots,
   resolveCargoProgressStatus,
 } from '../cargoStatusFlow';
 import styles from './CargoStatusTimeline.module.css';
-
-const WINDOW_SIZE = 5;
 
 type CargoStatusTimelineProps = {
   cargo: CargoInfo;
@@ -18,97 +15,69 @@ type CargoStatusTimelineProps = {
 export const CargoStatusTimeline: React.FC<CargoStatusTimelineProps> = ({ cargo }) => {
   const current = resolveCargoProgressStatus(cargo);
   const isProblems = current === CargoStatus.PROBLEMS;
-  const currentIndex = getCargoStatusFlowIndex(current);
-  const steps = useMemo(() => CARGO_STATUS_FLOW, []);
-  const visibleSteps = useMemo(() => {
-    const n = steps.length;
-    const start = Math.min(Math.max(currentIndex - 2, 0), Math.max(0, n - WINDOW_SIZE));
-    return steps.slice(start, start + WINDOW_SIZE).map((status, offset) => ({
-      status,
-      index: start + offset,
-    }));
-  }, [steps, currentIndex]);
-  const progressPct =
-    currentIndex >= 0 && steps.length > 0 ? ((currentIndex + 1) / steps.length) * 100 : 0;
+  const slots = isProblems ? [] : getCargoProgressSlots(current);
 
   return (
-    <section className={styles.wrap} aria-label="Статусы заявки">
+    <section className={styles.wrap} aria-label="Статус рейса">
       <div className={styles.head}>
-        <div>
-          <div className={styles.kicker}>Прогресс заявки</div>
-          <h2 className={styles.currentTitle}>
-            {isProblems ? (
-              <span className={styles.rejectedLabel}>{CargoStatus.PROBLEMS}</span>
-            ) : (
-              <>
-                Текущий статус:{' '}
-                <span className={styles.currentValue}>{current}</span>
-              </>
-            )}
-          </h2>
-        </div>
-        {!isProblems && currentIndex >= 0 && (
-          <div className={styles.progressMeta}>
-            Шаг {currentIndex + 1} из {steps.length}
-          </div>
+        <p className={styles.title}>Статус рейса</p>
+        {!isProblems && (
+          <span className={styles.pill}>{CARGO_STATUS_SHORT[current] || current}</span>
         )}
       </div>
 
-      {!isProblems && (
-        <>
-          <div
-            className={styles.progressBar}
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={steps.length}
-            aria-valuenow={currentIndex + 1}
-            aria-label="Прогресс по цепочке статусов"
-          >
-            <div className={styles.progressBarFill} style={{ width: `${progressPct}%` }} />
-          </div>
-          <ol className={styles.track} aria-label="Цепочка статусов">
-            {visibleSteps.map(({ status, index }, offset) => {
-              const done = index < currentIndex;
-              const active = index === currentIndex;
-              const upcoming = index > currentIndex;
-              return (
-                <li
-                  key={status}
-                  className={[
-                    styles.step,
-                    done ? styles.done : '',
-                    active ? styles.active : '',
-                    upcoming ? styles.upcoming : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  {offset > 0 && (
-                    <span
-                      className={`${styles.connector} ${done || active ? styles.connectorOn : ''}`}
-                      aria-hidden
-                    />
-                  )}
-                  <span className={styles.dot} aria-hidden>
-                    {done ? (
-                      <Check size={12} strokeWidth={2.5} />
-                    ) : active ? (
-                      <CircleDot size={14} strokeWidth={2} />
-                    ) : null}
-                  </span>
-                  <span className={styles.stepLabel}>{CARGO_STATUS_SHORT[status]}</span>
-                </li>
-              );
-            })}
-          </ol>
-        </>
-      )}
-
-      {isProblems && (
+      {isProblems ? (
         <div className={styles.rejectedBanner}>
-          <AlertTriangle size={18} strokeWidth={2} />
+          <AlertTriangle size={16} strokeWidth={2} />
           <span>По заявке зафиксирован внештатный статус «Проблемы»</span>
         </div>
+      ) : (
+        <ol className={styles.track}>
+          {slots.map((slot, offset) => {
+            if (slot.type === 'ellipsis') {
+              return (
+                <li key="ellipsis" className={`${styles.step} ${styles.gap}`}>
+                  {offset > 0 && <span className={styles.connector} aria-hidden />}
+                  <span className={styles.dot} aria-hidden>
+                    …
+                  </span>
+                  <span className={styles.stepLabel}>…</span>
+                </li>
+              );
+            }
+
+            const done = slot.role === 'prev';
+            const active = slot.role === 'current';
+            return (
+              <li
+                key={`${slot.role}-${slot.status}`}
+                className={[
+                  styles.step,
+                  done ? styles.done : '',
+                  active ? styles.active : '',
+                  !done && !active ? styles.upcoming : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                {offset > 0 && (
+                  <span
+                    className={`${styles.connector} ${done || active ? styles.connectorOn : ''}`}
+                    aria-hidden
+                  />
+                )}
+                <span className={styles.dot} aria-hidden>
+                  {done || (active && current === CargoStatus.COMPLETED) ? (
+                    <Check size={14} strokeWidth={2.5} />
+                  ) : (
+                    <span className={styles.dotMark} />
+                  )}
+                </span>
+                <span className={styles.stepLabel}>{CARGO_STATUS_SHORT[slot.status]}</span>
+              </li>
+            );
+          })}
+        </ol>
       )}
     </section>
   );

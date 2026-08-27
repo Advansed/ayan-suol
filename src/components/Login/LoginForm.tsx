@@ -1,6 +1,7 @@
 // src/components/Login/LoginForm.tsx
 
 import React, { useState, useCallback, useEffect } from 'react'
+import { Eye, EyeOff, Truck } from 'lucide-react'
 import { parseLoginPhone, validateLoginPhoneRaw } from './phone'
 import { PhoneCountryField } from './PhoneCountryField'
 import './Login.css'
@@ -27,6 +28,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 }) => {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [formErrors, setFormErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -92,36 +94,43 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const canSubmit = phoneOk && passwordOk && !isSubmitting
 
   return (
-    <div className="auth-page">
+    <div className="auth-page auth-page-login">
+      <div className="auth-brand-row">
+        <span className="login-logo-mark login-logo-mark-light" aria-hidden>
+          <Truck size={18} strokeWidth={2} />
+        </span>
+        <span>Груз в рейс</span>
+      </div>
+
       <header className="auth-hero">
-        <h1 className="auth-hero-title">Вход в платформу</h1>
-        <p className="auth-hero-sub">Груз в Рейс / PAITZA</p>
+        <h1 className="auth-hero-title">Вход в аккаунт</h1>
+        <p className="auth-hero-sub">Введите номер телефона и пароль</p>
       </header>
 
-      <div className="auth-card">
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <PhoneCountryField
-            id="login-phone"
-            value={phone}
-            onChange={handlePhoneChange}
-            error={formErrors.phone}
-            onBlur={() => {
-              if (phone) {
-                const err = validateLoginPhoneRaw(phone)
-                setFormErrors((p) => ({ ...p, phone: err || undefined }))
-              }
-            }}
-          />
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <PhoneCountryField
+          id="login-phone"
+          value={phone}
+          onChange={handlePhoneChange}
+          error={formErrors.phone}
+          onBlur={() => {
+            if (phone) {
+              const err = validateLoginPhoneRaw(phone)
+              setFormErrors((p) => ({ ...p, phone: err || undefined }))
+            }
+          }}
+        />
 
-          <label className="auth-label auth-label-spaced" htmlFor="login-password">
-            Пароль
-          </label>
+        <label className="auth-label auth-label-spaced" htmlFor="login-password">
+          Пароль
+        </label>
+        <div className="auth-input-icon-wrap">
           <input
             id="login-password"
-            className="auth-input"
-            type="password"
+            className="auth-input auth-input-with-icon"
+            type={showPassword ? 'text' : 'password'}
             autoComplete="current-password"
-            placeholder="••••"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => handlePasswordChange(e.target.value)}
             onBlur={() => {
@@ -131,25 +140,31 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 setFormErrors((p) => ({ ...p, password: 'Пароль должен содержать минимум 4 символа' }))
             }}
           />
-          {formErrors.password && <div className="auth-error">{formErrors.password}</div>}
-
-          <button type="button" className="auth-link" onClick={onSwitchToRecovery}>
-            Забыли пароль?
+          <button
+            type="button"
+            className="auth-input-icon-btn"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+          >
+            {showPassword ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
           </button>
+        </div>
+        {formErrors.password && <div className="auth-error">{formErrors.password}</div>}
+        <button type="button" className="auth-link-forgot" onClick={onSwitchToRecovery}>
+          Забыли пароль?
+        </button>
 
-          <button type="submit" className="auth-btn-primary" disabled={!canSubmit}>
-            {isSubmitting ? 'Вход…' : 'Войти'}
+        <button type="submit" className="auth-btn-primary" disabled={!canSubmit}>
+          {isSubmitting ? 'Вход…' : 'Войти'}
+        </button>
+
+        <p className="auth-footer-text">
+          Нет аккаунта?{' '}
+          <button type="button" className="auth-footer-action" onClick={onSwitchToRegister}>
+            Зарегистрироваться
           </button>
-
-          <div className="auth-divider" role="separator">
-            <span>или</span>
-          </div>
-
-          <button type="button" className="auth-btn-secondary" onClick={onSwitchToRegister}>
-            Создать аккаунт
-          </button>
-        </form>
-      </div>
+        </p>
+      </form>
     </div>
   )
 }

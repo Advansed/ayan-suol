@@ -1,12 +1,21 @@
 import React, { useEffect, useMemo } from 'react'
+import { Search } from 'lucide-react'
 import { useHistory } from 'react-router'
 import styles from './ChatList.module.css'
 import { useChats } from '../../Store/useChats'
 import { useSocketStore } from '../../Store/socketStore'
 
+const AVATAR_COLORS = ['#2b5adc', '#0f766e', '#c2410c', '#7c3aed', '#0369a1', '#be185d']
+
 const getInitial = (name: string): string => {
   const letter = (name || '').trim().charAt(0)
   return letter ? letter.toUpperCase() : '?'
+}
+
+const avatarColor = (name: string): string => {
+  let hash = 0
+  for (let i = 0; i < (name || '').length; i += 1) hash += name.charCodeAt(i)
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length]
 }
 
 const chatKey = (chat: { recipient: string; cargo: string }) =>
@@ -33,7 +42,12 @@ const ChatItem = React.memo(
       className={`${styles.chatCard} ${active ? styles.chatCardActive : ''}`}
       onClick={onClick}
     >
-      <div className={styles.avatar}>{getInitial(chat.rec_name)}</div>
+      <div className={styles.avatarWrap}>
+        <div className={styles.avatar} style={{ background: avatarColor(chat.rec_name) }}>
+          {getInitial(chat.rec_name)}
+        </div>
+        <span className={styles.onlineDot} aria-hidden />
+      </div>
       <div className={styles.chatBody}>
         <div className={styles.chatTop}>
           <span className={styles.driverName}>{chat.rec_name || 'Без имени'}</span>
@@ -60,7 +74,7 @@ type ChatsListProps = {
 }
 
 export function ChatsList({ activeId }: ChatsListProps) {
-  const { filteredChats, isLoading, loadChats, setCurrentChat } = useChats()
+  const { filteredChats, isLoading, loadChats, setCurrentChat, searchQuery, setSearchQuery } = useChats()
 
   const history = useHistory()
   const isConnected = useSocketStore((state) => state.isConnected)
@@ -87,6 +101,19 @@ export function ChatsList({ activeId }: ChatsListProps) {
 
   return (
     <div className={styles.pageRoot}>
+      <div className={styles.listHead}>
+        <h2 className={styles.listTitle}>Сообщения</h2>
+        <label className={styles.searchWrap}>
+          <Search size={16} strokeWidth={2} className={styles.searchIcon} />
+          <input
+            type="search"
+            className={styles.searchInput}
+            placeholder="Поиск по диалогам…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </label>
+      </div>
       <div className={styles.pageContent}>
         {isLoading ? (
           <div className={styles.skeleton}>
@@ -108,7 +135,7 @@ export function ChatsList({ activeId }: ChatsListProps) {
             {filteredChats.length === 0 && (
               <div className={styles.emptyState}>
                 <div className={styles.emptyIcon}>💬</div>
-                <div>Нет активных чатов</div>
+                <div>{searchQuery ? 'Ничего не найдено' : 'Нет активных чатов'}</div>
               </div>
             )}
           </div>

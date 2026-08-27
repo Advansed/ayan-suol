@@ -273,7 +273,7 @@ export const HomePage: React.FC = () => {
                   onClick={() => history.push('/finance')}
                 >
                   <Wallet size={18} strokeWidth={1.75} />
-                  Пополнить баланс
+                  Финансы
                 </button>
                 <button
                   type="button"

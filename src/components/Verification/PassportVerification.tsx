@@ -486,4 +486,5 @@ export const PassportVerification: React.FC<PassportVerificationProps>    = ({ o
       </div>
     </div>
   );
+  
 };

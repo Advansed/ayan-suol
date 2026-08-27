@@ -1,187 +1,175 @@
-import React, { useState, useEffect } from 'react';
-import { IonButton, IonIcon } from '@ionic/react';
-import { mailOutline, shieldCheckmarkOutline } from 'ionicons/icons';
-import styles from './OfferCard.module.css';
+import React, { useEffect, useState } from 'react';
+import { ChevronDown, ShieldCheck } from 'lucide-react';
 import { WorkInfo, WorkStatus } from '../../types';
-import { useTransportStore } from '../../../../Store/transportStore';
+import { useTransportStore, transportDisplayName } from '../../../../Store/transportStore';
+import styles from './CounterOffer.module.css';
 
 interface CounterOfferCardProps {
-    work: WorkInfo;
-    onSubmit: (data: Partial<WorkInfo>, volume: number) => Promise<void>;
-    onCancel?: () => void;
+  work: WorkInfo;
+  onSubmit: (data: Partial<WorkInfo>, volume: number) => Promise<void>;
+  onCancel?: () => void;
 }
 
-export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({
-    work,
-    onSubmit,
-    onCancel
-}) => {
-    const [formData, setFormData] = useState<Partial<WorkInfo>>({
-        price: work.price,
-        weight: work.weight
-    });
+export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({ work, onSubmit }) => {
+  const [formData, setFormData] = useState<Partial<WorkInfo>>({
+    price: work.price,
+    weight: work.weight,
+  });
+  const [volume, setVolume] = useState<number>(work.volume);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-    const [volume, setVolume] = useState<number>(work.volume);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState('');
+  const transport = useTransportStore((state) => state.data);
+  const isOffered = work.status === WorkStatus.OFFERED;
 
-    const transport = useTransportStore(state => state.data);
+  useEffect(() => {
+    if (transport?.guid) {
+      setFormData((prev) => ({ ...prev, transport: transport.guid }));
+    }
+  }, [transport?.guid]);
 
-    const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\s/g, '');
-        const numValue = parseInt(value) || 0;
-        setFormData({ ...formData, price: numValue });
-    };
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const numValue = parseInt(e.target.value.replace(/\s/g, ''), 10) || 0;
+    setFormData({ ...formData, price: numValue });
+  };
 
-    const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = parseFloat(e.target.value) || 0;
-        setFormData({ ...formData, weight: value });
-    };
+  const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, weight: parseFloat(e.target.value) || 0 });
+  };
 
-    const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = parseFloat(e.target.value) || 0;
-        setVolume(value);
-    };
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setVolume(parseFloat(e.target.value) || 0);
+  };
 
-    const formatPrice = (price: number | undefined): string => {
-        if (!price) return '0';
-        return price.toLocaleString('ru-RU').replace(/,/g, ' ');
-    };
+  const formatPrice = (price: number | undefined): string => {
+    if (!price) return '';
+    return String(price);
+  };
 
-    useEffect(() => {
-        if (transport?.guid) {
-            setFormData(prev => ({ ...prev, transport: transport.guid }));
-        }
-    }, [transport?.guid]);
+  const transportLabel = transport
+    ? [transportDisplayName(transport) || 'Транспорт', transport.license_plate ? `(${transport.license_plate})` : '']
+        .filter(Boolean)
+        .join(' ')
+    : 'Добавьте транспорт в профиле';
 
-    const handleSubmit = async () => {
-        setError('');
+  const handleSubmit = async () => {
+    setError('');
 
-        if (!formData.price || formData.price <= 0) {
-            setError('Укажите корректную цену');
-            return;
-        }
+    if (!formData.price || formData.price <= 0) {
+      setError('Укажите корректную цену');
+      return;
+    }
+    if (!formData.weight || formData.weight <= 0) {
+      setError('Укажите корректный вес');
+      return;
+    }
+    if (!transport?.guid) {
+      setError('Добавьте транспорт в профиле');
+      return;
+    }
 
-        if (!formData.weight || formData.weight <= 0) {
-            setError('Укажите корректный вес');
-            return;
-        }
+    setIsSubmitting(true);
+    try {
+      await onSubmit(
+        {
+          ...work,
+          ...formData,
+          transport: transport.guid,
+          volume,
+        },
+        volume
+      );
+    } catch {
+      setError(isOffered ? 'Ошибка при отзыве предложения' : 'Ошибка при отправке предложения');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-        if (!transport?.guid) {
-            setError('Добавьте транспорт в профиле');
-            return;
-        }
+  return (
+    <div className={styles.root}>
+      <section className={styles.formCard}>
+        <h3 className={styles.formTitle}>
+          {isOffered ? 'Сделано предложение' : 'Встречное предложение'}
+        </h3>
+        <p className={styles.formHint}>
+          {isOffered
+            ? 'Вы отправили встречное предложение заказчику'
+            : 'Укажите свою цену и параметры перевозки'}
+        </p>
 
-        setIsSubmitting(true);
-        try {
-            const updatedWork: Partial<WorkInfo> = {
-                ...work,
-                ...formData,
-                transport: transport.guid,
-                volume: volume
-            };
-            await onSubmit(updatedWork, volume);
-        } catch (err) {
-            setError('Ошибка при отправке предложения');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const isOffered = work.status === WorkStatus.OFFERED;
-
-    return (
-        <div className={styles.offerCard}>
-            <div className={styles.notificationCard}>
-                <div className={styles.notificationHeader}>
-                    <div className={styles.notificationTitleRow}>
-                        <IonIcon icon={mailOutline} className={styles.notificationIcon} />
-                        <h2 className={styles.notificationTitle}>
-                            {isOffered ? 'Сделано предложение' : 'Новое предложение'}
-                        </h2>
-                        {!isOffered && <span className={styles.newBadge}>NEW</span>}
-                    </div>
-                    <p className={styles.notificationSubtitle}>
-                        {isOffered
-                            ? 'Вы отправили встречное предложение заказчику'
-                            : 'Укажите цену и параметры для отправки предложения'}
-                    </p>
-                </div>
-            </div>
-
-            <div className={styles.detailsCard}>
-                <div className={styles.infoRow}>
-                    <div className={styles.infoField}>
-                        <label className={styles.label}>Цена (₽)</label>
-                        <input
-                            type="text"
-                            className={styles.input}
-                            value={formatPrice(formData.price)}
-                            onChange={handlePriceChange}
-                            placeholder="150 000"
-                        />
-                    </div>
-                    <div className={styles.infoField}>
-                        <label className={styles.label}>Вес (т)</label>
-                        <input
-                            type="number"
-                            className={styles.input}
-                            value={formData.weight || 0}
-                            onChange={handleWeightChange}
-                            placeholder="40"
-                            step="0.1"
-                        />
-                    </div>
-                    <div className={styles.infoField}>
-                        <label className={styles.label}>Объем (м³)</label>
-                        <input
-                            type="number"
-                            className={styles.input}
-                            value={volume}
-                            onChange={handleVolumeChange}
-                            placeholder="40"
-                            step="0.1"
-                        />
-                    </div>
-                </div>
-
-                <div className={styles.transportField}>
-                    <label className={styles.label}>Транспорт</label>
-                    {transport ? (
-                        <div className={styles.transportSingle}>
-                            {transport.name || transport.license_plate || 'Транспорт'}
-                            {transport.license_plate && (
-                                <span className={styles.transportPlate}> ({transport.license_plate})</span>
-                            )}
-                        </div>
-                    ) : (
-                        <div className={styles.transportEmpty}>Добавьте транспорт в профиле</div>
-                    )}
-                </div>
-            </div>
-
-            <div className={styles.secureCard}>
-                <IonIcon icon={shieldCheckmarkOutline} className={styles.secureIcon} />
-                <h3 className={styles.secureTitle}>Безопасная оплата через платформу</h3>
-                <p className={styles.secureDescription}>
-                    Все платежи проходят через специальный счет приложения. Комиссия платформы 5% обеспечивает защиту обеих сторон и гарантию выполнения сделки.
-                </p>
-            </div>
-
-            {error && <div className={styles.error}>{error}</div>}
-
-            <div className={styles.actions}>
-                <IonButton
-                    fill={isOffered ? 'outline' : 'solid'}
-                    className={isOffered ? styles.cancelButton : styles.submitButton}
-                    expand="block"
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                >
-                    <span>{isOffered ? 'Отозвать предложение' : 'Сделать предложение'}</span>
-                </IonButton>
-            </div>
+        <div className={styles.fields}>
+          <label className={styles.field}>
+            <span>Цена (₽)</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={formatPrice(formData.price)}
+              onChange={handlePriceChange}
+              placeholder="22500"
+              disabled={isOffered}
+            />
+          </label>
+          <label className={styles.field}>
+            <span>Вес (т)</span>
+            <input
+              type="number"
+              value={formData.weight || ''}
+              onChange={handleWeightChange}
+              placeholder="8"
+              step="0.1"
+              min="0"
+              disabled={isOffered}
+            />
+          </label>
+          <label className={styles.field}>
+            <span>Объём (м³)</span>
+            <input
+              type="number"
+              value={volume || ''}
+              onChange={handleVolumeChange}
+              placeholder="40"
+              step="0.1"
+              min="0"
+              disabled={isOffered}
+            />
+          </label>
         </div>
-    );
-};
 
+        <label className={styles.field}>
+          <span>Транспорт</span>
+          <div className={`${styles.select} ${transport ? '' : styles.selectEmpty}`}>
+            <span className={styles.selectValue}>{transportLabel}</span>
+            <ChevronDown size={18} strokeWidth={2} aria-hidden />
+          </div>
+        </label>
+      </section>
+
+      <aside className={styles.secure}>
+        <ShieldCheck size={22} strokeWidth={2} className={styles.secureIcon} />
+        <div>
+          <h4 className={styles.secureTitle}>Безопасная оплата через платформу</h4>
+          <p className={styles.secureText}>
+            Все платежи проходят через специальный эскроу-счёт приложения. Комиссия платформы 5%
+            обеспечивает защиту обеих сторон и гарантию выполнения сделки.
+          </p>
+        </div>
+      </aside>
+
+      {error && <div className={styles.error}>{error}</div>}
+
+      <button
+        type="button"
+        className={isOffered ? styles.cancelBtn : styles.submitBtn}
+        onClick={handleSubmit}
+        disabled={isSubmitting}
+      >
+        {isSubmitting
+          ? 'Отправка…'
+          : isOffered
+            ? 'Отозвать предложение'
+            : 'Отправить предложение'}
+      </button>
+    </div>
+  );
+};

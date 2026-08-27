@@ -13,6 +13,7 @@ export const TRANSACTION_ICONS = {
 export interface AccountData {
   balance: number
   currency: string
+  deposit?: number
   lastUpdated?: string
 }
 
@@ -53,6 +54,7 @@ export interface Transaction {
   type: 'income' | 'expense' | 'new' | 'inv'
   amount: number
   title: string
+  subtitle?: string
 }
 
 export interface PaymentData {
@@ -66,6 +68,7 @@ export interface PaymentData {
 export interface AccountData {
   balance: number
   currency: string
+  deposit?: number
   lastUpdated?: string
 }
 
@@ -100,6 +103,7 @@ type AccountStore = AccountState & AccountActions
 export const EMPTY_ACCOUNT: AccountData = {
   balance:        0,
   currency:       'RUB',
+  deposit:        0,
   lastUpdated:    ''
 }
 
@@ -119,10 +123,7 @@ export const useAccountStore = create<AccountStore>()(
       error:                  null,
 
       // ACTIONS
-      setAccountData: (accountData) =>{ 
-        console.log("set accountData", accountData)
-        set({ accountData })
-      },
+      setAccountData: (accountData) => set({ accountData }),
       setTransactions: (transactions) => set({ transactions }),
       setLoading: (isLoading) => set({ isLoading }),
       setSaving: (isSaving) => set({ isSaving }),
@@ -206,14 +207,13 @@ export const accountActions = {
 export const accountSocketHandlers = {
 
   onGetBalance:       (response: any) => {
-    console.log('onGetBalance response:', response)
-    
     accountActions.setLoading(false)
     
     if (response.success) {
       const accountData: AccountData = {
         balance: response.data?.balance || 0,
         currency: response.data?.currency || 'RUB',
+        deposit: Number(response.data?.deposit ?? response.data?.guarantee ?? 0) || 0,
         lastUpdated: new Date().toISOString()
       }
       accountActions.setAccountData(accountData)

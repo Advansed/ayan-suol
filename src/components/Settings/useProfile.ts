@@ -3,7 +3,7 @@ import { useLoginStore, AuthResponse } from '../../Store/loginStore';
 import { useToast } from '../Toast';
 import { useSocket } from '../../Store/useSocket';
 import { useCompanyStore, companyActions, CompanyData, toSetCompanyPayload } from '../../Store/companyStore';
-import { useTransportStore, transportActions, TransportData } from '../../Store/transportStore';
+import { useTransportStore, transportActions, asTransportList, TransportData } from '../../Store/transportStore';
 
 
 export const useProfile = () => {
@@ -18,6 +18,7 @@ export const useProfile = () => {
   
   // Данные транспорта из store
   const transportData     = useTransportStore(state => state.data)
+  const transportItems    = useTransportStore(state => state.items) ?? []
   const isTransportLoading = useTransportStore(state => state.isLoading)
   const isTransportSaving  = useTransportStore(state => state.isSaving)
 
@@ -140,8 +141,9 @@ export const useProfile = () => {
           console.log('set_transport', response)
           
           if ( response.success ) {
-            const data = Array.isArray(response.data) ? response.data[0] : response.data
-            transportActions.setData(data || transportData as TransportData)
+            const list = asTransportList(response.data)
+            if (list.length > 1) transportActions.setItems(list)
+            else transportActions.setData(list[0] || (transportData as TransportData))
             toast.success('Данные транспорта обновлены')
             resolve(true)
           } else {
@@ -173,6 +175,7 @@ export const useProfile = () => {
     , isCompanySaving
     , updateCompany
     , transportData
+    , transportItems
     , isTransportLoading
     , isTransportSaving
     , updateTransport

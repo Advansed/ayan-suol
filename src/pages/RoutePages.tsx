@@ -1,6 +1,6 @@
 import React from 'react';
+import { Download } from 'lucide-react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
-import { RefreshCw } from 'lucide-react';
 import { Cargos } from '../components/Cargos';
 import { Works } from '../components/Works';
 import CargoArchive from '../components/Cargos/components/CargoArchive';
@@ -19,9 +19,17 @@ import { PassportVerification } from '../components/Verification/PassportVerific
 export const FeedPage: React.FC = () => {
   const { user_type } = useUserType();
 
+  if (user_type === 2) {
+    return (
+      <div className="web-performer-feed">
+        <Works mode="feed" />
+      </div>
+    );
+  }
+
   return (
-    <div className="web-list-layout web-feed-layout">
-      {user_type === 2 ? <Works mode="feed" /> : <Cargos />}
+    <div className="web-performer-feed">
+      <Cargos />
     </div>
   );
 };
@@ -40,10 +48,16 @@ export const ArchivePage: React.FC = () => {
 
 export const ChatsPage: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
+  const { user_type } = useUserType();
   const chatOpen = Boolean(id);
 
   return (
-    <PanelFrame title="Сообщения" bare>
+    <PanelFrame
+      crumb={user_type === 2 ? 'Общение с заказчиками' : 'Общение с перевозчиками'}
+      title="Чат"
+      bare
+      className="web-chats-frame"
+    >
       <div
         className={`web-chats-layout ${chatOpen ? 'web-chats-open' : 'web-chats-list'}`}
       >
@@ -85,14 +99,15 @@ export const FinancePage: React.FC = () => {
 
   return (
     <PanelFrame
-      title="Финансы"
       crumb="Кошелёк и выплаты"
+      title="Финансы"
       actions={
         <button
           type="button"
           className={panelStyles.refreshBtn}
           onClick={() => document.getElementById('statement')?.scrollIntoView({ behavior: 'smooth' })}
         >
+          <Download size={16} strokeWidth={2} />
           Выписка
         </button>
       }
@@ -109,11 +124,7 @@ export const FinancePage: React.FC = () => {
 };
 
 export const VehiclesPage: React.FC = () => {
-  return (
-    <PanelFrame title="Мои машины" subtitle="Транспорт и документы" bare>
-      <TransportEditPage />
-    </PanelFrame>
-  );
+  return <TransportEditPage />;
 };
 
 export const VerificationPage: React.FC = () => {

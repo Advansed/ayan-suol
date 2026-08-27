@@ -68,6 +68,10 @@ export interface  CargoInfo {
     priority?:      CargoPriority;
     publish_date?:  string;
     updatedAt?:     string;
+    body_type?:     string;
+    transport_type?: string | number | { id?: string | number; name?: string };
+    vehicles_total?: number;
+    vehicles_busy?: number;
 }
 
 export enum       CargoStatus {
@@ -246,6 +250,49 @@ export const cargoActions = {
     useCargoStore.getState().deleteCargo(guid)
 }
 
+/** Последний payload set_cargo — чтобы не потерять insurance/advance, если сервер их не вернул */
+let pendingCargoSave: Partial<CargoInfo> | null = null
+
+export const setPendingCargoSave = (cargo: Partial<CargoInfo> | null) => {
+  pendingCargoSave = cargo
+}
+
+const pickFinance = (
+  key: 'advance' | 'insurance',
+  incoming: Partial<CargoInfo>,
+  fallback?: Partial<CargoInfo> | null
+): number => {
+  const fromIncoming = incoming[key]
+  if (fromIncoming !== undefined && fromIncoming !== null) {
+    return Number(fromIncoming) || 0
+  }
+  const fromFallback = fallback?.[key]
+  if (fromFallback !== undefined && fromFallback !== null) {
+    return Number(fromFallback) || 0
+  }
+  return 0
+}
+
+const mergeSavedCargo = (
+  incoming: CargoInfo,
+  existing?: CargoInfo
+): CargoInfo => {
+  const pending =
+    pendingCargoSave &&
+    (!incoming.guid ||
+      !pendingCargoSave.guid ||
+      pendingCargoSave.guid === incoming.guid)
+      ? pendingCargoSave
+      : null
+
+  const base = { ...EMPTY_CARGO, ...existing, ...pending, ...incoming }
+  return {
+    ...base,
+    advance: pickFinance('advance', incoming, pending ?? existing),
+    insurance: pickFinance('insurance', incoming, pending ?? existing),
+  }
+}
+
 // ============================================
 // SOCKET ОБРАБОТЧИКИ
 // ============================================
@@ -293,13 +340,17 @@ export const cargoSocketHandlers = {
         
         if (response.success && response.data) {
             const { cargos } = useCargoStore.getState()
-            const existingIndex = cargos.findIndex(c => c.guid === response.data.guid)
-            
-            if (existingIndex >= 0) {
-                useCargoStore.getState().updateCargo(response.data.guid, response.data)
+            const existing = cargos.find(c => c.guid === response.data.guid)
+            const merged = mergeSavedCargo(response.data as CargoInfo, existing)
+            pendingCargoSave = null
+
+            if (existing) {
+                useCargoStore.getState().updateCargo(merged.guid, merged)
             } else {
-                useCargoStore.getState().addCargo(response.data)
+                useCargoStore.getState().addCargo(merged)
             }
+        } else {
+            pendingCargoSave = null
         }
     },
 
@@ -318,15 +369,6 @@ export const cargoSocketHandlers = {
             useCargoStore.getState().updateCargo(response.data.guid, response.data)
         }
     },
-
-    /** Ответ на emit('update_cargo', …) — тот же контракт, что и у set_cargo */
-    onUpdateCargo: (response: any) => {
-        console.log('onUpdateCargo response:', response)
-
-        if (response.success && response.data?.guid) {
-            useCargoStore.getState().updateCargo(response.data.guid, response.data)
-        }
-    },
     
 }
 
@@ -340,8 +382,7 @@ export const initCargoSocketHandlers = (socket: any) => {
     
     socket.on('get_cargos',           cargoSocketHandlers.onGetCargos)
     socket.on('get_cargo_archives',   cargoSocketHandlers.onGetCargoArchives)
-    socket.on('set_cargo',            cargoSocketHandlers.onSaveCargo)  
-    socket.on('update_cargo',         cargoSocketHandlers.onUpdateCargo)
+    socket.on('set_cargo',            cargoSocketHandlers.onSaveCargo)
     socket.on('delete_cargo',         cargoSocketHandlers.onDeleteCargo)
     socket.on('publish_cargo',        cargoSocketHandlers.onPublishCargo)
     
@@ -353,8 +394,7 @@ export const destroyCargoSocketHandlers = (socket: any) => {
     
     socket.off('get_cargos',          cargoSocketHandlers.onGetCargos)
     socket.off('get_cargo_archives',  cargoSocketHandlers.onGetCargoArchives)
-    socket.off('set_cargo',          cargoSocketHandlers.onSaveCargo)
-    socket.off('update_cargo',        cargoSocketHandlers.onUpdateCargo)
+    socket.off('set_cargo',           cargoSocketHandlers.onSaveCargo)
     socket.off('delete_cargo',        cargoSocketHandlers.onDeleteCargo)
     socket.off('publish_cargo',       cargoSocketHandlers.onPublishCargo)
     

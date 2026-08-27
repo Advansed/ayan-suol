@@ -244,18 +244,36 @@ export const workActions = {
 // ============================================
 const normalizeWorkCompany = (company: WorkInfo['company'] | Record<string, unknown> | null | undefined): WorkInfo['company'] => {
   if (!company || typeof company !== 'object') return undefined
-  const id = String((company as { id?: unknown }).id ?? '').trim()
-  const name = String((company as { name?: unknown }).name ?? '').trim()
+  const raw = company as { id?: unknown; name?: unknown; verified?: unknown; is_verified?: unknown }
+  const id = String(raw.id ?? '').trim()
+  const name = String(raw.name ?? '').trim()
   if (!id && !name) return undefined
-  return { id, name }
+  const verified = raw.verified ?? raw.is_verified
+  const rating = Number((raw as { rating?: unknown }).rating)
+  const deals = Number((raw as { deals?: unknown; orders?: unknown }).deals
+    ?? (raw as { orders?: unknown }).orders)
+  return {
+    id,
+    name,
+    ...(typeof verified === 'boolean' ? { verified } : {}),
+    ...(Number.isFinite(rating) && rating > 0 ? { rating } : {}),
+    ...(Number.isFinite(deals) && deals > 0 ? { deals: Math.round(deals) } : {}),
+  }
 }
 
-const normalizeWork = (w: WorkInfo): WorkInfo => ({
-  ...w,
-  status: normalizeWorkStatus(w.status),
-  signed: Boolean(w.signed),
-  company: normalizeWorkCompany(w.company),
-})
+const normalizeWork = (w: WorkInfo): WorkInfo => {
+  const docs = (w as WorkInfo & { documents?: unknown }).documents
+  const documents = Array.isArray(docs)
+    ? docs.map((item) => String(item).trim()).filter(Boolean)
+    : undefined
+  return {
+    ...w,
+    status: normalizeWorkStatus(w.status),
+    signed: Boolean(w.signed),
+    company: normalizeWorkCompany(w.company),
+    ...(documents && documents.length > 0 ? { documents } : {}),
+  }
+}
 
 export const workSocketHandlers = {
   onGetWorks: (response: any) => {
