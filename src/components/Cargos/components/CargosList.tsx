@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Plus, SlidersHorizontal } from 'lucide-react';
 import { CargoCard } from './CargoCard';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
-import { cargoFeedKind, normalizeCargoStatus } from '../cargoStatusFlow';
+import { cargoFeedKind, resolveCargoProgressStatus } from '../cargoStatusFlow';
 import styles from './CargosList.module.css';
 
 type FilterId = 'all' | 'new' | 'bids' | 'work' | 'done';
@@ -19,6 +19,7 @@ function matchesFilter(status: CargoStatus, filter: FilterId): boolean {
   if (filter === 'all') return true;
   const kind = cargoFeedKind(status);
   if (filter === 'work') return kind === 'work' || kind === 'alert';
+  if (filter === 'new') return kind === 'new' || kind === 'waiting';
   return kind === filter;
 }
 
@@ -50,7 +51,7 @@ export const CargosList: React.FC<CargosListProps> = ({
   const visible = useMemo(
     () =>
       cargos.filter((cargo) =>
-        matchesFilter(normalizeCargoStatus(cargo.status), filter)
+        matchesFilter(resolveCargoProgressStatus(cargo), filter)
       ),
     [cargos, filter]
   );

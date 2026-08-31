@@ -68,20 +68,24 @@ const WORK_STATUS_ALIASES: Record<string, WorkStatus> = {
   Выгружается: WorkStatus.UNLOADING,
   Выгружено: WorkStatus.UNLOADED,
   Завершено: WorkStatus.COMPLETED,
+  Завершён: WorkStatus.COMPLETED,
+  Завершен: WorkStatus.COMPLETED,
   Отказано: WorkStatus.REJECTED,
 };
+
+function foldYo(value: string): string {
+  return value.replace(/ё/g, 'е').replace(/Ё/g, 'Е');
+}
 
 export function normalizeWorkStatus(status: string | number | WorkStatus | undefined | null): WorkStatus {
   if (status === undefined || status === null || status === '') {
     return WorkStatus.NEW;
   }
-  if (typeof status === 'number') {
-    return WORK_STATUS_ALIASES[String(status)] ?? WorkStatus.NEW;
+  const raw = String(status);
+  if (Object.values(WorkStatus).includes(raw as WorkStatus)) {
+    return raw as WorkStatus;
   }
-  if (Object.values(WorkStatus).includes(status as WorkStatus)) {
-    return status as WorkStatus;
-  }
-  return WORK_STATUS_ALIASES[String(status)] ?? WorkStatus.NEW;
+  return WORK_STATUS_ALIASES[raw] ?? WORK_STATUS_ALIASES[foldYo(raw)] ?? WorkStatus.NEW;
 }
 
 /** Сопоставление заказа: guid и cargo могут путаться / отличаться типом (string|number) */
@@ -143,7 +147,7 @@ export function getOrderProgressSlots(status: WorkStatus | string): OrderProgres
   return slots;
 }
 
-/** Лента: новые, отклики и активные рейсы (без архива) */
+/** Лента: новые, отклики, рейсы и завершённые */
 export const FEED_WORK_STATUSES: WorkStatus[] = [
   WorkStatus.NEW,
   WorkStatus.OFFERED,
@@ -155,6 +159,7 @@ export const FEED_WORK_STATUSES: WorkStatus[] = [
   WorkStatus.TO_UNLOAD,
   WorkStatus.UNLOADING,
   WorkStatus.UNLOADED,
+  WorkStatus.COMPLETED,
 ];
 
 /** Активные перевозки после подписи (TO_LOAD+signed и дальше по рейсу) */

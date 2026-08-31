@@ -58,11 +58,27 @@ export const CARGO_CURRENT_ACTION: Record<CargoStatus, string> = {
  * Нужны, пока бэкенд может присылать старые формулировки.
  */
 const STATUS_ALIASES: Record<string, CargoStatus> = {
+  // коды сервера (те же, что у исполнителя)
+  '10': CargoStatus.NEW,
+  '11': CargoStatus.HAS_ORDERS,
+  '12': CargoStatus.ACCEPTED,
+  '13': CargoStatus.WAIT_LOAD,
+  '14': CargoStatus.LOADING,
+  '15': CargoStatus.HAS_LOADED,
+  '16': CargoStatus.IN_TRANSIT,
+  '17': CargoStatus.HAS_DELIVERED,
+  '18': CargoStatus.UNLOADING,
+  '19': CargoStatus.WAIT_COMPLETE,
+  '20': CargoStatus.COMPLETED,
+  '21': CargoStatus.PROBLEMS,
   // старые CargoStatus
   Торг: CargoStatus.HAS_ORDERS,
   'В работе': CargoStatus.IN_TRANSIT,
   Доставлено: CargoStatus.HAS_DELIVERED,
   Выполнено: CargoStatus.COMPLETED,
+  Ожидание: CargoStatus.WAITING,
+  'На погрузку': CargoStatus.ACCEPTED,
+  Отказано: CargoStatus.PROBLEMS,
   // DriverStatus / рейс
   Заказано: CargoStatus.HAS_ORDERS,
   Принято: CargoStatus.ACCEPTED,
@@ -75,14 +91,23 @@ const STATUS_ALIASES: Record<string, CargoStatus> = {
   Разгружается: CargoStatus.UNLOADING,
   Разгружено: CargoStatus.WAIT_COMPLETE,
   Завершено: CargoStatus.COMPLETED,
+  Завершён: CargoStatus.COMPLETED,
+  Завершен: CargoStatus.COMPLETED,
   Проблемы: CargoStatus.PROBLEMS,
 };
 
-export function normalizeCargoStatus(status: string | CargoStatus): CargoStatus {
-  if (Object.values(CargoStatus).includes(status as CargoStatus)) {
-    return status as CargoStatus;
+export function normalizeCargoStatus(
+  status: string | number | CargoStatus | undefined | null
+): CargoStatus {
+  if (status === undefined || status === null || status === '') {
+    return CargoStatus.NEW;
   }
-  return STATUS_ALIASES[String(status)] ?? CargoStatus.NEW;
+  const raw = String(status);
+  if (Object.values(CargoStatus).includes(raw as CargoStatus)) {
+    return raw as CargoStatus;
+  }
+  const folded = raw.replace(/ё/g, 'е').replace(/Ё/g, 'Е');
+  return STATUS_ALIASES[raw] ?? STATUS_ALIASES[folded] ?? CargoStatus.NEW;
 }
 
 export function getCargoStatusFlowIndex(status: string | CargoStatus): number {
@@ -126,8 +151,11 @@ export function getCargoProgressSlots(status: string | CargoStatus): CargoProgre
 }
 
 /** Самый «продвинутый» статус: cargo.status или статусы заявок */
-export function resolveCargoProgressStatus(cargo: CargoInfo): CargoStatus {
-  const candidates: Array<string | CargoStatus> = [cargo.status];
+export function resolveCargoProgressStatus(cargo: {
+  status?: string | number | CargoStatus | null;
+  invoices?: CargoInfo['invoices'];
+}): CargoStatus {
+  const candidates: Array<string | number | CargoStatus | undefined | null> = [cargo.status];
   for (const invoice of cargo.invoices ?? []) {
     if (invoice.status) candidates.push(invoice.status);
   }
@@ -170,11 +198,12 @@ export function isCargoProblems(status: string | CargoStatus): boolean {
   return normalizeCargoStatus(status) === CargoStatus.PROBLEMS;
 }
 
-export type CargoFeedKind = 'new' | 'bids' | 'work' | 'done' | 'alert';
+export type CargoFeedKind = 'new' | 'waiting' | 'bids' | 'work' | 'done' | 'alert';
 
 export function cargoFeedKind(status: string | CargoStatus): CargoFeedKind {
   const normalized = normalizeCargoStatus(status);
-  if (normalized === CargoStatus.NEW || normalized === CargoStatus.WAITING) return 'new';
+  if (normalized === CargoStatus.NEW) return 'new';
+  if (normalized === CargoStatus.WAITING) return 'waiting';
   if (normalized === CargoStatus.HAS_ORDERS) return 'bids';
   if (normalized === CargoStatus.COMPLETED) return 'done';
   if (normalized === CargoStatus.PROBLEMS) return 'alert';
@@ -184,6 +213,7 @@ export function cargoFeedKind(status: string | CargoStatus): CargoFeedKind {
 export function cargoFeedLabel(status: string | CargoStatus): string {
   const kind = cargoFeedKind(status);
   if (kind === 'new') return 'Новый';
+  if (kind === 'waiting') return 'В ожидании';
   if (kind === 'bids') return 'Торги';
   if (kind === 'done') return 'Завершён';
   if (kind === 'alert') return 'Проблемы';

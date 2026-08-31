@@ -119,9 +119,11 @@ export const WorkView: React.FC<WorkViewProps> = ({
                     ? 'Изменить предложение'
                     : workInfo.status === WorkStatus.TO_LOAD && !workInfo.signed
                       ? 'Подписать договор'
-                      : hasInteractiveAction
-                        ? 'Продолжить'
-                        : '';
+                      : workInfo.status === WorkStatus.TO_LOAD && workInfo.signed
+                        ? 'Приехал на погрузку'
+                        : hasInteractiveAction
+                          ? 'Продолжить'
+                          : '';
     const statusKind = feedStatusKind(workInfo.status);
     const badgeClass =
         statusKind === 'new'

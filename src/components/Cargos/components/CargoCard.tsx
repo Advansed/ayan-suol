@@ -13,7 +13,7 @@ import {
 import { formatters, statusUtils } from '../../../utils/utils';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 import { useCompanyData } from '../../../Store/companyStore';
-import { cargoFeedKind, cargoFeedLabel, normalizeCargoStatus } from '../cargoStatusFlow';
+import { cargoFeedKind, cargoFeedLabel, resolveCargoProgressStatus } from '../cargoStatusFlow';
 import {
   PAYMENT_LABEL,
   fleetHint,
@@ -70,6 +70,7 @@ const PAY_CLASS: Record<PaymentLevel, string> = {
 
 const BADGE_CLASS: Record<ReturnType<typeof cargoFeedKind>, string> = {
     new: feedStyles.badgeNew,
+    waiting: feedStyles.badgeNew,
     bids: feedStyles.badgeBids,
     work: feedStyles.badgeWork,
     done: feedStyles.badgeDone,
@@ -89,6 +90,7 @@ function cargoFleet(cargo: CargoInfo): string | null {
 
 export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', selected, onClick }) => {
     const companyData = useCompanyData();
+    const status = resolveCargoProgressStatus(cargo);
     
     const handleClick = () => {
         if (onClick) {
@@ -128,7 +130,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
         });
     }
 
-    if (cargo.status === CargoStatus.PROBLEMS) {
+    if (status === CargoStatus.PROBLEMS) {
         tags.push({
             text: 'Проблемы',
             className: `${styles.tag} ${styles.tagBargain}`
@@ -141,8 +143,8 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
             <div className={styles.topRow}>
                 <div className={styles.topLeft}>
                     <div className={getCircle(cargo)}></div>
-                    <div className={'ml-05 ' + statusUtils.getClassName(cargo.status)}>
-                        {normalizeCargoStatus(cargo.status)}
+                    <div className={'ml-05 ' + statusUtils.getClassName(status)}>
+                        {status}
                     </div>
                     <IonText className="ml-1 fs-07 cl-gray">
                         {'ID: ' + formatters.shortId(cargo.guid)}
@@ -256,7 +258,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
         </>
     );
 
-    const surfaceClass = `${styles.cardSurface} ${SURFACE_BY_STATUS[normalizeCargoStatus(cargo.status)] ?? styles.surfaceNew}`;
+    const surfaceClass = `${styles.cardSurface} ${SURFACE_BY_STATUS[status] ?? styles.surfaceNew}`;
 
     if (mode === 'view') {
         return (
@@ -266,7 +268,6 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
         );
     }
 
-    const status = normalizeCargoStatus(cargo.status);
     const kind = cargoFeedKind(status);
     const fromCity = cargo.address?.city?.city || 'Не указано';
     const toCity = cargo.destiny?.city?.city || 'Не указано';

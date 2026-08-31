@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router';
 import { useSocket } from '../../../Store/useSocket';
 import { useToken } from '../../../Store/loginStore';
-import { CargoInfo, DriverInfo, cargoActions } from '../../../Store/cargoStore';
+import { CargoInfo, DriverInfo, cargoActions, cargoGetters } from '../../../Store/cargoStore';
 import { chatActions } from '../../../Store/chatStore';
 import { useToast } from '../../Toast';
+import { resolveCargoProgressStatus } from '../cargoStatusFlow';
 
 export interface TaskCompletion {
     delivered: boolean;
@@ -22,11 +23,31 @@ export interface UseInvoicesReturn {
     contract: unknown;
     setContract: (c: unknown) => void;
     get_contract: (info: DriverInfo) => Promise<unknown>;
-    create_contract: (info: DriverInfo, sign: string) => Promise<void>;
-    handleAccept: (info: DriverInfo, status: number) => Promise<void>;
+    create_contract: (info: DriverInfo, sign: string) => Promise<boolean>;
+    handleAccept: (info: DriverInfo, status: number, silent?: boolean) => Promise<void>;
     handleReject: (info: DriverInfo) => Promise<boolean>;
     handleComplete: (info: DriverInfo, rating: number, tasks: TaskCompletion) => Promise<void>;
     handleChat: (info: DriverInfo) => void;
+}
+
+const SOCKET_WAIT_MS = 10000;
+
+function waitForSocketEvent<T>(
+    once: (event: string, callback: (data: T) => void) => void,
+    event: string,
+    timeoutMs = SOCKET_WAIT_MS
+): Promise<T | undefined> {
+    return new Promise(resolve => {
+        let settled = false;
+        const finish = (value: T | undefined) => {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timer);
+            resolve(value);
+        };
+        const timer = window.setTimeout(() => finish(undefined), timeoutMs);
+        once(event, data => finish(data));
+    });
 }
 
 export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => {
@@ -48,78 +69,91 @@ export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => 
         }
     }, [info, info?.guid, invoicesKey]);
 
-    const handleAccept = useCallback(
-        async (infoRow: DriverInfo, status: number): Promise<void> => {
-            setIsLoading(true);
-            return new Promise<void>(resolve => {
-                once('set_inv', (data: { success: boolean; message?: string }) => {
-                    if (data.success) {
-                        setInvoices(prevInvoices => {
-                            const next = prevInvoices.map(invoice =>
-                                invoice.guid === infoRow.guid
-                                    ? { ...invoice, status: setStatus(status) as DriverInfo['status'] }
-                                    : invoice
-                            );
-                            cargoActions.updateCargo(infoRow.cargo, { invoices: next });
-                            return next;
-                        });
-                    } else {
-                        console.error('Ошибка при принятии заявки:', data.message);
-                    }
-                    setIsLoading(false);
-                    resolve();
-                });
+    const persistInvoices = useCallback((cargoId: string, next: DriverInfo[]) => {
+        const current = cargoGetters.getCargo(cargoId);
+        const status = resolveCargoProgressStatus({
+            status: current?.status,
+            invoices: next,
+        });
+        cargoActions.updateCargo(cargoId, { invoices: next, status });
+    }, []);
 
+    const applyInvoiceStatus = useCallback((infoRow: DriverInfo, status: number) => {
+        setInvoices(prevInvoices => {
+            const next = prevInvoices.map(invoice =>
+                invoice.guid === infoRow.guid
+                    ? { ...invoice, status: setStatus(status) as DriverInfo['status'] }
+                    : invoice
+            );
+            persistInvoices(infoRow.cargo, next);
+            return next;
+        });
+    }, [persistInvoices]);
+
+    const handleAccept = useCallback(
+        async (infoRow: DriverInfo, status: number, silent = false): Promise<void> => {
+            if (!silent) setIsLoading(true);
+            applyInvoiceStatus(infoRow, status);
+            try {
+                const responsePromise = waitForSocketEvent<{ success: boolean; message?: string }>(
+                    once,
+                    'set_inv'
+                );
                 emit('set_inv', {
                     token,
                     recipient: infoRow.recipient,
                     id: infoRow.guid,
                     status,
                 });
-            });
+                const data = await responsePromise;
+                if (data?.success === false) {
+                    console.error('Ошибка при принятии заявки:', data.message);
+                }
+            } finally {
+                if (!silent) setIsLoading(false);
+            }
         },
-        [once, emit, token]
+        [once, emit, token, applyInvoiceStatus]
     );
 
     const get_contract = useCallback(
         async (infoRow: DriverInfo): Promise<unknown> => {
             setIsLoading(true);
-
-            return new Promise(resolve => {
-                once('get_contract', (data: { success: boolean; message?: string; data: unknown }) => {
-                    if (data.success) {
-                        setContract(data.data);
-                        resolve(data.data);
-                    } else {
-                        console.error('Ошибка при получении договора:', data.message);
-                        resolve(undefined);
-                    }
-                    setIsLoading(false);
-                });
-
+            try {
+                const responsePromise = waitForSocketEvent<{
+                    success: boolean;
+                    message?: string;
+                    data: unknown;
+                }>(once, 'get_contract');
                 emit('get_contract', {
                     token,
                     id: infoRow.guid,
                 });
-            });
+                const data = await responsePromise;
+                if (data?.success) {
+                    setContract(data.data);
+                    return data.data;
+                }
+                if (data) {
+                    console.error('Ошибка при получении договора:', data.message);
+                }
+                return undefined;
+            } finally {
+                setIsLoading(false);
+            }
         },
         [once, emit, token]
     );
 
     const create_contract = useCallback(
-        async (infoRow: DriverInfo, sign: string): Promise<void> => {
+        async (infoRow: DriverInfo, sign: string): Promise<boolean> => {
             setIsLoading(true);
-            return new Promise<void>(resolve => {
-                once('create_contract', (data: { success: boolean; message?: string; data: unknown }) => {
-                    if (data.success) {
-                        toast.success(' Договор создан и подписан');
-                    } else {
-                        console.error('Ошибка при принятии заявки:', data.message);
-                    }
-                    setIsLoading(false);
-                    resolve();
-                });
-
+            try {
+                const responsePromise = waitForSocketEvent<{
+                    success: boolean;
+                    message?: string;
+                    data: unknown;
+                }>(once, 'create_contract');
                 emit('create_contract', {
                     token,
                     id: infoRow.guid,
@@ -127,7 +161,21 @@ export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => 
                     driver_id: infoRow.recipient,
                     sign,
                 });
-            });
+                const data = await responsePromise;
+                if (data?.success) {
+                    toast.success('Договор создан и подписан');
+                    return true;
+                }
+                if (data?.success === false) {
+                    console.error('Ошибка при принятии заявки:', data.message);
+                    toast.error(data.message || 'Не удалось подписать договор');
+                    return false;
+                }
+                toast.success('Договор отправлен');
+                return true;
+            } finally {
+                setIsLoading(false);
+            }
         },
         [once, emit, token, toast]
     );
@@ -168,7 +216,7 @@ export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => 
                         toast.success('Предложение успешно удалено');
                         setInvoices(prevInvoices => {
                             const next = prevInvoices.filter(invoice => invoice.guid !== infoRow.guid);
-                            cargoActions.updateCargo(infoRow.cargo, { invoices: next });
+                            persistInvoices(infoRow.cargo, next);
                             return next;
                         });
                         finish(true);
@@ -188,7 +236,7 @@ export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => 
                 }
             });
         },
-        [socket, token, toast]
+        [socket, token, toast, persistInvoices]
     );
 
     const handleComplete = useCallback(
@@ -209,7 +257,7 @@ export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => 
                             ? { ...invoice, status: setStatus(20) as DriverInfo['status'] }
                             : invoice
                     );
-                    cargoActions.updateCargo(infoRow.cargo, { invoices: next });
+                    persistInvoices(infoRow.cargo, next);
                     return next;
                 });
             } catch (error) {
@@ -218,7 +266,7 @@ export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => 
                 setIsLoading(false);
             }
         },
-        [emit, token]
+        [emit, token, persistInvoices]
     );
 
     const handleChat = useCallback(

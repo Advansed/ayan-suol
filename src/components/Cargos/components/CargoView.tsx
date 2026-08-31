@@ -1,11 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { IonAlert, IonLoading, IonModal } from '@ionic/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { IonAlert, IonModal } from '@ionic/react';
 import {
   ArrowLeft,
   CheckCircle2,
   Clock,
   CloudUpload,
-  FileText,
   MessageSquare,
   Pencil,
   ShieldCheck,
@@ -23,11 +22,11 @@ import {
   isCargoCompleted,
   isCargoInExecution,
   isCargoProblems,
-  normalizeCargoStatus,
   resolveCargoProgressStatus,
 } from '../cargoStatusFlow';
 import { CargoOrderInfo } from './CargoOrderInfo';
 import { CargoStatusTimeline } from './CargoStatusTimeline';
+import { CargoTripAction } from './CargoTripAction';
 import styles from './CargoView.module.css';
 
 interface CargoViewProps {
@@ -36,7 +35,12 @@ interface CargoViewProps {
   onEdit: (cargo: CargoInfo) => void;
   onDelete: (guid: string) => Promise<boolean>;
   onPublish: (guid: string) => Promise<boolean>;
-  onInvoices: (cargo: CargoInfo) => void;
+  onAcceptInvoice: (invoice: DriverInfo) => void | Promise<void>;
+  onRejectInvoice: (invoice: DriverInfo) => Promise<boolean>;
+  onChatInvoice: (invoice: DriverInfo) => void;
+  onAdvanceInvoice: (invoice: DriverInfo, status: number) => void | Promise<void>;
+  onStartUnloading: (invoice: DriverInfo) => void | Promise<void>;
+  onComplete: (invoice: DriverInfo, rating: number, completed: boolean) => void | Promise<void>;
   isLoading?: boolean;
 }
 
@@ -72,13 +76,20 @@ export const CargoView: React.FC<CargoViewProps> = ({
   onEdit,
   onDelete,
   onPublish,
-  onInvoices,
+  onAcceptInvoice,
+  onRejectInvoice,
+  onChatInvoice,
+  onAdvanceInvoice,
+  onStartUnloading,
+  onComplete,
   isLoading = false,
 }) => {
   const cargos = useCargoStore((state) => state.cargos);
   const [actionOpen, setActionOpen] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showPublishAlert, setShowPublishAlert] = useState(false);
+  const [rejectInvoice, setRejectInvoice] = useState<DriverInfo | null>(null);
+  const [acceptInvoice, setAcceptInvoice] = useState<DriverInfo | null>(null);
 
   const cargoInfo = useMemo(() => {
     const found = cargos.find((item) => item.guid === cargo.guid);
@@ -86,7 +97,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
   }, [cargos, cargo.guid, cargo]);
 
   const progressStatus = resolveCargoProgressStatus(cargoInfo);
-  const status = normalizeCargoStatus(cargoInfo.status);
+  const status = progressStatus;
   const canPublish = status === CargoStatus.NEW;
   const canEdit = statusUtils.canEdit(status);
   const canDelete = statusUtils.canDelete(status);
@@ -108,9 +119,8 @@ export const CargoView: React.FC<CargoViewProps> = ({
   const problems = isCargoProblems(progressStatus);
   const inExecution = isCargoInExecution(progressStatus);
   const showTracker = inExecution || completed;
-  const hasInteractiveAction = !completed;
-  const invoicesAsPrimary =
-    status === CargoStatus.HAS_ORDERS || isCargoInExecution(progressStatus);
+  const showPublishActions = canPublish;
+  const showTripActions = inExecution && !completed;
 
   const selectedInvoice = useMemo(
     () => invoices.find(isAssignedInvoice) ?? null,
@@ -125,6 +135,10 @@ export const CargoView: React.FC<CargoViewProps> = ({
     [invoices]
   );
 
+  useEffect(() => {
+    setActionOpen(false);
+  }, [selectedInvoice?.status]);
+
   const handleDelete = async () => {
     setShowDeleteAlert(false);
     setActionOpen(false);
@@ -137,12 +151,35 @@ export const CargoView: React.FC<CargoViewProps> = ({
     await onPublish(cargoInfo.guid);
   };
 
-  const handlePrimaryAction = () => {
-    if (invoicesAsPrimary) {
-      onInvoices(cargoInfo);
-      return;
-    }
-    setActionOpen(true);
+  const handleConfirmAccept = () => {
+    if (!acceptInvoice) return;
+    const invoice = acceptInvoice;
+    setAcceptInvoice(null);
+    void onAcceptInvoice(invoice);
+  };
+
+  const handleStartLoading = async (invoice: DriverInfo) => {
+    await onAdvanceInvoice(invoice, 14);
+    setActionOpen(false);
+  };
+
+  const handleSend = async (invoice: DriverInfo) => {
+    await onAdvanceInvoice(invoice, 16);
+    setActionOpen(false);
+  };
+
+  const handleStartUnloading = async (invoice: DriverInfo) => {
+    await onStartUnloading(invoice);
+    setActionOpen(false);
+  };
+
+  const handleCompleteTrip = async (
+    invoice: DriverInfo,
+    rating: number,
+    completedFlag: boolean
+  ) => {
+    await onComplete(invoice, rating, completedFlag);
+    setActionOpen(false);
   };
 
   const closeAnd = (fn: () => void) => {
@@ -205,25 +242,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
 
       {problems && (
         <div className={styles.doneNote}>
-          По заявке возникли проблемы. Откройте заявки водителей, чтобы разобрать ситуацию.
-        </div>
-      )}
-
-      {invoicesAsPrimary && (
-        <div className={styles.actionList}>
-          <button
-            type="button"
-            className={styles.actionPrimary}
-            onClick={() => closeAnd(() => onInvoices(cargoInfo))}
-          >
-            <FileText size={18} strokeWidth={1.75} />
-            <span>
-              <span className={styles.actionItemTitle}>Заявки от водителей</span>
-              <span className={styles.actionItemHint}>
-                {totalInvoices > 0 ? `${totalInvoices} заявок` : 'Открыть список заявок'}
-              </span>
-            </span>
-          </button>
+          По заявке возникли проблемы. Откройте карточку исполнителя, чтобы разобрать ситуацию.
         </div>
       )}
 
@@ -279,14 +298,16 @@ export const CargoView: React.FC<CargoViewProps> = ({
                 <button
                   type="button"
                   className={styles.bidPrimary}
-                  onClick={() => onInvoices(cargoInfo)}
+                  disabled={isLoading}
+                  onClick={() => setAcceptInvoice(invoice)}
                 >
                   Выбрать исполнителя
                 </button>
                 <button
                   type="button"
                   className={styles.bidSecondary}
-                  onClick={() => onInvoices(cargoInfo)}
+                  disabled={isLoading}
+                  onClick={() => onChatInvoice(invoice)}
                 >
                   <MessageSquare size={14} strokeWidth={1.75} />
                   Написать
@@ -294,7 +315,8 @@ export const CargoView: React.FC<CargoViewProps> = ({
                 <button
                   type="button"
                   className={styles.bidGhost}
-                  onClick={() => onInvoices(cargoInfo)}
+                  disabled={isLoading}
+                  onClick={() => setRejectInvoice(invoice)}
                 >
                   <XCircle size={14} strokeWidth={1.75} />
                   Отклонить
@@ -309,8 +331,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
 
   return (
     <div className={styles.view}>
-      <IonLoading isOpen={isLoading} message="Подождите..." />
-
       <button type="button" className={styles.backBtn} onClick={onBack}>
         <ArrowLeft size={16} strokeWidth={2} />
         Назад к моим заказам
@@ -338,7 +358,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
               <button
                 type="button"
                 className={styles.carrierChat}
-                onClick={() => onInvoices(cargoInfo)}
+                onClick={() => onChatInvoice(selectedInvoice)}
                 aria-label="Написать исполнителю"
               >
                 <MessageSquare size={16} strokeWidth={1.75} />
@@ -354,15 +374,6 @@ export const CargoView: React.FC<CargoViewProps> = ({
                 ? 'Все отклики по заказу'
                 : `Отклики исполнителей (${totalInvoices})`}
             </h3>
-            {!canPublish && (
-              <button
-                type="button"
-                className={styles.bidsLink}
-                onClick={() => onInvoices(cargoInfo)}
-              >
-                Открыть
-              </button>
-            )}
           </div>
 
           {totalInvoices === 0 ? (
@@ -379,31 +390,16 @@ export const CargoView: React.FC<CargoViewProps> = ({
           )}
         </section>
 
-        {(canPublish || hasInteractiveAction) && (
+        {(showPublishActions || showTripActions) && (
           <div className={styles.ctaRow}>
-            {canPublish && (
-              <button
-                type="button"
-                className={styles.actionCta}
-                onClick={() => setActionOpen(true)}
-              >
-                <span className={styles.actionCtaTitle}>Действие по заказу</span>
-                <span className={styles.actionCtaHint}>{actionHint}</span>
-              </button>
-            )}
-
-            {!canPublish && hasInteractiveAction && (
-              <button
-                type="button"
-                className={styles.actionCta}
-                onClick={handlePrimaryAction}
-              >
-                <span className={styles.actionCtaTitle}>
-                  {invoicesAsPrimary ? 'Управление заявками' : 'Действие по заказу'}
-                </span>
-                <span className={styles.actionCtaHint}>{actionHint}</span>
-              </button>
-            )}
+            <button
+              type="button"
+              className={styles.actionCta}
+              onClick={() => setActionOpen(true)}
+            >
+              <span className={styles.actionCtaTitle}>Действие по заказу</span>
+              <span className={styles.actionCtaHint}>{actionHint}</span>
+            </button>
           </div>
         )}
       </div>
@@ -428,8 +424,91 @@ export const CargoView: React.FC<CargoViewProps> = ({
               <X size={20} strokeWidth={2} />
             </button>
           </div>
-          <div className={styles.modalBody}>{actionContent}</div>
+          <div className={styles.modalBody}>
+            {showTripActions && selectedInvoice ? (
+              <CargoTripAction
+                invoice={selectedInvoice}
+                onChat={onChatInvoice}
+                onStartLoading={handleStartLoading}
+                onSend={handleSend}
+                onStartUnloading={handleStartUnloading}
+                onComplete={handleCompleteTrip}
+                isLoading={isLoading}
+              />
+            ) : (
+              actionContent
+            )}
+          </div>
         </div>
+      </IonModal>
+
+      <IonModal
+        isOpen={Boolean(acceptInvoice)}
+        onDidDismiss={() => setAcceptInvoice(null)}
+        className={styles.actionModal}
+      >
+        {acceptInvoice && (
+          <div className={styles.modalShell}>
+            <div className={styles.modalHead}>
+              <div>
+                <div className={styles.modalKicker}>Подтверждение</div>
+                <h2 className={styles.modalTitle}>Выбрать исполнителя?</h2>
+              </div>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setAcceptInvoice(null)}
+                aria-label="Закрыть"
+              >
+                <X size={20} strokeWidth={2} />
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <p className={styles.confirmText}>
+                После подтверждения заявка будет принята, с исполнителем будет заключён договор.
+              </p>
+              <div className={styles.confirmCard}>
+                <div className={styles.confirmRow}>
+                  <span className={styles.confirmLabel}>Исполнитель</span>
+                  <span className={styles.confirmValue}>
+                    {acceptInvoice.client || 'Исполнитель'}
+                  </span>
+                </div>
+                <div className={styles.confirmRow}>
+                  <span className={styles.confirmLabel}>Транспорт</span>
+                  <span className={styles.confirmValue}>
+                    {[acceptInvoice.transport, acceptInvoice.capacity]
+                      .filter(Boolean)
+                      .join(' · ') || 'Не указан'}
+                  </span>
+                </div>
+                <div className={styles.confirmRow}>
+                  <span className={styles.confirmLabel}>Ставка</span>
+                  <span className={styles.confirmValue}>
+                    {formatters.currency(acceptInvoice.price)}
+                  </span>
+                </div>
+              </div>
+              <div className={styles.confirmActions}>
+                <button
+                  type="button"
+                  className={styles.confirmCancel}
+                  onClick={() => setAcceptInvoice(null)}
+                >
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  className={styles.confirmSubmit}
+                  disabled={isLoading}
+                  onClick={handleConfirmAccept}
+                >
+                  Подтвердить выбор
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </IonModal>
 
       <IonAlert
@@ -446,6 +525,26 @@ export const CargoView: React.FC<CargoViewProps> = ({
           {
             text: 'Удалить',
             handler: handleDelete,
+          },
+        ]}
+      />
+
+      <IonAlert
+        isOpen={Boolean(rejectInvoice)}
+        onDidDismiss={() => setRejectInvoice(null)}
+        header="Отклонить заявку"
+        message="Отклонить заявку этого исполнителя?"
+        buttons={[
+          {
+            text: 'Отмена',
+            role: 'cancel',
+            handler: () => setRejectInvoice(null),
+          },
+          {
+            text: 'Отклонить',
+            handler: () => {
+              if (rejectInvoice) void onRejectInvoice(rejectInvoice);
+            },
           },
         ]}
       />

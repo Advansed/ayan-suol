@@ -94,6 +94,41 @@
   font-weight: 500;
 }
 
+.readonlyValue {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  border-radius: 12px;
+  background: #f0f3f8;
+  color: var(--gvr-text, #1a1f2e);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+
+.photos {
+  margin-top: 4px;
+}
+
+.checkRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--gvr-text, #1a1f2e);
+}
+
+.checkRow input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
 .secure {
   display: flex;
   align-items: flex-start;

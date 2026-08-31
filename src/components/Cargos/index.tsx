@@ -13,13 +13,17 @@ import { useCargoNavigation }                           from './hooks/useNavigat
 import { PrepaymentPage }                               from './components/PrePayment';
 import { Agreement }                                    from '../Offers/Agreement';
 import { useInvoices }                                  from './hooks/useInvoices';
+import { useSocket }                                    from '../../Store/useSocket';
+import { useToken }                                     from '../../Store/loginStore';
 
 export const Cargos: React.FC = () => {
     
     const { cargos, isLoading, createCargo, updateCargo, deleteCargo, publishCargo, refreshCargos } = useCargos()
     const { currentPage, navigateTo, replaceCurrentPage, handleCreateNew, handleCargoClick } = useCargoNavigation()
     const invoiceApi = useInvoices({ info: currentPage.cargo })
-    const { create_contract, handleAccept } = invoiceApi
+    const { create_contract, handleAccept, get_contract, handleReject, handleChat, handleComplete } = invoiceApi
+    const { emit } = useSocket()
+    const token = useToken()
 
     useEffect(() => {
         if (!currentPage.cargo?.guid) return;
@@ -41,8 +45,8 @@ export const Cargos: React.FC = () => {
                 navigateTo({ type: 'list' });
             }
         } else if (currentPage.type === 'agreement' && currentPage.cargo?.guid) {
-            const cargo = cargoGetters.getCargo(currentPage.cargo.guid);
-            navigateTo({ type: 'invoices', cargo });
+            const cargo = cargoGetters.getCargo(currentPage.cargo.guid) ?? currentPage.cargo;
+            navigateTo({ type: 'view', cargo });
         } else if (currentPage.cargo?.guid) {
             const cargo = cargoGetters.getCargo(currentPage.cargo.guid);
             navigateTo({ type: 'view', cargo: cargo });
@@ -51,13 +55,84 @@ export const Cargos: React.FC = () => {
 
     const handleAgreementSign = useCallback(
         async (invoice: DriverInfo, signature: string) => {
-            await create_contract(invoice, signature);
-            await handleAccept(invoice, 12);
+            const signed = await create_contract(invoice, signature);
+            if (signed) {
+                void handleAccept(invoice, 12, true);
+            }
             const guid = currentPage.cargo?.guid;
             const cargo = guid ? cargoGetters.getCargo(guid) ?? currentPage.cargo : currentPage.cargo;
             if (cargo) navigateTo({ type: 'view', cargo });
         },
         [create_contract, handleAccept, currentPage.cargo, navigateTo]
+    );
+
+    const handleOpenAgreement = useCallback(
+        async (invoice: DriverInfo) => {
+            const cargo = currentPage.cargo;
+            if (!cargo) return;
+            const contractData = await get_contract(invoice);
+            if (contractData) {
+                navigateTo({ type: 'agreement', cargo, invoice, contract: contractData });
+            }
+        },
+        [currentPage.cargo, get_contract, navigateTo]
+    );
+
+    const handleAdvanceInvoice = useCallback(
+        async (invoice: DriverInfo, status: number) => {
+            await handleAccept(invoice, status);
+            if (status === 16) {
+                emit('send_message', {
+                    token,
+                    recipient: invoice.recipient,
+                    cargo: invoice.cargo,
+                    message: 'Груз осмотрен и опломбирован, документы на груз переданы',
+                });
+                emit('send_message', {
+                    token,
+                    recipient: invoice.recipient,
+                    cargo: invoice.cargo,
+                    message: 'Транспорт отправлен в точку разгрузки',
+                });
+            }
+        },
+        [handleAccept, emit, token]
+    );
+
+    const handleStartUnloading = useCallback(
+        async (invoice: DriverInfo) => {
+            await handleAccept(invoice, 18);
+            emit('send_message', {
+                token,
+                recipient: invoice.recipient,
+                cargo: invoice.cargo,
+                message: 'Пломба цела, груз доставлен',
+            });
+            emit('send_message', {
+                token,
+                recipient: invoice.recipient,
+                cargo: invoice.cargo,
+                message: 'Разгрузка начата',
+            });
+        },
+        [handleAccept, emit, token]
+    );
+
+    const handleCompleteTrip = useCallback(
+        async (invoice: DriverInfo, rating: number, completed: boolean) => {
+            await handleComplete(invoice, rating, {
+                delivered: completed,
+                documents: completed,
+            });
+            await handleAccept(invoice, 20);
+            emit('send_message', {
+                token,
+                recipient: invoice.recipient,
+                cargo: invoice.cargo,
+                message: 'Все работы выполнены',
+            });
+        },
+        [handleComplete, handleAccept, emit, token]
     );
 
 
@@ -87,12 +162,18 @@ export const Cargos: React.FC = () => {
                 case 'view':
                     return (
                         <CargoView
-                            cargo       = { currentPage.cargo! }
-                            onEdit      = { (cargo) => navigateTo({ type: 'edit', cargo }) }
-                            onDelete    = { deleteCargo }
-                            onPublish   = { publishCargo }
-                            onInvoices  = { (cargo) => navigateTo({ type: 'invoices', cargo }) }
-                            onBack      = { handleBack }
+                            cargo           = { currentPage.cargo! }
+                            onEdit          = { (cargo) => navigateTo({ type: 'edit', cargo }) }
+                            onDelete        = { deleteCargo }
+                            onPublish       = { publishCargo }
+                            onAcceptInvoice = { handleOpenAgreement }
+                            onRejectInvoice = { handleReject }
+                            onChatInvoice   = { handleChat }
+                            onAdvanceInvoice= { handleAdvanceInvoice }
+                            onStartUnloading= { handleStartUnloading }
+                            onComplete      = { handleCompleteTrip }
+                            onBack          = { handleBack }
+                            isLoading       = { isLoading || invoiceApi.isLoading }
                         />
                     );
 
@@ -181,7 +262,7 @@ export const Cargos: React.FC = () => {
 
     return (
         <div className="cargos-module">
-            <IonLoading isOpen={isLoading} message="Подождите" />
+            <IonLoading isOpen={isLoading || invoiceApi.isLoading} message="Подождите" />
 
             {renderContent()}
 

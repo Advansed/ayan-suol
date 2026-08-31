@@ -37,7 +37,7 @@ export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo }) => {
   const progressStatus = resolveCargoProgressStatus(cargo);
   const statusKind = cargoFeedKind(progressStatus);
   const badgeClass =
-    statusKind === 'new'
+    statusKind === 'new' || statusKind === 'waiting'
       ? styles.badge_new
       : statusKind === 'bids'
         ? styles.badge_bids
