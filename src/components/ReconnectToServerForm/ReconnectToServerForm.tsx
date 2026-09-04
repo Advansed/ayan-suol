@@ -14,15 +14,22 @@ interface ReconnectToServerFormProps {
   isConnecting: boolean;
   error: string | null;
   onRetry: () => void;
+  overlay?: boolean;
 }
 
 export const ReconnectToServerForm: React.FC<ReconnectToServerFormProps> = ({ 
   isConnecting, 
   error, 
-  onRetry 
+  onRetry,
+  overlay = false,
 }) => {
   return (
-    <div className={styles.container}>
+    <div
+      className={`${styles.container} ${overlay ? styles.overlay : ''}`}
+      role={overlay ? 'alertdialog' : undefined}
+      aria-modal={overlay || undefined}
+      aria-labelledby="reconnect-title"
+    >
       <div className={styles.card}>
         
         {/* Иконка */}
@@ -41,7 +48,7 @@ export const ReconnectToServerForm: React.FC<ReconnectToServerFormProps> = ({
         </div>
 
         {/* Заголовок */}
-        <h1 className={styles.title}>
+        <h1 id="reconnect-title" className={styles.title}>
           {isConnecting ? 'Подключение к серверу...' : 'Нет связи с сервером'}
         </h1>
 

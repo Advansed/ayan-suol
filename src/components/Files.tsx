@@ -12,9 +12,51 @@ import { RenderCurrentScaleProps, RenderZoomInProps, RenderZoomOutProps, zoomPlu
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/zoom/lib/styles/index.css';
 import styles from './DataEditor/fields/ImageField.module.css';
+import { compressImageDataUrl, formatFileSize, getDataUrlSize } from '../utils/fileUpload';
 import UTIF from 'utif';
 
 defineCustomElements(window)
+
+function stripBase64Payload(raw: string): string {
+  const comma = raw.indexOf(',');
+  if (raw.startsWith('data:') && comma >= 0) return raw.slice(comma + 1);
+  return raw;
+}
+
+function normalizeCapturedPhoto(
+  base64OrDataUrl: string,
+  formatHint?: string
+): { base64: string; format: string; dataUrl: string } {
+  const header = base64OrDataUrl.startsWith('data:')
+    ? base64OrDataUrl.split(',')[0]
+    : '';
+  const headerFormat = header.match(/image\/([a-zA-Z0-9+.-]+)/i)?.[1];
+  const rawFormat = (headerFormat || formatHint || 'jpeg').toLowerCase().replace('jpg', 'jpeg');
+  const format = ['png', 'webp', 'gif', 'heic', 'heif', 'jpeg', 'bmp'].includes(rawFormat)
+    ? rawFormat
+    : 'jpeg';
+  const base64 = stripBase64Payload(base64OrDataUrl).replace(/\s/g, '');
+  return {
+    base64,
+    format,
+    dataUrl: `data:image/${format};base64,${base64}`,
+  };
+}
+
+async function finalizeCapturedPhoto(
+  base64OrDataUrl: string,
+  formatHint?: string
+): Promise<{ base64: string; format: string; dataUrl: string }> {
+  const normalized = normalizeCapturedPhoto(base64OrDataUrl, formatHint);
+  const received = getDataUrlSize(normalized.dataUrl);
+  console.log(
+    `[фото] получено с камеры: ${formatFileSize(received)}` +
+      ` (${normalized.format}${formatHint ? `, hint ${formatHint}` : ''})`
+  );
+  const dataUrl = await compressImageDataUrl(normalized.dataUrl);
+  const format = dataUrl.startsWith('data:image/webp') ? 'webp' : 'jpeg';
+  return normalizeCapturedPhoto(dataUrl, format);
+}
 
 /** Web fallback: file input (camera capture on mobile browsers) */
 function pickImageFromFileInput(): Promise<{
@@ -49,10 +91,7 @@ function pickImageFromFileInput(): Promise<{
           reader.onerror = () => rej(reader.error);
           reader.readAsDataURL(file);
         });
-        const match = dataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
-        const format = match?.[1] || 'jpeg';
-        const base64 = match?.[2] || dataUrl.split(',')[1] || '';
-        resolve({ base64, format, dataUrl });
+        resolve(await finalizeCapturedPhoto(dataUrl, file.type.split('/')[1]));
       } catch {
         resolve(null);
       }
@@ -79,7 +118,8 @@ export async function takePicture() {
             resultType:     CameraResultType.Base64,
             source:         CameraSource.Prompt,
             width:          600,
-            height:         800
+            height:         800,
+            correctOrientation: true,
         });
 
         if (!image || !image.base64String) {
@@ -87,14 +127,10 @@ export async function takePicture() {
             return null;
         }
 
-        console.log('image size', image.base64String.length);
-        
-        // Возвращаем в формате, который не требует немедленной записи на диск
-        return {
-            base64: image.base64String,
-            format: image.format || 'jpeg',
-            dataUrl: `data:image/${image.format || 'jpeg'};base64,${image.base64String}`
-        };
+        // WebView после системной камеры ещё без сети — чуть подождать до upload
+        await new Promise((resolve) => window.setTimeout(resolve, 400));
+
+        return finalizeCapturedPhoto(image.base64String, image.format);
     } catch (error) {
         console.log("Camera error:", error);
         // Fallback to file input if Camera plugin fails in hybrid webview

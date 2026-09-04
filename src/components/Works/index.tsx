@@ -17,6 +17,7 @@ import { useChats } from '../../Store/useChats';
 import { transportGetters } from '../../Store/transportStore';
 import { IonLoading } from '@ionic/react';
 import { filterWorksByMode, findWorkByRef, type WorksListMode } from './statusFlow';
+import { LOAD_CARGO_PHOTO_STATUS, LOAD_SEAL_PHOTO_STATUS } from '../../utils/orderPhotos';
 import './styles.css';
 
 export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
@@ -188,17 +189,21 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
 
     const handleLoaded                                       = async (work: WorkInfo, data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }) => {
         try {
-            await Promise.all([
-                ...data.cargoPhotos.map(image => sendImage(work.recipient, work.cargo, image, 16)),
-                ...data.sealPhotos.map(image => sendImage(work.recipient, work.cargo, image, 16)),
+            const uploadResults = await Promise.all([
+                ...data.cargoPhotos.map(image => sendImage(work.recipient, work.cargo, image, LOAD_CARGO_PHOTO_STATUS)),
+                ...data.sealPhotos.map(image => sendImage(work.recipient, work.cargo, image, LOAD_SEAL_PHOTO_STATUS)),
             ]);
+            if (uploadResults.some(ok => !ok)) {
+                throw new Error('Не удалось отправить фото груза или пломбы');
+            }
             emit("send_message", {
                 token,
                 recipient: work.recipient,
                 cargo: work.cargo,
                 message: "Груз загружен и опломбирован, фото приложено",
             });
-            await setStatus(work);
+            const ok = await setStatus(work);
+            if (!ok) throw new Error('Не удалось подтвердить погрузку');
             await refreshWorks();
         } catch (err) {
             console.error("handleLoaded error:", err);
@@ -208,19 +213,70 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
 
     const handleArrivedAtLoad                                = async (work: WorkInfo, data: { bodyPhotos: string[] }) => {
         try {
-            await Promise.all(
+            const uploadResults = await Promise.all(
                 data.bodyPhotos.map(image => sendImage(work.recipient, work.cargo, image, 14))
             );
+            if (uploadResults.some(ok => !ok)) {
+                throw new Error('Не удалось отправить фото кузова');
+            }
             emit("send_message", {
                 token,
                 recipient: work.recipient,
                 cargo: work.cargo,
                 message: "Транспорт прибыл на точку погрузки, фото кузова приложено",
             });
-            await setStatus(work);
+            const ok = await setStatus(work);
+            if (!ok) throw new Error('Не удалось подтвердить прибытие на погрузку');
             await refreshWorks();
         } catch (err) {
             console.error("handleArrivedAtLoad error:", err);
+            throw err;
+        }
+    };
+
+    const handleSendLoadedPhotos                             = async (
+        work: WorkInfo,
+        data: { cargoPhotos: Array<string | File>; sealPhotos: Array<string | File> }
+    ) => {
+        try {
+            const uploadResults = await Promise.all([
+                ...data.cargoPhotos.map(image => sendImage(work.recipient, work.cargo, image, LOAD_CARGO_PHOTO_STATUS)),
+                ...data.sealPhotos.map(image => sendImage(work.recipient, work.cargo, image, LOAD_SEAL_PHOTO_STATUS)),
+            ]);
+            if (uploadResults.some(ok => !ok)) {
+                throw new Error('Не удалось отправить фото груза или пломбы');
+            }
+            emit("send_message", {
+                token,
+                recipient: work.recipient,
+                cargo: work.cargo,
+                message: "Фото груза и пломбы обновлены",
+            });
+        } catch (err) {
+            console.error("handleSendLoadedPhotos error:", err);
+            throw err;
+        }
+    };
+
+    const handleSendBodyPhotos                               = async (
+        work: WorkInfo,
+        data: { bodyPhotos: Array<string | File> }
+    ) => {
+        try {
+            const uploadResults = await Promise.all(
+                data.bodyPhotos.map(image => sendImage(work.recipient, work.cargo, image, 14))
+            );
+            if (uploadResults.some(ok => !ok)) {
+                throw new Error('Не удалось отправить фото кузова');
+            }
+            emit("send_message", {
+                token,
+                recipient: work.recipient,
+                cargo: work.cargo,
+                message: "Фото кузова обновлены",
+            });
+        } catch (err) {
+            console.error("handleSendBodyPhotos error:", err);
             throw err;
         }
     };
@@ -361,6 +417,8 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
                         onOfferCancelClick        = { handleOfferCancelClick }
                         onLoaded                  = { handleLoaded }
                         onArrivedAtLoad           = { handleArrivedAtLoad }
+                        onSendBodyPhotos          = { handleSendBodyPhotos }
+                        onSendLoadedPhotos        = { handleSendLoadedPhotos }
                         onArrivedUnload           = { handleArrivedUnload }
                         onUnloadComplete          = { handleUnloadComplete }
                         onMapClick                = { handleMapClick }

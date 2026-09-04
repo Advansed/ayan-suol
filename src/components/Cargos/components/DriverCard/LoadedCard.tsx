@@ -5,7 +5,12 @@ import { DriverInfo } from '../../../../Store/cargoStore';
 import { useChats } from '../../../../Store/useChats';
 import offerStyles from './OfferCard.module.css';
 import { PhotoPreview } from '../../../Chats/PhotoPreview';
-import { resolveImageSrc } from '../../../../utils/fileUpload';
+import {
+    LOAD_CARGO_PHOTO_STATUS,
+    LOAD_SEAL_PHOTO_STATUS,
+    latestPhotoBatch,
+    photoSrc,
+} from '../../../../utils/orderPhotos';
 
 interface LoadedCardProps {
     info: DriverInfo;
@@ -15,7 +20,8 @@ interface LoadedCardProps {
 }
 
 export const LoadedCard: React.FC<LoadedCardProps> = ({ info, onChat, onSend, isLoading }) => {
-    const [fotos, setFotos] = useState<any[]>([]);
+    const [cargoFotos, setCargoFotos] = useState<string[]>([]);
+    const [sealFotos, setSealFotos] = useState<string[]>([]);
     const [previewUrl, setPreviewUrl] = useState('');
     const { getPhotos } = useChats();
 
@@ -24,19 +30,22 @@ export const LoadedCard: React.FC<LoadedCardProps> = ({ info, onChat, onSend, is
     };
 
     useEffect(() => {
-        let isMounted = true;
+        let cancelled = false;
 
-        getPhotos(info.recipient, info.cargo, 16)
-            .then((data: any[]) => {
-                if (!isMounted) return;
-                setFotos(data || []);
-            })
-            .catch((error: any) => {
+        (async () => {
+            try {
+                const cargoData = await getPhotos(info.recipient, info.cargo, LOAD_CARGO_PHOTO_STATUS);
+                const sealData = await getPhotos(info.recipient, info.cargo, LOAD_SEAL_PHOTO_STATUS);
+                if (cancelled) return;
+                setCargoFotos(latestPhotoBatch(cargoData || []).map(photoSrc).filter(Boolean));
+                setSealFotos(latestPhotoBatch(sealData || []).map(photoSrc).filter(Boolean));
+            } catch (error: unknown) {
                 console.error(error);
-            });
+            }
+        })();
 
         return () => {
-            isMounted = false;
+            cancelled = true;
         };
     }, [info.recipient, info.cargo, getPhotos]);
 
@@ -77,31 +86,42 @@ export const LoadedCard: React.FC<LoadedCardProps> = ({ info, onChat, onSend, is
                 </div>
             </div>
 
-            {fotos.length > 0 && (
+            {(cargoFotos.length > 0 || sealFotos.length > 0) && (
                 <div className="mt-05 mb-05">
-                    <label className={offerStyles.label}>Фотографии от водителя</label>
-                    <div className="flex flex-wrap mt-02">
-                        {fotos.map((item: any, index: number) => {
-                            const raw =
-                                typeof item === 'string'
-                                    ? item
-                                    : item?.url || item?.image || item?.path || item?.filePath;
-                            const src = resolveImageSrc(raw);
-
-                            if (!src) return null;
-
-                            return (
-                                <div key={index} className="ml-05 mr-05">
-                                    <img
-                                        src={src}
-                                        alt={`Фото ${index + 1}`}
-                                        style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
-                                        onClick={() => setPreviewUrl(src)}
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
+                    {cargoFotos.length > 0 && (
+                        <>
+                            <label className={offerStyles.label}>Фото груза</label>
+                            <div className="flex flex-wrap mt-02">
+                                {cargoFotos.map((src, index) => (
+                                    <div key={`c-${index}`} className="ml-05 mr-05">
+                                        <img
+                                            src={src}
+                                            alt={`Фото груза ${index + 1}`}
+                                            style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
+                                            onClick={() => setPreviewUrl(src)}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                    {sealFotos.length > 0 && (
+                        <>
+                            <label className={offerStyles.label}>Фото пломбы</label>
+                            <div className="flex flex-wrap mt-02">
+                                {sealFotos.map((src, index) => (
+                                    <div key={`s-${index}`} className="ml-05 mr-05">
+                                        <img
+                                            src={src}
+                                            alt={`Фото пломбы ${index + 1}`}
+                                            style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
+                                            onClick={() => setPreviewUrl(src)}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 

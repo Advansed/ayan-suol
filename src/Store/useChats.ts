@@ -176,14 +176,24 @@ export const useChats = (): UseChatsReturn => {
     }
 
     return new Promise<any[]>((resolve) => {
+      let settled = false
+      const finish = (photos: any[]) => {
+        if (settled) return
+        settled = true
+        resolve(photos)
+      }
+
       try {
+        const timer = window.setTimeout(() => finish([]), 10000)
+
         once('get_photos', (data: any) => {
+          window.clearTimeout(timer)
           const photos = Array.isArray(data?.data)
             ? data.data
             : Array.isArray(data)
               ? data
               : []
-          resolve(photos)
+          finish(photos)
         })
 
         emit("get_photos", {
@@ -194,7 +204,7 @@ export const useChats = (): UseChatsReturn => {
         })
       } catch (error) {
         toast.error('Ошибка получения фотографий')
-        resolve([])
+        finish([])
       }
     })
   }, [isConnected, token, emit, once])

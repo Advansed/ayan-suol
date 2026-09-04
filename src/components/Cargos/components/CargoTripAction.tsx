@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Camera, MessageSquare, Package, Send, Star, type LucideIcon } from 'lucide-react';
+import { Camera, MessageSquare, Package, RefreshCw, Send, Star, type LucideIcon } from 'lucide-react';
 import { DriverInfo } from '../../../Store/cargoStore';
 import { useChats } from '../../../Store/useChats';
 import { formatters } from '../../../utils/utils';
-import { resolveImageSrc } from '../../../utils/fileUpload';
+import { latestPhotoBatch, photoSrc, LOAD_CARGO_PHOTO_STATUS, LOAD_SEAL_PHOTO_STATUS } from '../../../utils/orderPhotos';
 import { PhotoPreview } from '../../Chats/PhotoPreview';
 import styles from './CargoView.module.css';
 
@@ -17,18 +17,11 @@ type CargoTripActionProps = {
   isLoading?: boolean;
 };
 
-function photoSrc(item: unknown): string {
-  const raw =
-    typeof item === 'string'
-      ? item
-      : item && typeof item === 'object'
-        ? (item as { url?: string; image?: string; path?: string; filePath?: string }).url ||
-          (item as { image?: string }).image ||
-          (item as { path?: string }).path ||
-          (item as { filePath?: string }).filePath
-        : '';
-  return resolveImageSrc(raw);
-}
+type PhotoGroupCopy = {
+  status: number;
+  label: string;
+  empty?: string;
+};
 
 type StepCopy = {
   title: string;
@@ -36,6 +29,7 @@ type StepCopy = {
   photoStatus?: number;
   photoLabel?: string;
   photoEmpty?: string;
+  photoGroups?: PhotoGroupCopy[];
   requirePhotos?: boolean;
   requireConfirm?: boolean;
   confirmLabel?: string;
@@ -43,6 +37,14 @@ type StepCopy = {
   primaryLabel?: string;
   PrimaryIcon?: LucideIcon;
 };
+
+function resolvePhotoGroups(copy: StepCopy): PhotoGroupCopy[] {
+  if (copy.photoGroups?.length) return copy.photoGroups;
+  if (copy.photoStatus) {
+    return [{ status: copy.photoStatus, label: copy.photoLabel || '', empty: copy.photoEmpty }];
+  }
+  return [];
+}
 
 function stepCopy(status: DriverInfo['status']): StepCopy {
   switch (status) {
@@ -56,8 +58,8 @@ function stepCopy(status: DriverInfo['status']): StepCopy {
         title: 'Приехал на погрузку',
         hint: 'Исполнитель прибыл. Проверьте фото кузова и начните загрузку.',
         photoStatus: 14,
-        photoLabel: 'Фото кузова от водителя',
-        photoEmpty: 'Фото кузова ещё не получены. Дождитесь снимков от водителя.',
+        photoLabel: 'Актуальные фото кузова',
+        photoEmpty: 'Фото кузова ещё не получены. Водитель может отправить или заменить снимки в действии по заказу.',
         requirePhotos: true,
         primaryLabel: 'Начать погрузку',
         PrimaryIcon: Package,
@@ -70,10 +72,19 @@ function stepCopy(status: DriverInfo['status']): StepCopy {
     case 'Загружено':
       return {
         title: 'Погружено',
-        hint: 'Груз погружен. Можно отправлять транспорт в рейс.',
-        photoStatus: 16,
-        photoLabel: 'Фото от водителя',
-        photoEmpty: 'Фото ещё не получены.',
+        hint: 'Груз погружен. Проверьте фото и отправьте транспорт в рейс. Водитель может заменить снимки, пока вы не отправили.',
+        photoGroups: [
+          {
+            status: LOAD_CARGO_PHOTO_STATUS,
+            label: 'Актуальные фото груза',
+            empty: 'Фото груза ещё не получены.',
+          },
+          {
+            status: LOAD_SEAL_PHOTO_STATUS,
+            label: 'Актуальные фото пломбы',
+            empty: 'Фото пломбы ещё не получены.',
+          },
+        ],
         primaryLabel: 'Отправить',
         PrimaryIcon: Send,
       };
@@ -137,40 +148,68 @@ export const CargoTripAction: React.FC<CargoTripActionProps> = ({
   isLoading = false,
 }) => {
   const copy = stepCopy(invoice.status);
-  const [fotos, setFotos] = useState<unknown[]>([]);
-  const [photosLoading, setPhotosLoading] = useState(Boolean(copy.photoStatus));
+  const photoGroups = resolvePhotoGroups(copy);
+  const photoKey = photoGroups.map((g) => g.status).join(',');
+  const [groupFotos, setGroupFotos] = useState<Record<number, unknown[]>>({});
+  const [photosLoading, setPhotosLoading] = useState(photoGroups.length > 0);
   const [previewUrl, setPreviewUrl] = useState('');
   const [confirmed, setConfirmed] = useState(false);
   const [rating, setRating] = useState(0);
+  const [photoTick, setPhotoTick] = useState(0);
   const { getPhotos } = useChats();
 
   useEffect(() => {
-    if (!copy.photoStatus) {
-      setFotos([]);
+    if (photoGroups.length === 0) {
+      setGroupFotos({});
       setPhotosLoading(false);
       return;
     }
-    let isMounted = true;
-    setPhotosLoading(true);
-    getPhotos(invoice.recipient, invoice.cargo, copy.photoStatus)
-      .then((data: unknown[]) => {
-        if (!isMounted) return;
-        setFotos(data || []);
-      })
-      .catch((err: unknown) => {
-        console.error(err);
-        if (isMounted) setFotos([]);
-      })
-      .finally(() => {
-        if (isMounted) setPhotosLoading(false);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, [invoice.recipient, invoice.cargo, copy.photoStatus, getPhotos]);
+    let cancelled = false;
+    let inflight = false;
+    const statuses = photoGroups.map((g) => g.status);
 
-  const photos = useMemo(() => fotos.map(photoSrc).filter(Boolean), [fotos]);
-  const photosReady = !copy.requirePhotos || (!photosLoading && photos.length > 0);
+    const load = async (showSpinner: boolean) => {
+      if (inflight) return;
+      inflight = true;
+      if (showSpinner) setPhotosLoading(true);
+      try {
+        const next: Record<number, unknown[]> = {};
+        for (const status of statuses) {
+          next[status] = (await getPhotos(invoice.recipient, invoice.cargo, status)) || [];
+        }
+        if (!cancelled) setGroupFotos(next);
+      } catch (err: unknown) {
+        console.error(err);
+        if (!cancelled) setGroupFotos({});
+      } finally {
+        inflight = false;
+        if (!cancelled) setPhotosLoading(false);
+      }
+    };
+
+    void load(true);
+    const shouldPoll = invoice.status === 'На погрузке' || invoice.status === 'Загружено';
+    const poll = shouldPoll
+      ? window.setInterval(() => {
+          void load(false);
+        }, 7000)
+      : undefined;
+
+    return () => {
+      cancelled = true;
+      if (poll !== undefined) window.clearInterval(poll);
+    };
+  }, [invoice.recipient, invoice.cargo, invoice.status, photoKey, getPhotos, photoTick]);
+
+  const groupedPhotos = useMemo(() => {
+    return photoGroups.map((group) => ({
+      ...group,
+      srcs: latestPhotoBatch(groupFotos[group.status] || []).map(photoSrc).filter(Boolean),
+    }));
+  }, [photoGroups, groupFotos]);
+
+  const anyPhotos = groupedPhotos.some((g) => g.srcs.length > 0);
+  const photosReady = !copy.requirePhotos || (!photosLoading && anyPhotos);
   const confirmReady = !copy.requireConfirm || confirmed;
   const ratingReady = !copy.requireRating || rating > 0;
   const canSubmit = Boolean(copy.primaryLabel) && photosReady && confirmReady && ratingReady && !isLoading;
@@ -216,19 +255,28 @@ export const CargoTripAction: React.FC<CargoTripActionProps> = ({
         </div>
       </div>
 
-      {copy.photoStatus && (
-        <div className={styles.photoBlock}>
+      {groupedPhotos.map((group) => (
+        <div key={group.status} className={styles.photoBlock}>
           <div className={styles.photoHead}>
             <Camera size={16} strokeWidth={1.75} />
-            {copy.photoLabel}
+            {group.label}
+            <button
+              type="button"
+              className={styles.photoRefresh}
+              onClick={() => setPhotoTick((n) => n + 1)}
+              disabled={photosLoading}
+            >
+              <RefreshCw size={14} strokeWidth={2} />
+              Обновить
+            </button>
           </div>
           {photosLoading && <p className={styles.photoEmpty}>Загрузка фото…</p>}
-          {!photosLoading && photos.length === 0 && (
-            <p className={styles.photoEmpty}>{copy.photoEmpty}</p>
+          {!photosLoading && group.srcs.length === 0 && (
+            <p className={styles.photoEmpty}>{group.empty}</p>
           )}
-          {!photosLoading && photos.length > 0 && (
+          {!photosLoading && group.srcs.length > 0 && (
             <div className={styles.photoGrid}>
-              {photos.map((src, index) => (
+              {group.srcs.map((src, index) => (
                 <button
                   key={`${src}-${index}`}
                   type="button"
@@ -241,7 +289,7 @@ export const CargoTripAction: React.FC<CargoTripActionProps> = ({
             </div>
           )}
         </div>
-      )}
+      ))}
 
       {copy.requireRating && (
         <div className={styles.photoBlock}>

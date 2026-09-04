@@ -38,6 +38,11 @@ interface WorkViewProps {
     onOfferCancelClick: (work: WorkInfo) => void;
     onLoaded?: (work: WorkInfo, data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }) => Promise<void>;
     onArrivedAtLoad?: (work: WorkInfo, data: { bodyPhotos: string[] }) => Promise<void>;
+    onSendBodyPhotos?: (work: WorkInfo, data: { bodyPhotos: Array<string | File> }) => Promise<void>;
+    onSendLoadedPhotos?: (
+        work: WorkInfo,
+        data: { cargoPhotos: Array<string | File>; sealPhotos: Array<string | File> }
+    ) => Promise<void>;
     onArrivedUnload?: (
         work: WorkInfo,
         data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }
@@ -54,6 +59,8 @@ export const WorkView: React.FC<WorkViewProps> = ({
     onOfferCancelClick,
     onLoaded,
     onArrivedAtLoad,
+    onSendBodyPhotos,
+    onSendLoadedPhotos,
     onArrivedUnload,
     onUnloadComplete,
     onSignContract
@@ -121,7 +128,11 @@ export const WorkView: React.FC<WorkViewProps> = ({
                       ? 'Подписать договор'
                       : workInfo.status === WorkStatus.TO_LOAD && workInfo.signed
                         ? 'Приехал на погрузку'
-                        : hasInteractiveAction
+                      : workInfo.status === WorkStatus.ON_LOAD
+                        ? 'Фото кузова'
+                        : workInfo.status === WorkStatus.LOADED
+                          ? 'Фото груза и пломбы'
+                          : hasInteractiveAction
                           ? 'Продолжить'
                           : '';
     const statusKind = feedStatusKind(workInfo.status);
@@ -230,7 +241,14 @@ export const WorkView: React.FC<WorkViewProps> = ({
                 />
             )}
 
-            {workInfo.status === WorkStatus.ON_LOAD && <OnLoadWaitCard work={workInfo} />}
+            {workInfo.status === WorkStatus.ON_LOAD && (
+                <OnLoadWaitCard
+                    work={workInfo}
+                    onSendBodyPhotos={(data) =>
+                        onSendBodyPhotos ? onSendBodyPhotos(workInfo, data) : Promise.resolve()
+                    }
+                />
+            )}
 
             {workInfo.status === WorkStatus.LOADING && (
                 <LoadedCard
@@ -244,7 +262,12 @@ export const WorkView: React.FC<WorkViewProps> = ({
             )}
 
             {workInfo.status === WorkStatus.LOADED && (
-                <LoadedWaitDispatchCard work={workInfo} />
+                <LoadedWaitDispatchCard
+                    work={workInfo}
+                    onSendLoadedPhotos={(data) =>
+                        onSendLoadedPhotos ? onSendLoadedPhotos(workInfo, data) : Promise.resolve()
+                    }
+                />
             )}
 
             {workInfo.status === WorkStatus.IN_WORK && (

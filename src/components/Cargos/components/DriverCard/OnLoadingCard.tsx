@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { IonButton, IonIcon, IonSpinner } from '@ionic/react';
-import { chatboxEllipsesOutline, cubeOutline } from 'ionicons/icons';
+import { chatboxEllipsesOutline, cubeOutline, refreshOutline } from 'ionicons/icons';
 import { DriverInfo } from '../../../../Store/cargoStore';
 import { useChats } from '../../../../Store/useChats';
 import offerStyles from './OfferCard.module.css';
 import { PhotoPreview } from '../../../Chats/PhotoPreview';
-import { resolveImageSrc } from '../../../../utils/fileUpload';
-
-/** Статус изображений «фото кузова при приезде на погрузку» (см. Works sendImage …, 14) */
-const BODY_PHOTO_STATUS = 14;
+import {
+    BODY_PHOTO_STATUS,
+    latestPhotoBatch,
+    photoSrc,
+} from '../../../../utils/orderPhotos';
 
 interface OnLoadingCardProps {
     info: DriverInfo;
@@ -26,6 +27,7 @@ export const OnLoadingCard: React.FC<OnLoadingCardProps> = ({
     const [fotos, setFotos] = useState<any[]>([]);
     const [photosLoading, setPhotosLoading] = useState(true);
     const [previewUrl, setPreviewUrl] = useState('');
+    const [photoTick, setPhotoTick] = useState(0);
     const { getPhotos } = useChats();
 
     const formatPrice = (price: number): string => {
@@ -33,28 +35,41 @@ export const OnLoadingCard: React.FC<OnLoadingCardProps> = ({
     };
 
     useEffect(() => {
-        let isMounted = true;
-        setPhotosLoading(true);
+        let cancelled = false;
+        let inflight = false;
 
-        getPhotos(info.recipient, info.cargo, BODY_PHOTO_STATUS)
-            .then((data: any[]) => {
-                if (!isMounted) return;
-                setFotos(data || []);
-            })
-            .catch((err: unknown) => {
+        const load = async (showSpinner: boolean) => {
+            if (inflight) return;
+            inflight = true;
+            if (showSpinner) setPhotosLoading(true);
+            try {
+                const data = await getPhotos(info.recipient, info.cargo, BODY_PHOTO_STATUS);
+                if (!cancelled) setFotos(data || []);
+            } catch (err: unknown) {
                 console.error(err);
-                if (isMounted) setFotos([]);
-            })
-            .finally(() => {
-                if (isMounted) setPhotosLoading(false);
-            });
+                if (!cancelled) setFotos([]);
+            } finally {
+                inflight = false;
+                if (!cancelled) setPhotosLoading(false);
+            }
+        };
+
+        void load(true);
+        const poll = window.setInterval(() => {
+            void load(false);
+        }, 7000);
 
         return () => {
-            isMounted = false;
+            cancelled = true;
+            window.clearInterval(poll);
         };
-    }, [info.recipient, info.cargo, getPhotos]);
+    }, [info.recipient, info.cargo, getPhotos, photoTick]);
 
-    const canStartLoading = !photosLoading && fotos.length > 0;
+    const photos = useMemo(
+        () => latestPhotoBatch(fotos).map(photoSrc).filter(Boolean),
+        [fotos]
+    );
+    const canStartLoading = !photosLoading && photos.length > 0;
 
     return (
         <div className={offerStyles.offerCard}>
@@ -94,40 +109,39 @@ export const OnLoadingCard: React.FC<OnLoadingCardProps> = ({
             </div>
 
             <div className={offerStyles.detailsCard}>
-                <label className={offerStyles.label}>Фото кузова от водителя</label>
+                <label className={offerStyles.label}>Актуальные фото кузова</label>
+                <IonButton
+                    fill="clear"
+                    size="small"
+                    onClick={() => setPhotoTick((n) => n + 1)}
+                    disabled={photosLoading}
+                >
+                    <IonIcon icon={refreshOutline} slot="start" />
+                    Обновить
+                </IonButton>
                 {photosLoading && (
                     <div className="flex items-center gap-05 mt-05">
                         <IonSpinner name="crescent" style={{ color: 'white' }} />
                         <span className={offerStyles.notificationSubtitle}>Загрузка фото…</span>
                     </div>
                 )}
-                {!photosLoading && fotos.length === 0 && (
+                {!photosLoading && photos.length === 0 && (
                     <p className={offerStyles.notificationSubtitle} style={{ marginTop: '0.5em' }}>
-                        Фото кузова ещё не получены. Дождитесь, пока водитель отправит снимки.
+                        Фото кузова ещё не получены. Водитель может отправить или заменить снимки.
                     </p>
                 )}
-                {!photosLoading && fotos.length > 0 && (
+                {!photosLoading && photos.length > 0 && (
                     <div className="flex flex-wrap mt-02">
-                        {fotos.map((item: any, index: number) => {
-                            const raw =
-                                typeof item === 'string'
-                                    ? item
-                                    : item?.url || item?.image || item?.path || item?.filePath;
-                            const src = resolveImageSrc(raw);
-
-                            if (!src) return null;
-
-                            return (
-                                <div key={index} className="ml-05 mr-05">
-                                    <img
-                                        src={src}
-                                        alt={`Фото кузова ${index + 1}`}
-                                        style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
-                                        onClick={() => setPreviewUrl(src)}
-                                    />
-                                </div>
-                            );
-                        })}
+                        {photos.map((src, index) => (
+                            <div key={`${src}-${index}`} className="ml-05 mr-05">
+                                <img
+                                    src={src}
+                                    alt={`Фото кузова ${index + 1}`}
+                                    style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
+                                    onClick={() => setPreviewUrl(src)}
+                                />
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>

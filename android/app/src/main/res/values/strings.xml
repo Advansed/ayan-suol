@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Your App Name</string>
+    <string name="title_activity_main">Your App Name</string>
+    <string name="package_name">your.app.id</string>
+    <string name="custom_url_scheme">your.app.id</string>
+</resources>

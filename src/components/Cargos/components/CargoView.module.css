@@ -630,6 +630,25 @@
   color: var(--gvr-text, #1a1f2e);
 }
 
+.photoRefresh {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  padding: 4px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gvr-accent, #2b5adc);
+  cursor: pointer;
+}
+
+.photoRefresh:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .photoEmpty {
   margin: 10px 0 0;
   font-size: 13px;
