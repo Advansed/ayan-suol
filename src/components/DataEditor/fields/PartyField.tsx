@@ -40,7 +40,6 @@ export const PartyField: React.FC<PartyFieldProps> = ({
               kpp:          suggestion.data.kpp,
               ogrn:         suggestion.data.ogrn,
             })
-            console.log(suggestion)
           }
         }}
         inputProps={{

@@ -6,6 +6,9 @@ export interface TransportType {
   id: string
   name: string
   description?: string
+  formula?: number
+  min_tarif?: number
+  max_tarif?: number
 }
 
 export type TransportTypeField = TransportType | TransportType[] | string | number | null | undefined
@@ -68,6 +71,16 @@ function parseMaybeJson(value: unknown): unknown {
   }
 }
 
+function optionalNumber(rec: Record<string, unknown>, keys: string[]): number | undefined {
+  for (const key of keys) {
+    const value = rec[key]
+    if (value == null || value === '') continue
+    const n = Number(value)
+    if (Number.isFinite(n)) return n
+  }
+  return undefined
+}
+
 export function asTransportType(value: unknown): TransportType | undefined {
   const parsed = parseMaybeJson(value)
   const item = Array.isArray(parsed) ? parsed[0] : parsed
@@ -84,7 +97,39 @@ export function asTransportType(value: unknown): TransportType | undefined {
     id: id != null ? String(id) : '',
     name: name != null && name !== '' ? String(name) : String(id ?? ''),
     description: rec.description != null && rec.description !== '' ? String(rec.description) : undefined,
+    formula: optionalNumber(rec, ['formula']),
+    min_tarif: optionalNumber(rec, ['min_tarif', 'minTarif', 'min_tariff']),
+    max_tarif: optionalNumber(rec, ['max_tarif', 'maxTarif', 'max_tariff']),
   }
+}
+
+export function haulPriceRange(
+  weight: number | null | undefined,
+  km: number | null | undefined,
+  type: Pick<TransportType, 'formula' | 'min_tarif' | 'max_tarif'> | undefined
+): { min: number; max: number } | null {
+  if (!type) return null
+  const formula = Number(type.formula)
+  const minTarif = Number(type.min_tarif)
+  const maxTarif = Number(type.max_tarif)
+  if (!Number.isFinite(km) || (km as number) <= 0) return null
+  if (!Number.isFinite(minTarif) || !Number.isFinite(maxTarif)) return null
+  if (formula === 1) {
+    const tons = Number(weight)
+    if (!Number.isFinite(tons) || tons <= 0) return null
+    return { min: tons * (km as number) * minTarif, max: tons * (km as number) * maxTarif }
+  }
+  if (formula === 2) {
+    return { min: (km as number) * minTarif, max: (km as number) * maxTarif }
+  }
+  return null
+}
+
+export function formatHaulPriceRange(range: { min: number; max: number }): string {
+  const minK = Math.round(range.min / 1000)
+  const maxK = Math.round(range.max / 1000)
+  if (minK === maxK) return `${minK} т.р`
+  return `${Math.min(minK, maxK)}~${Math.max(minK, maxK)} т.р`
 }
 
 export function asTransportList(raw: unknown): TransportData[] {
@@ -283,7 +328,6 @@ export const transportActions = {
 
 export const transportSocketHandlers = {
   onGetTransport: (response: any) => {
-    console.log('onGetTransport response:', response)
     transportActions.setLoading(false)
 
     if (response.success) {
@@ -295,7 +339,6 @@ export const transportSocketHandlers = {
   },
 
   onGetTransportTypes: (response: any) => {
-    console.log('onGetTransportTypes response:', response)
     if (response?.success === false) {
       console.error('Invalid transport types response:', response)
       return
@@ -304,7 +347,6 @@ export const transportSocketHandlers = {
   },
 
   onSaveTransport: (response: any) => {
-    console.log('onSaveTransport response:', response)
     transportActions.setSaving(false)
 
     if (response.success && response.data) {
@@ -322,7 +364,6 @@ export const initTransportSocketHandlers = (socket: any) => {
   socket.on('get_transport', transportSocketHandlers.onGetTransport)
   socket.on('get_transport_types', transportSocketHandlers.onGetTransportTypes)
   socket.on('set_transport', transportSocketHandlers.onSaveTransport)
-  console.log('Transport socket handlers initialized')
 }
 
 export const destroyTransportSocketHandlers = (socket: any) => {
@@ -330,5 +371,4 @@ export const destroyTransportSocketHandlers = (socket: any) => {
   socket.off('get_transport', transportSocketHandlers.onGetTransport)
   socket.off('get_transport_types', transportSocketHandlers.onGetTransportTypes)
   socket.off('set_transport', transportSocketHandlers.onSaveTransport)
-  console.log('Transport socket handlers destroyed')
 }

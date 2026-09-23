@@ -1,4 +1,4 @@
-import React, { useEffect, useState }              from 'react';
+import React, { useState }              from 'react';
 import { CargoInfo, DriverInfo }        from '../../../Store/cargoStore';
 import { WizardHeader }                 from '../../Header/WizardHeader';
 import { IonButton, IonCard, IonIcon }  from '@ionic/react';
@@ -29,8 +29,6 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
     const [ page, setPage ] = useState<Route1>({ type: 'main', info: undefined })
     const { emit } = useSocket()
     const token = useToken()
-
-    useEffect(()=>{ console.log(contract)},[contract])
 
     const AcceptClick           = async(invoice: DriverInfo, data: any, status: number) => {   
         
@@ -406,7 +404,6 @@ export const CargoInvoiceSections: React.FC<CargoInvoiceSectionsProps> = ({ carg
                     pdf     = { contract }
                     onBack  = { () => { setPage({type: "main", info: undefined})}}
                     onSave  = { (data: SaveData4) => { 
-                        console.log('sign', data)
                         create_contract( invoice, data.sign )
                         return AcceptClick( invoice, data, 12 ) 
                     }}

@@ -187,7 +187,6 @@ export const PassportVerification: React.FC<PassportVerificationProps>    = ({ o
     setCheckingFront(true);
     try {
       const result = await checkPassportPhoto(form.main_photo);
-      console.log('check_passport_photo', result);
       const payload = result?.data && typeof result.data === 'object' ? result.data : result;
 
       // Если API вернул распознанные поля — подставляем в форму

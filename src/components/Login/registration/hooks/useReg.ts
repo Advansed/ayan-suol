@@ -120,9 +120,6 @@ export const useReg = (opts?: { onRegistered?: () => void }): UseRegReturn => {
           transport: body.transport,
         })
 
-        // #region agent log
-        fetch('http://127.0.0.1:7412/ingest/6e96b9fc-4299-494f-9e68-66061b55b1b7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be6ab2'},body:JSON.stringify({sessionId:'be6ab2',runId:'pre-fix',hypothesisId:'A',location:'useReg.ts:register',message:'emit check_registration',data:{keys:Object.keys(body),hasPartner:Boolean(body.partner),partnerIsGuid:/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.partner||''),partnerIsDefault:body.partner==='00000000-0000-0000-0000-000000000000',partnerLen:(body.partner||'').length},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         const success = emit('check_registration', body)
 
         if (!success) {
@@ -219,9 +216,6 @@ export const useReg = (opts?: { onRegistered?: () => void }): UseRegReturn => {
       updateState({ isLoading: false })
 
       const message = response.message || ''
-      // #region agent log
-      fetch('http://127.0.0.1:7412/ingest/6e96b9fc-4299-494f-9e68-66061b55b1b7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be6ab2'},body:JSON.stringify({sessionId:'be6ab2',runId:'pre-fix',hypothesisId:'D',location:'useReg.ts:handleRegistration',message:'check_registration response',data:{success:Boolean(response.success),message,mentionsPartner:message.toLowerCase().includes('partner')},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       const alreadyExists = /уже зарегистрирован|already registered/i.test(message)
 
       if (response.success || alreadyExists) {

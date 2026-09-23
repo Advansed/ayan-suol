@@ -11,7 +11,6 @@ export const WorkArchive = () => {
 
   const handleWorkClick = (work: WorkInfo) => {
     // TODO: Добавить навигацию к просмотру работы
-    console.log('Clicked work:', work);
   };
 
   if (isArchiveLoading) {

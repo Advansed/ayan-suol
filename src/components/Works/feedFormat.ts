@@ -1,5 +1,6 @@
 import { WorkStatus } from './types';
 import { workFormatters } from './utils';
+import { normalizeWorkStatus, WORK_STATUS_SHORT } from './statusFlow';
 
 type Payable = { advance?: number | null; price?: number | null };
 type BodySource = {
@@ -9,8 +10,9 @@ type BodySource = {
 };
 type FleetSource = { vehicles_total?: number; vehicles_busy?: number };
 type RoutePoints = {
-  address?: { lat?: number; lon?: number } | null;
-  destiny?: { lat?: number; lon?: number } | null;
+  route_distance?: number | null;
+  address?: { lat?: number; lon?: number; city?: { lat?: number; lon?: number } } | null;
+  destiny?: { lat?: number; lon?: number; city?: { lat?: number; lon?: number } } | null;
 };
 
 export type PaymentLevel = 'full' | 'partial' | 'none';
@@ -72,6 +74,48 @@ export function shortDate(value: string): string {
   return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
 }
 
+type PublishedSource = {
+  publish_date?: string;
+  published_at?: string;
+  published?: string;
+  createdAt?: string;
+  created_at?: string;
+  created?: string;
+  updatedAt?: string;
+};
+
+export function resolvePublishedAt(source?: PublishedSource | null): string {
+  if (!source) return '';
+  const candidates = [
+    source.publish_date,
+    source.published_at,
+    source.published,
+    source.createdAt,
+    source.created_at,
+    source.created,
+    source.updatedAt,
+  ];
+  for (const value of candidates) {
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return '';
+}
+
+export function publishedDateTime(value: string): string {
+  const date = parseDate(value);
+  if (!date) return value?.trim() || '';
+  const datePart = date.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+  const timePart = date.toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  return `${datePart}, ${timePart}`;
+}
+
 export function timeAgo(value: string): string {
   const date = parseDate(value);
   if (!date) return '';
@@ -119,18 +163,51 @@ export function fleetHint(work: FleetSource): string | null {
   return `Машины: ${slots.busy}/${slots.total} в работе · нужно ещё ${slots.free}`;
 }
 
-export function routeDistanceKm(work: RoutePoints): number | null {
-  const from = work.address;
-  const to = work.destiny;
-  if (!from?.lat || !from?.lon || !to?.lat || !to?.lon) return null;
+export function straightLineDistanceKm(work: RoutePoints): number | null {
+  const fromLat = Number(work.address?.lat || work.address?.city?.lat);
+  const fromLon = Number(work.address?.lon || work.address?.city?.lon);
+  const toLat = Number(work.destiny?.lat || work.destiny?.city?.lat);
+  const toLon = Number(work.destiny?.lon || work.destiny?.city?.lon);
+  if (
+    !Number.isFinite(fromLat) ||
+    !Number.isFinite(fromLon) ||
+    !Number.isFinite(toLat) ||
+    !Number.isFinite(toLon) ||
+    (fromLat === 0 && fromLon === 0) ||
+    (toLat === 0 && toLon === 0)
+  ) {
+    return null;
+  }
   const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(to.lat - from.lat);
-  const dLon = toRad(to.lon - from.lon);
+  const dLat = toRad(toLat - fromLat);
+  const dLon = toRad(toLon - fromLon);
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.sin(dLon / 2) ** 2;
+    Math.cos(toRad(fromLat)) * Math.cos(toRad(toLat)) * Math.sin(dLon / 2) ** 2;
   const km = 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(a)));
   return km > 0 ? Math.round(km) : null;
+}
+
+export function chainDistanceKm(points: Array<{ lat: number; lon: number }>): number | null {
+  let sum = 0;
+  let any = false;
+  for (let index = 1; index < points.length; index += 1) {
+    const km = straightLineDistanceKm({
+      address: points[index - 1],
+      destiny: points[index],
+    });
+    if (km) {
+      sum += km;
+      any = true;
+    }
+  }
+  return any ? sum : null;
+}
+
+export function routeDistanceKm(work: RoutePoints): number | null {
+  const saved = Number(work.route_distance);
+  if (Number.isFinite(saved) && saved > 0) return Math.round(saved);
+  return straightLineDistanceKm(work);
 }
 
 export function feedStatusKind(status: WorkStatus): 'new' | 'bids' | 'work' | 'done' | 'alert' {
@@ -142,11 +219,8 @@ export function feedStatusKind(status: WorkStatus): 'new' | 'bids' | 'work' | 'd
 }
 
 export function feedStatusLabel(status: WorkStatus): string {
-  if (status === WorkStatus.NEW) return 'Новый';
-  if (status === WorkStatus.OFFERED) return 'Торги';
-  if (status === WorkStatus.COMPLETED) return 'Завершён';
-  if (status === WorkStatus.REJECTED) return 'Отказано';
-  return 'В работе';
+  const normalized = normalizeWorkStatus(status);
+  return WORK_STATUS_SHORT[normalized] || normalized;
 }
 
 export function formatPhonePretty(phone: string): string {

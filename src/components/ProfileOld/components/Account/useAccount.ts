@@ -20,7 +20,6 @@ export const useAccount = () => {
   const toast = useToast()
 
   useEffect(() => {
-    console.log("useeEffect", accountData)
   }, [accountData])
   
   const socketRequest = useCallback((event: string, data: any, responseEvent: string): Promise<any> => {
@@ -31,7 +30,6 @@ export const useAccount = () => {
       pendingRequests.current.set(requestId, { resolve, reject });
       
       const onSuccess = (response: any) => {
-        console.log(event + " on:", response)
         if(response.success) {
           const pending = pendingRequests.current.get(requestId);
           if (pending) {
@@ -59,7 +57,6 @@ export const useAccount = () => {
         }
       }, 10000);
       
-      console.log(event + " emit...")
       socket.emit(event, { ...data, requestId });
     });
   }, []);
@@ -163,7 +160,6 @@ export const useAccount = () => {
     setLoading(true)
     try {
       if(socket){
-        console.log("get_balance emit...")
         socket.emit("get_balance", { token })
       }
     } catch (err) {

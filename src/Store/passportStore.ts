@@ -146,7 +146,6 @@ export const passportActions = {
 // ============================================
 export const passportSocketHandlers = {
   onGetPassport: (response: any) => {
-    console.log('onGetPassport response:', response)
     
     passportActions.setLoading(false)
     
@@ -159,7 +158,6 @@ export const passportSocketHandlers = {
   },
 
   onSavePassport: (response: any) => {
-    console.log('onSavePassport response:', response)
     
     passportActions.setSaving(false)
     
@@ -179,7 +177,6 @@ export const initPassportSocketHandlers = (socket: any) => {
   
   socket.on('get_passport', passportSocketHandlers.onGetPassport)
   
-  console.log('Passport socket handlers initialized')
 }
 
 export const destroyPassportSocketHandlers = (socket: any) => {
@@ -187,5 +184,4 @@ export const destroyPassportSocketHandlers = (socket: any) => {
   
   socket.off('get_passport', passportSocketHandlers.onGetPassport)
 
-  console.log('Passport socket handlers destroyed')
 }

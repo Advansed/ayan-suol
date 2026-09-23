@@ -44,7 +44,6 @@ export const usePassport            = () => {
       passportActions.setLoading(false)
       
       if (response.success) {
-        console.log('passport_data', response.data)
         passportActions.setData(response.data)
       } else {
         toast.error(response.message || 'Ошибка загрузки паспортных данных')
@@ -71,7 +70,6 @@ export const usePassport            = () => {
     }
 
     once('set_passport', (response) => {
-      console.log('set_passport_response', response)
       passportActions.setSaving(false)
       if (response.success) {
         toast.success('Паспортные данные сохранены')
@@ -82,7 +80,6 @@ export const usePassport            = () => {
     })
 
     emit('set_passport', { ...data, token })
-    console.log('set_passport', { ...data, token })
     toast.info("Сохраняются паспортные данные...")
   }, [token, isConnected, once, emit ])
   

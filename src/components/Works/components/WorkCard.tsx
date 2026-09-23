@@ -19,10 +19,11 @@ import {
   formatQty,
   getPaymentLevel,
   offersLabel,
+  publishedDateTime,
   resolveBodyType,
+  resolvePublishedAt,
   routeDistanceKm,
   shortDate,
-  timeAgo,
   type PaymentLevel,
 } from '../feedFormat';
 import styles from './WorkCard.module.css';
@@ -67,7 +68,8 @@ export const WorkCard: React.FC<WorkCardProps> = ({ work, selected, onClick }) =
   const payment = getPaymentLevel(work);
   const bodyType = resolveBodyType(work);
   const customerName = getWorkCustomerName(work);
-  const publishedAt = work.publish_date || work.updatedAt || '';
+  const publishedAt = resolvePublishedAt(work);
+  const publishedLabel = publishedAt ? publishedDateTime(publishedAt) : '';
   const pickup = shortDate(work.pickup_date);
   const delivery = shortDate(work.delivery_date);
   const fleet = fleetHint(work);
@@ -119,8 +121,14 @@ export const WorkCard: React.FC<WorkCardProps> = ({ work, selected, onClick }) =
           {distance != null && <span className={styles.feedKm}>· {distance} км</span>}
         </div>
 
-        {(pickup || delivery) && (
+        {(publishedLabel || pickup || delivery) && (
           <div className={styles.feedDates}>
+            {publishedLabel && (
+              <span>
+                <Clock size={14} strokeWidth={1.75} aria-hidden />
+                Опубликовано: {publishedLabel}
+              </span>
+            )}
             {pickup && (
               <span>
                 <Calendar size={14} strokeWidth={1.75} aria-hidden />
@@ -153,12 +161,6 @@ export const WorkCard: React.FC<WorkCardProps> = ({ work, selected, onClick }) =
           <span>
             {formatQty(work.weight)} т · {formatQty(work.volume)} м³
           </span>
-          {publishedAt && (
-            <span>
-              <Clock size={14} strokeWidth={1.75} aria-hidden />
-              {timeAgo(publishedAt)}
-            </span>
-          )}
           {offers > 0 && (
             <span className={styles.feedOffers}>
               <Users size={14} strokeWidth={1.75} aria-hidden />

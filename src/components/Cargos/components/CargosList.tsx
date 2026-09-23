@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { Plus, SlidersHorizontal } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { List, Map, Plus, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { CargoCard } from './CargoCard';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 import { cargoFeedKind, resolveCargoProgressStatus } from '../cargoStatusFlow';
+import { FeedRoutesMap } from '../../Maps/FeedRoutesMap';
+import { ordersToFeedRoutes } from '../../Maps/mockFeedRoutes';
 import styles from './CargosList.module.css';
 
 type FilterId = 'all' | 'new' | 'bids' | 'work' | 'done';
@@ -18,6 +20,7 @@ const FILTERS: { id: FilterId; label: string }[] = [
 function matchesFilter(status: CargoStatus, filter: FilterId): boolean {
   if (filter === 'all') return true;
   const kind = cargoFeedKind(status);
+  // «В работе»: после торгов и до завершения (включая проблемы)
   if (filter === 'work') return kind === 'work' || kind === 'alert';
   if (filter === 'new') return kind === 'new' || kind === 'waiting';
   return kind === filter;
@@ -40,13 +43,26 @@ interface CargosListProps {
   onRefresh?: () => Promise<void>;
 }
 
+function updatedLabel(at: number): string {
+  const mins = Math.floor((Date.now() - at) / 60000);
+  if (mins < 1) return 'обновлено только что';
+  if (mins === 1) return 'обновлено 1 минуту назад';
+  const time = new Date(at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  return `обновлено в ${time}`;
+}
+
 export const CargosList: React.FC<CargosListProps> = ({
   cargos,
   isLoading = false,
   onCreateNew,
   onCargoClick,
+  onRefresh,
 }) => {
   const [filter, setFilter] = useState<FilterId>('all');
+  const [view, setView] = useState<'list' | 'map'>('list');
+  const [updatedAt, setUpdatedAt] = useState(() => Date.now());
+  const [refreshing, setRefreshing] = useState(false);
+  const waitingRefresh = useRef(false);
 
   const visible = useMemo(
     () =>
@@ -56,21 +72,110 @@ export const CargosList: React.FC<CargosListProps> = ({
     [cargos, filter]
   );
 
+  const mapRoutes = useMemo(() => ordersToFeedRoutes(visible), [visible]);
+
+  useEffect(() => {
+    if (!waitingRefresh.current) return;
+    waitingRefresh.current = false;
+    setRefreshing(false);
+    setUpdatedAt(Date.now());
+  }, [cargos]);
+
+  useEffect(() => {
+    if (!refreshing) return;
+    const timer = window.setTimeout(() => {
+      waitingRefresh.current = false;
+      setRefreshing(false);
+      setUpdatedAt(Date.now());
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [refreshing]);
+
+  const handleRefresh = () => {
+    if (!onRefresh || refreshing) return;
+    waitingRefresh.current = true;
+    setRefreshing(true);
+    void onRefresh();
+  };
+
   return (
-    <div className={styles.feed}>
+    <div className={`${styles.feed} ${view === 'map' ? styles.feedFill : ''}`} data-feed-view={view}>
       <header className={styles.pageHead}>
         <div className={styles.pageHeadText}>
           <h1 className={styles.pageTitle}>Лента заказов</h1>
           <p className={styles.pageSub}>
-            {activeOrdersLabel(cargos.length)} · обновлено только что
+            {activeOrdersLabel(cargos.length)} · {updatedLabel(updatedAt)}
           </p>
         </div>
-        <button type="button" className={styles.createBtn} onClick={onCreateNew}>
-          <Plus size={16} strokeWidth={2.25} />
-          Новый груз
-        </button>
+        <div className={styles.pageHeadActions}>
+          <div className={styles.viewToggle} role="tablist" aria-label="Вид ленты">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === 'list'}
+              className={`${styles.viewBtn} ${view === 'list' ? styles.viewBtnActive : ''}`}
+              onClick={() => setView('list')}
+            >
+              <List size={16} strokeWidth={2} />
+              Список
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === 'map'}
+              className={`${styles.viewBtn} ${view === 'map' ? styles.viewBtnActive : ''}`}
+              onClick={() => setView('map')}
+            >
+              <Map size={16} strokeWidth={2} />
+              Карта
+            </button>
+          </div>
+          <button
+            type="button"
+            className={styles.refreshBtn}
+            onClick={handleRefresh}
+            disabled={refreshing || !onRefresh}
+            aria-label="Обновить ленту"
+            title="Обновить"
+          >
+            <RefreshCw size={18} strokeWidth={2.25} className={refreshing ? styles.refreshSpin : undefined} />
+            Обновить
+          </button>
+          <button type="button" className={styles.createBtn} onClick={onCreateNew}>
+            <Plus size={16} strokeWidth={2.25} />
+            Новый груз
+          </button>
+        </div>
       </header>
 
+      {view === 'map' ? (
+        <>
+          <div className={styles.toolbar}>
+            <div className={styles.tabs} role="tablist" aria-label="Фильтр заказов">
+              {FILTERS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === item.id}
+                  className={`${styles.tab} ${filter === item.id ? styles.tabActive : ''}`}
+                  onClick={() => setFilter(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <FeedRoutesMap
+            routes={mapRoutes}
+            onRouteClick={(routeId) => {
+              const cargo = visible.find((item) => item.guid === routeId);
+              if (cargo) onCargoClick(cargo);
+            }}
+          />
+        </>
+      ) : (
+        <>
       <div className={styles.legend} aria-label="Светофор безопасной оплаты">
         <span className={styles.legendTitle}>Светофор безопасной оплаты</span>
         <span className={styles.legendItem}>
@@ -109,7 +214,7 @@ export const CargosList: React.FC<CargosListProps> = ({
       </div>
 
       <div className={styles.list}>
-        {isLoading ? (
+        {isLoading && cargos.length === 0 ? (
           <div className={styles.loading}>Загрузка грузов…</div>
         ) : visible.length === 0 ? (
           <div className={styles.empty}>
@@ -133,6 +238,8 @@ export const CargosList: React.FC<CargosListProps> = ({
           ))
         )}
       </div>
+        </>
+      )}
     </div>
   );
 };

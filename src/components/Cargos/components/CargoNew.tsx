@@ -9,18 +9,30 @@ import {
   MapPin,
   Navigation,
   Package,
+  Plus,
+  Trash2,
   Phone,
   Shield,
   ShieldCheck,
+  ShieldOff,
   Snowflake,
   Truck,
   Upload,
   Wallet,
   X,
 } from 'lucide-react';
-import { CargoInfo, EMPTY_CARGO } from '../../../Store/cargoStore';
+import {
+  buildCargoRoute,
+  CargoInfo,
+  CargoRoutePoint,
+  EMPTY_CARGO,
+  hasRouteCoords,
+  normalizeCargoRoute,
+} from '../../../Store/cargoStore';
 import { useLoginStore, useToken } from '../../../Store/loginStore';
 import {
+  formatHaulPriceRange,
+  haulPriceRange,
   resolveTransportTypeId,
   toTransportTypeId,
   useTransportTypes,
@@ -28,8 +40,32 @@ import {
 import { useSocket } from '../../../Store/useSocket';
 import { CityField } from '../../DataEditor/fields/СityField';
 import { AddressField } from '../../DataEditor/fields/AddressField';
+import Maps from '../../Maps/Maps';
+import { fetchDrivingDistanceKm } from '../../Maps/services/googleMapServices';
+import { geocodeAddress } from '../../../utils/googlePlaces';
 import { getPaymentLevel, type PaymentLevel } from '../../Works/feedFormat';
 import styles from './CargoNew.module.css';
+
+function coordString(lat?: number | null, lon?: number | null): { lat: string; lon: string } {
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo) || (la === 0 && lo === 0)) {
+    return { lat: '', lon: '' };
+  }
+  return { lat: String(la), lon: String(lo) };
+}
+
+function resolvePointCoords(point?: {
+  lat?: number;
+  lon?: number;
+  city?: { lat?: number; lon?: number };
+} | null): { lat: number; lon: number } | null {
+  const lat = Number(point?.lat || point?.city?.lat);
+  const lon = Number(point?.lon || point?.city?.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (lat === 0 && lon === 0) return null;
+  return { lat, lon };
+}
 
 interface CargoNewProps {
   cargo: CargoInfo;
@@ -38,7 +74,7 @@ interface CargoNewProps {
   onCreate: (data: CargoInfo) => Promise<boolean>;
 }
 
-type InsuranceKind = 'simple' | 'fragile' | 'tech';
+type InsuranceKind = 'none' | 'simple' | 'fragile' | 'tech';
 
 const FALLBACK_BODY_TYPES: Array<{ name: string; desc: string; Icon: typeof Truck }> = [
   { name: 'Тент', desc: 'Универсальный кузов для большинства грузов', Icon: Truck },
@@ -80,6 +116,13 @@ const INSURANCE_OPTIONS: Array<{
   rate: number;
   Icon: typeof Box;
 }> = [
+  {
+    id: 'none',
+    label: 'Без страховки',
+    desc: 'Заказ публикуется без страхового покрытия, премия не списывается',
+    rate: 0,
+    Icon: ShieldOff,
+  },
   {
     id: 'simple',
     label: 'Простой товар',
@@ -142,7 +185,8 @@ const parseDecimalDraft = (raw: string): number => {
 const resolveInsuranceKind = (cargo: CargoInfo): InsuranceKind => {
   const cost = Number(cargo.cost) || 0;
   const premium = Number(cargo.insurance) || 0;
-  if (!cost || !premium) return 'simple';
+  if (!premium) return 'none';
+  if (!cost) return 'simple';
   const rate = Math.round((premium / cost) * 100);
   if (rate >= 3) return 'tech';
   if (rate >= 2) return 'fragile';
@@ -190,6 +234,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
   );
   const [capacityT, setCapacityT] = useState('');
   const [docs, setDocs] = useState<File[]>([]);
+  const [endpointIds, setEndpointIds] = useState<{ pickup?: string; delivery?: string }>({});
 
   const isEdit = Boolean(initialCargo?.guid);
   const cargoGuid = initialCargo?.guid;
@@ -225,7 +270,15 @@ export const CargoNew: React.FC<CargoNewProps> = ({
 
   useEffect(() => {
     if (cargoGuid) {
-      setInfo(initialCargo);
+      const normalized = normalizeCargoRoute(initialCargo);
+      setEndpointIds({
+        pickup: normalized.route.find((point) => point.point_type === 'pickup')?.id,
+        delivery: normalized.route.find((point) => point.point_type === 'delivery')?.id,
+      });
+      setInfo({
+        ...normalized,
+        route: normalized.route.filter((point) => point.point_type === 'waypoint'),
+      });
       setWeightDraft(numberToDecimalDraft(initialCargo.weight));
       setVolumeDraft(numberToDecimalDraft(initialCargo.volume));
       setEscrow(getPaymentLevel(initialCargo));
@@ -250,12 +303,61 @@ export const CargoNew: React.FC<CargoNewProps> = ({
       setVolumeDraft('');
       setEscrow('full');
       setEscrowHeld(0);
-      setInsuranceKind('simple');
+      setInsuranceKind('none');
       setTransportTypeId(bodyTypes[0]?.id || '');
+      setEndpointIds({});
       setCapacityT('');
       setDocs([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only on cargo switch
+  }, [cargoGuid]);
+
+  useEffect(() => {
+    if (!cargoGuid) return;
+    let cancelled = false;
+    const run = async () => {
+      const normalized = normalizeCargoRoute(initialCargo);
+      const filled: CargoRoutePoint[] = [];
+      for (const point of normalized.route) {
+        if (hasRouteCoords(point.lat, point.lon)) {
+          filled.push(point);
+          continue;
+        }
+        const query = [point.address, point.city].filter(Boolean).join(', ');
+        const place = query ? await geocodeAddress(query) : null;
+        if (cancelled) return;
+        filled.push(
+          place
+            ? { ...point, lat: place.lat, lon: place.lon, address: point.address || place.label }
+            : point
+        );
+      }
+      if (cancelled) return;
+      const next = normalizeCargoRoute({ ...normalized, route: filled });
+      setInfo((prev) => {
+        if ((prev.guid || '') !== cargoGuid) return prev;
+        const keep = <T extends { lat?: number; lon?: number }>(current: T, incoming: T) =>
+          hasRouteCoords(current?.lat, current?.lon) ? current : incoming;
+        const incomingVia = next.route.filter((point) => point.point_type === 'waypoint');
+        return {
+          ...prev,
+          address: keep(prev.address, next.address),
+          destiny: keep(prev.destiny, next.destiny),
+          route: (prev.route || []).map((point, index) => {
+            if (hasRouteCoords(point.lat, point.lon)) return point;
+            const match = incomingVia[index];
+            return match && hasRouteCoords(match.lat, match.lon)
+              ? { ...point, lat: match.lat, lon: match.lon, address: point.address || match.address }
+              : point;
+          }),
+        };
+      });
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- geocode saved points once per order
   }, [cargoGuid]);
 
   useEffect(() => {
@@ -271,8 +373,11 @@ export const CargoNew: React.FC<CargoNewProps> = ({
   const cargoCost = Number(info.cost) || 0;
   const haulPrice = Number(info.price) || 0;
   const insuranceRate =
-    INSURANCE_OPTIONS.find((item) => item.id === insuranceKind)?.rate ?? 1;
-  const insurancePremium = Math.round((cargoCost * insuranceRate) / 100);
+    INSURANCE_OPTIONS.find((item) => item.id === insuranceKind)?.rate ?? 0;
+  const insurancePremium =
+    insuranceKind === 'none' || insuranceRate <= 0
+      ? 0
+      : Math.round((cargoCost * insuranceRate) / 100);
   const totalWithInsurance = haulPrice + insurancePremium;
   const escrowPercent =
     haulPrice > 0 && escrowHeld > 0
@@ -284,13 +389,146 @@ export const CargoNew: React.FC<CargoNewProps> = ({
     if (escrow === 'none') setEscrowHeld(0);
   }, [escrow, haulPrice]);
 
+  const routeStops = [
+    {
+      kind: 'pickup' as const,
+      city: info.address?.city?.city || '',
+      address: info.address?.address || '',
+      lat: Number(info.address?.lat) || Number(info.address?.city?.lat) || 0,
+      lon: Number(info.address?.lon) || Number(info.address?.city?.lon) || 0,
+    },
+    ...(info.route || [])
+      .filter((point) => point.point_type === 'waypoint')
+      .map((point) => ({
+        kind: 'waypoint' as const,
+        city: point.city || '',
+        address: point.address || '',
+        lat: Number(point.lat) || 0,
+        lon: Number(point.lon) || 0,
+      })),
+    {
+      kind: 'delivery' as const,
+      city: info.destiny?.city?.city || '',
+      address: info.destiny?.address || '',
+      lat: Number(info.destiny?.lat) || Number(info.destiny?.city?.lat) || 0,
+      lon: Number(info.destiny?.lon) || Number(info.destiny?.city?.lon) || 0,
+    },
+  ];
+  const routeSignature = routeStops
+    .map((stop) => `${stop.kind}\u001f${stop.city}\u001f${stop.address}\u001f${stop.lat}\u001f${stop.lon}`)
+    .join('\u001e');
+
+  useEffect(() => {
+    const stops = routeStops;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        const resolved: Array<{ kind: string; lat: number; lon: number } | null> = [];
+        for (const stop of stops) {
+          if (cancelled) return;
+          const query = [stop.address, stop.city].filter((part) => part.trim()).join(', ');
+          let coords = resolvePointCoords(stop);
+          if (stop.address.trim().length >= 3) {
+            const place = await geocodeAddress(query);
+            if (cancelled) return;
+            if (place) coords = { lat: place.lat, lon: place.lon };
+          }
+          resolved.push(coords ? { kind: stop.kind, lat: coords.lat, lon: coords.lon } : null);
+        }
+        if (cancelled) return;
+        const chain = resolved.filter((point): point is { kind: string; lat: number; lon: number } => Boolean(point));
+        if (chain.length < 2) {
+          setInfo((prev) =>
+            prev.route_distance == null ? prev : { ...prev, route_distance: undefined }
+          );
+          return;
+        }
+        const [from, ...rest] = chain;
+        const to = rest[rest.length - 1];
+        const via = rest.slice(0, -1);
+        const km = await fetchDrivingDistanceKm(from, to, via);
+        if (cancelled) return;
+        const next = km;
+        setInfo((prev) => {
+          const sameDistance = next == null ? prev.route_distance == null : prev.route_distance === next;
+          const applyCoord = (currentLat?: number, currentLon?: number, nextPoint?: { lat: number; lon: number } | null) => {
+            if (!nextPoint) return { lat: currentLat || 0, lon: currentLon || 0, changed: false };
+            const changed =
+              Math.abs((Number(currentLat) || 0) - nextPoint.lat) > 0.0001 ||
+              Math.abs((Number(currentLon) || 0) - nextPoint.lon) > 0.0001;
+            return changed
+              ? { lat: nextPoint.lat, lon: nextPoint.lon, changed: true }
+              : { lat: Number(currentLat) || 0, lon: Number(currentLon) || 0, changed: false };
+          };
+          const pickup = applyCoord(prev.address?.lat, prev.address?.lon, resolved[0]);
+          const delivery = applyCoord(prev.destiny?.lat, prev.destiny?.lon, resolved[resolved.length - 1]);
+          let viaIndex = 0;
+          let viaChanged = false;
+          const route = (prev.route || []).map((point) => {
+            if (point.point_type !== 'waypoint') return point;
+            const found = resolved[1 + viaIndex];
+            viaIndex += 1;
+            const coords = applyCoord(point.lat, point.lon, found);
+            if (!coords.changed) return point;
+            viaChanged = true;
+            return { ...point, lat: coords.lat, lon: coords.lon };
+          });
+          if (sameDistance && !pickup.changed && !delivery.changed && !viaChanged) return prev;
+          return {
+            ...prev,
+            route_distance: next == null ? undefined : next,
+            address: prev.address ? { ...prev.address, lat: pickup.lat, lon: pickup.lon } : prev.address,
+            destiny: prev.destiny ? { ...prev.destiny, lat: delivery.lat, lon: delivery.lon } : prev.destiny,
+            route,
+          };
+        });
+      })();
+    }, 500);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [routeSignature]);
+
   const activeBody =
     bodyTypes.find((item) => item.id === transportTypeId) || bodyTypes[0];
+
+  const selectedTransportType = transportTypes.find((type) => type.id === transportTypeId);
+  const routeKm = Number(info.route_distance) > 0 ? Number(info.route_distance) : null;
+  const priceRange = haulPriceRange(info.weight, routeKm, selectedTransportType);
+  const formula = Number(selectedTransportType?.formula);
+  const hasTariffs =
+    Number.isFinite(Number(selectedTransportType?.min_tarif)) &&
+    Number.isFinite(Number(selectedTransportType?.max_tarif));
+  const hintNum = (n: number | null | undefined) => {
+    const v = Number(n);
+    if (!Number.isFinite(v) || v <= 0) return '—';
+    return String(v).replace('.', ',');
+  };
+  const tariffParts = hasTariffs
+    ? `(${hintNum(info.weight)}, ${hintNum(routeKm)}, ${hintNum(selectedTransportType?.min_tarif)}~${hintNum(selectedTransportType?.max_tarif)})`
+    : '';
+  const priceHint =
+    priceRange
+      ? `${tariffParts} Цена перевозки ${formatHaulPriceRange(priceRange)}`.trim()
+      : formula === 1 && hasTariffs
+        ? `${tariffParts} Укажите вес и маршрут`
+        : formula === 2 && hasTariffs
+          ? `${tariffParts} Укажите маршрут`
+          : null;
 
   const buildCargo = (): CargoInfo => {
     const advance =
       escrow === 'full' ? haulPrice : escrow === 'partial' ? Number(escrowHeld) || 0 : 0;
     const selectedType = transportTypes.find((type) => type.id === transportTypeId);
+
+    const route = buildCargoRoute(
+      info.address || EMPTY_CARGO.address,
+      info.destiny || EMPTY_CARGO.destiny,
+      info.route || [],
+      endpointIds
+    );
 
     return {
       ...info,
@@ -305,7 +543,55 @@ export const CargoNew: React.FC<CargoNewProps> = ({
       body_type: selectedType?.name || activeBody?.name || info.body_type || '',
       vehicles_total: 1,
       vehicles_busy: info.vehicles_busy || 0,
+      route,
     };
+  };
+
+  const waypoints = (info.route || []).filter((point) => point.point_type === 'waypoint');
+
+  const patchWaypoint = (index: number, next: CargoRoutePoint) => {
+    setInfo((prev) => {
+      const list = (prev.route || []).filter((point) => point.point_type === 'waypoint');
+      const current = list[index];
+      const coordsChanged =
+        Number(current?.lat) !== Number(next.lat) || Number(current?.lon) !== Number(next.lon);
+      return {
+        ...prev,
+        ...(coordsChanged ? { route_distance: undefined } : {}),
+        route: list.map((point, itemIndex) =>
+          itemIndex === index
+            ? { ...next, point_type: 'waypoint', sequence_num: itemIndex + 2 }
+            : point
+        ),
+      };
+    });
+  };
+
+  const addWaypoint = () => {
+    setInfo((prev) => ({
+      ...prev,
+      route: [
+        ...(prev.route || []).filter((point) => point.point_type === 'waypoint'),
+        {
+          city: '',
+          address: '',
+          lat: 0,
+          lon: 0,
+          point_type: 'waypoint',
+          sequence_num: (prev.route?.length || 0) + 2,
+        },
+      ],
+    }));
+  };
+
+  const removeWaypoint = (index: number) => {
+    setInfo((prev) => ({
+      ...prev,
+      route_distance: undefined,
+      route: (prev.route || [])
+        .filter((point) => point.point_type === 'waypoint')
+        .filter((_, itemIndex) => itemIndex !== index),
+    }));
   };
 
   const handleNext = async (event?: React.FormEvent) => {
@@ -464,20 +750,14 @@ export const CargoNew: React.FC<CargoNewProps> = ({
                 onChange={(cityData) => {
                   setInfo((prev) => ({
                     ...prev,
+                    route_distance: undefined,
                     address: {
                       ...(prev.address || EMPTY_CARGO.address),
                       city: cityData,
-                      fias: cityData.fias || prev.address?.fias || '',
-                    },
-                  }));
-                }}
-                onFIAS={(fias) => {
-                  setInfo((prev) => ({
-                    ...prev,
-                    address: {
-                      ...(prev.address || EMPTY_CARGO.address),
-                      fias: fias || prev.address?.fias || '',
-                      city: prev.address?.city || EMPTY_CARGO.address.city,
+                      address: '',
+                      fias: '',
+                      lat: cityData.lat ?? 0,
+                      lon: cityData.lon ?? 0,
                     },
                   }));
                 }}
@@ -496,28 +776,123 @@ export const CargoNew: React.FC<CargoNewProps> = ({
 
             <div className={`${styles.dadata} ${styles.span2}`}>
               <AddressField
+                key={`from-${info.address?.city?.city || ''}-${info.address?.city?.lat || 0}-${info.address?.city?.lon || 0}`}
                 label="Точный адрес отправки"
                 value={{
                   address: info.address?.address || '',
                   fias: info.address?.fias || '',
-                  lat: info.address?.lat ? String(info.address.lat) : '',
-                  lon: info.address?.lon ? String(info.address.lon) : '',
+                  ...coordString(
+                    info.address?.lat || info.address?.city?.lat,
+                    info.address?.lon || info.address?.city?.lon
+                  ),
                 }}
                 onChange={(addressData) =>
-                  setInfo((prev) => ({
-                    ...prev,
-                    address: {
-                      ...(prev.address || EMPTY_CARGO.address),
-                      address: addressData.address,
-                      fias: addressData.fias || prev.address?.fias || '',
-                      lat: addressData.lat ? Number(addressData.lat) : prev.address?.lat || 0,
-                      lon: addressData.lon ? Number(addressData.lon) : prev.address?.lon || 0,
-                    },
-                  }))
+                  setInfo((prev) => {
+                    const lat = Number(addressData.lat);
+                    const lon = Number(addressData.lon);
+                    const nextLat =
+                      Number.isFinite(lat) && !(lat === 0 && Number.isFinite(lon) && lon === 0)
+                        ? lat
+                        : prev.address?.lat || prev.address?.city?.lat || 0;
+                    const nextLon =
+                      Number.isFinite(lon) && !(Number.isFinite(lat) && lat === 0 && lon === 0)
+                        ? lon
+                        : prev.address?.lon || prev.address?.city?.lon || 0;
+                    const coordsChanged =
+                      nextLat !== (prev.address?.lat || 0) || nextLon !== (prev.address?.lon || 0);
+                    return {
+                      ...prev,
+                      ...(coordsChanged ? { route_distance: undefined } : {}),
+                      address: {
+                        ...(prev.address || EMPTY_CARGO.address),
+                        address: addressData.address,
+                        fias: addressData.fias || prev.address?.fias || '',
+                        lat: nextLat,
+                        lon: nextLon,
+                      },
+                    };
+                  })
                 }
-                cityFias={info.address?.city?.fias || info.address?.fias}
+                cityFias={info.address?.city?.fias}
+                cityName={info.address?.city?.city}
+                country={info.address?.city?.country}
+                cityLat={info.address?.city?.lat ?? info.address?.lat}
+                cityLon={info.address?.city?.lon ?? info.address?.lon}
               />
             </div>
+          </div>
+        </Section>
+
+        <Section icon={MapPin} title="Промежуточные точки">
+          <div className={styles.waypointList}>
+            {waypoints.map((point, index) => (
+              <div key={point.id || `waypoint-${index}`} className={styles.waypointCard}>
+                <div className={styles.waypointHead}>
+                  <span>Точка {index + 1}</span>
+                  <button
+                    type="button"
+                    className={styles.waypointRemove}
+                    onClick={() => removeWaypoint(index)}
+                  >
+                    <Trash2 size={14} strokeWidth={2} />
+                    Удалить
+                  </button>
+                </div>
+                <div className={styles.grid2}>
+                  <div className={styles.dadata}>
+                    <CityField
+                      label="Город"
+                      value={{ city: point.city || '', fias: '', lat: point.lat, lon: point.lon }}
+                      onChange={(cityData) =>
+                        patchWaypoint(index, {
+                          ...point,
+                          city: cityData.city,
+                          address: '',
+                          lat: cityData.lat ?? 0,
+                          lon: cityData.lon ?? 0,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className={`${styles.dadata} ${styles.span2}`}>
+                    <AddressField
+                      key={`via-${point.id || index}-${point.city}`}
+                      label="Точный адрес"
+                      value={{
+                        address: point.address || '',
+                        fias: '',
+                        ...coordString(point.lat, point.lon),
+                      }}
+                      onChange={(addressData) => {
+                        const lat = Number(addressData.lat);
+                        const lon = Number(addressData.lon);
+                        const nextLat =
+                          Number.isFinite(lat) && !(lat === 0 && Number.isFinite(lon) && lon === 0)
+                            ? lat
+                            : point.lat || 0;
+                        const nextLon =
+                          Number.isFinite(lon) && !(Number.isFinite(lat) && lat === 0 && lon === 0)
+                            ? lon
+                            : point.lon || 0;
+                        patchWaypoint(index, {
+                          ...point,
+                          address: addressData.address,
+                          lat: nextLat,
+                          lon: nextLon,
+                        });
+                      }}
+                      cityName={point.city}
+                      cityLat={point.lat}
+                      cityLon={point.lon}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button type="button" className={styles.addPoint} onClick={addWaypoint}>
+              <Plus size={16} strokeWidth={2} />
+              Добавить точку
+            </button>
           </div>
         </Section>
 
@@ -530,20 +905,14 @@ export const CargoNew: React.FC<CargoNewProps> = ({
                 onChange={(cityData) => {
                   setInfo((prev) => ({
                     ...prev,
+                    route_distance: undefined,
                     destiny: {
                       ...(prev.destiny || EMPTY_CARGO.destiny),
                       city: cityData,
-                      fias: cityData.fias || prev.destiny?.fias || '',
-                    },
-                  }));
-                }}
-                onFIAS={(fias) => {
-                  setInfo((prev) => ({
-                    ...prev,
-                    destiny: {
-                      ...(prev.destiny || EMPTY_CARGO.destiny),
-                      fias: fias || prev.destiny?.fias || '',
-                      city: prev.destiny?.city || EMPTY_CARGO.destiny.city,
+                      address: '',
+                      fias: '',
+                      lat: cityData.lat ?? 0,
+                      lon: cityData.lon ?? 0,
                     },
                   }));
                 }}
@@ -562,30 +931,74 @@ export const CargoNew: React.FC<CargoNewProps> = ({
 
             <div className={`${styles.dadata} ${styles.span2}`}>
               <AddressField
+                key={`to-${info.destiny?.city?.city || ''}-${info.destiny?.city?.lat || 0}-${info.destiny?.city?.lon || 0}`}
                 label="Точный адрес прибытия"
                 value={{
                   address: info.destiny?.address || '',
                   fias: info.destiny?.fias || '',
-                  lat: info.destiny?.lat ? String(info.destiny.lat) : '',
-                  lon: info.destiny?.lon ? String(info.destiny.lon) : '',
+                  ...coordString(
+                    info.destiny?.lat || info.destiny?.city?.lat,
+                    info.destiny?.lon || info.destiny?.city?.lon
+                  ),
                 }}
                 onChange={(addressData) =>
-                  setInfo((prev) => ({
-                    ...prev,
-                    destiny: {
-                      ...(prev.destiny || EMPTY_CARGO.destiny),
-                      address: addressData.address,
-                      fias: addressData.fias || prev.destiny?.fias || '',
-                      lat: addressData.lat ? Number(addressData.lat) : prev.destiny?.lat || 0,
-                      lon: addressData.lon ? Number(addressData.lon) : prev.destiny?.lon || 0,
-                    },
-                  }))
+                  setInfo((prev) => {
+                    const lat = Number(addressData.lat);
+                    const lon = Number(addressData.lon);
+                    const nextLat =
+                      Number.isFinite(lat) && !(lat === 0 && Number.isFinite(lon) && lon === 0)
+                        ? lat
+                        : prev.destiny?.lat || prev.destiny?.city?.lat || 0;
+                    const nextLon =
+                      Number.isFinite(lon) && !(Number.isFinite(lat) && lat === 0 && lon === 0)
+                        ? lon
+                        : prev.destiny?.lon || prev.destiny?.city?.lon || 0;
+                    const coordsChanged =
+                      nextLat !== (prev.destiny?.lat || 0) || nextLon !== (prev.destiny?.lon || 0);
+                    return {
+                      ...prev,
+                      ...(coordsChanged ? { route_distance: undefined } : {}),
+                      destiny: {
+                        ...(prev.destiny || EMPTY_CARGO.destiny),
+                        address: addressData.address,
+                        fias: addressData.fias || prev.destiny?.fias || '',
+                        lat: nextLat,
+                        lon: nextLon,
+                      },
+                    };
+                  })
                 }
-                cityFias={info.destiny?.city?.fias || info.destiny?.fias}
+                cityFias={info.destiny?.city?.fias}
+                cityName={info.destiny?.city?.city}
+                country={info.destiny?.city?.country}
+                cityLat={info.destiny?.city?.lat ?? info.destiny?.lat}
+                cityLon={info.destiny?.city?.lon ?? info.destiny?.lon}
               />
             </div>
           </div>
         </Section>
+
+        {resolvePointCoords(info.address) && resolvePointCoords(info.destiny) ? (
+          <Section icon={MapPin} title="Маршрут">
+            <div className={styles.routeMap}>
+              <Maps
+                height="320px"
+                startCoords={{
+                  lat: Number(info.address?.lat) || Number(info.address?.city?.lat) || 0,
+                  long: Number(info.address?.lon) || Number(info.address?.city?.lon) || 0,
+                }}
+                endCoords={{
+                  lat: Number(info.destiny?.lat) || Number(info.destiny?.city?.lat) || 0,
+                  long: Number(info.destiny?.lon) || Number(info.destiny?.city?.lon) || 0,
+                }}
+                waypoints={(info.route || [])
+                  .filter((point) => point.point_type === 'waypoint')
+                  .filter((point) => resolvePointCoords(point))
+                  .map((point) => ({ lat: point.lat, long: point.lon }))}
+              />
+            </div>
+          </Section>
+        ) : null}
 
         <Section icon={Phone} title="Контактное лицо">
           <div className={styles.grid2}>
@@ -735,14 +1148,20 @@ export const CargoNew: React.FC<CargoNewProps> = ({
                   <span className={styles.choiceHead}>
                     <Icon size={16} strokeWidth={1.75} className={styles.choiceIcon} />
                     <span className={styles.choiceTitle}>{option.label}</span>
-                    <span className={styles.choiceRate}>{option.rate}%</span>
+                    <span className={styles.choiceRate}>
+                      {option.rate > 0 ? `${option.rate}%` : '0 ₽'}
+                    </span>
                   </span>
                   <span className={styles.choiceDesc}>{option.desc}</span>
                 </button>
               );
             })}
           </div>
-          {cargoCost > 0 && (
+          {insuranceKind === 'none' ? (
+            <p className={styles.helpText}>
+              Заказ будет опубликован без страховки, с баланса премия не списывается.
+            </p>
+          ) : cargoCost > 0 ? (
             <p className={styles.helpText}>
               Страховая премия:{' '}
               <strong>
@@ -750,7 +1169,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
               </strong>{' '}
               ({insuranceRate}% от стоимости груза {formatNumber(cargoCost)} ₽)
             </p>
-          )}
+          ) : null}
         </Section>
 
         <Section icon={Wallet} title="Цена перевозки">
@@ -770,6 +1189,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
               <div className={styles.readonly}>{formatNumber(totalWithInsurance) || '0'} ₽</div>
             </Field>
           </div>
+          {priceHint ? <p className={styles.helpText}>{priceHint}</p> : null}
         </Section>
 
         <div className={styles.actions}>

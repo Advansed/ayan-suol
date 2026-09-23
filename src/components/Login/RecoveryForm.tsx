@@ -18,7 +18,6 @@ const StepPhone: React.FC<{ auth: UseAuthReturn }> = ({ auth }) => {
       auth.updateRecoveryData('phoneError', 'Введите номер телефона')
       return
     }
-    console.log(auth.recoveryData)
     auth.submitRecoveryStep()
   }
 

@@ -5,10 +5,33 @@
   width: 100%;
 }
 
+.feedFill {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
 .pageHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pageHeadText {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+}
+
+.pageHeadActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .pageTitle {
@@ -25,6 +48,71 @@
   font-size: 14px;
   color: var(--gvr-text-muted);
   line-height: 1.4;
+}
+
+.viewToggle {
+  display: inline-flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.viewBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--gvr-border);
+  background: var(--gvr-surface);
+  color: var(--gvr-text-secondary);
+  border-radius: var(--gvr-radius-pill);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.viewBtn:hover {
+  background: var(--gvr-bg);
+  color: var(--gvr-text);
+}
+
+.viewBtnActive {
+  background: var(--gvr-primary);
+  border-color: transparent;
+  color: #fff;
+}
+
+.refreshBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--gvr-border);
+  background: var(--gvr-surface);
+  color: var(--gvr-text);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.refreshBtn:hover:not(:disabled) {
+  background: var(--gvr-bg);
+}
+
+.refreshBtn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.refreshSpin {
+  animation: feedRefreshSpin 0.8s linear infinite;
+}
+
+@keyframes feedRefreshSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .legend {

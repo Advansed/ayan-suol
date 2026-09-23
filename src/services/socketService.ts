@@ -1,18 +1,41 @@
 // src/services/socketService.ts
-import { io, Socket }     from 'socket.io-client';
-import { socketActions }  from '../Store/socketStore';
-import { loginGetters }   from '../Store/loginStore';
+import { io, Socket } from 'socket.io-client';
+import { socketActions } from '../Store/socketStore';
+import { loginGetters } from '../Store/loginStore';
+import { logApiRequest, logApiResponse } from '../utils/apiLogger';
 
 class SocketService {
   private socket: Socket | null = null;
   private isConnected = false;
+  private responseLoggingAttached = false;
+  private emitLoggingAttached = false;
 
   private readonly SERVER_URL = 'https://paitza.com';
   private readonly SOCKET_PATH = '/node/socket.io/';
 
-  connect(token: string): Promise<boolean> {
+  private attachResponseLogging(socket: Socket) {
+    if (this.responseLoggingAttached) return;
+    this.responseLoggingAttached = true;
+    socket.onAny((event: string, ...args: unknown[]) => {
+      logApiResponse('socket', event, args.length <= 1 ? args[0] : args);
+    });
+  }
 
-    socketActions.setConnecting(true)
+  /** Логирует параметры всех исходящих emit, в т.ч. прямых socket.emit(...) */
+  private attachEmitLogging(socket: Socket) {
+    if (this.emitLoggingAttached) return;
+    this.emitLoggingAttached = true;
+    const originalEmit = socket.emit.bind(socket);
+    socket.emit = ((event: string, ...args: unknown[]) => {
+      if (typeof event === 'string') {
+        logApiRequest('socket', event, args.length <= 1 ? args[0] : args);
+      }
+      return originalEmit(event, ...args);
+    }) as typeof socket.emit;
+  }
+
+  connect(token: string): Promise<boolean> {
+    socketActions.setConnecting(true);
 
     return new Promise((resolve, reject) => {
       if (this.socket?.connected) {
@@ -21,33 +44,35 @@ class SocketService {
       }
 
       this.socket = io(this.SERVER_URL, {
-        path:                   this.SOCKET_PATH,
-        auth:                   { token },
-        transports:             ['polling', 'websocket'],
-        withCredentials:        true
+        path: this.SOCKET_PATH,
+        auth: { token },
+        transports: ['polling', 'websocket'],
+        withCredentials: true,
       });
 
-      // Только критичные обработчики для Promise
+      this.attachEmitLogging(this.socket);
+      this.attachResponseLogging(this.socket);
+
       const handleConnect = () => {
-        console.log("socketService connect", true)
         this.isConnected = true;
         this.socket?.off('connect', handleConnect);
         this.socket?.off('connect_error', handleError);
 
-        socketActions.setConnected(true)
-        socketActions.setConnecting(false)
+        socketActions.setConnected(true);
+        socketActions.setConnecting(false);
 
-        if(loginGetters.isAuthenticated()) this.socket?.emit("re_authorize", {token: loginGetters.getToken()})
+        if (loginGetters.isAuthenticated()) {
+          this.emit('re_authorize', { token: loginGetters.getToken() });
+        }
 
         resolve(true);
       };
       const handleDisconnect = () => {
-        console.log("socketService disconnect", true)
         this.isConnected = false;
-        socketActions.setConnected(false)
-        this.socket?.off('disconnect', handleConnect);
+        socketActions.setConnected(false);
+        this.socket?.off('disconnect', handleDisconnect);
 
-        socketActions.setConnecting(false)
+        socketActions.setConnecting(false);
 
         resolve(true);
       };
@@ -55,8 +80,8 @@ class SocketService {
         console.error('Ошибка подключения:', error);
         this.socket?.off('connect', handleConnect);
         this.socket?.off('connect_error', handleError);
-        
-        socketActions.updateStatus(false, false)
+
+        socketActions.updateStatus(false, false);
 
         reject(error);
       };
@@ -72,7 +97,7 @@ class SocketService {
       console.error('Socket не подключен');
       return false;
     }
-    
+
     this.socket.emit(eventName, data);
     return true;
   }
@@ -82,8 +107,10 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
+      this.responseLoggingAttached = false;
+      this.emitLoggingAttached = false;
     }
-    socketActions.updateStatus(false, false)
+    socketActions.updateStatus(false, false);
   }
 
   isSocketConnected(): boolean {
@@ -96,11 +123,10 @@ class SocketService {
       socketId: this.socket?.id,
     };
   }
-    
+
   getSocket(): Socket | null {
     return this.socket;
   }
-
 }
 
 export const socketService = new SocketService();

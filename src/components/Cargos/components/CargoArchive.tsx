@@ -9,7 +9,6 @@ const CargoArchive = () => {
 
   const handleCargoClick = (cargo) => {
     // TODO: Добавить навигацию к просмотру заказа
-    console.log('Clicked cargo:', cargo);
   };
 
   return (

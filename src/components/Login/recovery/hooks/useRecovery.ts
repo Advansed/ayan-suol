@@ -257,7 +257,6 @@ export const useRecovery = (onSwitchToLogin?: () => void): UseRecoveryReturn => 
 
       updateState({ isLoading: false });
 
-      console.log("handleCheckSms", response);
       if (response.success) {
         const token = tokenFromCheckSmsResponse(response.data);
         if (token) {

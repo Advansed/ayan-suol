@@ -100,7 +100,6 @@ export const WorkPage1: React.FC<VehicleInspectionProps> = ({
 
   // Преобразование данных из DataEditor обратно в VehicleInspectionData
   const pagesToInspection = ( data: PageData ): SaveData => {
-    console.log("pageData", data)
     return {
         sign:             data[1].data[0].data, 
         inspectVehicle:   data[2].data[0].data, 
@@ -116,7 +115,6 @@ export const WorkPage1: React.FC<VehicleInspectionProps> = ({
     try {
       const inspectionData = pagesToInspection(data);
       
-      console.log( 'handleSave', inspectionData)
 
       const success = await onSave(inspectionData);
       

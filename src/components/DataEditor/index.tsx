@@ -31,7 +31,13 @@ const DataEditor: React.FC<DataEditorProps> = ({
   const { errors, validateField, setError, clearAll } = useValidation();
  
 
-  const [fias, setFias ] = useState('')
+  const [cityHint, setCityHint] = useState<{
+    fias: string;
+    city: string;
+    country?: string;
+    lat?: number;
+    lon?: number;
+  }>({ fias: '', city: '' });
 
   const scrollToTop = () => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -45,7 +51,6 @@ const DataEditor: React.FC<DataEditorProps> = ({
   };
 
   const handleForwardNavigation   = () => {
-    console.log("go", navigation.canGoNext)
     if (navigation.canGoNext) {
       // Валидация полей текущей страницы
       const currentSection = data[navigation.currentPage];
@@ -54,7 +59,6 @@ const DataEditor: React.FC<DataEditorProps> = ({
       currentSection.data.forEach((field, fIdx) => {
         if (field.validate) {
           const error = validateField(field, navigation.currentPage, fIdx);
-          console.log('validate',error)
           if (error) {
             setError(navigation.currentPage, fIdx, error);
             hasErrors = true;
@@ -78,7 +82,6 @@ const DataEditor: React.FC<DataEditorProps> = ({
       currentSection.data.forEach((field, fIdx) => {
         if (field.validate) {
           const error = validateField(field, navigation.currentPage, fIdx);
-          console.log('validate',error)
           if (error) {
             setError(navigation.currentPage, fIdx, error);
             hasErrors = true;
@@ -103,7 +106,7 @@ const DataEditor: React.FC<DataEditorProps> = ({
   }
 
   useEffect(()=>{
-    console.log(errors)
+    console.error(errors)
   },[errors])
   
   const renderField = (field: FieldData, sectionIdx: number, fieldIdx: number) => {
@@ -127,9 +130,33 @@ const DataEditor: React.FC<DataEditorProps> = ({
         case 'number':      return <NumberField     { ...props } />;
         case 'select':      return <SelectField     { ...props } options={field.values || []} />;
         case 'date':        return <DateField       { ...props } />;
-        case 'city':        return <CityField       { ...props } onFIAS={ setFias}/>;
-        case 'address':     return <AddressField    { ...props } cityFias = { fias } />;
-        case 'party':       return <PartyField      { ...props } cityFias = { fias } />;
+        case 'city':        return (
+          <CityField
+            { ...props }
+            onChange={(value) => {
+              update(value);
+              setCityHint({
+                fias: value.fias || '',
+                city: value.city || '',
+                country: value.country,
+                lat: value.lat,
+                lon: value.lon,
+              });
+            }}
+            onFIAS={(fias) => setCityHint((hint) => ({ ...hint, fias }))}
+          />
+        );
+        case 'address':     return (
+          <AddressField
+            { ...props }
+            cityFias={cityHint.fias}
+            cityName={cityHint.city}
+            country={cityHint.country}
+            cityLat={cityHint.lat}
+            cityLon={cityHint.lon}
+          />
+        );
+        case 'party':       return <PartyField      { ...props } cityFias = { cityHint.fias } />;
         case 'image':       return <ImageField      { ...props } />;
         case 'images':      return <ImagesField     { ...props } />;
         case 'sign':        return <SignField       { ...props } />;

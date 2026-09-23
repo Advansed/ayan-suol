@@ -30,17 +30,14 @@ export const useSocketStore = create<SocketStore>()(
       isConnecting: false,
 
       setConnected: (connected: boolean) => {
-        console.log("socketStore connect:", connected)
         set({ isConnected: connected })
       },
 
       setConnecting: (connecting: boolean) => {
-        console.log("socketStore connecting:", connecting)
         set({ isConnecting: connecting })
       },
 
       updateStatus: (isConnected: boolean, isConnecting: boolean) => {
-        console.log("socketStore {isConnected, isConnecting}:", isConnected, isConnecting)
         set({ isConnected, isConnecting })
       }
     }),

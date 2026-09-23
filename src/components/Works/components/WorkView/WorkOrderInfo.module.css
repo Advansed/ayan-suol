@@ -532,6 +532,24 @@
   color: var(--gvr-text-muted, #8b93a7);
 }
 
+.mapBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -8px 0 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--gvr-primary, #2b5adc);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mapBtn:hover {
+  text-decoration: underline;
+}
+
 .specTable {
   margin: 0;
 }

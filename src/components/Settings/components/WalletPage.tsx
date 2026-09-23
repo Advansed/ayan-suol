@@ -10,20 +10,22 @@ import {
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  Briefcase,
   Clock,
   Lock,
   Plus,
   TrendingUp,
+  Wallet,
   X,
 } from 'lucide-react';
-import { useWallet } from '../hooks/useWallet';
+import { useWallet, type DueDeal } from '../hooks/useWallet';
 import walletStyles from './WalletPage.module.css';
 import { useToast } from '../../Toast';
 import { useLogin } from '../../../Store/useLogin';
 import { openUrlInApp } from '../../../utils/openUrlInApp';
 import { InvoiceModal } from './InvoiceModal/InvoiceModal';
 import type { Transaction } from '../../../Store/accountStore';
-import { plural } from '../../Works/feedFormat';
+import { shortDate } from '../../Works/feedFormat';
 
 export interface WalletPageProps {
   onBack: () => void;
@@ -44,7 +46,7 @@ const parseAmountInput = (value: string): number => {
   return digits ? Number(digits) : 0;
 };
 
-const WALLET_POLL_MS = 12_000;
+const WALLET_POLL_MS = 60_000;
 const MONTHS_SHORT = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
 const MONTHS_NOM = [
   'январь',
@@ -59,20 +61,6 @@ const MONTHS_NOM = [
   'октябрь',
   'ноябрь',
   'декабрь',
-];
-const MONTHS_DAT = [
-  'январю',
-  'февралю',
-  'марту',
-  'апрелю',
-  'маю',
-  'июню',
-  'июлю',
-  'августу',
-  'сентябрю',
-  'октябрю',
-  'ноябрю',
-  'декабрю',
 ];
 
 function parseTxDate(raw: string): Date | null {
@@ -151,6 +139,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
 }) => {
   const toast = useToast();
   const { user } = useLogin();
+  const isCustomer = user.user_type === 1;
   const {
     accountData,
     transactions,
@@ -161,6 +150,8 @@ export const WalletPage: React.FC<WalletPageProps> = ({
     set_payment,
     set_invoice,
     get_invoice,
+    get_deals,
+    set_deals_payment,
     seller_id,
   } = useWallet();
 
@@ -169,6 +160,10 @@ export const WalletPage: React.FC<WalletPageProps> = ({
     return Number.isFinite(n) && n > 0 ? formatAmountInput(Math.ceil(n)) : '';
   });
   const [showTopUp, setShowTopUp] = useState(() => Number(initialAmount) > 0);
+  const [showDeals, setShowDeals] = useState(false);
+  const [deals, setDeals] = useState<DueDeal[]>([]);
+  const [dealsLoading, setDealsLoading] = useState(false);
+  const [payingDealId, setPayingDealId] = useState<string | null>(null);
   const [payLoading, setPayLoading] = useState<PayMethod | null>(null);
   const [invoiceModalData, setInvoiceModalData] = useState<unknown>();
   const [invoiceLoadingId, setInvoiceLoadingId] = useState<string | null>(null);
@@ -189,6 +184,15 @@ export const WalletPage: React.FC<WalletPageProps> = ({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [showTopUp, payLoading]);
+
+  useEffect(() => {
+    if (!showDeals) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !dealsLoading && !payingDealId) setShowDeals(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showDeals, dealsLoading, payingDealId]);
 
   const loadedRef = useRef(false);
   useEffect(() => {
@@ -222,10 +226,6 @@ export const WalletPage: React.FC<WalletPageProps> = ({
 
   const stats = useMemo(() => {
     const list = transactions || [];
-    let monthIncome = 0;
-    let prevMonthIncome = 0;
-    let pending = 0;
-    let pendingCount = 0;
 
     const bars = Array.from({ length: 6 }, (_, i) => {
       const d = new Date(thisYear, thisMonth - 5 + i, 1);
@@ -234,30 +234,16 @@ export const WalletPage: React.FC<WalletPageProps> = ({
 
     for (const t of list) {
       const date = parseTxDate(t.date);
-      if (t.type === 'new') {
-        pending += Math.abs(t.amount);
-        pendingCount += 1;
-      }
       if (!isIncome(t)) continue;
       const value = Math.abs(t.amount);
       if (date) {
-        if (date.getMonth() === thisMonth && date.getFullYear() === thisYear) monthIncome += value;
-        const prev = new Date(thisYear, thisMonth - 1, 1);
-        if (date.getMonth() === prev.getMonth() && date.getFullYear() === prev.getFullYear()) {
-          prevMonthIncome += value;
-        }
         const key = `${date.getFullYear()}-${date.getMonth()}`;
         const bar = bars.find((b) => b.key === key);
         if (bar) bar.value += value;
       }
     }
 
-    const trend =
-      prevMonthIncome > 0
-        ? Math.round(((monthIncome - prevMonthIncome) / prevMonthIncome) * 100)
-        : null;
-
-    return { monthIncome, pending, pendingCount, bars, trend };
+    return { bars };
   }, [transactions, thisMonth, thisYear]);
 
   const amountNumber = useMemo(() => parseAmountInput(amount), [amount]);
@@ -267,10 +253,70 @@ export const WalletPage: React.FC<WalletPageProps> = ({
 
   const deposit = Number(accountData?.deposit ?? 0);
   const depositPaid = deposit > 0;
+  const advanceReserve = Number(accountData?.advanceReserve ?? 0);
+  const advanceInWork = Number(accountData?.advanceInWork ?? 0);
+  const remainingToPay = Number(accountData?.remainingToPay ?? 0);
+  const monthIncome = Number(accountData?.monthIncome ?? 0);
+  const upcomingIncome = Number(accountData?.upcomingIncome ?? 0);
+  const holdAdvance = Number(accountData?.holdAdvance ?? 0);
 
   const closeTopUp = () => {
     if (payLoading) return;
     setShowTopUp(false);
+  };
+
+  const openDueDeals = async () => {
+    setShowDeals(true);
+    setDealsLoading(true);
+    try {
+      const res = await get_deals();
+      if (!res.success) {
+        toast.error(res.error || 'Не удалось загрузить сделки');
+        setDeals([]);
+        return;
+      }
+      setDeals(res.data || []);
+    } finally {
+      setDealsLoading(false);
+    }
+  };
+
+  const closeDeals = () => {
+    if (dealsLoading || payingDealId) return;
+    setShowDeals(false);
+  };
+
+  const handleDealPayment = async (deal: DueDeal) => {
+    if (payingDealId) return;
+    if (!deal.cargoId || !deal.performer) {
+      toast.error('Не хватает данных сделки для доплаты');
+      return;
+    }
+    if (deal.due <= 0) {
+      toast.error('Сумма доплаты должна быть больше нуля');
+      return;
+    }
+
+    const dealKey = deal.id || `${deal.cargoId}-${deal.performer}`;
+    setPayingDealId(dealKey);
+    try {
+      const res = await set_deals_payment({
+        cargo_id: deal.cargoId,
+        performer: deal.performer,
+        amount: deal.due,
+        currency: deal.currency || accountData?.currency || 'RUB',
+      });
+      if (!res.success) {
+        toast.error(res.error || 'Не удалось провести доплату');
+        return;
+      }
+      toast.success('Доплата отправлена');
+      void refreshWallet({ silent: true });
+      const refreshed = await get_deals();
+      if (refreshed.success) setDeals(refreshed.data || []);
+    } finally {
+      setPayingDealId(null);
+    }
   };
 
   const handleOpenInvoicePdf = async (invoiceId: string) => {
@@ -401,6 +447,90 @@ export const WalletPage: React.FC<WalletPageProps> = ({
         />
       )}
 
+      {showDeals && (
+        <div className={walletStyles.modalOverlay} role="presentation" onClick={closeDeals}>
+          <div
+            className={`${walletStyles.modalDialog} ${walletStyles.dealsDialog}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="deals-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={walletStyles.modalHead}>
+              <div>
+                <h2 id="deals-title" className={walletStyles.modalTitle}>
+                  Сделки к доплате
+                </h2>
+                <p className={walletStyles.modalSub}>
+                  Всего к доплате: {formatMoney(remainingToPay)}
+                </p>
+              </div>
+              <button
+                type="button"
+                className={walletStyles.modalClose}
+                onClick={closeDeals}
+                aria-label="Закрыть"
+                disabled={dealsLoading || Boolean(payingDealId)}
+              >
+                <X size={18} strokeWidth={2} />
+              </button>
+            </div>
+
+            {dealsLoading ? (
+              <div className={walletStyles.loadingWrap}>
+                <IonSpinner name="bubbles" />
+              </div>
+            ) : deals.length === 0 ? (
+              <div className={walletStyles.empty}>
+                <IonIcon icon={receiptOutline} />
+                <p>Сделок к доплате нет</p>
+                <span>Когда появится остаток по перевозкам, они отобразятся здесь</span>
+              </div>
+            ) : (
+              <ul className={walletStyles.dealList}>
+                {deals.map((deal) => {
+                  const dealKey = deal.id || `${deal.cargoId}-${deal.performer}`;
+                  const isPaying = payingDealId === dealKey;
+                  const canPay =
+                    Boolean(deal.cargoId && deal.performer && deal.due > 0) && !payingDealId;
+                  return (
+                  <li key={dealKey}>
+                    <div className={walletStyles.dealItem}>
+                      <div className={walletStyles.dealText}>
+                        <div className={walletStyles.dealTitle}>{deal.cargoName}</div>
+                        <div className={walletStyles.dealSub}>
+                          Исполнитель: {deal.executorName || '—'}
+                        </div>
+                        <div className={walletStyles.dealMeta}>
+                          Доставка: {deal.deliveryDate ? shortDate(deal.deliveryDate) || deal.deliveryDate : '—'}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className={walletStyles.dealPayBtn}
+                        disabled={!canPay}
+                        onClick={() => void handleDealPayment(deal)}
+                        aria-label={`Доплатить ${formatMoney(deal.due)}`}
+                      >
+                        {isPaying ? (
+                          <IonSpinner name="bubbles" />
+                        ) : (
+                          <>
+                            <span className={walletStyles.dealDue}>{formatMoney(deal.due)}</span>
+                            <span className={walletStyles.dealPayLabel}>К доплате</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
       {showTopUp && (
         <div className={walletStyles.modalOverlay} role="presentation" onClick={closeTopUp}>
           <div
@@ -510,19 +640,25 @@ export const WalletPage: React.FC<WalletPageProps> = ({
             <span className={walletStyles.statIconHero} aria-hidden>
               <ArrowUpRight size={18} strokeWidth={2.25} />
             </span>
-            <span className={walletStyles.statLabel}>Доступно к выводу</span>
+            <span className={walletStyles.statLabel}>
+              {isCustomer ? 'Баланс' : 'Доступно к выводу'}
+            </span>
           </div>
           <div className={walletStyles.statValue}>{formattedBalance}</div>
-          <div className={walletStyles.statSub}>В обработке: {formatMoney(stats.pending)}</div>
+          {!isCustomer && (
+            <div className={walletStyles.statSub}>Ожидаемые выплаты: {formatMoney(upcomingIncome)}</div>
+          )}
           <div className={walletStyles.statActions}>
-            <button
-              type="button"
-              className={walletStyles.heroGhost}
-              onClick={() => toast.info('Вывод средств скоро будет доступен')}
-            >
-              <ArrowUpRight size={16} strokeWidth={2.25} />
-              Вывести
-            </button>
+            {!isCustomer && (
+              <button
+                type="button"
+                className={walletStyles.heroGhost}
+                onClick={() => toast.info('Вывод средств скоро будет доступен')}
+              >
+                <ArrowUpRight size={16} strokeWidth={2.25} />
+                Вывести
+              </button>
+            )}
             <button
               type="button"
               className={walletStyles.heroPrimary}
@@ -537,53 +673,99 @@ export const WalletPage: React.FC<WalletPageProps> = ({
           </div>
         </section>
 
-        <section className={walletStyles.statCard}>
-          <div className={walletStyles.statHead}>
-            <span className={`${walletStyles.statIcon} ${walletStyles.statIconGreen}`} aria-hidden>
-              <TrendingUp size={16} strokeWidth={2.25} />
-            </span>
-            <span className={walletStyles.statLabel}>Доход за {MONTHS_NOM[thisMonth]}</span>
-          </div>
-          <div className={walletStyles.statValue}>{formatMoney(stats.monthIncome)}</div>
-          {stats.trend != null && (
-            <div className={stats.trend >= 0 ? walletStyles.trendUp : walletStyles.trendDown}>
-              {stats.trend >= 0 ? '+' : ''}
-              {stats.trend}% к {MONTHS_DAT[(thisMonth + 11) % 12]}
-            </div>
-          )}
-        </section>
+        {isCustomer ? (
+          <>
+            <section className={walletStyles.statCard}>
+              <div className={walletStyles.statHead}>
+                <span className={`${walletStyles.statIcon} ${walletStyles.statIconBlue}`} aria-hidden>
+                  <Lock size={16} strokeWidth={2.25} />
+                </span>
+                <span className={walletStyles.statLabel}>Резерв под заявки</span>
+              </div>
+              <div className={walletStyles.statValue}>{formatMoney(advanceReserve)}</div>
+              <div className={walletStyles.statSub}>Зарезервировано под опубликованные заявки</div>
+            </section>
 
-        <section className={walletStyles.statCard}>
-          <div className={walletStyles.statHead}>
-            <span className={`${walletStyles.statIcon} ${walletStyles.statIconOrange}`} aria-hidden>
-              <Clock size={16} strokeWidth={2.25} />
-            </span>
-            <span className={walletStyles.statLabel}>Ожидает выплаты</span>
-          </div>
-          <div className={walletStyles.statValue}>{formatMoney(stats.pending)}</div>
-          <div className={walletStyles.statSub}>
-            {stats.pendingCount} {plural(stats.pendingCount, 'рейс', 'рейса', 'рейсов')} в обработке
-          </div>
-        </section>
+            <section className={walletStyles.statCard}>
+              <div className={walletStyles.statHead}>
+                <span className={`${walletStyles.statIcon} ${walletStyles.statIconOrange}`} aria-hidden>
+                  <Briefcase size={16} strokeWidth={2.25} />
+                </span>
+                <span className={walletStyles.statLabel}>Авансы в работе</span>
+              </div>
+              <div className={walletStyles.statValue}>{formatMoney(advanceInWork)}</div>
+              <div className={walletStyles.statSub}>На эскроу по активным перевозкам</div>
+            </section>
 
-        <section className={walletStyles.statCard}>
-          <div className={walletStyles.statHead}>
-            <span className={`${walletStyles.statIcon} ${walletStyles.statIconBlue}`} aria-hidden>
-              <Lock size={16} strokeWidth={2.25} />
-            </span>
-            <span className={walletStyles.statLabel}>Гарантийный депозит</span>
-            <span className={`${walletStyles.depositBadge} ${depositPaid ? walletStyles.depositOn : walletStyles.depositOff}`}>
-              {depositPaid ? 'Внесён' : 'Не внесён'}
-            </span>
-          </div>
-          <div className={walletStyles.statValue}>{formatMoney(deposit)}</div>
-          <p className={walletStyles.depositHint}>
-            Заблокирован на кошельке — требуется для верификации и покрытия ущерба, если рейс
-            срывается или груз повреждён по вашей вине.
-          </p>
-        </section>
+            <section
+              className={`${walletStyles.statCard} ${walletStyles.statCardClickable}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => void openDueDeals()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  void openDueDeals();
+                }
+              }}
+              aria-label="Открыть список сделок к доплате"
+            >
+              <div className={walletStyles.statHead}>
+                <span className={`${walletStyles.statIcon} ${walletStyles.statIconGreen}`} aria-hidden>
+                  <Wallet size={16} strokeWidth={2.25} />
+                </span>
+                <span className={walletStyles.statLabel}>Остаток к доплате</span>
+              </div>
+              <div className={walletStyles.statValue}>{formatMoney(remainingToPay)}</div>
+              <div className={walletStyles.statSub}>Нажмите, чтобы открыть сделки к доплате</div>
+            </section>
+          </>
+        ) : (
+          <>
+            <section className={walletStyles.statCard}>
+              <div className={walletStyles.statHead}>
+                <span className={`${walletStyles.statIcon} ${walletStyles.statIconGreen}`} aria-hidden>
+                  <TrendingUp size={16} strokeWidth={2.25} />
+                </span>
+                <span className={walletStyles.statLabel}>Доход за {MONTHS_NOM[thisMonth]}</span>
+              </div>
+              <div className={walletStyles.statValue}>{formatMoney(monthIncome)}</div>
+            </section>
+
+            <section className={walletStyles.statCard}>
+              <div className={walletStyles.statHead}>
+                <span className={`${walletStyles.statIcon} ${walletStyles.statIconOrange}`} aria-hidden>
+                  <Clock size={16} strokeWidth={2.25} />
+                </span>
+                <span className={walletStyles.statLabel}>Ожидаемые выплаты</span>
+              </div>
+              <div className={walletStyles.statValue}>{formatMoney(upcomingIncome)}</div>
+              <div className={walletStyles.statSub}>
+                Получено авансов: {formatMoney(holdAdvance)}
+              </div>
+            </section>
+
+            <section className={walletStyles.statCard}>
+              <div className={walletStyles.statHead}>
+                <span className={`${walletStyles.statIcon} ${walletStyles.statIconBlue}`} aria-hidden>
+                  <Lock size={16} strokeWidth={2.25} />
+                </span>
+                <span className={walletStyles.statLabel}>Гарантийный депозит</span>
+                <span className={`${walletStyles.depositBadge} ${depositPaid ? walletStyles.depositOn : walletStyles.depositOff}`}>
+                  {depositPaid ? 'Внесён' : 'Не внесён'}
+                </span>
+              </div>
+              <div className={walletStyles.statValue}>{formatMoney(deposit)}</div>
+              <p className={walletStyles.depositHint}>
+                Заблокирован на кошельке — требуется для верификации и покрытия ущерба, если рейс
+                срывается или груз повреждён по вашей вине.
+              </p>
+            </section>
+          </>
+        )}
       </div>
 
+      {!isCustomer && (
       <div className={walletStyles.midGrid}>
         <section className={walletStyles.card}>
           <h2 className={walletStyles.cardTitle}>Доход по месяцам</h2>
@@ -611,6 +793,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
           </button>
         </section>
       </div>
+      )}
 
       <section className={walletStyles.card} id="statement">
         <h2 className={walletStyles.cardTitle}>История операций</h2>

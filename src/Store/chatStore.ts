@@ -283,7 +283,6 @@ export const chatActions = {
 // ============================================
 export const chatSocketHandlers = {
   onGetChats: (response: any) => {
-    console.log('onGetChats response:', response)
     
     chatActions.setLoading(false)
     
@@ -302,7 +301,6 @@ export const chatSocketHandlers = {
   },
 
   onGetMessages: (response: any) => {
-    console.log('onGetMessages response:', response)
     
     if (response.success && response.data) {
       const { recipient, cargo, messages, hasMore } = response.data
@@ -317,7 +315,6 @@ export const chatSocketHandlers = {
   },
 
   onNewMessage: (response: any) => {
-    console.log('onNewMessage response:', response)
     
     if (response.success && response.data) {
       const { message } = response.data
@@ -332,7 +329,6 @@ export const chatSocketHandlers = {
   },
 
   onMarkAsRead: (response: any) => {
-    console.log('onMarkAsRead response:', response)
     
     if (response.success && response.data) {
       const { recipient, cargo } = response.data
@@ -355,7 +351,6 @@ export const initChatSocketHandlers = (socket: any) => {
   socket.on('new_message',      chatSocketHandlers.onNewMessage)
   socket.on('mark_as_read',     chatSocketHandlers.onMarkAsRead)
   
-  console.log('Chat socket handlers initialized')
 }
 
 export const destroyChatSocketHandlers = (socket: any) => {
@@ -366,5 +361,4 @@ export const destroyChatSocketHandlers = (socket: any) => {
   socket.off('new_message',     chatSocketHandlers.onNewMessage)
   socket.off('mark_as_read',    chatSocketHandlers.onMarkAsRead)
   
-  console.log('Chat socket handlers destroyed')
 }

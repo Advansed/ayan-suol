@@ -112,7 +112,16 @@ export const WorkOffer: React.FC<WorkOfferProps> = ({ work, onBack, onOffer }) =
                             type="number"
                             className="custom-text-input"
                             value={formData.weight}
-                            onChange={(e) => setFormData({...formData, weight: Number(e.target.value)})}
+                            onChange={(e) => {
+                                const weight = Number(e.target.value) || 0;
+                                const baseWeight = Number(work.weight) || 0;
+                                const basePrice = Number(work.price) || 0;
+                                const price =
+                                    baseWeight > 0 && weight > 0
+                                        ? Math.round((basePrice / baseWeight) * weight)
+                                        : 0;
+                                setFormData({ ...formData, weight, price });
+                            }}
                             placeholder="Введите вес"
                             step="0.1"
                         />

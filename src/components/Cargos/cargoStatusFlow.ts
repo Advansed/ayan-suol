@@ -211,11 +211,6 @@ export function cargoFeedKind(status: string | CargoStatus): CargoFeedKind {
 }
 
 export function cargoFeedLabel(status: string | CargoStatus): string {
-  const kind = cargoFeedKind(status);
-  if (kind === 'new') return 'Новый';
-  if (kind === 'waiting') return 'В ожидании';
-  if (kind === 'bids') return 'Торги';
-  if (kind === 'done') return 'Завершён';
-  if (kind === 'alert') return 'Проблемы';
-  return 'В работе';
+  const normalized = normalizeCargoStatus(status);
+  return CARGO_STATUS_SHORT[normalized] || normalized;
 }

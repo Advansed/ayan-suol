@@ -330,7 +330,6 @@ export const useWorks = () => {
     workActions.setLoading(true);
 
     socket.once('get_pdf1', (data: { success: boolean; message?: string; data: string }) => {
-      console.log("get_pdf1", data)
       if (data.success) {
 
         setContract('data:application/pdf;base64,' + data.data)
@@ -442,8 +441,6 @@ export const useWorks = () => {
   // ============================================
   const refreshWorks = useCallback(async (): Promise<void> => {
     if (!socket) return
-
-    workActions.setLoading(true)
     socket.emit('get_works', { token })
   }, [token, socket])
 

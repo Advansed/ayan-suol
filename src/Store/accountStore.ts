@@ -10,21 +10,6 @@ export const TRANSACTION_ICONS = {
 
 // src/components/Profile/components/Account/types.ts
 
-export interface AccountData {
-  balance: number
-  currency: string
-  deposit?: number
-  lastUpdated?: string
-}
-
-export interface PaymentData {
-  type: number
-  summ: number
-  date?: string
-  orderId?: string
-  description?: string
-}
-
 export interface AccountProps {
   onBack: () => void
 }
@@ -69,7 +54,46 @@ export interface AccountData {
   balance: number
   currency: string
   deposit?: number
+  /** Резерв под заявки — advance1 из p_get_balance */
+  advanceReserve?: number
+  /** Авансы в работе — advance2 из p_get_balance */
+  advanceInWork?: number
+  /** Остаток к доплате — due из p_get_balance */
+  remainingToPay?: number
+  /** Доход за период — month_income из p_get_balance (исполнитель) */
+  monthIncome?: number
+  /** Предстоящие / ожидаемые выплаты — upcoming_income из p_get_balance (исполнитель) */
+  upcomingIncome?: number
+  /** Получено авансов — hold_advance из p_get_balance (исполнитель) */
+  holdAdvance?: number
   lastUpdated?: string
+}
+
+function num(value: unknown): number {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : 0
+}
+
+/** Достаёт доп. поля из ответа get_balance (p_get_balance) */
+export function parseBalanceExtras(data: any): Pick<
+  AccountData,
+  | 'advanceReserve'
+  | 'advanceInWork'
+  | 'remainingToPay'
+  | 'deposit'
+  | 'monthIncome'
+  | 'upcomingIncome'
+  | 'holdAdvance'
+> {
+  return {
+    deposit: num(data?.deposit ?? data?.guarantee),
+    advanceReserve: num(data?.advance1),
+    advanceInWork: num(data?.advance2),
+    remainingToPay: num(data?.due),
+    monthIncome: num(data?.month_income),
+    upcomingIncome: num(data?.upcoming_income),
+    holdAdvance: num(data?.hold_advance),
+  }
 }
 
 export interface AccountState {
@@ -101,10 +125,16 @@ type AccountStore = AccountState & AccountActions
 // ============================================
 
 export const EMPTY_ACCOUNT: AccountData = {
-  balance:        0,
-  currency:       'RUB',
-  deposit:        0,
-  lastUpdated:    ''
+  balance:          0,
+  currency:         'RUB',
+  deposit:          0,
+  advanceReserve:   0,
+  advanceInWork:    0,
+  remainingToPay:   0,
+  monthIncome:      0,
+  upcomingIncome:   0,
+  holdAdvance:      0,
+  lastUpdated:      ''
 }
 
 // ============================================
@@ -210,10 +240,17 @@ export const accountSocketHandlers = {
     accountActions.setLoading(false)
     
     if (response.success) {
+      const extras = parseBalanceExtras(response.data)
       const accountData: AccountData = {
         balance: response.data?.balance || 0,
         currency: response.data?.currency || 'RUB',
-        deposit: Number(response.data?.deposit ?? response.data?.guarantee ?? 0) || 0,
+        deposit: extras.deposit,
+        advanceReserve: extras.advanceReserve,
+        advanceInWork: extras.advanceInWork,
+        remainingToPay: extras.remainingToPay,
+        monthIncome: extras.monthIncome,
+        upcomingIncome: extras.upcomingIncome,
+        holdAdvance: extras.holdAdvance,
         lastUpdated: new Date().toISOString()
       }
       accountActions.setAccountData(accountData)
@@ -224,7 +261,6 @@ export const accountSocketHandlers = {
   },
 
   onGetTransactions:  (response: any) => {
-    console.log('onGetTransactions response:', response)
     
     accountActions.setLoadingTransactions(false)
     
@@ -247,7 +283,6 @@ export const accountSocketHandlers = {
   },
 
   onSetPayment:       (response: any) => {
-    console.log('onSetPayment response:', response)
     
     accountActions.setSaving(false)
     

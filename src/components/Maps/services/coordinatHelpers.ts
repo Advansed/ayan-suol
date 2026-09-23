@@ -14,10 +14,17 @@ export const calculateDistance = (coord1: Coordinates, coord2: Coordinates): num
   return R * c;
 };
 
-// Проверка валидности координат
 export const isValidCoordinates = (coords: Coordinates): boolean => {
-  return coords.lat >= -90 && coords.lat <= 90 && 
+  return coords.lat >= -90 && coords.lat <= 90 &&
          coords.long >= -180 && coords.long <= 180;
+};
+
+/** Точки маршрута: не (0,0) и в допустимом диапазоне. */
+export const hasMapCoordinates = (coords?: Coordinates | null): boolean => {
+  if (!coords) return false;
+  if (!Number.isFinite(coords.lat) || !Number.isFinite(coords.long)) return false;
+  if (coords.lat === 0 && coords.long === 0) return false;
+  return isValidCoordinates(coords);
 };
 
 // Форматирование расстояния

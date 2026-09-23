@@ -155,9 +155,7 @@ const Transport: React.FC<TransportProps> = ({ setPage }) => {
     const mountedRef = useRef(true);
 
     // Получаем начальные данные из Store
-    console.log("transport")
     const initialData = Store.getState().transport[0] || null;
-    console.log(initialData)
     
     // Используем custom hook для управления формой
     const {
@@ -174,14 +172,13 @@ const Transport: React.FC<TransportProps> = ({ setPage }) => {
     // Функция сохранения
     const handleSave = useCallback(async () => {
         if (!mountedRef.current || isSaving || !hasChanges) return;
-        console.log( 'save ')
         // Валидируем форму перед отправкой
         if (!validateForm()) {
             Store.dispatch({
                 type: "message",
                 data: { type: "error", message: "Исправьте ошибки в форме" }
             });
-            console.log( "Исправьте ошибки в форме" )
+            console.error( "Исправьте ошибки в форме" )
             return;
         }
 
@@ -198,7 +195,6 @@ const Transport: React.FC<TransportProps> = ({ setPage }) => {
                 throw new Error('Нет токена авторизации');
             }
 
-            console.log(saveData)
             const success = socketService.emit('transport', saveData);
             
             if (!success) {
@@ -239,8 +235,6 @@ const Transport: React.FC<TransportProps> = ({ setPage }) => {
         containerClass: string = "mt-05",
         inputType: 'text' | 'number' = 'text'
     ) => {
-        console.log(fieldKey)
-        console.log(transportInfo[fieldKey])
         const value = transportInfo[fieldKey] || '';
         const error = errors[fieldKey];
         
@@ -292,7 +286,6 @@ const Transport: React.FC<TransportProps> = ({ setPage }) => {
             setIsSaving(false);
 
             if (response?.success) {
-                console.log('Transport saved successfully:', response.data);
                 setSaveSuccess(true);
                 
                 // Обновляем данные в Store и форме

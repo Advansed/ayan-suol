@@ -141,10 +141,6 @@ export function buildCheckRegistrationPayload(form: {
     localStorage.setItem('gvrs.partner', partner)
   }
 
-  // #region agent log
-  fetch('http://127.0.0.1:7412/ingest/6e96b9fc-4299-494f-9e68-66061b55b1b7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be6ab2'},body:JSON.stringify({sessionId:'be6ab2',runId:'pre-fix',hypothesisId:'B',location:'registrationPayload.ts:build',message:'built payload partner',data:{hasPartner:Boolean(partner),partnerIsGuid:/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(partner),partnerIsDefault:partner===DEFAULT_PARTNER_GUID,hasEnvPartner:Boolean(String(import.meta.env.VITE_DEFAULT_PARTNER||'').trim())},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
-
   return {
     name: name.slice(0, 24),
     email: (form.email || '').trim().slice(0, 128),

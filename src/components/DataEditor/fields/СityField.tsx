@@ -1,61 +1,46 @@
 import React from 'react';
-import { AddressSuggestions } from 'react-dadata';
-import 'react-dadata/dist/react-dadata.css';
-import styles from './CityField.module.css';
+import { searchCities } from '../../../utils/googlePlaces';
+import type { CityData } from '../types';
+import { PhotonSuggest } from './PhotonSuggest';
 
 interface CityFieldProps {
-  label:            string;
-  value:            { city: string; fias: string };
-  onChange:         (value: { city: string; fias: string }) => void;
-  onFIAS:           (fias: string) => void;
-  disabled?:        boolean;
-  error?:           string;
+  label: string;
+  value: CityData;
+  onChange: (value: CityData) => void;
+  onFIAS?: (fias: string) => void;
+  disabled?: boolean;
+  error?: string;
   validate?: boolean;
-
 }
 
-export const CityField: React.FC<CityFieldProps> = ({ 
-  label, 
-  value, 
+export const CityField: React.FC<CityFieldProps> = ({
+  label,
+  value,
   onChange,
   onFIAS,
   disabled = false,
-  error
+  error,
 }) => {
-  return (
-    <div className={styles.field}>
-      <label className={styles.label}>{label}</label>
-      <AddressSuggestions
-        token               = {import.meta.env.VITE_DADATA_TOKEN || "23de02cd2b41dbb9951f8991a41b808f4398ec6e"}
-        filterToBound       = "city"
-        filterFromBound     = "city"
-        value               = {{ value: value?.city || '' } as any}
-        onChange            = {(suggestion) => {
-          if (suggestion) {
-            const d = suggestion.data as Record<string, string | undefined>;
-            const cityName =
-              d.city_with_type ||
-              d.city ||
-              d.settlement_with_type ||
-              d.settlement ||
-              suggestion.value ||
-              '';
-            const cityFias =
-              d.city_fias_id ||
-              d.settlement_fias_id ||
-              '';
+  const display = [value?.city, value?.country].filter(Boolean).join(', ');
 
-            onChange({ city: cityName, fias: cityFias });
-            onFIAS(cityFias);
-          }
-        }}
-        inputProps={{
-          disabled,
-          className: `${styles.input} ${error ? styles.inputError : ''}`,
-          placeholder: "Начните вводить город"
-        }}
-      />
-      {error && <span className={styles.errorMessage}>{error}</span>}
-    </div>
+  return (
+    <PhotonSuggest
+      label={label}
+      value={display}
+      disabled={disabled}
+      error={error}
+      placeholder="Начните вводить город"
+      search={searchCities}
+      onSelect={(place) => {
+        onChange({
+          city: place.name,
+          fias: '',
+          country: place.country || undefined,
+          lat: place.lat,
+          lon: place.lon,
+        });
+        onFIAS?.('');
+      }}
+    />
   );
 };

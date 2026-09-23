@@ -32,12 +32,10 @@ const TBankPayment: React.FC<TBankPaymentProps> = ({
   const getPaymentUrl = (): string => {
     if (paymentData.type === 'sbp' && paymentData.sbp_payload ) {
       
-      console.log('🔗 Используем SBP deep link:', paymentData.sbp_payload);
       
       return paymentData.sbp_payload;
       
     }
-    console.log('🌐 Используем стандартный payment_url:', paymentData.payment_url);
     return paymentData.payment_url;
   };
 
@@ -52,25 +50,19 @@ const TBankPayment: React.FC<TBankPaymentProps> = ({
           return;
         }
       } catch (error) {
-        console.log('⚠️ Не удалось проверить origin сообщения');
       }
 
-      console.log('📨 Сообщение от iframe:', event.data);
 
       // Обрабатываем различные типы сообщений
       if (event.data.type === 'payment_close') {
-        console.log('🔵 Кнопка "Закрыть" нажата в iframe');
         handleClose();
       } else if (event.data.type === 'payment_success') {
-        console.log('✅ Платеж успешно завершен');
         onPaymentSuccess?.(event.data);
         handleClose();
       } else if (event.data.type === 'payment_failed') {
-        console.log('❌ Платеж не удался');
         onPaymentFail?.(event.data);
       } else if (event.data === 'close' || event.data === 'payment_close') {
         // Простые строковые сообщения
-        console.log('🔵 Получено сообщение о закрытии');
         handleClose();
       }
     };
@@ -105,7 +97,6 @@ const TBankPayment: React.FC<TBankPaymentProps> = ({
             if (!button.hasAttribute('data-tbank-listener')) {
               button.setAttribute('data-tbank-listener', 'true');
               button.addEventListener('click', () => {
-                console.log('🔄 Кнопка закрытия найдена и нажата');
                 handleClose();
               });
             }
@@ -115,11 +106,9 @@ const TBankPayment: React.FC<TBankPaymentProps> = ({
           const iframeUrl = iframe.contentWindow?.location.href;
           if (iframeUrl) {
             if (iframeUrl.includes('success=true') || iframeUrl.includes('status=success')) {
-              console.log('✅ Обнаружен успешный платеж по URL');
               onPaymentSuccess?.({ url: iframeUrl });
               handleClose();
             } else if (iframeUrl.includes('success=false') || iframeUrl.includes('status=failed')) {
-              console.log('❌ Обнаружен неудачный платеж по URL');
               onPaymentFail?.({ url: iframeUrl });
             }
           }
@@ -134,12 +123,10 @@ const TBankPayment: React.FC<TBankPaymentProps> = ({
   }, [onPaymentSuccess, onPaymentFail]);
 
   const handleClose = () => {
-    console.log('🔴 Закрытие платежного окна');
     onClose();
   };
 
   const handleRetry = () => {
-    console.log('🔄 Перезагрузка iframe');
     setIsLoading(true);
     setIframeKey(prev => prev + 1);
   };
@@ -252,7 +239,6 @@ const TBankPayment: React.FC<TBankPaymentProps> = ({
             transition: 'opacity 0.3s ease'
           }}
           onLoad={() => {
-            console.log('✅ Iframe загружен');
             setIsLoading(false);
             
             // Пытаемся отправить сообщение в iframe для настройки связи
@@ -264,7 +250,6 @@ const TBankPayment: React.FC<TBankPaymentProps> = ({
                     message: 'Родительская страница готова'
                   }, '*');
                 } catch (error) {
-                  console.log('⚠️ Не удалось отправить сообщение в iframe');
                 }
               }
             }, 1000);

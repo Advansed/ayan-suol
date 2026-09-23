@@ -187,7 +187,6 @@ export const Agreement: React.FC<AgreementProps> = ({
   };
 
   const handleSign = () => {
-        console.log("handleSign", onSign)
         if( onSign ) onSign( customerSignature )
   }
 

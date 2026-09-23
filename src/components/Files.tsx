@@ -49,10 +49,6 @@ async function finalizeCapturedPhoto(
 ): Promise<{ base64: string; format: string; dataUrl: string }> {
   const normalized = normalizeCapturedPhoto(base64OrDataUrl, formatHint);
   const received = getDataUrlSize(normalized.dataUrl);
-  console.log(
-    `[фото] получено с камеры: ${formatFileSize(received)}` +
-      ` (${normalized.format}${formatHint ? `, hint ${formatHint}` : ''})`
-  );
   const dataUrl = await compressImageDataUrl(normalized.dataUrl);
   const format = dataUrl.startsWith('data:image/webp') ? 'webp' : 'jpeg';
   return normalizeCapturedPhoto(dataUrl, format);
@@ -123,7 +119,6 @@ export async function takePicture() {
         });
 
         if (!image || !image.base64String) {
-            console.log('Camera returned null or empty data');
             return null;
         }
 
@@ -132,7 +127,7 @@ export async function takePicture() {
 
         return finalizeCapturedPhoto(image.base64String, image.format);
     } catch (error) {
-        console.log("Camera error:", error);
+        console.error("Camera error:", error);
         // Fallback to file input if Camera plugin fails in hybrid webview
         return pickImageFromFileInput();
     }
@@ -532,7 +527,7 @@ export function         Files(props: { info, name, check, title }) {
             }
                 
         } catch (error) {
-            console.log( error )
+            console.error( error )
         }
         setUpd(upd + 1)   
     }
@@ -579,7 +574,7 @@ export function         Files(props: { info, name, check, title }) {
             }
 
         } catch (error) {
-            console.log( error )
+            console.error( error )
         }
 
     }
@@ -693,10 +688,10 @@ export function         Files(props: { info, name, check, title }) {
                     { props.info.map((e, ind) =>{
                         return e.format === "pdf"
                             ? <img key = { ind as number } src = { "assets/pdf.png" } alt="" className="w-4 h-4 ml-1 mt-1 s-point"
-                                onClick = {()=>{ setModal( e ); console.log(e) }}
+                                onClick = {()=>{ setModal( e ) }}
                             />
                             : <img key = { ind as number } src = { e.dataUrl } alt="" className="w-4 h-4 ml-1 mt-1 s-point"
-                                onClick = {()=>{ setModal( e ); console.log(e) }}
+                                onClick = {()=>{ setModal( e ) }}
                             />
                             
                         })

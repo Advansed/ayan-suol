@@ -224,7 +224,6 @@ export const useData = ( cargo: CargoInfo, onBack ) => {
   const updateCargo                         = useCargoStore( state => state.updateCargo )
 
   useEffect(()=>{
-    console.log("useeEffect", accountData)
   },[accountData])
   
     // Универсальная функция для socket запросов с ответом
@@ -238,7 +237,6 @@ export const useData = ( cargo: CargoInfo, onBack ) => {
         
         // Обработчик успешного ответа
         const onSuccess = (response: any) => {
-          console.log(event + " on:",  response)
           if( response.success ){
   
             const pending = pendingRequests.current.get( requestId );
@@ -273,7 +271,6 @@ export const useData = ( cargo: CargoInfo, onBack ) => {
         }, 10000); // 10 сек таймаут
         
         // Отправляем запрос
-        console.log(event + " emit...")
         socket.emit(event, { ...data, requestId });
       });
     }, []);

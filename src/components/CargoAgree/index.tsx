@@ -71,14 +71,12 @@ const ContractPage: React.FC<ContractProps> = ({ isOpen, onClose, data }) => {
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    console.log("data", data)
     if(!data)
         loadContractData();
   }, []);
 
   const loadContractData = async () => {
     try {
-      console.log("loading", true)
       // Здесь будет вызов API для получения данных договора
       // const response = await fetch('/api/contract', { method: 'POST', body: JSON.stringify({ token, id }) });
       // const result = await response.json();
@@ -132,13 +130,11 @@ const ContractPage: React.FC<ContractProps> = ({ isOpen, onClose, data }) => {
     } catch (err) {
       setError('Ошибка при загрузке данных договора');
     } finally {
-      console.log("loading", false)
     }
   };
 
   const handleDownload = () => {
     // Логика для скачивания PDF
-    console.log('Download contract');
   };
 
   const handlePrint = () => {

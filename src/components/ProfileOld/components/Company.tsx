@@ -84,7 +84,6 @@ export const Company: React.FC<CompanyProps> = ({onBack}) => {
       bank_corr_account:    data[2].data[2].data,
       bank_account:         data[2].data[3].data
     };
-    console.log( formData )
     saveData(formData);
     onBack()
   };

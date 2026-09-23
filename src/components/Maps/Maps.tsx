@@ -1,68 +1,83 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import styles from './Maps.module.css';
-import { MapProps, YandexMapInstance } from './MapTypes';
-import { initializeMap, createRoute } from './services/YandexMapServices';
+import { MapProps, GoogleMapInstance } from './MapTypes';
+import { createRoute, initializeMap } from './services/googleMapServices';
+import { hasMapCoordinates } from './services/coordinatHelpers';
 
-const Maps: React.FC<MapProps> = ({ startCoords, endCoords, cargoInfo, workInfo, height = '400px' }) => {
+const Maps: React.FC<MapProps> = ({ startCoords, endCoords, waypoints = [], cargoInfo, workInfo, height = '100%' }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<YandexMapInstance | null>(null);
-  const [screenSize, setScreenSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight
-  });
-
-  // Получение и отслеживание размера экрана
-  useEffect(() => {
-    const handleResize = () => {
-      setScreenSize({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Вычисление высоты карты на основе размера экрана
-  const calculateMapHeight = (): string => {
-    if (height !== '400px') return height; // Если передана кастомная высота
-    
-    // Для WorkMap - на весь экран минус заголовок (примерно 60px)
-    const headerHeight = 90;
-    const calculatedHeight = screenSize.height - headerHeight;
-    
-    return `${calculatedHeight}px`;
-  };
+  const mapInstance = useRef<GoogleMapInstance | null>(null);
+  const infoRef = useRef(cargoInfo || workInfo);
+  infoRef.current = cargoInfo || workInfo;
+  const viaRef = useRef(waypoints);
+  viaRef.current = waypoints;
+  const coordsReady = hasMapCoordinates(startCoords) && hasMapCoordinates(endCoords);
+  const startLat = startCoords.lat;
+  const startLng = startCoords.long;
+  const endLat = endCoords.lat;
+  const endLng = endCoords.long;
+  const viaKey = waypoints.map((point) => `${point.lat},${point.long}`).join('|');
 
   useEffect(() => {
-    if (!mapRef.current || !startCoords || !endCoords) return;
+    if (!coordsReady || !mapRef.current) return;
+    let cancelled = false;
 
     const initMap = async () => {
       try {
-        mapInstance.current = await initializeMap(mapRef.current!);
-        await createRoute(mapInstance.current, startCoords, endCoords, cargoInfo || workInfo);
+        const map = await initializeMap(mapRef.current!, {
+          lat: startLat,
+          lon: startLng,
+          zoom: 8,
+        });
+        if (cancelled) {
+          map.destroy();
+          return;
+        }
+        mapInstance.current = map;
+        map.resize();
+        await createRoute(
+          map,
+          { lat: startLat, long: startLng },
+          { lat: endLat, long: endLng },
+          infoRef.current,
+          viaRef.current
+        );
+        map.resize();
       } catch (error) {
         console.error('Ошибка инициализации карты:', error);
       }
     };
 
-    initMap();
+    void initMap();
+
+    const frame = mapRef.current.parentElement;
+    const ro =
+      frame && typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => mapInstance.current?.resize())
+        : null;
+    if (frame && ro) ro.observe(frame);
 
     return () => {
+      cancelled = true;
+      ro?.disconnect();
       if (mapInstance.current) {
         mapInstance.current.destroy();
+        mapInstance.current = null;
       }
     };
-  }, [startCoords, endCoords]);
+  }, [coordsReady, startLat, startLng, endLat, endLng, viaKey]);
+
+  if (!coordsReady) {
+    return (
+      <div className={styles.mapContainer}>
+        <p className={styles.mapEmpty}>Координаты маршрута ещё не заданы</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.mapContainer}>
-      <div 
-        ref         = { mapRef } 
-        className   = { styles.map }
-        style       = { { height: calculateMapHeight() } }
-      />
+      <div ref={mapRef} className={styles.map} style={{ height }} />
     </div>
   );
 };

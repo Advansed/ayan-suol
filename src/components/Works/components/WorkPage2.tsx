@@ -56,7 +56,6 @@ export const WorkPage2: React.FC<VehicleInspectionProps> = ({
     try {
       const inspectionData = pagesToInspection(data);
       
-      console.log( 'handleSave', inspectionData)
 
      // const success = await onSave(inspectionData);
       

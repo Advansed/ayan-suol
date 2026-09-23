@@ -5,6 +5,30 @@ import { useToast } from '../../Toast';
 import { useAccountStore, type Transaction } from '../../../Store/accountStore';
 import { useLoginStore } from '../../../Store/loginStore';
 
+export interface DueDeal {
+  id: string
+  /** Имя груза */
+  cargoName: string
+  /** Дата доставки */
+  deliveryDate: string
+  /** Имя исполнителя (отображение) */
+  executorName: string
+  /** GUID груза для set_deals_payment */
+  cargoId: string
+  /** GUID исполнителя для set_deals_payment */
+  performer: string
+  /** Сумма к доплате */
+  due: number
+  currency: string
+}
+
+export type SetDealsPaymentPayload = {
+  cargo_id: string
+  performer: string
+  amount: number
+  currency: string
+}
+
 function mapTransactionType(raw: unknown): Transaction['type'] {
   if (raw === 'inv' || raw === 'invoice') return 'inv';
   if (raw === 'new') return 'new';
@@ -28,6 +52,90 @@ function normalizeTransactions(raw: unknown): Transaction[] {
     title: item.title ?? item.description ?? item.message ?? '',
     subtitle: item.subtitle ?? item.route ?? item.details ?? ''
   }));
+}
+
+function asText(value: unknown): string {
+  if (value == null) return ''
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  if (typeof value === 'object' && value && 'name' in value) {
+    return String((value as { name?: unknown }).name || '').trim()
+  }
+  return ''
+}
+
+function dealDeliveryDate(item: any): string {
+  return asText(
+    item.delivery_date ??
+      item.deliveryDate ??
+      item.date_delivery ??
+      item.дата_доставки ??
+      item.date
+  )
+}
+
+function dealCargoName(item: any): string {
+  return (
+    asText(item.name ?? item.cargo_name ?? item.cargoName ?? item.title ?? item.cargo) || 'Груз'
+  )
+}
+
+function dealExecutorName(item: any): string {
+  const executor =
+    typeof item.executor === 'string' && item.executor.length < 32 ? item.executor : ''
+  return asText(
+    item.executor_name ??
+      item.executorName ??
+      item.carrier_name ??
+      item.driver_name ??
+      item.исполнитель ??
+      item.company?.name ??
+      (executor || item.client)
+  )
+}
+
+function dealCargoId(item: any): string {
+  const cargo = item.cargo_id ?? item.cargoId ?? item.cargo ?? item.guid ?? item.id
+  if (cargo && typeof cargo === 'object') {
+    return asText((cargo as { guid?: unknown; id?: unknown }).guid ?? (cargo as { id?: unknown }).id)
+  }
+  return asText(cargo)
+}
+
+function dealPerformerId(item: any): string {
+  const candidates = [
+    item.performer,
+    item.performer_id,
+    item.executor_id,
+    item.executorId,
+    item.driver_id,
+    item.driverId,
+    item.recipient,
+    typeof item.executor === 'string' && item.executor.length >= 32 ? item.executor : null,
+    typeof item.driver === 'string' && item.driver.length >= 32 ? item.driver : null,
+  ]
+  for (const value of candidates) {
+    const text = asText(value)
+    if (text) return text
+  }
+  return ''
+}
+
+export function normalizeDeals(raw: unknown): DueDeal[] {
+  const list = Array.isArray(raw) ? raw : Array.isArray((raw as any)?.data) ? (raw as any).data : []
+  return list.map((item: any) => {
+    const due = Number(item.due ?? item.amount ?? item.remainder ?? item.to_pay ?? item.dopay ?? 0) || 0
+    return {
+      id: String(item.guid ?? item.id ?? item.deal ?? item.cargo_id ?? ''),
+      cargoName: dealCargoName(item),
+      deliveryDate: dealDeliveryDate(item),
+      executorName: dealExecutorName(item),
+      cargoId: dealCargoId(item),
+      performer: dealPerformerId(item),
+      due,
+      currency: asText(item.currency) || 'RUB',
+    }
+  })
 }
 
 export const useWallet = () => {
@@ -155,6 +263,35 @@ export const useWallet = () => {
     [setLoading, socketRequest, token]
   );
 
+  const get_deals = useCallback(async (): Promise<{ success: boolean; data?: DueDeal[]; error?: string }> => {
+    const result = await socketRequest('get_deals', { token }, 'get_deals');
+    if (!result?.success) {
+      return { success: false, error: result?.error || 'Не удалось загрузить сделки' };
+    }
+    return { success: true, data: normalizeDeals(result.data) };
+  }, [socketRequest, token]);
+
+  const set_deals_payment = useCallback(
+    async (payload: SetDealsPaymentPayload): Promise<{ success: boolean; data?: any; error?: string }> => {
+      const result = await socketRequest(
+        'set_deals_payment',
+        {
+          token,
+          cargo_id: payload.cargo_id,
+          performer: payload.performer,
+          amount: payload.amount,
+          currency: payload.currency,
+        },
+        'set_deals_payment'
+      );
+      if (!result?.success) {
+        return { success: false, error: result?.error || 'Не удалось провести доплату' };
+      }
+      return { success: true, data: result.data };
+    },
+    [socketRequest, token]
+  );
+
   // Подписка на события баланса/транзакций держится в socket handlers аккаунта,
   // но здесь просто запускаем загрузку.
   useEffect(() => {
@@ -197,6 +334,8 @@ export const useWallet = () => {
     set_payment,
     set_invoice,
     get_invoice,
+    get_deals,
+    set_deals_payment,
     seller_id
   };
 };

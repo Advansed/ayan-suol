@@ -20,6 +20,21 @@
   padding: 18px 18px 16px;
 }
 
+.statCardClickable {
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.statCardClickable:hover {
+  border-color: var(--gvr-primary, #2b5adc);
+  box-shadow: 0 10px 24px rgba(43, 90, 220, 0.12);
+}
+
+.statCardClickable:focus-visible {
+  outline: 2px solid var(--gvr-primary, #2b5adc);
+  outline-offset: 2px;
+}
+
 .statHero {
   background: var(--gvr-primary, #2b5adc);
   border-color: transparent;
@@ -154,6 +169,103 @@
   border-radius: 20px;
   box-shadow: 0 24px 64px rgba(26, 31, 46, 0.22);
   padding: 22px 24px 20px;
+}
+
+.dealsDialog {
+  max-width: 560px;
+}
+
+.dealList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dealItem {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--gvr-border, #e6ebf2);
+}
+
+.dealList li:first-child .dealItem {
+  border-top: none;
+  padding-top: 4px;
+}
+
+.dealText {
+  min-width: 0;
+  flex: 1;
+}
+
+.dealTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gvr-text, #1a1f2e);
+}
+
+.dealSub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--gvr-text-secondary, #5b6475);
+}
+
+.dealMeta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--gvr-text-muted, #8b93a7);
+}
+
+.dealRight {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.dealDue {
+  font-size: 15px;
+  font-weight: 750;
+  color: #c2410c;
+  letter-spacing: -0.02em;
+}
+
+.dealPayBtn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 112px;
+  padding: 10px 12px;
+  border: 1px solid rgba(194, 65, 12, 0.28);
+  border-radius: 12px;
+  background: #fff7ed;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.dealPayBtn:hover:not(:disabled) {
+  background: #ffedd5;
+  border-color: #c2410c;
+}
+
+.dealPayBtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.dealPayBtn :global(ion-spinner) {
+  width: 22px;
+  height: 22px;
+  color: #c2410c;
+}
+
+.dealPayLabel {
+  font-size: 12px;
+  font-weight: 650;
+  color: #9a3412;
 }
 
 .modalHead {

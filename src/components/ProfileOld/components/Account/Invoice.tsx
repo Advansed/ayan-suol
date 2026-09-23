@@ -173,7 +173,6 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         directory: Directory.Library,
       });
 
-      console.log("PDF сохранён:", result.uri);
       alert(`Счёт сохранён как ${fileName}`);
 
     } catch (err) {
@@ -184,7 +183,6 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
   const send_email = async(data: any) => {
     setLoad(true);
     const res = await api("api/sendEmail", data);
-    console.log("sendEmail", res);
     if(res.success) toast.success("Счет отправлен на почту ");
     else toast.error("Ошибка отправки почты");
     setLoad(false);

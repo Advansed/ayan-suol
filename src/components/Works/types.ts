@@ -2,7 +2,7 @@
  * Типы для модуля Works (работы для водителей)
  */
 
-import { CargoAddress } from "../../Store/cargoStore";
+import { CargoAddress, CargoRoutePoint } from "../../Store/cargoStore";
 
 
 // Статусы работ с точки зрения водителя
@@ -74,6 +74,7 @@ export interface WorkInfo {
     // Адреса (переиспользуем из Cargos)
     address: CargoAddress;
     destiny: CargoAddress;
+    route?: CargoRoutePoint[];
 
     // Характеристики груза
     weight: number;
@@ -113,6 +114,8 @@ export interface WorkInfo {
     vehicles_busy?: number;
     /** Имена файлов по заказу, если приходят с сервера */
     documents?: string[];
+    /** Длина автомобильного маршрута, км */
+    route_distance?: number;
 }
 
 // Данные для создания предложения

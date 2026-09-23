@@ -34,7 +34,12 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({ work, onSubm
   };
 
   const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, weight: parseFloat(e.target.value) || 0 });
+    const weight = parseFloat(e.target.value) || 0;
+    const baseWeight = Number(work.weight) || 0;
+    const basePrice = Number(work.price) || 0;
+    const price =
+      baseWeight > 0 && weight > 0 ? Math.round((basePrice / baseWeight) * weight) : 0;
+    setFormData({ ...formData, weight, price });
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {

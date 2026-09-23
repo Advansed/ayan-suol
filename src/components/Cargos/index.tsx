@@ -4,6 +4,7 @@ import React, { useEffect, useCallback }       from 'react';
 import { useCargos }                                    from './hooks/useCargos';
 import { CargosList }                                   from './components/CargosList';
 import { CargoView }                                    from './components/CargoView';
+import { CargoMap }                                     from './components/CargoMap';
 import { CargoInvoice }                                 from './components/CargoInvoices';
 import { InsurancePage }                                from './components/InsurancePage';
 import { cargoGetters, CargoInfo, EMPTY_CARGO, DriverInfo } from '../../Store/cargoStore';
@@ -18,7 +19,7 @@ import { useToken }                                     from '../../Store/loginS
 
 export const Cargos: React.FC = () => {
     
-    const { cargos, isLoading, createCargo, updateCargo, deleteCargo, publishCargo, refreshCargos } = useCargos()
+    const { cargos, isLoading, createCargo, updateCargo, deleteCargo, publishCargo, unpublishCargo, refreshCargos } = useCargos()
     const { currentPage, navigateTo, replaceCurrentPage, handleCreateNew, handleCargoClick } = useCargoNavigation()
     const invoiceApi = useInvoices({ info: currentPage.cargo })
     const { create_contract, handleAccept, get_contract, handleReject, handleChat, handleComplete } = invoiceApi
@@ -166,14 +167,24 @@ export const Cargos: React.FC = () => {
                             onEdit          = { (cargo) => navigateTo({ type: 'edit', cargo }) }
                             onDelete        = { deleteCargo }
                             onPublish       = { publishCargo }
+                            onUnpublish     = { unpublishCargo }
                             onAcceptInvoice = { handleOpenAgreement }
                             onRejectInvoice = { handleReject }
                             onChatInvoice   = { handleChat }
                             onAdvanceInvoice= { handleAdvanceInvoice }
                             onStartUnloading= { handleStartUnloading }
                             onComplete      = { handleCompleteTrip }
+                            onMapClick       = { (cargo) => navigateTo({ type: 'map', cargo }) }
                             onBack          = { handleBack }
                             isLoading       = { isLoading || invoiceApi.isLoading }
+                        />
+                    );
+
+                case 'map':
+                    return (
+                        <CargoMap
+                            cargo={currentPage.cargo!}
+                            onBack={handleBack}
                         />
                     );
 

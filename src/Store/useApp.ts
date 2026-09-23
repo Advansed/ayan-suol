@@ -19,7 +19,6 @@ export const useApp = () => {
   // Загрузка данных компании при авторизации для заказчика
   useEffect(() => {
     if (auth && isConnected && token && user_type === 1 && !hasLoadedCompany.current) {
-      console.log('Loading company data after authorization...')
       
       companyActions.setLoading(true)
       hasLoadedCompany.current = true
@@ -28,7 +27,6 @@ export const useApp = () => {
         companyActions.setLoading(false)
         
         if (response.success) {
-          console.log('Company data loaded:', response.data)
           companyActions.setData(response.data || null)
         } else {
           console.error('Failed to load company data:', response.message)
@@ -50,7 +48,6 @@ export const useApp = () => {
   // Загрузка данных транспорта при авторизации для водителя
   useEffect(() => {
     if (auth && isConnected && token && user_type === 2 && !hasLoadedTransport.current) {
-      console.log('Loading transport data after authorization...')
       
       transportActions.setLoading(true)
       hasLoadedTransport.current = true
@@ -60,7 +57,6 @@ export const useApp = () => {
         
         if (response.success) {
           const items = asTransportList(response.data)
-          console.log('Transport data loaded:', items)
           transportActions.setItems(items)
         } else {
           console.error('Failed to load transport data:', response.message)

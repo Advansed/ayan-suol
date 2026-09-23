@@ -60,7 +60,6 @@ export const PaymentPage: React.FC<PaymentPageProps> = ({
                 cargo:          cargo.guid
             })
                     
-             console.log( res )
 
             res.data.type = selectedMethod
 

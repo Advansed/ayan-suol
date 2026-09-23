@@ -1,15 +1,15 @@
 import { CargoInfo } from "../../Store/cargoStore";
-import { WorkInfo } from "../Works";
+import { WorkInfo } from "../Works/types";
 
 export interface Coordinates {
   lat: number;
   long: number;
 }
 
-
 export interface MapProps {
   startCoords: Coordinates;
   endCoords: Coordinates;
+  waypoints?: Coordinates[];
   cargoInfo?: CargoInfo;
   workInfo?: WorkInfo;
   height?: string;
@@ -22,11 +22,12 @@ export interface RouteInfoProps {
   workInfo?: WorkInfo;
 }
 
-export interface YandexMapInstance {
+export interface GoogleMapInstance {
+  map: any;
+  objects: any[];
+  lookAtPoints?: Array<{ lat: number; lng: number }>;
+  lookAtZoom?: number;
+  bounds?: any;
   destroy: () => void;
-  geoObjects: {
-    add: (object: any) => void;
-    removeAll: () => void;
-  };
-  setBounds: (bounds: number[][], options?: any) => void;
+  resize: () => void;
 }

@@ -4,6 +4,7 @@ import {
   Building2,
   FileText,
   Lock,
+  Map,
   MapPin,
   Phone,
   Plus,
@@ -23,7 +24,9 @@ import {
   offersLabel,
   phoneHref,
   plural,
+  publishedDateTime,
   resolveBodyType,
+  resolvePublishedAt,
   routeDistanceKm,
   shortDate,
   type PaymentLevel,
@@ -32,6 +35,7 @@ import styles from './WorkOrderInfo.module.css';
 
 type WorkOrderInfoProps = {
   work: WorkInfo;
+  onMapClick?: (work: WorkInfo) => void;
 };
 
 const PAYMENT_TITLE: Record<PaymentLevel, string> = {
@@ -46,7 +50,7 @@ const PAYMENT_TEXT: Record<PaymentLevel, string> = {
   none: 'Средства не зарезервированы. Оплата напрямую с заказчиком — повышенный риск.',
 };
 
-export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work }) => {
+export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }) => {
   const price = work.currentOffer?.price ?? work.price;
   const weight = work.currentOffer?.weight ?? work.weight;
   const volume = work.currentOffer?.volume ?? work.volume;
@@ -62,6 +66,8 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work }) => {
   const bodyType = resolveBodyType(work);
   const pickup = shortDate(work.pickup_date);
   const delivery = shortDate(work.delivery_date);
+  const publishedAt = resolvePublishedAt(work);
+  const publishedLabel = publishedAt ? publishedDateTime(publishedAt) : '';
   const tel = work.phone ? phoneHref(work.phone) : null;
   const verified = work.company?.verified ?? Boolean(work.company);
   const status = normalizeWorkStatus(work.status);
@@ -264,7 +270,14 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work }) => {
           <span>{toCity}</span>
           {distance != null && <span className={styles.specKm}>· {distance} км</span>}
         </div>
+        {onMapClick && (
+          <button type="button" className={styles.mapBtn} onClick={() => onMapClick(work)}>
+            <Map size={16} strokeWidth={1.75} />
+            Открыть карту
+          </button>
+        )}
         <dl className={styles.specTable}>
+          <SpecRow label="Опубликовано" value={publishedLabel} />
           <SpecRow label="Дата отправления" value={pickup} />
           <SpecRow label="Дата доставки" value={delivery} />
           <SpecRow label="Тип кузова" value={bodyType} />

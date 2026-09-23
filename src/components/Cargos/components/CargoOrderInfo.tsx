@@ -3,7 +3,9 @@ import {
   ArrowRight,
   Calendar,
   CalendarCheck,
+  Clock,
   Lock,
+  Map,
   MapPin,
   Users,
 } from 'lucide-react';
@@ -13,6 +15,8 @@ import {
   getPaymentLevel,
   PAYMENT_LABEL,
   plural,
+  publishedDateTime,
+  resolvePublishedAt,
   shortDate,
 } from '../../Works/feedFormat';
 import {
@@ -24,9 +28,10 @@ import styles from './CargoOrderInfo.module.css';
 
 type CargoOrderInfoProps = {
   cargo: CargoInfo;
+  onMapClick?: (cargo: CargoInfo) => void;
 };
 
-export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo }) => {
+export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo, onMapClick }) => {
   const fromCity = cargo.address?.city?.city || 'Не указано';
   const toCity = cargo.destiny?.city?.city || 'Не указано';
   const payment = getPaymentLevel(cargo);
@@ -34,6 +39,8 @@ export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo }) => {
   const offers = cargo.invoices?.length ?? 0;
   const pickup = shortDate(cargo.pickup_date) || '—';
   const delivery = shortDate(cargo.delivery_date) || '—';
+  const publishedAt = resolvePublishedAt(cargo);
+  const publishedLabel = publishedAt ? publishedDateTime(publishedAt) : '';
   const progressStatus = resolveCargoProgressStatus(cargo);
   const statusKind = cargoFeedKind(progressStatus);
   const badgeClass =
@@ -64,6 +71,12 @@ export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo }) => {
             <ArrowRight size={14} strokeWidth={2} className={styles.routeArrow} />
             <span>{toCity}</span>
           </div>
+          {onMapClick && (
+            <button type="button" className={styles.mapBtn} onClick={() => onMapClick(cargo)}>
+              <Map size={16} strokeWidth={1.75} />
+              Открыть карту
+            </button>
+          )}
         </div>
 
         <div className={styles.topRight}>
@@ -76,6 +89,12 @@ export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo }) => {
       </div>
 
       <div className={styles.chips}>
+        {publishedLabel && (
+          <span className={styles.chip}>
+            <Clock size={14} strokeWidth={1.75} className={styles.chipPrimary} />
+            Опубликовано: {publishedLabel}
+          </span>
+        )}
         <span className={styles.chip}>
           <Calendar size={14} strokeWidth={1.75} className={styles.chipPrimary} />
           Отправление: {pickup}

@@ -9,6 +9,8 @@ import {
   OfferInfo,
   WorkPriority
 } from './types'
+import { normalizeCargoRoute } from '../../Store/cargoStore'
+import { resolvePublishedAt } from './feedFormat'
 import { normalizeWorkStatus, findWorkByRef, workIdsMatch } from './statusFlow'
 
 // ============================================
@@ -266,18 +268,18 @@ const normalizeWork = (w: WorkInfo): WorkInfo => {
   const documents = Array.isArray(docs)
     ? docs.map((item) => String(item).trim()).filter(Boolean)
     : undefined
-  return {
+  return normalizeCargoRoute({
     ...w,
     status: normalizeWorkStatus(w.status),
     signed: Boolean(w.signed),
     company: normalizeWorkCompany(w.company),
+    publish_date: resolvePublishedAt(w) || w.publish_date,
     ...(documents && documents.length > 0 ? { documents } : {}),
-  }
+  })
 }
 
 export const workSocketHandlers = {
   onGetWorks: (response: any) => {
-    console.log('onGetWorks response:', response)
 
     workActions.setLoading(false)
 
@@ -337,7 +339,6 @@ export const workSocketHandlers = {
   },
 
   onGetArchive: (response: any) => {
-    console.log('onGetArchive response:', response)
 
     workActions.setArchiveLoading(false)
 
@@ -359,7 +360,6 @@ export const initWorkSocketHandlers = (socket: any) => {
   socket.on('get_works', workSocketHandlers.onGetWorks)
   socket.on('get_work_archives', workSocketHandlers.onGetArchive)
 
-  console.log('Work socket handlers initialized')
 }
 
 export const destroyWorkSocketHandlers = (socket: any) => {
@@ -368,5 +368,4 @@ export const destroyWorkSocketHandlers = (socket: any) => {
   socket.off('get_works', workSocketHandlers.onGetWorks)
   socket.off('get_work_archives', workSocketHandlers.onGetArchive)
 
-  console.log('Work socket handlers destroyed')
 }

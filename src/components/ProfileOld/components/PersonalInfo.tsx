@@ -15,7 +15,6 @@ interface PersonalInfoProps {
 export const PersonalInfo: React.FC<PersonalInfoProps> = ({ user, onBack, onSave }) => {
   const { loading, updUser } = useData( onBack )
 
-  console.log("personalinfo", user)
   const getFormData = (): PageData => [
     {
       title: 'Основная информация',
@@ -166,9 +165,7 @@ const useData = ( onBack )=> {
           updateData.password = newPassword;
         }
 
-        console.log( updateData )
          
-        console.log("set_user emit...")
         const result = await socketRequest(
           'set_user', 
           { token, ...updateData },

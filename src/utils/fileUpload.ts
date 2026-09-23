@@ -6,6 +6,7 @@
 
 import { URL as API_BASE } from '../Store/api';
 import { loginGetters } from '../Store/loginStore';
+import { logApiError, logApiRequest, logApiResponse } from './apiLogger';
 
 export interface UploadResult {
   filePath: string;
@@ -140,10 +141,6 @@ export const compressImageDataUrl = async (dataUrl: string): Promise<string> => 
     }
 
     const after = dataUrlByteLength(best);
-    console.log(
-      `[фото] сжато: ${formatFileSize(before)} → ${formatFileSize(after)}` +
-        ` (${OUTPUT_MIME.replace('image/', '')}, ${bitmap.width}×${bitmap.height} → max ${edge}px)`
-    );
 
     if (after > HARD_MAX_UPLOAD_BYTES) {
       throw new Error('Не удалось загрузить фото: файл слишком большой.');
@@ -186,14 +183,23 @@ export const uploadFileToMinIO                  = async (
   if (params.type) searchParams.set('type', params.type);
   if (params.kind) searchParams.set('kind', params.kind);
 
+  logApiRequest('http', 'api/getUrl', {
+    filename: safeFilename,
+    cargo_id: params.cargo_id,
+    recipient_id: params.recipient_id,
+    type: params.type,
+    kind: params.kind,
+  });
   const res = await fetch(`${API_BASE}/api/getUrl?${searchParams}`);
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    logApiError('http', 'api/getUrl', err);
     throw new Error(err.message || `HTTP ${res.status}`);
   }
 
   const data = await res.json();
+  logApiResponse('http', 'api/getUrl', data);
   const { uploadUrl, filePath, publicUrl: url } = data;
 
   if (!uploadUrl) {
@@ -242,9 +248,6 @@ export const uploadFileToDocs = async (
     throw new Error('Не удалось загрузить фото: файл слишком большой.');
   }
 
-  console.log(
-    `[фото] отправка в API uploadFotos: ${formatFileSize(file.size)}, ${file.type || ext}, ключ ${uploadKey}`
-  );
 
   let lastError: unknown;
   let res: Response | undefined;
@@ -256,6 +259,12 @@ export const uploadFileToDocs = async (
     form.append('file', file, file.name);
 
     try {
+      logApiRequest('http', 'api/uploadFotos', {
+        filename: uploadKey,
+        size: file.size,
+        type: file.type,
+        attempt: attempt + 1,
+      });
       res = await fetch(`${API_BASE}/api/uploadFotos`, {
         method: 'POST',
         body: form,
@@ -264,6 +273,7 @@ export const uploadFileToDocs = async (
       break;
     } catch (err) {
       lastError = err;
+      logApiError('http', 'api/uploadFotos', err);
       if (attempt < UPLOAD_RETRIES - 1 && isTransientFetchError(err)) {
         await sleep(UPLOAD_RETRY_MS);
         continue;
@@ -293,6 +303,7 @@ export const uploadFileToDocs = async (
   }
 
   const data = await res.json();
+  logApiResponse('http', 'api/uploadFotos', data);
   if (data?.success === false) {
     throw new Error(data.message || 'Ошибка загрузки файла');
   }
@@ -395,6 +406,7 @@ export const checkPassportPhoto = async (
 
   const key = filename.startsWith('/') ? filename.slice(1) : filename;
 
+  logApiRequest('http', 'api/check_passport_photo', { filename: key });
   const res = await fetch(`${API_BASE}/api/check_passport_photo`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -402,8 +414,10 @@ export const checkPassportPhoto = async (
   });
 
   const data = await res.json().catch(() => ({}));
+  logApiResponse('http', 'api/check_passport_photo', data);
 
   if (!res.ok || data?.success === false) {
+    logApiError('http', 'api/check_passport_photo', data);
     throw new Error(data.message || `Ошибка проверки фото: HTTP ${res.status}`);
   }
 

@@ -37,7 +37,6 @@ export const useProfile = () => {
 
         const handleOnce = (response: { success: boolean; data?: AuthResponse; message?: string }) => {
           clearTimeout(timeoutId)
-          console.log('set_user', response)
           
           if ( response.success ) {
             setUser( userData )
@@ -84,7 +83,6 @@ export const useProfile = () => {
         const handleOnce = (response: { success: boolean; data?: CompanyData; message?: string; guid?: string }) => {
           clearTimeout(timeoutId)
           companyActions.setSaving(false)
-          console.log('set_company', response)
           
           if ( response.success ) {
             const current = useCompanyStore.getState().data
@@ -138,7 +136,6 @@ export const useProfile = () => {
         const handleOnce = (response: { success: boolean; data?: TransportData; message?: string }) => {
           clearTimeout(timeoutId)
           transportActions.setSaving(false)
-          console.log('set_transport', response)
           
           if ( response.success ) {
             const list = asTransportList(response.data)

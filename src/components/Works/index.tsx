@@ -152,10 +152,9 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
     };
 
     const handleOfferCancelClick                             = async (work: WorkInfo) => {
-        // Формируем данные предложения для удаления
-        // Транспорт берется из work.transport, который был выбран в OfferCard
+        // guid — идентификатор сделки (не груза)
         const offerData: OfferInfo = {
-            guid: work.cargo,
+            guid: work.guid,
             recipient: work.recipient,
             price: work.price,
             weight: work.weight,
@@ -173,7 +172,7 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
             emit("send_message", {
                 token: token,
                 recipient: offerData.recipient,
-                cargo: offerData.guid,
+                cargo: work.cargo,
                 message: "Отозвал предложение",
                 image: "",
             });
@@ -461,6 +460,7 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
                         works                    = { visibleWorks }
                         isLoading                = { isLoading }
                         onWorkClick              = { handleWorkClick }
+                        onRefresh                = { refreshWorks }
                         emptyTitle               = { emptyTitle }
                         emptyHint                = { emptyHint }
                         variant                  = { mode === 'feed' ? 'feed' : 'simple' }

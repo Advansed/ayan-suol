@@ -33,7 +33,6 @@ export function useLogin() {
   // ============================================
 
   const login = useCallback(async (phoneNumber: string, password: string): Promise<boolean> => {
-    console.log("login")
     if (!isConnected) {
       toast.error('Нет подключения к серверу')
       return false
@@ -58,7 +57,6 @@ export function useLogin() {
           localStorage.setItem('gvrs.password', password)
           
           if (response.success && response.data) {
-            console.log("authorization", response)
             setUser(response.data)
             setAuth( true )
             toast.success('Вход выполнен успешно')

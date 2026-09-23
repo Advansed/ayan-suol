@@ -31,7 +31,6 @@ export const Agreements: React.FC = () => {
 
 
   const handlePersonalData = () => { 
-    console.log( "pass", passportCompletion )
     if( passportCompletion > 0){
       if(!agreements.personalData) toggleAgreement('personalData')
     } else toggleAgreement('personalData')

@@ -26,7 +26,6 @@ export const useSocketManager = () => {
       // Подключились - инициализируем handlers
       initSocketHandlers(socket)
       isInitialized.current = true
-      console.log('Socket handlers initialized')
       
     } else if (!isConnected && isInitialized.current) {
       // Отключились - очищаем handlers
@@ -34,7 +33,6 @@ export const useSocketManager = () => {
         destroySocketHandlers(socket)
       }
       isInitialized.current = false
-      console.log('Socket handlers destroyed')
     }
     
   }, [ isConnected ] )

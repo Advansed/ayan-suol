@@ -248,10 +248,8 @@ export const CargoForm: React.FC<CargoFormProps> = ({
       
       let success;
       if (cargo?.guid) {
-        console.log("update", cargoData)
         success = await onUpdate(cargo.guid, cargoData);
       } else {
-        console.log("create", cargoData)
         success = await onCreate(cargoData);
       }
       

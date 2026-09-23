@@ -20,10 +20,11 @@ import {
   formatQty,
   getPaymentLevel,
   offersLabel,
+  publishedDateTime,
   resolveBodyType,
+  resolvePublishedAt,
   routeDistanceKm,
   shortDate,
-  timeAgo,
   type PaymentLevel,
 } from '../../Works/feedFormat';
 import styles from './CargoCard.module.css';
@@ -98,7 +99,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
         }
     };
 
-    const publishedAt = cargo.publish_date || '';
+    const publishedAt = resolvePublishedAt(cargo);
 
     // Теги под статусом (используются и в view, и в list)
     const tags: Array<{ text: string; className: string }> = [];
@@ -163,12 +164,9 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
             </div>
 
             {publishedAt && (
-                <div className={styles.publishedRow} title={formatters.date(publishedAt)}>
+                <div className={styles.publishedRow} title={publishedDateTime(publishedAt)}>
                     <span className={styles.publishedLabel}>Опубликовано</span>
-                    <span className={styles.publishedValue}>{formatters.date(publishedAt)}</span>
-                    {formatters.published(publishedAt) !== formatters.date(publishedAt) && (
-                        <span className={styles.publishedRel}>{formatters.published(publishedAt)}</span>
-                    )}
+                    <span className={styles.publishedValue}>{publishedDateTime(publishedAt)}</span>
                 </div>
             )}
 
@@ -276,7 +274,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
     const payment = getPaymentLevel(cargo);
     const bodyType = resolveBodyType(cargo);
     const companyName = getCargoCompanyName(cargo, companyData?.name || companyData?.short_name);
-    const publishedAgo = cargo.publish_date || cargo.updatedAt || '';
+    const publishedLabel = publishedAt ? publishedDateTime(publishedAt) : '';
     const pickup = shortDate(cargo.pickup_date);
     const delivery = shortDate(cargo.delivery_date);
     const fleet = cargoFleet(cargo);
@@ -328,8 +326,14 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
                     {distance != null && <span className={feedStyles.feedKm}>· {distance} км</span>}
                 </div>
 
-                {(pickup || delivery) && (
+                {(publishedLabel || pickup || delivery) && (
                     <div className={feedStyles.feedDates}>
+                        {publishedLabel && (
+                            <span>
+                                <Clock size={14} strokeWidth={1.75} aria-hidden />
+                                Опубликовано: {publishedLabel}
+                            </span>
+                        )}
                         {pickup && (
                             <span>
                                 <Calendar size={14} strokeWidth={1.75} aria-hidden />
@@ -362,12 +366,6 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
                     <span>
                         {formatQty(cargo.weight)} т · {formatQty(cargo.volume)} м³
                     </span>
-                    {publishedAgo && (
-                        <span>
-                            <Clock size={14} strokeWidth={1.75} aria-hidden />
-                            {timeAgo(publishedAgo)}
-                        </span>
-                    )}
                     {offers > 0 && (
                         <span className={feedStyles.feedOffers}>
                             <Users size={14} strokeWidth={1.75} aria-hidden />

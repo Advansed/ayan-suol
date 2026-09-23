@@ -22,10 +22,9 @@ export const useCargoArchive = (): UseCargoArchiveReturn => {
       emit("get_cargo_archives", { token: token })
       
     } catch (err) {
-      console.log('Error refreshing cargo archive:', err);
+      console.error('Error refreshing cargo archive:', err);
       toast.error('Не удалось загрузить архив заказов');
     } finally {
-      console.log("finally")
     }
   }, []);
 

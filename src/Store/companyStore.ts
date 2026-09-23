@@ -279,7 +279,6 @@ export const companyActions = {
 // ============================================
 export const companySocketHandlers = {
   onGetCompany: (response: any) => {
-    console.log('onGetCompany response:', response)
     
     companyActions.setLoading(false)
     
@@ -292,7 +291,6 @@ export const companySocketHandlers = {
   },
 
   onSaveCompany: (response: any) => {
-    console.log('onSaveCompany response:', response)
     
     companyActions.setSaving(false)
     
@@ -313,7 +311,6 @@ export const initCompanySocketHandlers = (socket: any) => {
   socket.on('get_company', companySocketHandlers.onGetCompany)
   socket.on('set_company', companySocketHandlers.onSaveCompany)
   
-  console.log('Company socket handlers initialized')
 }
 
 export const destroyCompanySocketHandlers = (socket: any) => {
@@ -322,5 +319,4 @@ export const destroyCompanySocketHandlers = (socket: any) => {
   socket.off('get_company', companySocketHandlers.onGetCompany)
   socket.off('set_company', companySocketHandlers.onSaveCompany)
 
-  console.log('Company socket handlers destroyed')
 }

@@ -15,7 +15,6 @@ import {
   XCircle,
 } from 'lucide-react';
 import { CargoInfo, CargoStatus, DriverInfo, useCargoStore } from '../../../Store/cargoStore';
-import { accountGetters } from '../../../Store/accountStore';
 import { statusUtils, formatters } from '../../../utils/utils';
 import {
   getCargoActionHint,
@@ -35,12 +34,14 @@ interface CargoViewProps {
   onEdit: (cargo: CargoInfo) => void;
   onDelete: (guid: string) => Promise<boolean>;
   onPublish: (guid: string) => Promise<boolean>;
+  onUnpublish: (guid: string) => Promise<boolean>;
   onAcceptInvoice: (invoice: DriverInfo) => void | Promise<void>;
   onRejectInvoice: (invoice: DriverInfo) => Promise<boolean>;
   onChatInvoice: (invoice: DriverInfo) => void;
   onAdvanceInvoice: (invoice: DriverInfo, status: number) => void | Promise<void>;
   onStartUnloading: (invoice: DriverInfo) => void | Promise<void>;
   onComplete: (invoice: DriverInfo, rating: number, completed: boolean) => void | Promise<void>;
+  onMapClick?: (cargo: CargoInfo) => void;
   isLoading?: boolean;
 }
 
@@ -76,18 +77,21 @@ export const CargoView: React.FC<CargoViewProps> = ({
   onEdit,
   onDelete,
   onPublish,
+  onUnpublish,
   onAcceptInvoice,
   onRejectInvoice,
   onChatInvoice,
   onAdvanceInvoice,
   onStartUnloading,
   onComplete,
+  onMapClick,
   isLoading = false,
 }) => {
   const cargos = useCargoStore((state) => state.cargos);
   const [actionOpen, setActionOpen] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showPublishAlert, setShowPublishAlert] = useState(false);
+  const [showUnpublishAlert, setShowUnpublishAlert] = useState(false);
   const [rejectInvoice, setRejectInvoice] = useState<DriverInfo | null>(null);
   const [acceptInvoice, setAcceptInvoice] = useState<DriverInfo | null>(null);
 
@@ -99,27 +103,19 @@ export const CargoView: React.FC<CargoViewProps> = ({
   const progressStatus = resolveCargoProgressStatus(cargoInfo);
   const status = progressStatus;
   const canPublish = status === CargoStatus.NEW;
+  const canUnpublish = status === CargoStatus.WAITING;
   const canEdit = statusUtils.canEdit(status);
   const canDelete = statusUtils.canDelete(status);
   const invoices = cargoInfo.invoices ?? [];
   const totalInvoices = invoices.length;
-  const advanceAmount = Number(cargoInfo.advance) || 0;
-  const insuranceAmount = Number(cargoInfo.insurance) || 0;
-  const publishCost = advanceAmount + insuranceAmount;
-  const balance = accountGetters.getBalance();
   const actionHint = getCargoActionHint(progressStatus);
-  const publishAlertMessage = (() => {
-    if (publishCost <= 0) return 'Опубликовать груз для поиска водителей?';
-    const parts: string[] = [];
-    if (advanceAmount > 0) parts.push(`спецсчёт ${formatters.currency(advanceAmount)}`);
-    if (insuranceAmount > 0) parts.push(`страховка ${formatters.currency(insuranceAmount)}`);
-    return `К списанию с баланса: ${formatters.currency(publishCost)} (${parts.join(' + ')}). Доступно: ${formatters.currency(balance)}. Опубликовать заказ?`;
-  })();
+  const publishAlertMessage = 'Опубликовать заказ для поиска водителей?';
   const completed = isCargoCompleted(progressStatus);
   const problems = isCargoProblems(progressStatus);
   const inExecution = isCargoInExecution(progressStatus);
   const showTracker = inExecution || completed;
   const showPublishActions = canPublish;
+  const showWaitingActions = canUnpublish;
   const showTripActions = inExecution && !completed;
 
   const selectedInvoice = useMemo(
@@ -149,6 +145,12 @@ export const CargoView: React.FC<CargoViewProps> = ({
     setShowPublishAlert(false);
     setActionOpen(false);
     await onPublish(cargoInfo.guid);
+  };
+
+  const handleUnpublish = async () => {
+    setShowUnpublishAlert(false);
+    setActionOpen(false);
+    await onUnpublish(cargoInfo.guid);
   };
 
   const handleConfirmAccept = () => {
@@ -234,9 +236,22 @@ export const CargoView: React.FC<CargoViewProps> = ({
       )}
 
       {status === CargoStatus.WAITING && (
-        <div className={styles.doneNote}>
-          Заказ опубликован. Ожидаем предложения от водителей.
-          {totalInvoices > 0 && ` Уже есть заявок: ${totalInvoices}.`}
+        <div className={styles.waitingBox}>
+          <div className={styles.doneNote}>
+            Заказ опубликован. Ожидаем предложения от водителей.
+            {totalInvoices > 0 && ` Уже есть заявок: ${totalInvoices}.`}
+          </div>
+          <button
+            type="button"
+            className={`${styles.actionItem} ${styles.actionDanger}`}
+            onClick={() => setShowUnpublishAlert(true)}
+          >
+            <XCircle size={18} strokeWidth={1.75} />
+            <span>
+              <span className={styles.actionItemTitle}>Снять с публикации</span>
+              <span className={styles.actionItemHint}>Заказ снова станет черновиком</span>
+            </span>
+          </button>
         </div>
       )}
 
@@ -339,7 +354,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
       <div className={styles.stack}>
         {showTracker && <CargoStatusTimeline cargo={cargoInfo} />}
 
-        <CargoOrderInfo cargo={cargoInfo} />
+        <CargoOrderInfo cargo={cargoInfo} onMapClick={onMapClick} />
 
         {selectedInvoice && (
           <section className={styles.carrierCard}>
@@ -367,6 +382,26 @@ export const CargoView: React.FC<CargoViewProps> = ({
           </section>
         )}
 
+        {status === CargoStatus.WAITING && (
+          <div className={styles.waitingBox}>
+            <div className={styles.doneNote}>
+              Заказ опубликован. Ожидаем предложения от водителей.
+              {totalInvoices > 0 && ` Уже есть заявок: ${totalInvoices}.`}
+            </div>
+            <button
+              type="button"
+              className={`${styles.actionItem} ${styles.actionDanger}`}
+              onClick={() => setShowUnpublishAlert(true)}
+            >
+              <XCircle size={18} strokeWidth={1.75} />
+              <span>
+                <span className={styles.actionItemTitle}>Снять с публикации</span>
+                <span className={styles.actionItemHint}>Заказ снова станет черновиком</span>
+              </span>
+            </button>
+          </div>
+        )}
+
         <section className={styles.bidsSection}>
           <div className={styles.bidsHead}>
             <h3 className={styles.bidsTitle}>
@@ -390,7 +425,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
           )}
         </section>
 
-        {(showPublishActions || showTripActions) && (
+        {(showPublishActions || showWaitingActions || showTripActions) && (
           <div className={styles.ctaRow}>
             <button
               type="button"
@@ -545,6 +580,24 @@ export const CargoView: React.FC<CargoViewProps> = ({
             handler: () => {
               if (rejectInvoice) void onRejectInvoice(rejectInvoice);
             },
+          },
+        ]}
+      />
+
+      <IonAlert
+        isOpen={showUnpublishAlert}
+        onDidDismiss={() => setShowUnpublishAlert(false)}
+        header="Снять с публикации"
+        message="Заказ снова станет черновиком и перестанет быть виден водителям. Снять с публикации?"
+        buttons={[
+          {
+            text: 'Отмена',
+            role: 'cancel',
+            handler: () => setShowUnpublishAlert(false),
+          },
+          {
+            text: 'Снять',
+            handler: handleUnpublish,
           },
         ]}
       />

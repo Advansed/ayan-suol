@@ -10,7 +10,6 @@ const useWorkArchive = () => {
   // Фильтруем выполненные работы
   const archiveWorks = useMemo(() => {
     const filteredWorks = works.filter(work => work.status === WorkStatus.COMPLETED);
-    console.log(filteredWorks);
     return filteredWorks;
   }, [works]);
 

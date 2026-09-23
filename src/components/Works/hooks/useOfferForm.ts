@@ -70,7 +70,6 @@ export const useOfferForm = (): UseOfferFormReturn => {
 
         try {
             // Форма готова к отправке - результат будет обработан в useWorks
-            console.log('Submitting offer form:', formState.data);
             
             // Имитация отправки
             await new Promise(resolve => setTimeout(resolve, 1000));

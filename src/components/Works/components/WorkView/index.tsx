@@ -15,7 +15,8 @@ import {
   feedStatusKind,
   feedStatusLabel,
   fleetSlots,
-  timeAgo,
+  publishedDateTime,
+  resolvePublishedAt,
 } from '../../feedFormat';
 import { CounterOfferCard } from './OfferCard';
 import { ContractCard } from './ContractCard';
@@ -63,6 +64,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
     onSendLoadedPhotos,
     onArrivedUnload,
     onUnloadComplete,
+    onMapClick,
     onSignContract
 }) => {
     const works = useWorkStore(state => state.works);
@@ -146,10 +148,10 @@ export const WorkView: React.FC<WorkViewProps> = ({
                 : statusKind === 'alert'
                   ? styles.badge_alert
                   : styles.badge_work;
-    const publishedAt = workInfo.publish_date || workInfo.updatedAt || '';
+    const publishedAt = resolvePublishedAt(workInfo);
     const subtitleParts = [
         workInfo.category?.trim() || '',
-        publishedAt ? timeAgo(publishedAt) : '',
+        publishedAt ? `Опубликовано: ${publishedDateTime(publishedAt)}` : '',
     ].filter(Boolean);
 
     // Смена этапа с сервера — закрыть модалку, чтобы показать новое действие
@@ -337,7 +339,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
             <StatusTimeline work={workInfo} />
 
             <div className={styles.body}>
-                <WorkOrderInfo work={workInfo} />
+                <WorkOrderInfo work={workInfo} onMapClick={onMapClick} />
 
                 {isBidding && (
                     <section className={styles.bidsCard}>

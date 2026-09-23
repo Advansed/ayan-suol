@@ -1,6 +1,9 @@
 export interface CityData {
   city: string;
   fias: string;
+  country?: string;
+  lat?: number;
+  lon?: number;
 }
 
 export interface AddressData {

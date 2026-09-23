@@ -28,7 +28,6 @@ const Tab1: React.FC = () => {
                             minWidth: '100vw'
                         }}
                         onComplete={() => {
-                          console.log("complete")
                           setLogo( false )
                         }}
                     />

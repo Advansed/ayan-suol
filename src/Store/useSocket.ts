@@ -1,6 +1,6 @@
 // src/Store/useSocket.ts
 
-import { useEffect, useCallback } from 'react'
+import { useCallback } from 'react'
 import socketService from '../services/socketService'
 import { socketActions, useSocketStore } from './socketStore'
 
@@ -16,9 +16,6 @@ export function useSocket() {
   const connect     = useCallback(async (token: string) => {
     try {
       socketActions.setConnecting(true)
-
-      console.log("connecting...")
-      
       const success = await socketService.connect(token)
       
       socketActions.updateStatus(
@@ -40,9 +37,6 @@ export function useSocket() {
   }, [])
 
   const emit        = useCallback((event: string, data?: any) => {
-    if (event !== 'get_balance') {
-      console.log("emit... " + event, data)
-    }
     return socketService.emit(event, data)
   }, [])
 
@@ -84,4 +78,3 @@ export function useSocket() {
     once
   }
 }
-

@@ -50,8 +50,6 @@ export const Account: React.FC<AccountProps> = ({ onBack }) => {
   }, [])
 
   useEffect(() => {
-    console.log(accountData?.balance)
-    console.log(accountData?.currency)
   }, [accountData])
 
   // Загрузка данных продавца
@@ -74,7 +72,6 @@ export const Account: React.FC<AccountProps> = ({ onBack }) => {
       amount: parseFloat(amount),
       description: "Пополнение лицевого счета " + id
     })
-    console.log(res)
     if(res.success){
       window.open(res.data.payment_url);
     }
@@ -86,7 +83,6 @@ export const Account: React.FC<AccountProps> = ({ onBack }) => {
       amount: parseFloat(amount),
       description: "Пополнение лицевого счета " + id
     })
-    console.log(res)
 
     if(res.success){
       window.open(res.data.sbp_payload);
@@ -115,7 +111,6 @@ export const Account: React.FC<AccountProps> = ({ onBack }) => {
     };
 
     const result = await set_invoice( invoiceData );
-    console.log( result )
 
     setShowInvoiceForm( result.data )
 
@@ -123,11 +118,9 @@ export const Account: React.FC<AccountProps> = ({ onBack }) => {
 
   const handleOpenInvoice = async(id: string) => {
     
-    console.log("get_invoice", id)
     
     const res = await get_invoice( id ); 
 
-    console.log(res)
 
     if(res.success) setShowInvoiceForm(res.data)
   }

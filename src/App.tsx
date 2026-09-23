@@ -57,7 +57,7 @@ const AppContent: React.FC = () => {
   useApp();
 
   useEffect(() => {
-    getVersion().then((res) => console.log(res));
+    getVersion().then(() => undefined);
   }, []);
 
   return (
