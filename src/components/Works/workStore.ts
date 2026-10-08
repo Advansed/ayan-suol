@@ -20,7 +20,6 @@ export interface WorkState {
   works: WorkInfo[]
   archiveWorks: WorkInfo[]
   isLoading: boolean
-  isArchiveLoading: boolean
   currentPage: WorkPageType
   filters: WorkFilters
   searchQuery: string
@@ -32,14 +31,13 @@ interface WorkActions {
   setWorks: (works: WorkInfo[]) => void
   setArchiveWorks: (archiveWorks: WorkInfo[]) => void
   setLoading: (loading: boolean) => void
-  setArchiveLoading: (loading: boolean) => void
   setCurrentPage: (page: WorkPageType) => void
   replaceCurrentPage: (page: WorkPageType) => void
   setFilters: (filters: WorkFilters) => void
   setSearchQuery: (query: string) => void
   setNavigationHistory: (history: WorkPageType[]) => void
   setError: (error: string | null) => void
-  updateWork: (guid: string, data: Partial<WorkInfo>) => void
+  updateWork: (guid: string | { guid?: string; cargo?: string }, data: Partial<WorkInfo>) => void
   addToArchive: (guid: string) => void
   markCompleted: (guid: string) => void
   clearError: () => void
@@ -102,7 +100,6 @@ export const useWorkStore = create<WorkStore>()(
       works: [],
       archiveWorks: [],
       isLoading: false,
-      isArchiveLoading: false,
       currentPage: { type: 'list' },
       filters: {},
       searchQuery: '',
@@ -110,10 +107,9 @@ export const useWorkStore = create<WorkStore>()(
       error: null,
 
       // ACTIONS
-      setWorks: (works) => set({ works }),
+      setWorks: (works) => set({ works: works.map((item) => withLocalOffer(item)) }),
       setArchiveWorks: (archiveWorks) => set({ archiveWorks }),
       setLoading: (isLoading) => set({ isLoading }),
-      setArchiveLoading: (isArchiveLoading) => set({ isArchiveLoading }),
       setCurrentPage: (currentPage) => set({ currentPage }),
       /** Обновить текущий экран без записи в history (sync из стора) */
       replaceCurrentPage: (page) => {
@@ -176,7 +172,6 @@ export const useWorkStore = create<WorkStore>()(
         works: [],
         archiveWorks: [],
         isLoading: false,
-        isArchiveLoading: false,
         currentPage: { type: 'list' },
         filters: {},
         searchQuery: '',
@@ -196,7 +191,6 @@ export const workGetters = {
   getWorks: (): WorkInfo[] => useWorkStore.getState().works,
   getArchiveWorks: (): WorkInfo[] => useWorkStore.getState().archiveWorks,
   isLoading: (): boolean => useWorkStore.getState().isLoading,
-  isArchiveLoading: (): boolean => useWorkStore.getState().isArchiveLoading,
   getError: (): string | null => useWorkStore.getState().error,
 
   getWork: (guid: string): WorkInfo | undefined => {
@@ -227,14 +221,14 @@ export const workActions = {
   setWorks: (works: WorkInfo[]) => useWorkStore.getState().setWorks(works),
   setArchiveWorks: (archiveWorks: WorkInfo[]) => useWorkStore.getState().setArchiveWorks(archiveWorks),
   setLoading: (loading: boolean) => useWorkStore.getState().setLoading(loading),
-  setArchiveLoading: (loading: boolean) => useWorkStore.getState().setArchiveLoading(loading),
   setCurrentPage: (page: WorkPageType) => useWorkStore.getState().setCurrentPage(page),
   replaceCurrentPage: (page: WorkPageType) => useWorkStore.getState().replaceCurrentPage(page),
   setFilters: (filters: WorkFilters) => useWorkStore.getState().setFilters(filters),
   setSearchQuery: (query: string) => useWorkStore.getState().setSearchQuery(query),
   setNavigationHistory: (history: WorkPageType[]) => useWorkStore.getState().setNavigationHistory(history),
   setError: (error: string | null) => useWorkStore.getState().setError(error),
-  updateWork: (guid: string, data: Partial<WorkInfo>) => useWorkStore.getState().updateWork(guid, data),
+  updateWork: (guid: string | { guid?: string; cargo?: string }, data: Partial<WorkInfo>) =>
+    useWorkStore.getState().updateWork(guid, data),
   addToArchive: (guid: string) => useWorkStore.getState().addToArchive(guid),
   markCompleted: (guid: string) => useWorkStore.getState().markCompleted(guid),
   clearError: () => useWorkStore.getState().clearError(),
@@ -261,6 +255,45 @@ const normalizeWorkCompany = (company: WorkInfo['company'] | Record<string, unkn
     ...(Number.isFinite(rating) && rating > 0 ? { rating } : {}),
     ...(Number.isFinite(deals) && deals > 0 ? { deals: Math.round(deals) } : {}),
   }
+}
+
+const locallyOfferedIds = new Set<string>()
+
+export function rememberOfferedWork(ref: { guid?: string; cargo?: string } | string) {
+  const found = typeof ref === 'string' ? undefined : findWorkByRef(useWorkStore.getState().works, ref)
+  const ids = [
+    typeof ref === 'string' ? ref : ref.guid,
+    typeof ref === 'string' ? undefined : ref.cargo,
+    found?.guid,
+    found?.cargo,
+  ]
+  ids.filter(Boolean).forEach((id) => locallyOfferedIds.add(String(id)))
+}
+
+export function forgetOfferedWork(ref: { guid?: string; cargo?: string } | string) {
+  const found = findWorkByRef(useWorkStore.getState().works, ref)
+  const ids = [
+    typeof ref === 'string' ? ref : ref.guid,
+    typeof ref === 'string' ? undefined : ref.cargo,
+    found?.guid,
+    found?.cargo,
+  ]
+  ids.filter(Boolean).forEach((id) => locallyOfferedIds.delete(String(id)))
+}
+
+export function isLocallyOffered(work: { guid?: string; cargo?: string }): boolean {
+  const ids = [work.guid, work.cargo].filter(Boolean).map(String)
+  return ids.some((id) => locallyOfferedIds.has(id))
+}
+
+function withLocalOffer(work: WorkInfo): WorkInfo {
+  if (!isLocallyOffered(work)) return work
+  const status = normalizeWorkStatus(work.status)
+  if (status === WorkStatus.NEW || status === WorkStatus.OFFERED) {
+    return { ...work, status: WorkStatus.OFFERED }
+  }
+  ;[work.guid, work.cargo].filter(Boolean).forEach((id) => locallyOfferedIds.delete(String(id)))
+  return work
 }
 
 const normalizeWork = (w: WorkInfo): WorkInfo => {
@@ -292,7 +325,7 @@ export const workSocketHandlers = {
         workActions.setError('Failed to load works')
         return
       }
-      workActions.setWorks(response.map(normalizeWork))
+      workActions.setWorks(response.map((item: WorkInfo) => withLocalOffer(normalizeWork(item))))
       return
     }
 
@@ -302,7 +335,7 @@ export const workSocketHandlers = {
         workActions.setError(response?.message || 'Failed to load works')
         return
       }
-      workActions.setWorks(response.data.map(normalizeWork))
+      workActions.setWorks(response.data.map((item: WorkInfo) => withLocalOffer(normalizeWork(item))))
       return
     }
 
@@ -321,12 +354,12 @@ export const workSocketHandlers = {
       if (idx >= 0) {
         const next = [...works]
         // Сохраняем исходный guid из стора, чтобы открытый экран не «терял» запись
-        next[idx] = {
+        next[idx] = withLocalOffer({
           ...works[idx],
           ...normalized,
           guid: works[idx].guid || normalized.guid,
           cargo: normalized.cargo || works[idx].cargo,
-        }
+        })
         workActions.setWorks(next)
       } else {
         workActions.setWorks([...works, normalized])
@@ -337,18 +370,6 @@ export const workSocketHandlers = {
     console.error('Invalid works response:', response)
     workActions.setError(response?.message || 'Failed to load works')
   },
-
-  onGetArchive: (response: any) => {
-
-    workActions.setArchiveLoading(false)
-
-    if (response.success && Array.isArray(response.data)) {
-      workActions.setArchiveWorks(response.data.map(normalizeWork))
-    } else {
-      console.error('Invalid archive response:', response)
-      workActions.setError(response.message || 'Failed to load archive')
-    }
-  }
 }
 
 // ============================================
@@ -357,8 +378,8 @@ export const workSocketHandlers = {
 export const initWorkSocketHandlers = (socket: any) => {
   if (!socket) return
 
+  socket.off('get_works')
   socket.on('get_works', workSocketHandlers.onGetWorks)
-  socket.on('get_work_archives', workSocketHandlers.onGetArchive)
 
 }
 
@@ -366,6 +387,5 @@ export const destroyWorkSocketHandlers = (socket: any) => {
   if (!socket) return
 
   socket.off('get_works', workSocketHandlers.onGetWorks)
-  socket.off('get_work_archives', workSocketHandlers.onGetArchive)
 
 }

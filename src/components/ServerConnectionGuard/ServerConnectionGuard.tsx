@@ -1,5 +1,6 @@
 // src/components/ServerConnectionGuard/ServerConnectionGuard.tsx
 import React, { useCallback, useEffect, useState } from 'react';
+import i18n from '../../i18n';
 import { useSocket } from '../../Store/useSocket';
 import { ReconnectToServerForm } from '../ReconnectToServerForm/ReconnectToServerForm';
 import { useSocketStore } from '../../Store/socketStore';
@@ -50,7 +51,7 @@ export const ServerConnectionGuard: React.FC<ServerConnectionGuardProps> = ({ ch
 
       await connect(token);
     } catch (err: any) {
-      setError(err.message || 'Сервер недоступен');
+      setError(err.message || i18n.t('serverDown', { ns: 'common' }));
     }
   }, [isConnected, connect]);
 

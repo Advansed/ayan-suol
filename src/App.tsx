@@ -21,22 +21,23 @@ import './theme/web-layout.css';
 import { ToastProvider } from './components/Toast/ToastManager';
 import { useLogin } from './Store/useLogin';
 import { ServerConnectionGuard } from './components/ServerConnectionGuard';
-import { Login } from './components/Login';
 import { useSocketManager } from './services/useSocketManager';
 import { useApp } from './Store/useApp';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getVersion } from './Store/api';
 import { AppShell } from './layout';
 import { HomePage } from './pages/Home/HomePage';
+import { LandingPage } from './pages/Landing/LandingPage';
 import { StubPage } from './pages/Stub/StubPage';
 import {
   ArchivePage,
   ChatsPage,
+  DriversRoutePage,
   FeedPage,
   FinancePage,
   ProfileRoutePage,
   SettingsRoutePage,
-  VerificationPage,
   VehiclesPage,
 } from './pages/RoutePages';
 
@@ -50,7 +51,25 @@ const LegacyChatRedirect: React.FC = () => {
   return <Redirect to={`/chats/${id}`} />;
 };
 
+const GuestRoutes: React.FC = () => (
+  <IonReactRouter>
+    <Switch>
+      <Route exact path="/" component={LandingPage} />
+      <Route exact path="/login">
+        <Redirect to="/?auth=login" />
+      </Route>
+      <Route exact path="/register">
+        <Redirect to="/?auth=register" />
+      </Route>
+      <Route>
+        <Redirect to="/" />
+      </Route>
+    </Switch>
+  </IonReactRouter>
+);
+
 const AppContent: React.FC = () => {
+  const { t } = useTranslation('common');
   const { auth } = useLogin();
 
   useSocketManager();
@@ -79,6 +98,7 @@ const AppContent: React.FC = () => {
               <Route exact path="/chats" component={ChatsPage} />
               <Route exact path="/chats/:id" component={ChatsPage} />
               <Route exact path="/vehicles" component={VehiclesPage} />
+              <Route exact path="/drivers" component={DriversRoutePage} />
               <Route exact path="/settings" component={SettingsRoutePage} />
               <Route exact path="/profile" component={ProfileRoutePage} />
               <Route exact path="/cabinet">
@@ -86,16 +106,16 @@ const AppContent: React.FC = () => {
               </Route>
 
               <Route exact path="/support">
-                <StubPage title="Поддержка" description="Служба поддержки скоро будет доступна. Напишите нам на info@gruzreis.ru." />
+                <StubPage title={t('supportTitle')} description={t('supportText')} />
               </Route>
               <Route exact path="/documents">
-                <StubPage title="Документы" description="Раздел документов и договоров в разработке." />
+                <StubPage title={t('documentsTitle')} description={t('documentsText')} />
               </Route>
               <Route exact path="/verification">
-                <VerificationPage />
+                <Redirect to="/finance" />
               </Route>
               <Route exact path="/partners">
-                <StubPage title="Партнёрам" description="Партнёрская программа в разработке." />
+                <StubPage title={t('partnersTitle')} description={t('partnersText')} />
               </Route>
 
               {/* Legacy tabs */}
@@ -116,6 +136,13 @@ const AppContent: React.FC = () => {
                 <Redirect to="/archive" />
               </Route>
 
+              <Route exact path="/login">
+                <Redirect to="/" />
+              </Route>
+              <Route exact path="/register">
+                <Redirect to="/" />
+              </Route>
+
               <Route>
                 <Redirect to="/" />
               </Route>
@@ -123,7 +150,7 @@ const AppContent: React.FC = () => {
           </AppShell>
         </IonReactRouter>
       ) : (
-        <Login />
+        <GuestRoutes />
       )}
     </ServerConnectionGuard>
   );

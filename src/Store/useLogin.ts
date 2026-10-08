@@ -57,7 +57,13 @@ export function useLogin() {
           localStorage.setItem('gvrs.password', password)
           
           if (response.success && response.data) {
-            setUser(response.data)
+            const envelopeTax = (response as { tax?: unknown }).tax
+            setUser({
+              ...response.data,
+              ...(response.data.tax === undefined && envelopeTax !== undefined
+                ? { tax: envelopeTax as number }
+                : {}),
+            })
             setAuth( true )
             toast.success('Вход выполнен успешно')
             resolve(true)

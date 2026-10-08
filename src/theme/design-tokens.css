@@ -43,6 +43,16 @@
   --dop-color: #ffba00;
 }
 
+html[lang='zh-CN'] {
+  --landing-font: 'Noto Sans SC', 'Manrope', 'Segoe UI', sans-serif;
+  --landing-display: 'Noto Sans SC', 'Sora', sans-serif;
+}
+
+html[lang='zh-CN'] body,
+html[lang='zh-CN'] ion-app {
+  font-family: 'Noto Sans SC', 'Manrope', 'Segoe UI', sans-serif;
+}
+
 @media (min-width: 1024px) {
   :root {
     --safe-area-inset-top: 0px;

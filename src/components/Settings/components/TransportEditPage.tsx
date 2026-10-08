@@ -6,13 +6,17 @@ import { TransportData } from '../../../Store/transportStore';
 import { useTransport } from '../../../Store/useTransport';
 
 export const TransportEditPage: React.FC = () => {
-  const { transportData, transportItems, updateTransport, isTransportSaving } = useProfile();
-  const { loadTypes } = useTransport();
+  const { transportData, transportItems, updateTransport, isTransportSaving, user_type } = useProfile();
+  const { loadTypes, refresh } = useTransport();
   const [editing, setEditing] = useState<TransportData | null | undefined>(undefined);
 
   useEffect(() => {
     loadTypes();
   }, [loadTypes]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh, user_type]);
 
   const vehicles = useMemo(() => {
     if (transportItems?.length) return transportItems;

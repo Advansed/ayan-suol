@@ -254,7 +254,6 @@ export interface UseWorksReturn {
 
     // Архив (добавить)
     archiveWorks: WorkInfo[];
-    isArchiveLoading: boolean;
 
     // Существующие методы
     navigateTo: (page: WorkPageType) => void;
@@ -266,8 +265,5 @@ export interface UseWorksReturn {
     cancelOffer: (offerId: string) => Promise<boolean>;
     getWork: (guid: string) => WorkInfo | undefined;
     refreshWorks: () => Promise<void>;
-
-    // Архив (добавить)
-    loadArchiveWorks: () => Promise<void>;
 }
 

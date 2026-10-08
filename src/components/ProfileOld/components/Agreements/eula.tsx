@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { IonButton, IonContent, IonHeader, IonIcon, IonModal, IonTitle, IonToolbar } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
 import { useLogin } from '../../../../Store/useLogin';
@@ -10,13 +11,14 @@ interface EULAProps {
 }
 
 const EULA: React.FC<EULAProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation('settings');
   const { agreements, toggleAgreement } = useAgreements()
 
   return (
     <IonModal isOpen={isOpen} onDidDismiss={onClose}>
           <IonHeader>
             <IonToolbar>
-              <IonTitle>Пользовательское соглашение</IonTitle>
+              <IonTitle>{t('userAgreement')}</IonTitle>
               <IonButton 
                 fill="clear" 
                 slot="end" 
@@ -135,7 +137,7 @@ const EULA: React.FC<EULAProps> = ({ isOpen, onClose }) => {
                 <div className="mt-6 space-y-3">
                   <label className="flex items-center">
                     <input type="checkbox" className="mr-3" checked = { agreements?.userAgreement }/>
-                    <span className="text-sm text-gray-700">Я прочитал(а) и согласен(на) с условиями пользовательского соглашения</span>
+                    <span className="text-sm text-gray-700">{t('eulaRead')}</span>
                   </label>
                   <IonButton 
                       color={ agreements?.userAgreement ? "danger" : "primary" }
@@ -144,8 +146,8 @@ const EULA: React.FC<EULAProps> = ({ isOpen, onClose }) => {
                   >
                       {
                         agreements?.userAgreement 
-                          ? "Отмена принятий условий соглашения"
-                          : "Принимаю условия соглашения"
+                          ? t('revokeAgreement')
+                          : t('acceptAgreement')
                       }
                       
                   </IonButton>

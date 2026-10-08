@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { Bell, Menu, Search, X } from 'lucide-react';
 import { RoleToggle } from './RoleToggle';
-import { resolveImageSrc } from '../utils/fileUpload';
+import { useResolvedImageSrc } from '../utils/fileUpload';
 import styles from './AppHeader.module.css';
 
 type AppHeaderProps = {
@@ -22,8 +23,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onMenuToggle,
   showMenuButton,
 }) => {
+  const { t } = useTranslation('common');
   const history = useHistory();
   const [query, setQuery] = useState('');
+  const userImageSrc = useResolvedImageSrc(userImage);
   const initial = (userName || 'П').trim().charAt(0).toUpperCase() || 'П';
 
   const onSearchSubmit = (e: React.FormEvent) => {
@@ -38,7 +41,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           type="button"
           className={styles.iconBtn}
           onClick={onMenuToggle}
-          aria-label="Открыть меню"
+          aria-label={t('openMenu')}
         >
           <Menu size={22} strokeWidth={1.75} />
         </button>
@@ -50,16 +53,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Поиск заказов, машин, документов..."
+          placeholder={t('searchPlaceholder')}
           className={styles.searchInput}
-          aria-label="Поиск"
+          aria-label={t('search')}
         />
         {query && (
           <button
             type="button"
             className={styles.clearBtn}
             onClick={() => setQuery('')}
-            aria-label="Очистить"
+            aria-label={t('clear')}
           >
             <X size={16} />
           </button>
@@ -71,7 +74,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <RoleToggle userType={userType} onChange={onRoleChange} />
         </div>
 
-        <button type="button" className={styles.iconBtn} aria-label="Уведомления">
+        <button type="button" className={styles.iconBtn} aria-label={t('notifications')}>
           <Bell size={20} strokeWidth={1.75} />
           <span className={styles.notifDot} />
         </button>
@@ -80,11 +83,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           type="button"
           className={styles.avatar}
           onClick={() => history.push('/profile')}
-          aria-label="Профиль"
-          title={userName || 'Профиль'}
+          aria-label={t('profile')}
+          title={userName || t('profile')}
         >
-          {userImage ? (
-            <img src={resolveImageSrc(userImage)} alt="" />
+          {userImageSrc ? (
+            <img src={userImageSrc} alt="" />
           ) : (
             <span>{initial}</span>
           )}

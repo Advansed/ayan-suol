@@ -1,6 +1,7 @@
 import { WorkStatus } from './types';
 import { workFormatters } from './utils';
-import { normalizeWorkStatus, WORK_STATUS_SHORT } from './statusFlow';
+import { workStatusLabel } from './statusFlow';
+import i18n, { intlLocale } from '../../i18n';
 
 type Payable = { advance?: number | null; price?: number | null };
 type BodySource = {
@@ -17,10 +18,27 @@ type RoutePoints = {
 
 export type PaymentLevel = 'full' | 'partial' | 'none';
 
+const PAYMENT_KEYS: Record<PaymentLevel, string> = {
+  full: 'payEscrow',
+  partial: 'payEscrowPart',
+  none: 'payNone',
+};
+
+export function paymentLabel(level: PaymentLevel): string {
+  return i18n.t(PAYMENT_KEYS[level], { ns: 'works' });
+}
+
+/** @deprecated use paymentLabel so the text follows the selected language */
 export const PAYMENT_LABEL: Record<PaymentLevel, string> = {
-  full: 'Оплата на эскроу',
-  partial: 'Часть на эскроу',
-  none: 'Без безопасной оплаты',
+  get full() {
+    return paymentLabel('full');
+  },
+  get partial() {
+    return paymentLabel('partial');
+  },
+  get none() {
+    return paymentLabel('none');
+  },
 };
 
 export function getPaymentLevel(work: Payable): PaymentLevel {
@@ -40,7 +58,7 @@ export function plural(n: number, one: string, few: string, many: string): strin
 }
 
 export function offersLabel(count: number): string {
-  return `${count} ${plural(count, 'предложение', 'предложения', 'предложений')}`;
+  return i18n.t('offers', { ns: 'works', count });
 }
 
 export function formatQty(value: number): string {
@@ -71,7 +89,7 @@ export function parseDate(value: string): Date | null {
 export function shortDate(value: string): string {
   const date = parseDate(value);
   if (!date) return '';
-  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
+  return date.toLocaleDateString(intlLocale(), { day: 'numeric', month: 'short' }).replace('.', '');
 }
 
 type PublishedSource = {
@@ -104,12 +122,12 @@ export function resolvePublishedAt(source?: PublishedSource | null): string {
 export function publishedDateTime(value: string): string {
   const date = parseDate(value);
   if (!date) return value?.trim() || '';
-  const datePart = date.toLocaleDateString('ru-RU', {
+  const datePart = date.toLocaleDateString(intlLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   });
-  const timePart = date.toLocaleTimeString('ru-RU', {
+  const timePart = date.toLocaleTimeString(intlLocale(), {
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -126,11 +144,11 @@ export function timeAgo(value: string): string {
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffMins < 1) return 'только что';
-  if (diffMins < 60) return `${diffMins} ${plural(diffMins, 'минуту', 'минуты', 'минут')} назад`;
-  if (diffHours < 24) return `${diffHours} ${plural(diffHours, 'час', 'часа', 'часов')} назад`;
-  if (diffDays === 1) return 'вчера';
-  if (diffDays < 7) return `${diffDays} ${plural(diffDays, 'день', 'дня', 'дней')} назад`;
+  if (diffMins < 1) return i18n.t('justNow', { ns: 'works' });
+  if (diffMins < 60) return i18n.t('minutesAgo', { ns: 'works', count: diffMins });
+  if (diffHours < 24) return i18n.t('hoursAgo', { ns: 'works', count: diffHours });
+  if (diffDays === 1) return i18n.t('yesterday', { ns: 'works' });
+  if (diffDays < 7) return i18n.t('daysAgo', { ns: 'works', count: diffDays });
   return workFormatters.date(value);
 }
 
@@ -159,8 +177,8 @@ export function fleetSlots(work: FleetSource): { total: number; busy: number; fr
 export function fleetHint(work: FleetSource): string | null {
   const slots = fleetSlots(work);
   if (!slots) return null;
-  if (slots.free <= 0) return `Машины: ${slots.busy}/${slots.total} в работе`;
-  return `Машины: ${slots.busy}/${slots.total} в работе · нужно ещё ${slots.free}`;
+  if (slots.free <= 0) return i18n.t('fleetBusy', { ns: 'works', busy: slots.busy, total: slots.total });
+  return i18n.t('fleetNeed', { ns: 'works', busy: slots.busy, total: slots.total, free: slots.free });
 }
 
 export function straightLineDistanceKm(work: RoutePoints): number | null {
@@ -219,8 +237,7 @@ export function feedStatusKind(status: WorkStatus): 'new' | 'bids' | 'work' | 'd
 }
 
 export function feedStatusLabel(status: WorkStatus): string {
-  const normalized = normalizeWorkStatus(status);
-  return WORK_STATUS_SHORT[normalized] || normalized;
+  return workStatusLabel(status);
 }
 
 export function formatPhonePretty(phone: string): string {

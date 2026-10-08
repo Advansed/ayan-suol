@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
   Building2,
@@ -23,7 +24,6 @@ import {
   getPaymentLevel,
   offersLabel,
   phoneHref,
-  plural,
   publishedDateTime,
   resolveBodyType,
   resolvePublishedAt,
@@ -38,24 +38,25 @@ type WorkOrderInfoProps = {
   onMapClick?: (work: WorkInfo) => void;
 };
 
-const PAYMENT_TITLE: Record<PaymentLevel, string> = {
-  full: 'Полная безопасная оплата',
-  partial: 'Частичная безопасная оплата',
-  none: 'Без безопасной оплаты',
+const PAYMENT_TITLE_KEY: Record<PaymentLevel, string> = {
+  full: 'paySafeFull',
+  partial: 'paySafePartial',
+  none: 'paySafeNone',
 };
 
-const PAYMENT_TEXT: Record<PaymentLevel, string> = {
-  full: 'Вся сумма уже зарезервирована на эскроу-счёте и будет переведена после доставки.',
-  partial: 'На эскроу-счёте зарезервирована часть суммы, остаток оплачивается напрямую.',
-  none: 'Средства не зарезервированы. Оплата напрямую с заказчиком — повышенный риск.',
+const PAYMENT_TEXT_KEY: Record<PaymentLevel, string> = {
+  full: 'paySafeFullText',
+  partial: 'paySafePartialText',
+  none: 'paySafeNoneText',
 };
 
 export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }) => {
+  const { t } = useTranslation('works');
   const price = work.currentOffer?.price ?? work.price;
   const weight = work.currentOffer?.weight ?? work.weight;
   const volume = work.currentOffer?.volume ?? work.volume;
-  const fromCity = work.address?.city?.city || 'Не указано';
-  const toCity = work.destiny?.city?.city || 'Не указано';
+  const fromCity = work.address?.city?.city || t('notSpecified');
+  const toCity = work.destiny?.city?.city || t('notSpecified');
   const customerName = getWorkCustomerName(work);
   const contactName = work.face?.trim() || '';
   const payment = getPaymentLevel(work);
@@ -92,19 +93,19 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
           <div className={styles.payCopy}>
             <h3 className={styles.payTitle}>
               <Lock size={14} strokeWidth={2} className={styles.payLock} />
-              {PAYMENT_TITLE[payment]}
+              {t(PAYMENT_TITLE_KEY[payment])}
             </h3>
-            <p className={styles.payText}>{PAYMENT_TEXT[payment]}</p>
+            <p className={styles.payText}>{t(PAYMENT_TEXT_KEY[payment])}</p>
           </div>
         </div>
         {payment !== 'none' && (
           <div className={styles.payReserve}>
-            <span>Зарезервировано на эскроу-счёте</span>
+            <span>{t('reserved')}</span>
             <strong>
               {workFormatters.currency(reserved)}
               <span>
                 {' '}
-                из {workFormatters.currency(work.price)}
+                {t('ofAmount', { amount: workFormatters.currency(work.price) })}
               </span>
             </strong>
           </div>
@@ -116,10 +117,10 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
           <div className={styles.fleetHead}>
             <div className={styles.fleetTitle}>
               <Truck size={16} strokeWidth={1.75} />
-              Требуется машин: {slots.total}
+              {t('trucksNeeded', { count: slots.total })}
             </div>
             <span className={`${styles.fleetBadge} ${slots.free > 0 ? styles.fleetOpen : styles.fleetFull}`}>
-              {slots.free > 0 ? `Свободно ${slots.free}` : 'Набор завершён'}
+              {slots.free > 0 ? t('slotsFree', { count: slots.free }) : t('slotsClosed')}
             </span>
           </div>
           <div className={styles.fleetBar} aria-hidden>
@@ -128,10 +129,10 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
             ))}
           </div>
           <p className={styles.fleetHint}>
-            {slots.busy} из {slots.total} машин уже согласовали переговоры и работают по заказу.
+            {t('fleetProgress', { busy: slots.busy, total: slots.total })}
             {slots.free > 0
-              ? ` Заказчику ещё нужно ${slots.free} ${plural(slots.free, 'машина', 'машины', 'машин')} — вы можете откликнуться, даже если часть уже в работе.`
-              : ' Все места заняты, приём новых откликов закрыт.'}
+              ? ` ${t('fleetMore', { count: slots.free })}`
+              : ` ${t('fleetFull')}`}
           </p>
           <div className={styles.fleetSlots}>
             {Array.from({ length: slots.total }, (_, i) =>
@@ -141,17 +142,17 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
                     <User size={16} strokeWidth={1.75} />
                   </span>
                   <div className={styles.slotBody}>
-                    <p>Машина в работе</p>
-                    <span>Слот занят перевозчиком</span>
+                    <p>{t('truckWorking')}</p>
+                    <span>{t('slotTaken')}</span>
                   </div>
-                  <span className={styles.slotPill}>В работе</span>
+                  <span className={styles.slotPill}>{t('inProgress')}</span>
                 </div>
               ) : (
                 <div key={i} className={styles.slotOpen}>
                   <span className={styles.slotIconMuted}>
                     <Plus size={16} strokeWidth={1.75} />
                   </span>
-                  <p>Свободный слот — ждём отклика</p>
+                  <p>{t('slotOpen')}</p>
                 </div>
               )
             )}
@@ -161,7 +162,7 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
 
       {customerName && (
         <section className={styles.card}>
-          <div className={styles.kicker}>Отправитель заказа</div>
+          <div className={styles.kicker}>{t('sender')}</div>
           <div className={styles.partyRow}>
             <span className={styles.partyIconBrand}>
               <Building2 size={18} strokeWidth={1.75} />
@@ -171,7 +172,7 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
                 {customerName}
                 {verified && <ShieldCheck size={16} strokeWidth={2} className={styles.verified} />}
               </div>
-              <div className={styles.partyRole}>Заказчик · Грузовладелец</div>
+              <div className={styles.partyRole}>{t('customerRole')}</div>
             </div>
           </div>
           {(work.company?.rating || work.company?.deals || verified) && (
@@ -185,11 +186,11 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
                 )}
                 {work.company?.deals != null && (
                   <span>
-                    {work.company.deals} {plural(work.company.deals, 'сделка', 'сделки', 'сделок')}
+                    {t('deals', { count: work.company.deals })}
                   </span>
                 )}
               </div>
-              {verified && <span className={styles.verifiedPill}>Проверен</span>}
+              {verified && <span className={styles.verifiedPill}>{t('verified')}</span>}
             </div>
           )}
         </section>
@@ -197,14 +198,14 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
 
       {(contactName || work.phone) && (
         <section className={styles.card}>
-          <div className={styles.kicker}>Контактное лицо</div>
+          <div className={styles.kicker}>{t('contactPerson')}</div>
           <div className={styles.partyRow}>
             <span className={styles.partyIcon}>
               <User size={16} strokeWidth={1.75} />
             </span>
             <div className={styles.partyBody}>
-              <div className={styles.partyName}>{contactName || 'Представитель заказчика'}</div>
-              <div className={styles.partyRole}>Представитель заказчика</div>
+              <div className={styles.partyName}>{contactName || t('representative')}</div>
+              <div className={styles.partyRole}>{t('representative')}</div>
             </div>
           </div>
           {phoneUnlocked && work.phone ? (
@@ -217,13 +218,13 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
             >
               <Phone size={16} strokeWidth={2} />
               <span>{formatPhonePretty(work.phone)}</span>
-              {work.signed && <span className={styles.signedPill}>Договор заключён</span>}
+              {work.signed && <span className={styles.signedPill}>{t('contractSigned')}</span>}
             </a>
           ) : (
             <div className={styles.phoneLocked}>
               <Lock size={16} strokeWidth={2} />
               <span>+7 900 •••-••-••</span>
-              <em>Откроется после договора</em>
+              <em>{t('phoneAfter')}</em>
             </div>
           )}
         </section>
@@ -233,7 +234,7 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
         <section className={styles.card}>
           <div className={styles.kicker}>
             <FileText size={13} strokeWidth={2} />
-            Документы по заказу
+            {t('orderDocs')}
           </div>
           {phoneUnlocked ? (
             <ul className={styles.docList}>
@@ -249,9 +250,9 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
               <Lock size={16} strokeWidth={2} />
               <span>
                 {documents.length}{' '}
-                {plural(documents.length, 'документ', 'документа', 'документов')}
+                {t('docs', { count: documents.length })}
               </span>
-              <em>Откроются после договора</em>
+              <em>{t('docsAfter')}</em>
             </div>
           )}
         </section>
@@ -259,7 +260,7 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
 
       <section className={`${styles.card} ${styles.specCard}`}>
         <div className={styles.specHead}>
-          <span className={styles.specKicker}>Стоимость</span>
+          <span className={styles.specKicker}>{t('cost')}</span>
           <span className={styles.offers}>{offersLabel(offers)}</span>
         </div>
         <div className={styles.specPrice}>{workFormatters.currency(price)}</div>
@@ -268,25 +269,28 @@ export const WorkOrderInfo: React.FC<WorkOrderInfoProps> = ({ work, onMapClick }
           <span>{fromCity}</span>
           <ArrowRight size={14} strokeWidth={2} className={styles.specArrow} />
           <span>{toCity}</span>
-          {distance != null && <span className={styles.specKm}>· {distance} км</span>}
+          {distance != null && <span className={styles.specKm}>· {t('km', { count: distance })}</span>}
         </div>
         {onMapClick && (
           <button type="button" className={styles.mapBtn} onClick={() => onMapClick(work)}>
             <Map size={16} strokeWidth={1.75} />
-            Открыть карту
+            {t('openMap')}
           </button>
         )}
         <dl className={styles.specTable}>
-          <SpecRow label="Опубликовано" value={publishedLabel} />
-          <SpecRow label="Дата отправления" value={pickup} />
-          <SpecRow label="Дата доставки" value={delivery} />
-          <SpecRow label="Тип кузова" value={bodyType} />
-          <SpecRow label="Тип загрузки" value={work.loading_type} />
+          <SpecRow label={t('published')} value={publishedLabel} />
+          <SpecRow label={t('pickupDate')} value={pickup} />
+          <SpecRow label={t('deliveryDate')} value={delivery} />
+          <SpecRow label={t('bodyType')} value={bodyType} />
+          <SpecRow label={t('loadingType')} value={work.loading_type} />
           <SpecRow
-            label="Вес / объём"
-            value={`${formatQty(Number(weight) || 0)} т · ${formatQty(Number(volume) || 0)} м³`}
+            label={t('weightVolume')}
+            value={t('weightVolumeValue', {
+              weight: formatQty(Number(weight) || 0),
+              volume: formatQty(Number(volume) || 0),
+            })}
           />
-          <SpecRow label="Оплата" value="Безналичный" />
+          <SpecRow label={t('payment')} value={t('cashless')} />
         </dl>
         {work.description && work.description.trim() !== work.name && (
           <p className={styles.desc}>{work.description}</p>

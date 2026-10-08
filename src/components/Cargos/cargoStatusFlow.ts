@@ -1,4 +1,6 @@
+import i18n from '../../i18n';
 import { CargoInfo, CargoStatus } from '../../Store/cargoStore';
+import { buildProgressSlots, type ProgressSlot } from '../../utils/progressSlots';
 
 /**
  * Основной жизненный цикл заявки заказчика.
@@ -35,6 +37,30 @@ export const CARGO_STATUS_SHORT: Record<CargoStatus, string> = {
   [CargoStatus.COMPLETED]: 'Готово',
   [CargoStatus.PROBLEMS]: 'Проблемы',
 };
+
+const CARGO_STATUS_I18N: Record<CargoStatus, string> = {
+  [CargoStatus.NEW]: 'statusNew',
+  [CargoStatus.WAITING]: 'statusWaiting',
+  [CargoStatus.HAS_ORDERS]: 'statusOrders',
+  [CargoStatus.ACCEPTED]: 'statusAccepted',
+  [CargoStatus.WAIT_LOAD]: 'statusWaitLoad',
+  [CargoStatus.LOADING]: 'statusLoading',
+  [CargoStatus.HAS_LOADED]: 'statusLoaded',
+  [CargoStatus.IN_TRANSIT]: 'statusTransit',
+  [CargoStatus.HAS_DELIVERED]: 'statusDelivered',
+  [CargoStatus.UNLOADING]: 'statusUnloading',
+  [CargoStatus.WAIT_COMPLETE]: 'statusWaitComplete',
+  [CargoStatus.COMPLETED]: 'statusCompleted',
+  [CargoStatus.PROBLEMS]: 'statusProblems',
+};
+
+export function cargoStatusLabel(status: string | CargoStatus): string {
+  const normalized = normalizeCargoStatus(status);
+  return i18n.t(CARGO_STATUS_I18N[normalized], {
+    ns: 'cargos',
+    defaultValue: CARGO_STATUS_SHORT[normalized],
+  });
+}
 
 /** Что делать заказчику на этом статусе */
 export const CARGO_CURRENT_ACTION: Record<CargoStatus, string> = {
@@ -117,37 +143,11 @@ export function getCargoStatusFlowIndex(status: string | CargoStatus): number {
   return idx >= 0 ? idx : 0;
 }
 
-export type CargoProgressSlot =
-  | { type: 'status'; status: CargoStatus; role: 'prev' | 'current' | 'next' | 'last' }
-  | { type: 'ellipsis' };
+export type CargoProgressSlot = ProgressSlot<CargoStatus>;
 
-/** Предыдущий, текущий, следующий и последний статус; «…» если между следующим и последним есть этапы. */
+/** До 7 точек: соседние этапы вокруг текущего и финиш, «…» если дальше ещё есть шаги. */
 export function getCargoProgressSlots(status: string | CargoStatus): CargoProgressSlot[] {
-  const currentIndex = getCargoStatusFlowIndex(status);
-  if (currentIndex < 0) return [];
-
-  const lastIndex = CARGO_STATUS_FLOW.length - 1;
-  const slots: CargoProgressSlot[] = [];
-
-  if (currentIndex > 0) {
-    slots.push({ type: 'status', status: CARGO_STATUS_FLOW[currentIndex - 1], role: 'prev' });
-  }
-  slots.push({ type: 'status', status: CARGO_STATUS_FLOW[currentIndex], role: 'current' });
-
-  const nextIndex = currentIndex + 1;
-  if (nextIndex > lastIndex) return slots;
-
-  if (nextIndex === lastIndex) {
-    slots.push({ type: 'status', status: CARGO_STATUS_FLOW[lastIndex], role: 'last' });
-    return slots;
-  }
-
-  slots.push({ type: 'status', status: CARGO_STATUS_FLOW[nextIndex], role: 'next' });
-  if (nextIndex < lastIndex - 1) {
-    slots.push({ type: 'ellipsis' });
-  }
-  slots.push({ type: 'status', status: CARGO_STATUS_FLOW[lastIndex], role: 'last' });
-  return slots;
+  return buildProgressSlots(CARGO_STATUS_FLOW, getCargoStatusFlowIndex(status));
 }
 
 /** Самый «продвинутый» статус: cargo.status или статусы заявок */
@@ -211,6 +211,5 @@ export function cargoFeedKind(status: string | CargoStatus): CargoFeedKind {
 }
 
 export function cargoFeedLabel(status: string | CargoStatus): string {
-  const normalized = normalizeCargoStatus(status);
-  return CARGO_STATUS_SHORT[normalized] || normalized;
+  return cargoStatusLabel(status);
 }

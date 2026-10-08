@@ -287,6 +287,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .feedBadge {
@@ -295,6 +296,7 @@
   padding: 3px 8px;
   border-radius: var(--gvr-radius-pill, 999px);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .badgeNew {
@@ -326,6 +328,10 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--gvr-text-muted, #8b93a7);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .feedPrice {
@@ -334,6 +340,7 @@
   font-weight: 700;
   color: var(--gvr-text, #1a1f2e);
   letter-spacing: -0.02em;
+  flex-shrink: 0;
 }
 
 .feedTitle {
@@ -399,6 +406,7 @@
   gap: 12px;
   font-size: 13px;
   color: var(--gvr-text-muted, #8b93a7);
+  min-width: 0;
 }
 
 .feedRight {
@@ -411,5 +419,43 @@
 .feedOffers {
   font-weight: 600;
   color: var(--gvr-primary, #2b5adc);
+}
+
+@media (max-width: 560px) {
+  .feedCard {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .feedTop {
+    flex-wrap: wrap;
+  }
+
+  .feedPrice {
+    font-size: 16px;
+    width: 100%;
+    margin-left: 0;
+    text-align: left;
+    order: 3;
+  }
+
+  .feedPublished {
+    flex-wrap: wrap;
+  }
+
+  .feedCompany {
+    margin-left: 0;
+    text-align: left;
+    width: 100%;
+  }
+
+  .feedMeta {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .feedRight {
+    flex-wrap: wrap;
+  }
 }
 

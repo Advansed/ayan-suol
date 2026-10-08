@@ -36,3 +36,17 @@
 .btn:not(.active):not(:disabled):hover {
   color: var(--gvr-text);
 }
+
+@media (max-width: 640px) {
+  .btn {
+    font-size: 12px;
+    padding: 6px 9px;
+  }
+}
+
+@media (max-width: 380px) {
+  .btn {
+    font-size: 11px;
+    padding: 6px 7px;
+  }
+}

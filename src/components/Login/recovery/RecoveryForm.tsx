@@ -3,6 +3,7 @@
  */
 
 import React, { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MessageSquare, Send } from 'lucide-react'
 import { useRecovery } from './hooks/useRecovery'
 import type { OtpTransport } from '../otpTransport'
@@ -25,6 +26,7 @@ const StepPhone: React.FC<{
   onSwitchToLogin: () => void
   onSwitchToRegister: () => void
 }> = ({ recovery, onSwitchToLogin, onSwitchToRegister }) => {
+  const { t } = useTranslation('auth')
   const otpTransport: OtpTransport =
     recovery.formData.transport === 'telegram' ? 'telegram' : 'sms'
 
@@ -39,7 +41,7 @@ const StepPhone: React.FC<{
       }}
     >
       <p className="auth-step-lead">
-        Введите номер телефона, привязанный к аккаунту
+        {t('recoveryLead')}
       </p>
 
       <div className="auth-fields auth-fields-relaxed">
@@ -59,7 +61,7 @@ const StepPhone: React.FC<{
 
         <div className="auth-field">
           <div className="auth-label" id="recovery-otp-label">
-            Куда отправить код
+            {t('otpWhere')}
           </div>
           <div className="auth-otp-tabs" role="tablist" aria-labelledby="recovery-otp-label">
             <button
@@ -85,8 +87,8 @@ const StepPhone: React.FC<{
           </div>
           <p className="auth-hint">
             {otpTransport === 'telegram'
-              ? 'Код придёт в Telegram на указанный номер'
-              : 'Код придёт в текстовом сообщении на номер телефона'}
+              ? t('otpTelegram')
+              : t('otpSms')}
           </p>
         </div>
       </div>
@@ -97,20 +99,20 @@ const StepPhone: React.FC<{
 
       <div className="auth-form-actions">
         <button type="submit" className="auth-btn-primary" disabled={!canSubmit}>
-          {recovery.isLoading ? 'Отправка…' : 'Получить код'}
+          {recovery.isLoading ? t('sending') : t('getCode')}
         </button>
       </div>
 
       <p className="auth-footer-text">
-        — Вспомнили пароль?{' '}
+        — {t('remembered')}{' '}
         <button type="button" className="auth-footer-action" onClick={onSwitchToLogin}>
-          Войти
+          {t('signIn')}
         </button>
       </p>
       <p className="auth-footer-text">
-        — Нет аккаунта?{' '}
+        — {t('noAccount')}{' '}
         <button type="button" className="auth-footer-action" onClick={onSwitchToRegister}>
-          Регистрация
+          {t('signUp')}
         </button>
       </p>
     </form>
@@ -125,6 +127,7 @@ const StepOtp: React.FC<{
   recovery: RecoveryApi
   onSwitchToLogin: () => void
 }> = ({ recovery, onSwitchToLogin }) => {
+  const { t } = useTranslation('auth')
   const [pin, setPin] = useState(['', '', '', ''])
   const pinRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -170,8 +173,8 @@ const StepOtp: React.FC<{
     >
       <p className="auth-step-lead">
         {recovery.otpTransport === 'telegram'
-          ? 'Введите код из Telegram'
-          : 'Введите код из SMS'}
+          ? t('otpTelegramTitle')
+          : t('otpSmsTitle')}
       </p>
       <p className="auth-hint auth-hint-center">{recovery.formData.phone || ''}</p>
 
@@ -209,21 +212,21 @@ const StepOtp: React.FC<{
           className="auth-btn-primary"
           disabled={pin.join('').length !== 4 || recovery.isLoading}
         >
-          {recovery.isLoading ? 'Проверка…' : 'Подтвердить'}
+          {recovery.isLoading ? t('checking') : t('confirm')}
         </button>
         <button
           type="button"
           className="auth-btn-secondary auth-btn-spaced"
           onClick={recovery.prevStep}
         >
-          Изменить номер
+          {t('editPhone')}
         </button>
       </div>
 
       <p className="auth-footer-text">
-        — Вспомнили пароль?{' '}
+        — {t('remembered')}{' '}
         <button type="button" className="auth-footer-action" onClick={onSwitchToLogin}>
-          Войти
+          {t('signIn')}
         </button>
       </p>
     </form>
@@ -238,6 +241,7 @@ const StepNewPassword: React.FC<{
   recovery: RecoveryApi
   onSwitchToLogin: () => void
 }> = ({ recovery, onSwitchToLogin }) => {
+  const { t } = useTranslation('auth')
   const [password, setPassword] = useState('')
   const [password1, setPassword1] = useState('')
 
@@ -273,12 +277,12 @@ const StepNewPassword: React.FC<{
         void recovery.submitRecoveryStep({ password: nextPassword, password1: nextPassword1 })
       }}
     >
-      <p className="auth-step-lead">Придумайте новый пароль для входа</p>
+      <p className="auth-step-lead">{t('newPasswordLead')}</p>
 
       <div className="auth-fields auth-fields-relaxed">
         <div className="auth-field">
           <label className="auth-label" htmlFor="recovery-password">
-            Новый пароль
+            {t('newPassword')}
           </label>
           <input
             id="recovery-password"
@@ -301,7 +305,7 @@ const StepNewPassword: React.FC<{
 
         <div className="auth-field">
           <label className="auth-label" htmlFor="recovery-password1">
-            Подтверждение
+            {t('passwordConfirm')}
           </label>
           <input
             id="recovery-password1"
@@ -331,21 +335,21 @@ const StepNewPassword: React.FC<{
           className="auth-btn-primary"
           disabled={!canSave}
         >
-          {recovery.isLoading ? 'Сохранение…' : 'Сохранить пароль'}
+          {recovery.isLoading ? t('saving') : t('savePassword')}
         </button>
         <button
           type="button"
           className="auth-btn-secondary auth-btn-spaced"
           onClick={recovery.prevStep}
         >
-          Назад
+          {t('back', { ns: 'common' })}
         </button>
       </div>
 
       <p className="auth-footer-text">
-        — Вспомнили пароль?{' '}
+        — {t('remembered')}{' '}
         <button type="button" className="auth-footer-action" onClick={onSwitchToLogin}>
-          Войти
+          {t('signIn')}
         </button>
       </p>
     </form>
@@ -360,16 +364,17 @@ export const RecoveryForm: React.FC<RecoveryFormProps> = ({
   onSwitchToLogin,
   onSwitchToRegister,
 }) => {
+  const { t } = useTranslation('auth')
   const recovery = useRecovery(onSwitchToLogin)
 
-  const titles = ['Восстановление пароля', 'Подтверждение', 'Новый пароль'] as const
-  const title = titles[recovery.recoveryStep] ?? 'Восстановление пароля'
+  const titles = [t('recoveryTitle'), t('regConfirm'), t('newPassword')] as const
+  const title = titles[recovery.recoveryStep] ?? t('recoveryTitle')
 
   return (
     <div className="auth-page auth-page-reg auth-page-relaxed auth-page-recovery">
       <header className="auth-hero">
         <h1 className="auth-hero-title">{title}</h1>
-        <p className="auth-hero-sub">Груз в Рейс / PAITZA</p>
+        <p className="auth-hero-sub">{t('brand')} / PAITZA</p>
       </header>
 
       <div className="auth-card auth-card-reg auth-card-relaxed auth-card-recovery">

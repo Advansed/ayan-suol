@@ -451,6 +451,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  min-width: 0;
 }
 
 .feedBadge {
@@ -491,6 +492,10 @@
   font-weight: 600;
   color: var(--gvr-text-muted, #8b93a7);
   padding-top: 2px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .feedPriceCol {
@@ -669,6 +674,17 @@
     gap: 10px;
   }
 
+  .feedTop {
+    flex-wrap: wrap;
+  }
+
+  .feedPriceCol {
+    margin-left: 0;
+    width: 100%;
+    align-items: flex-start;
+    order: 3;
+  }
+
   .feedTitle {
     font-size: 16px;
   }
@@ -679,5 +695,9 @@
 
   .feedOffers {
     margin-left: 0;
+  }
+
+  .feedMeta {
+    gap: 6px 10px;
   }
 }

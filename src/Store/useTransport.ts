@@ -55,6 +55,18 @@ export const useTransport = () => {
     
   }, [token, isConnected, once, emit, toast])
 
+  const refresh = useCallback(() => {
+    if (!isConnected || !token) return
+
+    once('get_transport', (response) => {
+      if (response?.success) {
+        transportActions.setItems(asTransportList(response.data))
+      }
+    })
+
+    emit('get_transport', { token })
+  }, [token, isConnected, once, emit])
+
   const loadTypes = useCallback(() => {
     if (!isConnected || !token) return
     emit('get_transport_types', { token })
@@ -102,6 +114,7 @@ export const useTransport = () => {
     isLoading,
     isSaving,
     loadData,
+    refresh,
     loadTypes,
     saveData,
     // Для совместимости со старым API

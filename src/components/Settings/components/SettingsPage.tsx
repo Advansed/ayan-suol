@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { IonIcon, IonToggle, IonButton } from '@ionic/react';
 import {
   personOutline,
   carOutline,
+  peopleOutline,
   checkmarkCircleOutline,
   documentTextOutline,
   notificationsOutline,
@@ -18,15 +20,17 @@ import { useProfile } from '../../Profile/useProfile';
 import { useHistory } from 'react-router-dom';
 import styles from '../Settings.module.css';
 import { SettingsAgreementsSection } from './SettingsAgreementsSection';
+import { LanguageSwitcher } from '../../../i18n/LanguageSwitcher';
 
 export interface SettingsPageProps {
-  onToggleClick?: () => void;
+  onRoleChange?: (userType: number) => void;
   onBack?: () => void;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
-  onToggleClick,
+  onRoleChange,
 }) => {
+  const { t } = useTranslation('settings');
   const { logout } = useLogin();
   const { user_type } = useProfile();
   const history = useHistory();
@@ -40,10 +44,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     history.push('/');
   };
 
-  const handleToggle = () => {
-    if (onToggleClick) {
-      onToggleClick();
-    }
+  const handleRole = (nextType: number) => {
+    if (user_type !== nextType) onRoleChange?.(nextType);
   };
 
   return (
@@ -54,46 +56,62 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <IonIcon icon={personOutline} />
             </div>
             <div>
-              <h3 className={styles.cardTitle}>Режим работы</h3>
-              <p className={styles.cardSub}>Заказчик или водитель</p>
+              <h3 className={styles.cardTitle}>{t('language', { ns: 'common' })}</h3>
+            </div>
+          </div>
+          <LanguageSwitcher variant="inline" />
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.cardHead}>
+            <div className={styles.cardIcon} aria-hidden>
+              <IonIcon icon={personOutline} />
+            </div>
+            <div>
+              <h3 className={styles.cardTitle}>{t('mode')}</h3>
+              <p className={styles.cardSub}>{t('modeSub')}</p>
             </div>
           </div>
 
           <div className={styles.verifiedBadge}>
             <IonIcon icon={checkmarkCircleOutline} />
-            Аккаунт подтверждён
+            {t('verified')}
           </div>
 
-          <div className={styles.roleSwitcher} role="radiogroup" aria-label="Режим работы">
+          <div className={styles.roleSwitcher} role="radiogroup" aria-label={t('mode')}>
             <button
               type="button"
               role="radio"
               aria-checked={user_type === 1}
               className={`${styles.roleItem} ${user_type === 1 ? styles.roleActive : ''}`}
-              onClick={() => {
-                if (user_type !== 1) handleToggle();
-              }}
+              onClick={() => handleRole(1)}
             >
               <IonIcon icon={personOutline} className={styles.roleIcon} />
-              <span className={styles.roleText}>Заказчик</span>
+              <span className={styles.roleText}>{t('roleCustomer', { ns: 'common' })}</span>
             </button>
             <button
               type="button"
               role="radio"
               aria-checked={user_type === 2}
               className={`${styles.roleItem} ${user_type === 2 ? styles.roleActive : ''}`}
-              onClick={() => {
-                if (user_type !== 2) handleToggle();
-              }}
+              onClick={() => handleRole(2)}
             >
               <IonIcon icon={carOutline} className={styles.roleIcon} />
-              <span className={styles.roleText}>Водитель</span>
+              <span className={styles.roleText}>{t('roleDriver', { ns: 'common' })}</span>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={user_type === 3}
+              className={`${styles.roleItem} ${user_type === 3 ? styles.roleActive : ''}`}
+              onClick={() => handleRole(3)}
+            >
+              <IonIcon icon={peopleOutline} className={styles.roleIcon} />
+              <span className={styles.roleText}>{t('roleDispatcher', { ns: 'common' })}</span>
             </button>
           </div>
           <p className={styles.instructionText}>
-            {user_type === 1
-              ? 'Создаёте заказы и выбираете водителей.'
-              : 'Смотрите заказы и принимаете предложения.'}
+            {user_type === 3 ? t('hintDispatcher') : user_type === 2 ? t('hintCarrier') : t('hintCustomer')}
           </p>
         </section>
 
@@ -103,8 +121,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <IonIcon icon={notificationsOutline} />
             </div>
             <div>
-              <h3 className={styles.cardTitle}>Уведомления</h3>
-              <p className={styles.cardSub}>Push, звук и вибрация</p>
+              <h3 className={styles.cardTitle}>{t('notifications')}</h3>
+              <p className={styles.cardSub}>{t('notificationsSub')}</p>
             </div>
           </div>
 
@@ -112,8 +130,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <div className={styles.settingItem}>
               <IonIcon icon={notificationsOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Push</span>
-                <span className={styles.settingSubtext}>В приложении</span>
+                <span className={styles.settingLabel}>{t('push')}</span>
+                <span className={styles.settingSubtext}>{t('inApp')}</span>
               </div>
               <IonToggle
                 checked={pushNotifications}
@@ -124,7 +142,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <div className={styles.settingItem}>
               <IonIcon icon={volumeHighOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Звук</span>
+                <span className={styles.settingLabel}>{t('sound')}</span>
               </div>
               <IonToggle
                 checked={sound}
@@ -135,7 +153,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <div className={styles.settingItem}>
               <IonIcon icon={phonePortrait} className={styles.settingIcon} />
               <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Вибрация</span>
+                <span className={styles.settingLabel}>{t('vibration')}</span>
               </div>
               <IonToggle
                 checked={vibration}
@@ -152,8 +170,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <IonIcon icon={lockClosedOutline} />
             </div>
             <div>
-              <h3 className={styles.cardTitle}>Безопасность</h3>
-              <p className={styles.cardSub}>Пароль и устройства</p>
+              <h3 className={styles.cardTitle}>{t('security')}</h3>
+              <p className={styles.cardSub}>{t('securitySub')}</p>
             </div>
           </div>
 
@@ -161,14 +179,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <div className={styles.settingItem}>
               <IonIcon icon={lockClosedOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Изменить пароль</span>
+                <span className={styles.settingLabel}>{t('changePassword')}</span>
               </div>
               <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
             </div>
             <div className={styles.settingItem}>
               <IonIcon icon={linkOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Привязанные устройства</span>
+                <span className={styles.settingLabel}>{t('devices')}</span>
               </div>
               <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
             </div>
@@ -181,8 +199,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <IonIcon icon={documentTextOutline} />
             </div>
             <div>
-              <h3 className={styles.cardTitle}>Согласия</h3>
-              <p className={styles.cardSub}>Документы и рекламные рассылки</p>
+              <h3 className={styles.cardTitle}>{t('consents')}</h3>
+              <p className={styles.cardSub}>{t('consentsSub')}</p>
             </div>
           </div>
           <SettingsAgreementsSection />
@@ -191,7 +209,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         <div className={styles.logoutSection}>
           <IonButton color="danger" className={styles.logoutButton} onClick={handleLogout}>
             <IonIcon icon={logOutOutline} slot="start" />
-            Выйти из аккаунта
+            {t('logout')}
           </IonButton>
         </div>
     </div>

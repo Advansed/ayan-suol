@@ -1,6 +1,7 @@
 // src/components/ReconnectToServerForm/ReconnectToServerForm.tsx
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { IonIcon, IonButton } from '@ionic/react';
 import { 
   cloudOfflineOutline, 
@@ -23,6 +24,7 @@ export const ReconnectToServerForm: React.FC<ReconnectToServerFormProps> = ({
   onRetry,
   overlay = false,
 }) => {
+  const { t } = useTranslation('common');
   return (
     <div
       className={`${styles.container} ${overlay ? styles.overlay : ''}`}
@@ -49,15 +51,12 @@ export const ReconnectToServerForm: React.FC<ReconnectToServerFormProps> = ({
 
         {/* Заголовок */}
         <h1 id="reconnect-title" className={styles.title}>
-          {isConnecting ? 'Подключение к серверу...' : 'Нет связи с сервером'}
+          {isConnecting ? t('connecting') : t('offline')}
         </h1>
 
         {/* Сообщение */}
         <p className={styles.message}>
-          {isConnecting 
-            ? 'Устанавливаем соединение с сервером. Пожалуйста, подождите.'
-            : 'Не удалось подключиться к серверу. Проверьте интернет-соединение и повторите попытку.'
-          }
+          {isConnecting ? t('connectingHint') : t('offlineHint')}
         </p>
 
         {/* Ошибка */}
@@ -84,17 +83,17 @@ export const ReconnectToServerForm: React.FC<ReconnectToServerFormProps> = ({
             className={styles.retryButton}
           >
             <IonIcon icon={refreshOutline} slot="start" />
-            Повторить подключение
+            {t('retry')}
           </IonButton>
         )}
 
         {/* Информация */}
         <div className={styles.info}>
-          <p>Убедитесь что:</p>
+          <p>{t('checkTitle')}</p>
           <ul>
-            <li>Есть подключение к интернету</li>
-            <li>Сервер доступен</li>
-            <li>Нет блокировки файрвола</li>
+            <li>{t('checkNet')}</li>
+            <li>{t('checkServer')}</li>
+            <li>{t('checkFirewall')}</li>
           </ul>
         </div>
 

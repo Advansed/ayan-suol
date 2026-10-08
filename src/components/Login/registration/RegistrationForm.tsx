@@ -3,6 +3,7 @@
  */
 
 import React, { useCallback, memo, lazy, Suspense, useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MessageSquare, Send, Calendar } from 'lucide-react'
 import { FioSuggestions, type DaDataFioSuggestion } from 'react-dadata'
 import 'react-dadata/dist/react-dadata.css'
@@ -39,6 +40,7 @@ const StepPersonalInfo: React.FC<{
   reg: UseRegReturn
   onOpenEula: () => void
 }> = memo(({ reg, onOpenEula }) => {
+  const { t } = useTranslation('auth')
   const otpTransport: OtpTransport =
     reg.formData.otpTransport === 'telegram' ? 'telegram' : 'sms'
 
@@ -106,13 +108,13 @@ const StepPersonalInfo: React.FC<{
     >
       <section className="auth-section" aria-labelledby="reg-sec-personal">
         <h2 id="reg-sec-personal" className="auth-section-title">
-          Личные данные
+          {t('personal')}
         </h2>
 
         <div className="auth-fields">
           <div className="auth-field">
             <label className="auth-label" htmlFor="reg-fio">
-              ФИО
+              {t('fullName')}
             </label>
             <div className="auth-dadata">
               <FioSuggestions
@@ -125,7 +127,7 @@ const StepPersonalInfo: React.FC<{
                 inputProps={{
                   id: 'reg-fio',
                   className: 'auth-input',
-                  placeholder: 'Иванов Иван Иванович',
+                  placeholder: t('fullNamePh'),
                   autoComplete: 'name',
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                     applyFio(e.target.value)
@@ -138,13 +140,13 @@ const StepPersonalInfo: React.FC<{
 
           <div className="auth-field">
             <label className="auth-label" htmlFor="reg-birthDate">
-              Дата рождения
+              {t('birthDate')}
             </label>
             <div className="auth-input-icon-wrap">
               <input
                 id="reg-birthDate"
                 className="auth-input auth-input-with-icon"
-                placeholder="дд.мм.гггг"
+                placeholder={t('birthDatePh')}
                 inputMode="numeric"
                 value={f.birthDate || ''}
                 onChange={(e) =>
@@ -159,12 +161,12 @@ const StepPersonalInfo: React.FC<{
 
           <div className="auth-field">
             <label className="auth-label" htmlFor="reg-birthPlace">
-              Место рождения
+              {t('birthPlace')}
             </label>
             <input
               id="reg-birthPlace"
               className="auth-input"
-              placeholder="г. Якутск"
+              placeholder={t('birthPlacePh')}
               value={f.birthPlace || ''}
               onChange={(e) => reg.updateFormData('birthPlace', e.target.value)}
             />
@@ -173,7 +175,7 @@ const StepPersonalInfo: React.FC<{
 
           <div className="auth-field">
             <div className="auth-label" id="reg-gender-label">
-              Пол
+              {t('gender')}
             </div>
             <div
               className="auth-gender-tabs"
@@ -189,7 +191,7 @@ const StepPersonalInfo: React.FC<{
                 }
                 onClick={() => reg.updateFormData('gender', 'male')}
               >
-                Мужской
+                {t('male')}
               </button>
               <button
                 type="button"
@@ -200,7 +202,7 @@ const StepPersonalInfo: React.FC<{
                 }
                 onClick={() => reg.updateFormData('gender', 'female')}
               >
-                Женский
+                {t('female')}
               </button>
             </div>
             {err.gender && <div className="auth-error">{err.gender}</div>}
@@ -210,13 +212,13 @@ const StepPersonalInfo: React.FC<{
 
       <section className="auth-section" aria-labelledby="reg-sec-contacts">
         <h2 id="reg-sec-contacts" className="auth-section-title">
-          Контакты
+          {t('contacts')}
         </h2>
 
         <div className="auth-fields">
           <div className="auth-field">
             <label className="auth-label" htmlFor="reg-email">
-              Email (необязательно)
+              {t('emailOptional')}
             </label>
             <input
               id="reg-email"
@@ -244,7 +246,7 @@ const StepPersonalInfo: React.FC<{
 
           <div className="auth-field">
             <div className="auth-label" id="reg-otp-label">
-              Куда отправить код
+              {t('otpWhere')}
             </div>
             <div className="auth-otp-tabs" role="tablist" aria-labelledby="reg-otp-label">
               <button
@@ -272,8 +274,8 @@ const StepPersonalInfo: React.FC<{
             </div>
             <p className="auth-hint">
               {otpTransport === 'telegram'
-                ? 'Код придёт в Telegram на указанный номер'
-                : 'Код придёт в текстовом сообщении на номер телефона'}
+                ? t('otpTelegram')
+                : t('otpSms')}
             </p>
           </div>
         </div>
@@ -281,7 +283,7 @@ const StepPersonalInfo: React.FC<{
 
       <section className="auth-section auth-section-last" aria-labelledby="reg-sec-consents">
         <h2 id="reg-sec-consents" className="auth-section-title">
-          Согласия
+          {t('consents')}
         </h2>
 
         <div className="auth-consents">
@@ -292,8 +294,8 @@ const StepPersonalInfo: React.FC<{
               onChange={(e) => reg.updateFormData('consentPersonalData', e.target.checked)}
             />
             <span>
-              Я принимаю{' '}
-              <span className="auth-consent-link">Согласие на обработку персональных данных</span>
+              {t('accept')}{' '}
+              <span className="auth-consent-link">{t('pdConsent')}</span>
             </span>
           </label>
           {err.consentPersonalData && <div className="auth-error">{err.consentPersonalData}</div>}
@@ -305,9 +307,9 @@ const StepPersonalInfo: React.FC<{
               onChange={(e) => reg.updateFormData('consentUserAgreement', e.target.checked)}
             />
             <span>
-              Я принимаю{' '}
+              {t('accept')}{' '}
               <button type="button" className="auth-inline-link" onClick={onOpenEula}>
-                Пользовательское соглашение
+                {t('userAgreement')}
               </button>
             </span>
           </label>
@@ -320,8 +322,8 @@ const StepPersonalInfo: React.FC<{
               onChange={(e) => reg.updateFormData('consentMarketing', e.target.checked)}
             />
             <span>
-              Я согласен(на) на{' '}
-              <span className="auth-consent-link">Согласие на рекламные рассылки</span>
+              {t('adsAccept')}{' '}
+              <span className="auth-consent-link">{t('adsConsent')}</span>
             </span>
           </label>
         </div>
@@ -331,7 +333,7 @@ const StepPersonalInfo: React.FC<{
 
       <div className="auth-form-actions">
         <button type="submit" className="auth-btn-primary" disabled={!canSubmit}>
-          {reg.isLoading ? 'Отправка…' : 'Получить код'}
+          {reg.isLoading ? t('sending') : t('getCode')}
         </button>
       </div>
     </form>
@@ -343,6 +345,7 @@ const StepPersonalInfo: React.FC<{
 // ======================
 
 const StepVerification: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
+  const { t } = useTranslation('auth')
   const otpTransport: OtpTransport =
     reg.formData.otpTransport === 'telegram' ? 'telegram' : 'sms'
 
@@ -393,7 +396,7 @@ const StepVerification: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
       }}
     >
       <p className="auth-step-lead">
-        {otpTransport === 'telegram' ? 'Введите код из Telegram' : 'Введите код из SMS'}
+        {otpTransport === 'telegram' ? t('otpTelegramTitle') : t('otpSmsTitle')}
       </p>
       <p className="auth-hint auth-hint-center">{reg.formData.phone || ''}</p>
 
@@ -425,11 +428,11 @@ const StepVerification: React.FC<{ reg: UseRegReturn }> = memo(({ reg }) => {
           className="auth-btn-primary"
           disabled={pin.some((d) => d === '') || reg.isLoading}
         >
-          {reg.isLoading ? 'Проверка…' : 'Подтвердить'}
+          {reg.isLoading ? t('checking') : t('confirm')}
         </button>
 
         <button type="button" className="auth-btn-secondary auth-btn-spaced" onClick={reg.prevStep}>
-          Изменить данные
+          {t('editData')}
         </button>
       </div>
     </form>
@@ -444,6 +447,7 @@ const StepSetPassword: React.FC<{
   reg: UseRegReturn
   toLogin?: () => void
 }> = memo(({ reg, toLogin }) => {
+  const { t } = useTranslation('auth')
   const passwordsMatch =
     reg.formData.password &&
     reg.formData.password1 &&
@@ -459,12 +463,12 @@ const StepSetPassword: React.FC<{
         })
       }}
     >
-      <p className="auth-step-lead">Придумайте пароль для входа</p>
+      <p className="auth-step-lead">{t('passwordLead')}</p>
 
       <div className="auth-fields auth-fields-relaxed">
         <div className="auth-field">
           <label className="auth-label" htmlFor="reg-password">
-            Пароль
+            {t('password')}
           </label>
           <input
             id="reg-password"
@@ -480,7 +484,7 @@ const StepSetPassword: React.FC<{
 
         <div className="auth-field">
           <label className="auth-label" htmlFor="reg-password1">
-            Подтверждение
+            {t('passwordConfirm')}
           </label>
           <input
             id="reg-password1"
@@ -503,15 +507,15 @@ const StepSetPassword: React.FC<{
           className="auth-btn-primary"
           disabled={!passwordsMatch || reg.isLoading}
         >
-          {reg.isLoading ? 'Сохранение…' : 'Сохранить'}
+          {reg.isLoading ? t('saving') : t('save', { ns: 'common' })}
         </button>
       </div>
 
       {toLogin && (
         <p className="auth-footer-text">
-          — Уже есть аккаунт?{' '}
+          — {t('haveAccount')}{' '}
           <button type="button" className="auth-footer-action" onClick={toLogin}>
-            Войти
+            {t('signIn')}
           </button>
         </p>
       )}
@@ -524,11 +528,12 @@ const StepSetPassword: React.FC<{
 // ======================
 
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin }) => {
+  const { t } = useTranslation('auth')
   const reg = useReg({ onRegistered: onSwitchToLogin })
   const eula = useEULA(false)
 
-  const titles = ['Данные для регистрации', 'Подтверждение', 'Пароль'] as const
-  const title = titles[reg.registrationStep] ?? 'Данные для регистрации'
+  const titles = [t('regData'), t('regConfirm'), t('regPassword')] as const
+  const title = titles[reg.registrationStep] ?? t('regData')
   const isRelaxedStep = reg.registrationStep === 1 || reg.registrationStep === 2
 
   return (
@@ -541,7 +546,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin }) 
     >
       <header className="auth-hero">
         <h1 className="auth-hero-title">{title}</h1>
-        <p className="auth-hero-sub">Груз в Рейс / PAITZA</p>
+        <p className="auth-hero-sub">{t('brand')} / PAITZA</p>
       </header>
 
       <div
@@ -561,9 +566,9 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSwitchToLogin }) 
 
         {reg.registrationStep === 0 && onSwitchToLogin && (
           <p className="auth-footer-text">
-            — Уже есть аккаунт?{' '}
+            — {t('haveAccount')}{' '}
             <button type="button" className="auth-footer-action" onClick={onSwitchToLogin}>
-              Войти
+              {t('signIn')}
             </button>
           </p>
         )}

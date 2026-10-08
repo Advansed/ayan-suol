@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../../i18n';
 import {
   AlertTriangle,
   BadgeCheck,
@@ -10,10 +12,10 @@ import {
   User,
 } from 'lucide-react';
 import { TransportData, asTransportType, transportDisplayName, transportDriverName } from '../../../Store/transportStore';
-import { resolveImageSrc } from '../../../utils/fileUpload';
+import { useResolvedImageSrc } from '../../../utils/fileUpload';
 import { useWorkStore } from '../../Works/workStore';
 import { MY_WORK_STATUSES, normalizeWorkStatus } from '../../Works/statusFlow';
-import { plural } from '../../Works/feedFormat';
+import { formatPhonePretty } from '../../Works/feedFormat';
 import styles from './FleetPage.module.css';
 
 export type FleetStatus = 'free' | 'trip' | 'service';
@@ -24,13 +26,18 @@ type FleetPageProps = {
   onOpen: (vehicle: TransportData) => void;
 };
 
-const STATUS_LABEL: Record<FleetStatus, string> = {
-  free: 'Свободна',
-  trip: 'В рейсе',
-  service: 'На ТО',
+const STATUS_KEY: Record<FleetStatus, string> = {
+  free: 'free',
+  trip: 'onTrip',
+  service: 'service',
 };
 
+function fleetStatusLabel(status: FleetStatus): string {
+  return i18n.t(STATUS_KEY[status], { ns: 'fleet' });
+}
+
 export const FleetPage: React.FC<FleetPageProps> = ({ vehicles, onAdd, onOpen }) => {
+  const { t } = useTranslation('fleet');
   const works = useWorkStore((s) => s.works);
 
   const rows = useMemo(
@@ -46,30 +53,29 @@ export const FleetPage: React.FC<FleetPageProps> = ({ vehicles, onAdd, onOpen })
     <div className={styles.root}>
       <header className={styles.head}>
         <div>
-          <div className={styles.kicker}>Автопарк</div>
-          <h1 className={styles.title}>Мои машины</h1>
+          <div className={styles.kicker}>{t('kicker')}</div>
+          <h1 className={styles.title}>{t('title')}</h1>
           <p className={styles.sub}>
-            {total} {plural(total, 'машина', 'машины', 'машин')} · {free} свободно · {trip} в
-            рейсе
+            {t('summary', { total, free, trip })}
           </p>
         </div>
         <button type="button" className={styles.addBtn} onClick={onAdd}>
           <Plus size={18} strokeWidth={2.25} />
-          Добавить машину
+          {t('add')}
         </button>
       </header>
 
       <div className={styles.stats}>
         <article className={styles.statCard}>
-          <div className={styles.statLabel}>Всего машин</div>
+          <div className={styles.statLabel}>{t('total')}</div>
           <div className={styles.statValue}>{total}</div>
         </article>
         <article className={styles.statCard}>
-          <div className={styles.statLabel}>Свободны сейчас</div>
+          <div className={styles.statLabel}>{t('freeNow')}</div>
           <div className={`${styles.statValue} ${styles.statGreen}`}>{free}</div>
         </article>
         <article className={styles.statCard}>
-          <div className={styles.statLabel}>В рейсе</div>
+          <div className={styles.statLabel}>{t('onTrip')}</div>
           <div className={`${styles.statValue} ${styles.statBlue}`}>{trip}</div>
         </article>
       </div>
@@ -87,7 +93,7 @@ export const FleetPage: React.FC<FleetPageProps> = ({ vehicles, onAdd, onOpen })
           <span className={styles.addCardIcon}>
             <Plus size={22} strokeWidth={2.25} />
           </span>
-          Добавить машину в парк
+          {t('addToFleet')}
         </button>
       </div>
     </div>
@@ -103,31 +109,36 @@ function VehicleCard({
   status: FleetStatus;
   onClick: () => void;
 }) {
+  const { t } = useTranslation('fleet');
   const type = asTransportType(vehicle.transport_type);
-  const title = transportDisplayName(vehicle) || 'Без названия';
+  const title = transportDisplayName(vehicle) || t('untitled');
   const plate = vehicle.license_plate || vehicle.number || '';
   const body = type?.name || '—';
   const tons = vehicle.load_capacity ?? vehicle.capacity;
   const volume = vehicle.volume;
   const year = vehicle.manufacture_year || vehicle.year;
   const mileage = vehicle.mileage;
-  const driver = transportDriverName(vehicle) || 'Не назначен';
+  const driverPhone =
+    vehicle.driver_phone ||
+    (typeof vehicle.driver === 'object' && vehicle.driver ? vehicle.driver.phone || '' : '');
+  const driver =
+    transportDriverName(vehicle) || (driverPhone ? formatPhonePretty(driverPhone) : '') || t('unassigned');
   const verified = vehicle.verified ?? Boolean(vehicle.vin && vehicle.image);
   const needsVerify = !vehicle.vin || !vehicle.image;
   const capacityLabel = [
-    tons != null ? `${formatNum(tons)} т` : '',
-    volume != null ? `${formatNum(volume)} м³` : '',
+    tons != null ? t('tons', { value: formatNum(tons) }) : '',
+    volume != null ? t('volume', { value: formatNum(volume) }) : '',
   ]
     .filter(Boolean)
     .join(' · ');
   const yearLabel = [
     year ? String(year) : '',
-    mileage != null ? `${formatMileage(mileage)} тыс. км` : '',
+    mileage != null ? t('mileage', { value: formatMileage(mileage) }) : '',
   ]
     .filter(Boolean)
     .join(' · ');
 
-  const photo = vehicle.image ? resolveImageSrc(vehicle.image) : '';
+  const photo = useResolvedImageSrc(vehicle.image);
 
   return (
     <button type="button" className={styles.card} onClick={onClick}>
@@ -145,27 +156,27 @@ function VehicleCard({
           <div className={styles.cardName}>
             {title}
             {verified && (
-              <BadgeCheck size={16} strokeWidth={2} className={styles.verified} aria-label="Проверена" />
+              <BadgeCheck size={16} strokeWidth={2} className={styles.verified} aria-label={t('verified')} />
             )}
           </div>
           {plate && <div className={styles.cardPlate}>{plate}</div>}
         </div>
         <span className={`${styles.badge} ${
           status === 'trip' ? styles.badge_trip : status === 'service' ? styles.badge_service : styles.badge_free
-        }`}>{STATUS_LABEL[status]}</span>
+        }`}>{fleetStatusLabel(status)}</span>
       </div>
 
       <div className={styles.meta}>
-        <Meta icon={<Box size={15} />} label="Кузов" value={body} />
-        <Meta icon={<Gauge size={15} />} label="Грузоподъёмность" value={capacityLabel || '—'} />
-        <Meta icon={<User size={15} />} label="Водитель" value={driver} />
-        <Meta icon={<Calendar size={15} />} label="Год · пробег" value={yearLabel || '—'} />
+        <Meta icon={<Box size={15} />} label={t('body')} value={body} />
+        <Meta icon={<Gauge size={15} />} label={t('capacity')} value={capacityLabel || '—'} />
+        <Meta icon={<User size={15} />} label={t('driver')} value={driver} />
+        <Meta icon={<Calendar size={15} />} label={t('yearMileage')} value={yearLabel || '—'} />
       </div>
 
       {needsVerify && (
         <div className={styles.warn}>
           <AlertTriangle size={14} strokeWidth={2} />
-          Требуется верификация — загрузите СТС в профиле
+          {t('needSts')}
         </div>
       )}
     </button>

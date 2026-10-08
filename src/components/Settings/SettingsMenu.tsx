@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { IonIcon, IonToggle, IonButton } from '@ionic/react';
 import { 
   personOutline, 
@@ -15,15 +16,18 @@ import {
   linkOutline,
   logOutOutline,
   chevronForwardOutline,
-  personCircleOutline
+  personCircleOutline,
+  peopleOutline
 } from 'ionicons/icons';
 import { WizardHeader } from '../Header/WizardHeader';
 import { useLogin } from '../../Store/useLogin';
 import { useProfile } from '../Profile/useProfile';
 import { useHistory } from 'react-router-dom';
 import styles from './Settings.module.css';
+import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 
 export const SettingsMenu: React.FC = () => {
+  const { t } = useTranslation('settings');
   const { user, logout } = useLogin();
   const { user_type, setUser } = useProfile();
   const history = useHistory();
@@ -38,7 +42,7 @@ export const SettingsMenu: React.FC = () => {
     history.goBack();
   };
 
-  const handleRoleToggle = (nextType: 1 | 2) => {
+  const handleRoleToggle = (nextType: 1 | 2 | 3) => {
     if (user_type !== nextType) {
       setUser({ user_type: nextType });
     }
@@ -100,7 +104,7 @@ export const SettingsMenu: React.FC = () => {
             <h3 className={styles.sectionTitle}>Режим работы</h3>
           </div>
           <p className={styles.sectionDescription}>
-            Переключение между ролями заказчика и водителя
+            Переключение между ролями заказчика, водителя и диспетчера
           </p>
           <div className={styles.roleSwitcher} role="radiogroup" aria-label="Режим работы">
             <button
@@ -123,11 +127,23 @@ export const SettingsMenu: React.FC = () => {
               <IonIcon icon={phonePortrait} className={styles.roleIcon} />
               <span className={styles.roleText}>Водитель</span>
             </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={user_type === 3}
+              className={`${styles.roleItem} ${user_type === 3 ? styles.roleActive : ''}`}
+              onClick={() => handleRoleToggle(3)}
+            >
+              <IonIcon icon={peopleOutline} className={styles.roleIcon} />
+              <span className={styles.roleText}>Диспетчер</span>
+            </button>
           </div>
           <p className={styles.instructionText}>
-            {user_type === 1
-              ? 'Вы работаете в режиме заказчика. Можете создавать заказы и выбирать водителей.'
-              : 'Вы работаете в режиме водителя. Можете просматривать и принимать заказы.'}
+            {user_type === 3
+              ? 'Вы работаете в режиме диспетчера. Управляете автопарком и водителями, откликаетесь на заказы.'
+              : user_type === 1
+                ? 'Вы работаете в режиме заказчика. Можете создавать заказы и выбирать водителей.'
+                : 'Вы работаете в режиме водителя. Можете просматривать и принимать заказы.'}
           </p>
         </div>
 
@@ -155,9 +171,9 @@ export const SettingsMenu: React.FC = () => {
             <div className={styles.settingItem}>
               <IonIcon icon={languageOutline} className={styles.settingIcon} />
               <div className={styles.settingContent}>
-                <span className={styles.settingLabel}>Язык</span>
+                <span className={styles.settingLabel}>{t('language', { ns: 'common' })}</span>
               </div>
-              <IonIcon icon={chevronForwardOutline} className={styles.chevronIcon} />
+              <LanguageSwitcher variant="inline" />
             </div>
 
             <div className={styles.settingItem}>

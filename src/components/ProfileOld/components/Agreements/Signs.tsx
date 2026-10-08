@@ -1,6 +1,7 @@
 import { IonButton, IonContent, IonHeader, IonIcon, IonModal, IonTitle, IonToolbar } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface SignsProps {
   isOpen: boolean;
@@ -8,11 +9,12 @@ interface SignsProps {
 }
 
 const Signs: React.FC<SignsProps> = ({isOpen, onClose}) => {
+  const { t } = useTranslation('settings');
   return (
       <IonModal isOpen={isOpen} onDidDismiss={onClose}>
             <IonHeader>
               <IonToolbar>
-                <IonTitle>Пользовательское соглашение</IonTitle>
+                <IonTitle>{t('pepAgreement')}</IonTitle>
                 <IonButton 
                   fill="clear" 
                   slot="end" 

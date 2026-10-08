@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import { useToast } from '../Toast'
 import { useSocket } from '../../Store/useSocket'
 import { useToken } from '../../Store/loginStore'
-import { useWorkStore, workActions, workGetters }
+import { useWorkStore, workActions, workGetters, rememberOfferedWork, forgetOfferedWork, initWorkSocketHandlers }
   from './workStore'
 import { WorkInfo, WorkFilters, OfferInfo, WorkStatus }
   from './types'
@@ -20,7 +20,6 @@ export const useWorks = () => {
   const works = useWorkStore(state => state.works)
   const archiveWorks = useWorkStore(state => state.archiveWorks)
   const isLoading = useWorkStore(state => state.isLoading)
-  const isArchiveLoading = useWorkStore(state => state.isArchiveLoading)
   const filters = useWorkStore(state => state.filters)
   const searchQuery = useWorkStore(state => state.searchQuery)
 
@@ -40,22 +39,33 @@ export const useWorks = () => {
   // ============================================
   // ОПЕРАЦИИ С ПРЕДЛОЖЕНИЯМИ
   // ============================================
-  const setOffer = useCallback(async (data: OfferInfo): Promise<boolean> => {
+  const setOffer = useCallback(async (
+    data: OfferInfo,
+    source?: { guid?: string; cargo?: string }
+  ): Promise<boolean> => {
     if (!socket) {
       toast.error('Нет соединения с сервером');
       return false;
     }
 
     workActions.setLoading(true);
+    initWorkSocketHandlers(socket);
 
     return new Promise((resolve) => {
       let settled = false;
       const timerRef: { id?: ReturnType<typeof setTimeout> } = {};
+      let handleOfferResponse: (response: {
+        success?: boolean;
+        error?: string;
+        message?: string;
+        data?: WorkInfo | Partial<WorkInfo>;
+      }) => void = () => {};
 
       const finish = (value: boolean) => {
         if (settled) return;
         settled = true;
         if (timerRef.id !== undefined) clearTimeout(timerRef.id);
+        socket.off('set_offer', handleOfferResponse);
         workActions.setLoading(false);
         resolve(value);
       };
@@ -66,38 +76,31 @@ export const useWorks = () => {
           createdAt: new Date().toISOString()
         };
 
-        const handleOfferResponse = (response: {
-          success: boolean;
+        handleOfferResponse = (response: {
+          success?: boolean;
           error?: string;
+          message?: string;
           data?: WorkInfo | Partial<WorkInfo>;
         }) => {
-          if (response.success) {
-            const worksList = useWorkStore.getState().works;
-            const workGuid =
-              (response.data as WorkInfo | undefined)?.guid ||
-              worksList.find((w) => w.cargo === data.guid || w.guid === data.guid)?.guid;
-
-            if (workGuid) {
-              if (response.data && typeof response.data === 'object') {
-                workActions.updateWork(workGuid, {
-                  ...response.data,
-                  status: (response.data as WorkInfo).status || WorkStatus.OFFERED,
-                });
-              } else {
-                workActions.updateWork(workGuid, {
-                  status: WorkStatus.OFFERED,
-                  price: data.price,
-                  weight: data.weight,
-                  volume: data.volume,
-                  transport: data.transport,
-                });
-              }
-            }
+          if (settled) return;
+          if (response?.success) {
+            const ref = {
+              guid: source?.guid || data.guid,
+              cargo: source?.cargo || data.guid,
+            };
+            rememberOfferedWork(ref);
+            workActions.updateWork(ref, {
+              status: WorkStatus.OFFERED,
+              price: data.price,
+              weight: data.weight,
+              volume: data.volume,
+              transport: data.transport,
+            });
 
             toast.success('Предложение успешно создано');
             finish(true);
           } else {
-            toast.error(response.error || 'Ошибка создания предложения');
+            toast.error(response?.error || response?.message || 'Ошибка создания предложения');
             finish(false);
           }
         };
@@ -150,23 +153,10 @@ export const useWorks = () => {
           data?: WorkInfo | Partial<WorkInfo>;
         }) => {
           if (response.success) {
-            const worksList = useWorkStore.getState().works;
-            const workGuid =
-              (response.data as WorkInfo | undefined)?.guid ||
-              worksList.find((w) => w.cargo === data.guid || w.guid === data.guid)?.guid;
-
-            if (workGuid) {
-              if (response.data && typeof response.data === 'object') {
-                workActions.updateWork(workGuid, {
-                  ...response.data,
-                  status: (response.data as WorkInfo).status || WorkStatus.NEW,
-                });
-              } else {
-                workActions.updateWork(workGuid, {
-                  status: WorkStatus.NEW,
-                });
-              }
-            }
+            forgetOfferedWork(String(data.guid));
+            workActions.updateWork(String(data.guid), {
+              status: WorkStatus.NEW,
+            });
 
             toast.success('Предложение успешно удалено');
             finish(true);
@@ -444,13 +434,6 @@ export const useWorks = () => {
     socket.emit('get_works', { token })
   }, [token, socket])
 
-  const loadArchiveWorks = useCallback(async (): Promise<void> => {
-    if (!socket) return
-
-    workActions.setArchiveLoading(true)
-    socket.emit('get_work_archives', { token })
-  }, [token, socket])
-
   // ============================================
   // УТИЛИТЫ
   // ============================================
@@ -504,7 +487,6 @@ export const useWorks = () => {
     works,
     archiveWorks,
     isLoading,
-    isArchiveLoading,
     filters,
     searchQuery,
 
@@ -519,7 +501,6 @@ export const useWorks = () => {
 
     // Загрузка
     refreshWorks,
-    loadArchiveWorks,
     setDeliver,
     setStatus,
     setOffer,

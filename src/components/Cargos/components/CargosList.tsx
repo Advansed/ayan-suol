@@ -1,20 +1,22 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { List, Map, Plus, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { CargoCard } from './CargoCard';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 import { cargoFeedKind, resolveCargoProgressStatus } from '../cargoStatusFlow';
+import { intlLocale } from '../../../i18n';
 import { FeedRoutesMap } from '../../Maps/FeedRoutesMap';
 import { ordersToFeedRoutes } from '../../Maps/mockFeedRoutes';
 import styles from './CargosList.module.css';
 
 type FilterId = 'all' | 'new' | 'bids' | 'work' | 'done';
 
-const FILTERS: { id: FilterId; label: string }[] = [
-  { id: 'all', label: 'Все' },
-  { id: 'new', label: 'Новый' },
-  { id: 'bids', label: 'Торги' },
-  { id: 'work', label: 'В работе' },
-  { id: 'done', label: 'Завершён' },
+const FILTERS: { id: FilterId; key: string }[] = [
+  { id: 'all', key: 'filterAll' },
+  { id: 'new', key: 'filterNew' },
+  { id: 'bids', key: 'filterBids' },
+  { id: 'work', key: 'filterWork' },
+  { id: 'done', key: 'filterDone' },
 ];
 
 function matchesFilter(status: CargoStatus, filter: FilterId): boolean {
@@ -26,13 +28,9 @@ function matchesFilter(status: CargoStatus, filter: FilterId): boolean {
   return kind === filter;
 }
 
-function activeOrdersLabel(count: number): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (count === 0) return 'нет активных заказов';
-  if (mod10 === 1 && mod100 !== 11) return `${count} активный заказ`;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} активных заказа`;
-  return `${count} активных заказов`;
+function activeOrdersLabel(count: number, t: (key: string, opts?: Record<string, unknown>) => string): string {
+  if (count === 0) return t('activeNone');
+  return t('active', { count });
 }
 
 interface CargosListProps {
@@ -43,12 +41,12 @@ interface CargosListProps {
   onRefresh?: () => Promise<void>;
 }
 
-function updatedLabel(at: number): string {
+function updatedLabel(at: number, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const mins = Math.floor((Date.now() - at) / 60000);
-  if (mins < 1) return 'обновлено только что';
-  if (mins === 1) return 'обновлено 1 минуту назад';
-  const time = new Date(at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  return `обновлено в ${time}`;
+  if (mins < 1) return t('updatedNow');
+  if (mins === 1) return t('updatedMin');
+  const time = new Date(at).toLocaleTimeString(intlLocale(), { hour: '2-digit', minute: '2-digit' });
+  return t('updatedAt', { time });
 }
 
 export const CargosList: React.FC<CargosListProps> = ({
@@ -58,6 +56,8 @@ export const CargosList: React.FC<CargosListProps> = ({
   onCargoClick,
   onRefresh,
 }) => {
+  const { t } = useTranslation('works');
+  const { t: tc } = useTranslation('cargos');
   const [filter, setFilter] = useState<FilterId>('all');
   const [view, setView] = useState<'list' | 'map'>('list');
   const [updatedAt, setUpdatedAt] = useState(() => Date.now());
@@ -102,13 +102,13 @@ export const CargosList: React.FC<CargosListProps> = ({
     <div className={`${styles.feed} ${view === 'map' ? styles.feedFill : ''}`} data-feed-view={view}>
       <header className={styles.pageHead}>
         <div className={styles.pageHeadText}>
-          <h1 className={styles.pageTitle}>Лента заказов</h1>
+          <h1 className={styles.pageTitle}>{t('feedTitle')}</h1>
           <p className={styles.pageSub}>
-            {activeOrdersLabel(cargos.length)} · {updatedLabel(updatedAt)}
+            {activeOrdersLabel(cargos.length, t)} · {updatedLabel(updatedAt, t)}
           </p>
         </div>
         <div className={styles.pageHeadActions}>
-          <div className={styles.viewToggle} role="tablist" aria-label="Вид ленты">
+          <div className={styles.viewToggle} role="tablist" aria-label={t('viewLabel')}>
             <button
               type="button"
               role="tab"
@@ -117,7 +117,7 @@ export const CargosList: React.FC<CargosListProps> = ({
               onClick={() => setView('list')}
             >
               <List size={16} strokeWidth={2} />
-              Список
+              <span className={styles.btnLabel}>{t('viewList')}</span>
             </button>
             <button
               type="button"
@@ -127,7 +127,7 @@ export const CargosList: React.FC<CargosListProps> = ({
               onClick={() => setView('map')}
             >
               <Map size={16} strokeWidth={2} />
-              Карта
+              <span className={styles.btnLabel}>{t('viewMap')}</span>
             </button>
           </div>
           <button
@@ -135,15 +135,16 @@ export const CargosList: React.FC<CargosListProps> = ({
             className={styles.refreshBtn}
             onClick={handleRefresh}
             disabled={refreshing || !onRefresh}
-            aria-label="Обновить ленту"
-            title="Обновить"
+            aria-label={t('refreshFeed')}
+            title={t('refresh')}
           >
             <RefreshCw size={18} strokeWidth={2.25} className={refreshing ? styles.refreshSpin : undefined} />
-            Обновить
+            <span className={styles.btnLabel}>{t('refresh')}</span>
           </button>
           <button type="button" className={styles.createBtn} onClick={onCreateNew}>
             <Plus size={16} strokeWidth={2.25} />
-            Новый груз
+            <span className={styles.createLabel}>{tc('newCargo')}</span>
+            <span className={styles.createLabelShort}>{tc('newShort')}</span>
           </button>
         </div>
       </header>
@@ -151,7 +152,7 @@ export const CargosList: React.FC<CargosListProps> = ({
       {view === 'map' ? (
         <>
           <div className={styles.toolbar}>
-            <div className={styles.tabs} role="tablist" aria-label="Фильтр заказов">
+            <div className={styles.tabs} role="tablist" aria-label={t('filterLabel')}>
               {FILTERS.map((item) => (
                 <button
                   key={item.id}
@@ -161,7 +162,7 @@ export const CargosList: React.FC<CargosListProps> = ({
                   className={`${styles.tab} ${filter === item.id ? styles.tabActive : ''}`}
                   onClick={() => setFilter(item.id)}
                 >
-                  {item.label}
+                  {t(item.key)}
                 </button>
               ))}
             </div>
@@ -176,24 +177,24 @@ export const CargosList: React.FC<CargosListProps> = ({
         </>
       ) : (
         <>
-      <div className={styles.legend} aria-label="Светофор безопасной оплаты">
-        <span className={styles.legendTitle}>Светофор безопасной оплаты</span>
+      <div className={styles.legend} aria-label={t('legend')}>
+        <span className={styles.legendTitle}>{t('legend')}</span>
         <span className={styles.legendItem}>
           <span className={`${styles.legendDot} ${styles.dotFull}`} />
-          Полная оплата на эскроу
+          {t('payFull')}
         </span>
         <span className={styles.legendItem}>
           <span className={`${styles.legendDot} ${styles.dotPartial}`} />
-          Частичная оплата
+          {t('payPartial')}
         </span>
         <span className={styles.legendItem}>
           <span className={`${styles.legendDot} ${styles.dotNone}`} />
-          Без безопасной оплаты
+          {t('payNone')}
         </span>
       </div>
 
       <div className={styles.toolbar}>
-        <div className={styles.tabs} role="tablist" aria-label="Фильтр заказов">
+        <div className={styles.tabs} role="tablist" aria-label={t('filterLabel')}>
           {FILTERS.map((item) => (
             <button
               key={item.id}
@@ -203,28 +204,26 @@ export const CargosList: React.FC<CargosListProps> = ({
               className={`${styles.tab} ${filter === item.id ? styles.tabActive : ''}`}
               onClick={() => setFilter(item.id)}
             >
-              {item.label}
+              {t(item.key)}
             </button>
           ))}
         </div>
         <button type="button" className={styles.filterBtn}>
           <SlidersHorizontal size={15} strokeWidth={2} />
-          Фильтры
+          <span className={styles.btnLabel}>{t('filters')}</span>
         </button>
       </div>
 
       <div className={styles.list}>
         {isLoading && cargos.length === 0 ? (
-          <div className={styles.loading}>Загрузка грузов…</div>
+          <div className={styles.loading}>{tc('loading')}</div>
         ) : visible.length === 0 ? (
           <div className={styles.empty}>
             <p className={styles.emptyTitle}>
-              {cargos.length === 0 ? 'Грузы не найдены' : 'Нет заказов в этом фильтре'}
+              {cargos.length === 0 ? tc('notFound') : tc('emptyFilter')}
             </p>
             <p className={styles.emptyHint}>
-              {cargos.length === 0
-                ? 'Создайте первый груз для перевозки'
-                : 'Переключите фильтр или создайте новый заказ'}
+              {cargos.length === 0 ? tc('createFirst') : tc('emptyFilterHint')}
             </p>
           </div>
         ) : (

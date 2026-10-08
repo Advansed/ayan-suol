@@ -3,28 +3,34 @@
  */
 
 import React, { useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { WorkInfo, OfferInfo, WorkStatus } from './types';
 import { WorksList, WorkView } from './components';
 import { WorkMap } from './components/WorkMap';
 import { Agreement } from './components/WorkView/index';
 import { useWorks } from './useWorks';
 import { useWorkNavigation } from './hooks/useNavigation';
-import { workActions, workGetters, useWorkStore } from './workStore';
+import { isLocallyOffered, workActions, workGetters, useWorkStore } from './workStore';
 import { SaveData, WorkPage1 } from './components/WorkPage1';
 import { useSocket } from '../../Store/useSocket';
-import { useToken } from '../../Store/loginStore';
+import { offerTaxAmount, useLoginStore, useToken } from '../../Store/loginStore';
+import { useAccountStore } from '../../Store/accountStore';
+import { useToast } from '../Toast';
+import { formatters } from '../../utils/utils';
 import { useChats } from '../../Store/useChats';
 import { transportGetters } from '../../Store/transportStore';
 import { IonLoading } from '@ionic/react';
-import { filterWorksByMode, findWorkByRef, type WorksListMode } from './statusFlow';
+import { filterWorksByMode, findWorkByRef, normalizeWorkStatus, type WorksListMode } from './statusFlow';
 import { LOAD_CARGO_PHOTO_STATUS, LOAD_SEAL_PHOTO_STATUS } from '../../utils/orderPhotos';
 import './styles.css';
 
 export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
+    const { t } = useTranslation('works');
     const { contract, works, isLoading, setOffer, delOffer, setStatus, refreshWorks
         , get_contract_data, set_contract } = useWorks();
-    const { emit } = useSocket();
+    const { emit, socket } = useSocket();
     const token = useToken();
+    const toast = useToast();
     const { sendImage } = useChats();
 
     const { currentPage, navigateTo, goBack } = useWorkNavigation();
@@ -42,17 +48,17 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
 
     const emptyTitle =
         mode === 'feed'
-            ? 'Нет заказов в ленте'
+            ? t('emptyFeedTitle')
             : mode === 'mine'
-              ? 'Нет ваших заказов'
-              : 'Нет доступных заказов';
+              ? t('emptyMineTitle')
+              : t('emptyAllTitle');
 
     const emptyHint =
         mode === 'feed'
-            ? 'Здесь новые заказы, ваши отклики и перевозки в работе'
+            ? t('emptyFeedHint')
             : mode === 'mine'
-              ? 'Здесь перевозки после подписания договора'
-              : 'Доступные заказы появятся здесь, когда их опубликуют заказчики';
+              ? t('emptyMineHint')
+              : t('emptyAllHint');
 
     // Обновляем currentPage.work (+ history) при push get_works
     const pageType = currentPage.type;
@@ -70,14 +76,18 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
     useEffect(() => {
         if (!pageWork) return;
 
-        const updatedWork = findWorkByRef(works, pageWork);
-        if (!updatedWork) return;
+        const stored = findWorkByRef(works, pageWork);
+        if (!stored) return;
+        const updatedWork =
+            isLocallyOffered(stored) && normalizeWorkStatus(stored.status) === WorkStatus.NEW
+                ? { ...stored, status: WorkStatus.OFFERED }
+                : stored;
 
         const changed =
             updatedWork.status !== pageWorkStatus ||
             updatedWork.price !== pageWorkPrice ||
             Boolean(updatedWork.signed) !== pageWorkSigned ||
-            updatedWork !== pageWorkRef;
+            (updatedWork === stored && stored !== pageWorkRef);
 
         if (!changed) return;
 
@@ -113,7 +123,39 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
         navigateTo({ type: 'view', work });
     };
 
-    const handleOfferClick                                   = async (work: WorkInfo) => {
+    const loadBalance = () => new Promise<number | null>((resolve) => {
+        const current = useAccountStore.getState().accountData;
+        if (!socket || !token) {
+            resolve(current?.balance ?? null);
+            return;
+        }
+
+        let done = false;
+        let timer = 0;
+        const finish = (value: number | null) => {
+            if (done) return;
+            done = true;
+            window.clearTimeout(timer);
+            socket.off('get_balance', onBalance);
+            resolve(value);
+        };
+        const onBalance = (response: { success?: boolean; data?: { balance?: number } }) => {
+            const fromResponse = Number(response?.data?.balance);
+            if (response?.success && Number.isFinite(fromResponse)) {
+                finish(fromResponse);
+                return;
+            }
+            finish(useAccountStore.getState().accountData?.balance ?? null);
+        };
+        timer = window.setTimeout(() => {
+            finish(useAccountStore.getState().accountData?.balance ?? null);
+        }, 8000);
+
+        socket.once('get_balance', onBalance);
+        socket.emit('get_balance', { token });
+    });
+
+    const handleOfferClick                                   = async (work: WorkInfo): Promise<boolean> => {
         // Формируем предложение из данных работы
         // Транспорт берется из work.transport, который был выбран в OfferCard
         const offerData: OfferInfo = {
@@ -127,28 +169,46 @@ export const Works: React.FC<{ mode?: WorksListMode }> = ({ mode = 'all' }) => {
             status: 11 // WorkStatus.OFFERED
         };
 
+        const tax = useLoginStore.getState().tax;
+        const required = offerTaxAmount(offerData.price, tax);
+        if (required > 0) {
+            const balance = await loadBalance();
+            if (balance == null || balance < required) {
+                toast.error(
+                    `Для отправки предложения на счёте должно быть ${formatters.currency(required)} (${tax}% от цены). Сейчас ${formatters.currency(balance ?? 0)}.`
+                );
+                return false;
+            }
+        }
+
         // Отправляем предложение
-        const res = await setOffer(offerData);
+        const res = await setOffer(offerData, { guid: work.guid, cargo: work.cargo });
 
         if (res) {
             // Отправляем сообщение в чат
             emit("send_message", {
                 token: token,
                 recipient: offerData.recipient,
-                cargo: offerData.guid,
+                cargo: offerData.guid || work.guid,
                 message: "Сделал предложение: Сумма - " + offerData.price.toFixed() + " рублей",
                 image: "",
             });
 
-            // Держим открытую карточку с новым статусом (в ленте заказ пропадёт из списка)
-            const updated =
-                useWorkStore.getState().works.find((w) => w.guid === work.guid) ||
-                { ...work, status: WorkStatus.OFFERED, price: offerData.price };
-            workActions.setCurrentPage({ type: 'view', work: updated });
+            const offered: WorkInfo = {
+                ...work,
+                cargo: work.cargo || offerData.guid,
+                status: WorkStatus.OFFERED,
+                price: offerData.price,
+                weight: offerData.weight,
+                volume: offerData.volume,
+                transport: offerData.transport || work.transport,
+            };
+            workActions.replaceCurrentPage({ type: 'view', work: offered });
 
-            // Сверка с сервером
             await refreshWorks();
+            return true;
         }
+        return false;
     };
 
     const handleOfferCancelClick                             = async (work: WorkInfo) => {

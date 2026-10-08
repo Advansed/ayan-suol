@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../../i18n'
 import { Search } from 'lucide-react'
 import { useHistory } from 'react-router'
 import styles from './ChatList.module.css'
@@ -24,7 +26,7 @@ const chatKey = (chat: { recipient: string; cargo: string }) =>
 const orderLabel = (cargo: string, cargoName?: string) => {
   const id = cargo ? `ЗК-${String(cargo).slice(0, 6).toUpperCase()}` : ''
   if (id && cargoName) return `${id} · ${cargoName}`
-  return cargoName || id || 'Заказ'
+  return cargoName || id || i18n.t('order', { ns: 'chats' })
 }
 
 const ChatItem = React.memo(
@@ -36,7 +38,9 @@ const ChatItem = React.memo(
     chat: any
     active: boolean
     onClick: () => void
-  }) => (
+  }) => {
+    const { t } = useTranslation('chats')
+    return (
     <button
       type="button"
       className={`${styles.chatCard} ${active ? styles.chatCardActive : ''}`}
@@ -50,7 +54,7 @@ const ChatItem = React.memo(
       </div>
       <div className={styles.chatBody}>
         <div className={styles.chatTop}>
-          <span className={styles.driverName}>{chat.rec_name || 'Без имени'}</span>
+          <span className={styles.driverName}>{chat.rec_name || t('unnamed')}</span>
           {chat.last_time && (
             <span className={styles.timestamp}>{chat.last_time}</span>
           )}
@@ -58,15 +62,16 @@ const ChatItem = React.memo(
         <div className={styles.cargoName}>{orderLabel(chat.cargo, chat.cargo_name)}</div>
         <div className={styles.chatBottom}>
           <span className={styles.lastMessage}>
-            {chat.last_message || 'Нет сообщений'}
+            {chat.last_message || t('noMessages')}
           </span>
           {chat.unread_count > 0 && (
             <span className={styles.unreadBadge}>{chat.unread_count}</span>
           )}
         </div>
       </div>
-    </button>
-  )
+      </button>
+    )
+  }
 )
 
 type ChatsListProps = {
@@ -74,6 +79,7 @@ type ChatsListProps = {
 }
 
 export function ChatsList({ activeId }: ChatsListProps) {
+  const { t } = useTranslation('chats')
   const { filteredChats, isLoading, loadChats, setCurrentChat, searchQuery, setSearchQuery } = useChats()
 
   const history = useHistory()
@@ -102,13 +108,13 @@ export function ChatsList({ activeId }: ChatsListProps) {
   return (
     <div className={styles.pageRoot}>
       <div className={styles.listHead}>
-        <h2 className={styles.listTitle}>Сообщения</h2>
+        <h2 className={styles.listTitle}>{t('messages')}</h2>
         <label className={styles.searchWrap}>
           <Search size={16} strokeWidth={2} className={styles.searchIcon} />
           <input
             type="search"
             className={styles.searchInput}
-            placeholder="Поиск по диалогам…"
+            placeholder={t('search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -135,7 +141,7 @@ export function ChatsList({ activeId }: ChatsListProps) {
             {filteredChats.length === 0 && (
               <div className={styles.emptyState}>
                 <div className={styles.emptyIcon}>💬</div>
-                <div>{searchQuery ? 'Ничего не найдено' : 'Нет активных чатов'}</div>
+                <div>{searchQuery ? t('nothing') : t('empty')}</div>
               </div>
             )}
           </div>

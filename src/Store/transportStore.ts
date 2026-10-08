@@ -14,6 +14,7 @@ export interface TransportType {
 export type TransportTypeField = TransportType | TransportType[] | string | number | null | undefined
 
 export interface TransportData {
+  id?: string | number
   guid?: string
   name?: string
   license_plate?: string
@@ -141,6 +142,9 @@ export function asTransportList(raw: unknown): TransportData[] {
 
   return list.map((item) => {
     const transport = { ...(item as TransportData) }
+    if (!transport.guid && transport.id != null && transport.id !== '') {
+      transport.guid = String(transport.id)
+    }
     const type = asTransportType(transport.transport_type)
     if (type) transport.transport_type = type
 

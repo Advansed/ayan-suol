@@ -2,6 +2,7 @@
  * Утилиты для модуля Cargos
  */
 
+import i18n, { intlLocale } from '../i18n';
 import { CargoStatus } from '../Store/cargoStore';
 import { 
     STATUS_CLASSES,
@@ -21,7 +22,7 @@ export const formatters = {
     // Форматирование валюты
     currency: (amount: number): string => {
         try {
-            return new Intl.NumberFormat('ru-RU', {
+            return new Intl.NumberFormat(intlLocale(), {
                 style: 'currency',
                 currency: 'RUB',
                 minimumFractionDigits: 0,
@@ -35,7 +36,7 @@ export const formatters = {
     // Форматирование веса
     weight: (weight: number, weight1 = 0): string => {
         const totalWeight = Math.max(0, weight - weight1);
-        return `${totalWeight.toFixed(1)} тонн`;
+        return i18n.t('tons', { ns: 'common', value: totalWeight.toFixed(1) });
     },
 
     // Форматирование объема
@@ -66,7 +67,7 @@ export const formatters = {
             }
             if (isNaN(date.getTime())) return dateString;
             
-            return date.toLocaleDateString('ru-RU', {
+            return date.toLocaleDateString(intlLocale(), {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric'

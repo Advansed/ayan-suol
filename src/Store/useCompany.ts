@@ -8,6 +8,7 @@ import {
   companyActions, 
   CompanyData,
   toSetCompanyPayload,
+  normalizeCompany,
 } from './companyStore'
 
 // ============================================
@@ -43,7 +44,7 @@ export const useCompany = () => {
       companyActions.setLoading(false)
       
       if (response.success) {
-        companyActions.setData(response.data)
+        companyActions.setData(normalizeCompany(response.data))
       } else {
         toast.error(response.message || 'Ошибка загрузки данных')
       }
@@ -75,12 +76,12 @@ export const useCompany = () => {
         toast.success('Данные компании сохранены')
         const current = useCompanyStore.getState().data
         const guid = response.guid || response.data?.guid || payload.guid || current?.guid
-        companyActions.setData({
+        companyActions.setData(normalizeCompany({
           ...(current || {}),
           ...payload,
           ...(response.data || {}),
           guid,
-        })
+        }))
       } else {
         toast.error(response.message || 'Ошибка сохранения данных')
       }

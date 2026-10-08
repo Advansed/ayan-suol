@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './Profile.module.css';
 import { useProfile } from './useProfile';
 import { GeneralInfo } from '../Settings/components/GeneralInfo';
@@ -9,6 +10,7 @@ import { uploadProfilePhoto } from '../../utils/fileUpload';
 
 /** Профиль — персональные данные и организация. Транспорт — в /vehicles. */
 export const Profile: React.FC = () => {
+  const { t } = useTranslation('settings');
   const { image, name, phone, email, setUser } = useProfile();
   const personalDataConsent = useLoginStore((s) => s.agreements.personalData);
   const toast = useToast();
@@ -25,12 +27,12 @@ export const Profile: React.FC = () => {
     if (!file) return;
 
     if (!file.type.match(/^image\/(png|jpg|jpeg|webp)$/)) {
-      toast.error('Формат файла должен быть PNG, JPG или WebP');
+      toast.error(t('photoType'));
       return;
     }
 
     if (file.size > 12 * 1024 * 1024) {
-      toast.error('Размер файла не должен превышать 12 МБ');
+      toast.error(t('photoSize'));
       return;
     }
 
@@ -43,7 +45,7 @@ export const Profile: React.FC = () => {
       await setUser({ image: filePath });
     } catch (error) {
       console.error(error);
-      toast.error(error instanceof Error ? error.message : 'Не удалось загрузить фото');
+      toast.error(error instanceof Error ? error.message : t('photoFailed'));
     } finally {
       setPhotoLoading(false);
     }

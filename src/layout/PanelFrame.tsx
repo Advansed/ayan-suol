@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLoginStore } from '../Store/loginStore';
+import { panelLabel } from '../Store/roles';
 import styles from './PanelFrame.module.css';
 
 type PanelFrameProps = {
@@ -24,11 +25,11 @@ export const PanelFrame: React.FC<PanelFrameProps> = ({
   actions,
 }) => {
   const userType = useLoginStore((s) => s.user_type);
-  const panelLabel = crumb || (userType === 2 ? 'Панель перевозчика' : 'Панель заказчика');
+  const label = crumb || panelLabel(userType);
 
   return (
     <div className={`${styles.root} ${className || ''}`}>
-      <div className={styles.crumb}>{panelLabel}</div>
+      <div className={styles.crumb}>{label}</div>
       {(title || subtitle || actions) && (
         <div className={styles.titleRow}>
           <div>
@@ -50,5 +51,5 @@ export const PanelFrame: React.FC<PanelFrameProps> = ({
 
 export function usePanelPanelLabel(): string {
   const userType = useLoginStore((s) => s.user_type);
-  return userType === 2 ? 'Панель перевозчика' : 'Панель заказчика';
+  return panelLabel(userType);
 }

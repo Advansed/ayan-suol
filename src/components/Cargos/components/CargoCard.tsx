@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { IonIcon, IonText } from '@ionic/react';
 import { locationOutline } from 'ionicons/icons';
 import {
@@ -90,6 +91,7 @@ function cargoFleet(cargo: CargoInfo): string | null {
 }
 
 export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', selected, onClick }) => {
+    const { t } = useTranslation('cargos');
     const companyData = useCompanyData();
     const status = resolveCargoProgressStatus(cargo);
     
@@ -331,19 +333,19 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
                         {publishedLabel && (
                             <span>
                                 <Clock size={14} strokeWidth={1.75} aria-hidden />
-                                Опубликовано: {publishedLabel}
+                                {t('published', { date: publishedLabel })}
                             </span>
                         )}
                         {pickup && (
                             <span>
                                 <Calendar size={14} strokeWidth={1.75} aria-hidden />
-                                Отправление: {pickup}
+                                {t('departure', { date: pickup })}
                             </span>
                         )}
                         {delivery && (
                             <span>
                                 <Calendar size={14} strokeWidth={1.75} aria-hidden />
-                                Доставка: {delivery}
+                                {t('delivery', { date: delivery })}
                             </span>
                         )}
                     </div>

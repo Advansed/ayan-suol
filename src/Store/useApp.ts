@@ -2,7 +2,8 @@
 import { useEffect, useRef } from 'react'
 import { useLoginStore } from './loginStore'
 import { useSocket } from './useSocket'
-import { companyActions, CompanyData } from './companyStore'
+import { isExecutorRole } from './roles'
+import { companyActions, CompanyData, normalizeCompany } from './companyStore'
 import { transportActions, asTransportList } from './transportStore'
 
 // ============================================
@@ -13,12 +14,12 @@ export const useApp = () => {
   const { auth, token, user_type } = useLoginStore()
   const { isConnected, emit, once } = useSocket()
   const hasLoadedCompany = useRef(false)
-  const hasLoadedTransport = useRef(false)
+  const loadedTransportFor = useRef<number | null>(null)
   const hasLoadedTransportTypes = useRef(false)
 
-  // Загрузка данных компании при авторизации для заказчика
+  // Загрузка данных компании при авторизации (обе роли — нужен is_verified)
   useEffect(() => {
-    if (auth && isConnected && token && user_type === 1 && !hasLoadedCompany.current) {
+    if (auth && isConnected && token && !hasLoadedCompany.current) {
       
       companyActions.setLoading(true)
       hasLoadedCompany.current = true
@@ -27,7 +28,7 @@ export const useApp = () => {
         companyActions.setLoading(false)
         
         if (response.success) {
-          companyActions.setData(response.data || null)
+          companyActions.setData(normalizeCompany(response.data))
         } else {
           console.error('Failed to load company data:', response.message)
           // Не показываем ошибку, так как данные компании могут отсутствовать
@@ -45,15 +46,15 @@ export const useApp = () => {
     }
   }, [auth, isConnected, token, user_type, emit, once])
 
-  // Загрузка данных транспорта при авторизации для водителя
+  // Транспорт исполнителя и диспетчера; при смене роли список перезапрашивается
   useEffect(() => {
-    if (auth && isConnected && token && user_type === 2 && !hasLoadedTransport.current) {
-      
-      transportActions.setLoading(true)
-      hasLoadedTransport.current = true
+    if (auth && isConnected && token && isExecutorRole(user_type) && loadedTransportFor.current !== user_type) {
+      const firstLoad = loadedTransportFor.current === null
+      if (firstLoad) transportActions.setLoading(true)
+      loadedTransportFor.current = user_type
 
       const handleGetTransport = (response: { success: boolean; data?: unknown; message?: string }) => {
-        transportActions.setLoading(false)
+        if (firstLoad) transportActions.setLoading(false)
         
         if (response.success) {
           const items = asTransportList(response.data)
@@ -70,7 +71,7 @@ export const useApp = () => {
 
     // Сброс флага при выходе
     if (!auth) {
-      hasLoadedTransport.current = false
+      loadedTransportFor.current = null
       transportActions.reset()
     }
   }, [auth, isConnected, token, user_type, emit, once])

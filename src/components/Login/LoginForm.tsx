@@ -1,6 +1,7 @@
 // src/components/Login/LoginForm.tsx
 
 import React, { useState, useCallback, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Eye, EyeOff, Truck } from 'lucide-react'
 import { parseLoginPhone, validateLoginPhoneRaw } from './phone'
 import { PhoneCountryField } from './PhoneCountryField'
@@ -26,6 +27,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onSwitchToRegister,
   onSwitchToRecovery,
 }) => {
+  const { t } = useTranslation('auth')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -58,15 +60,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     const phoneErr = validateLoginPhoneRaw(phone) || undefined
     const pass = normalizeString(password)
     let passwordErr: string | undefined
-    if (!pass.trim()) passwordErr = 'Заполните пароль'
-    else if (pass.length < 4) passwordErr = 'Пароль должен содержать минимум 4 символа'
+    if (!pass.trim()) passwordErr = t('passwordRequired')
+    else if (pass.length < 4) passwordErr = t('passwordShort')
 
     setFormErrors({
       phone: phoneErr,
       password: passwordErr,
     })
     return !phoneErr && !passwordErr
-  }, [phone, password])
+  }, [phone, password, t])
 
   const handleSubmit = useCallback(
     async (e?: React.FormEvent) => {
@@ -99,12 +101,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <span className="login-logo-mark login-logo-mark-light" aria-hidden>
           <Truck size={18} strokeWidth={2} />
         </span>
-        <span>Груз в рейс</span>
+        <span>{t('brand')}</span>
       </div>
 
       <header className="auth-hero">
-        <h1 className="auth-hero-title">Вход в аккаунт</h1>
-        <p className="auth-hero-sub">Введите номер телефона и пароль</p>
+        <h1 className="auth-hero-title">{t('loginTitle')}</h1>
+        <p className="auth-hero-sub">{t('loginSub')}</p>
       </header>
 
       <form className="auth-form" onSubmit={handleSubmit}>
@@ -122,7 +124,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         />
 
         <label className="auth-label auth-label-spaced" htmlFor="login-password">
-          Пароль
+          {t('password')}
         </label>
         <div className="auth-input-icon-wrap">
           <input
@@ -135,33 +137,33 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             onChange={(e) => handlePasswordChange(e.target.value)}
             onBlur={() => {
               const pass = normalizeString(password)
-              if (!pass.trim()) setFormErrors((p) => ({ ...p, password: 'Заполните пароль' }))
+              if (!pass.trim()) setFormErrors((p) => ({ ...p, password: t('passwordRequired') }))
               else if (pass.length < 4)
-                setFormErrors((p) => ({ ...p, password: 'Пароль должен содержать минимум 4 символа' }))
+                setFormErrors((p) => ({ ...p, password: t('passwordShort') }))
             }}
           />
           <button
             type="button"
             className="auth-input-icon-btn"
             onClick={() => setShowPassword((v) => !v)}
-            aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+            aria-label={showPassword ? t('hidePassword') : t('showPassword')}
           >
             {showPassword ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
           </button>
         </div>
         {formErrors.password && <div className="auth-error">{formErrors.password}</div>}
         <button type="button" className="auth-link-forgot" onClick={onSwitchToRecovery}>
-          Забыли пароль?
+          {t('forgot')}
         </button>
 
         <button type="submit" className="auth-btn-primary" disabled={!canSubmit}>
-          {isSubmitting ? 'Вход…' : 'Войти'}
+          {isSubmitting ? t('signingIn') : t('signIn')}
         </button>
 
         <p className="auth-footer-text">
-          Нет аккаунта?{' '}
+          {t('noAccount')}{' '}
           <button type="button" className="auth-footer-action" onClick={onSwitchToRegister}>
-            Зарегистрироваться
+            {t('signUp')}
           </button>
         </p>
       </form>

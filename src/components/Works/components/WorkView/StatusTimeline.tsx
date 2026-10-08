@@ -1,10 +1,11 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
 import { WorkInfo, WorkStatus } from '../../types';
 import {
-  WORK_STATUS_SHORT,
   getOrderProgressSlots,
   normalizeWorkStatus,
+  workStatusLabel,
 } from '../../statusFlow';
 import styles from './StatusTimeline.module.css';
 
@@ -13,23 +14,24 @@ type StatusTimelineProps = {
 };
 
 export const StatusTimeline: React.FC<StatusTimelineProps> = ({ work }) => {
+  const { t } = useTranslation('works');
   const current = normalizeWorkStatus(work.status);
   const isRejected = current === WorkStatus.REJECTED;
   const slots = isRejected ? [] : getOrderProgressSlots(current);
 
   return (
-    <section className={styles.wrap} aria-label="Статус рейса">
+    <section className={styles.wrap} aria-label={t('tripStatus')}>
       <div className={styles.head}>
-        <p className={styles.title}>Статус рейса</p>
+        <p className={styles.title}>{t('tripStatus')}</p>
         {!isRejected && (
-          <span className={styles.pill}>{WORK_STATUS_SHORT[current] || current}</span>
+          <span className={styles.pill}>{workStatusLabel(current)}</span>
         )}
       </div>
 
       {isRejected ? (
-        <div className={styles.rejectedBanner}>Заказ перешёл в статус «Отказано»</div>
+        <div className={styles.rejectedBanner}>{t('rejected')}</div>
       ) : (
-        <ol className={styles.track}>
+        <ol className={`${styles.track} ${slots.length >= 6 ? styles.dense : ''}`}>
           {slots.map((slot, offset) => {
             if (slot.type === 'ellipsis') {
               return (
@@ -70,7 +72,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({ work }) => {
                     <span className={styles.dotMark} />
                   )}
                 </span>
-                <span className={styles.stepLabel}>{WORK_STATUS_SHORT[slot.status]}</span>
+                <span className={styles.stepLabel}>{workStatusLabel(slot.status)}</span>
               </li>
             );
           })}

@@ -9,7 +9,7 @@ import {
   transportDisplayName,
   transportDriverName,
 } from '../../../Store/transportStore';
-import { resolveImageSrc, uploadTransportPhoto } from '../../../utils/fileUpload';
+import { uploadTransportPhoto, useResolvedImageSrc } from '../../../utils/fileUpload';
 import { useToast } from '../../Toast';
 import styles from './VehicleModal.module.css';
 
@@ -32,6 +32,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
   const isEdit = Boolean(vehicle?.guid);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState('');
+  const savedPhotoSrc = useResolvedImageSrc(photoFile ? null : vehicle?.image);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [form, setForm] = useState({
     name: '',
@@ -56,7 +57,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
       driverPhone: vehicle?.driver_phone || (typeof vehicle?.driver === 'object' ? vehicle.driver?.phone || '' : ''),
     });
     setPhotoFile(null);
-    setPhotoPreview(vehicle?.image ? resolveImageSrc(vehicle.image) : '');
+    setPhotoPreview('');
   }, [vehicle, types]);
 
   useEffect(() => {
@@ -129,8 +130,10 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
     if (photoFile) {
       setPhotoUploading(true);
       try {
-        const { filePath } = await uploadTransportPhoto(photoFile, vehicle?.guid);
+        const transportId = vehicle?.guid || crypto.randomUUID();
+        const { filePath } = await uploadTransportPhoto(photoFile, transportId);
         if (!filePath) throw new Error('Сервер не вернул путь к файлу');
+        data.guid = transportId;
         data.image = filePath;
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Не удалось загрузить фото');
@@ -172,8 +175,8 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
               onClick={() => photoInputRef.current?.click()}
               disabled={busy}
             >
-              {photoPreview ? (
-                <img src={photoPreview} alt="Фото машины" className={styles.photoImg} />
+              {photoPreview || savedPhotoSrc ? (
+                <img src={photoPreview || savedPhotoSrc} alt="Фото машины" className={styles.photoImg} />
               ) : (
                 <div className={styles.photoEmpty}>
                   <Truck size={36} strokeWidth={1.5} />
@@ -199,7 +202,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
               <Camera size={16} strokeWidth={2} />
               {photoUploading
                 ? 'Загрузка…'
-                : photoPreview
+                : photoPreview || savedPhotoSrc
                   ? 'Заменить фото'
                   : 'Загрузить фото'}
             </button>

@@ -560,13 +560,20 @@ export const cargoSocketHandlers = {
     },
 
     onPublishCargo: (response: any) => {
-        
-        if (response.success && response.data) {
+        if (!response?.success) return
+        const guid = response.data?.guid || response.guid
+        if (!guid) return
+        if (response.data) {
             useCargoStore.getState().updateCargo(
-                response.data.guid,
-                normalizeCargoRoute(response.data as CargoInfo)
+                guid,
+                normalizeCargoRoute({
+                    ...response.data,
+                    status: response.data.status || CargoStatus.WAITING,
+                } as CargoInfo)
             )
+            return
         }
+        useCargoStore.getState().publishCargo(guid)
     },
 
     onUnpublishCargo: (response: any) => {
@@ -597,6 +604,7 @@ export const initCargoSocketHandlers = (socket: any) => {
     socket.on('set_cargo',            cargoSocketHandlers.onSaveCargo)
     socket.on('delete_cargo',         cargoSocketHandlers.onDeleteCargo)
     socket.on('publish_cargo',        cargoSocketHandlers.onPublishCargo)
+    socket.on('publish',              cargoSocketHandlers.onPublishCargo)
     socket.on('unpublish_cargo',      cargoSocketHandlers.onUnpublishCargo)
     
 }
@@ -609,6 +617,7 @@ export const destroyCargoSocketHandlers = (socket: any) => {
     socket.off('set_cargo',           cargoSocketHandlers.onSaveCargo)
     socket.off('delete_cargo',        cargoSocketHandlers.onDeleteCargo)
     socket.off('publish_cargo',       cargoSocketHandlers.onPublishCargo)
+    socket.off('publish',             cargoSocketHandlers.onPublishCargo)
     socket.off('unpublish_cargo',     cargoSocketHandlers.onUnpublishCargo)
     
 }

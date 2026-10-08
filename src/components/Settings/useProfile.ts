@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useLoginStore, AuthResponse } from '../../Store/loginStore';
 import { useToast } from '../Toast';
 import { useSocket } from '../../Store/useSocket';
-import { useCompanyStore, companyActions, CompanyData, toSetCompanyPayload } from '../../Store/companyStore';
+import { useCompanyStore, companyActions, CompanyData, toSetCompanyPayload, normalizeCompany } from '../../Store/companyStore';
 import { useTransportStore, transportActions, asTransportList, TransportData } from '../../Store/transportStore';
 
 
@@ -87,12 +87,12 @@ export const useProfile = () => {
           if ( response.success ) {
             const current = useCompanyStore.getState().data
             const guid = response.guid || response.data?.guid || payload.guid || current?.guid
-            companyActions.setData({
+            companyActions.setData(normalizeCompany({
               ...(current || {}),
               ...payload,
               ...(response.data || {}),
               guid,
-            })
+            }))
             toast.success('Данные компании обновлены')
             resolve(true)
           } else {

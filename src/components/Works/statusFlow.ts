@@ -1,4 +1,6 @@
+import i18n from '../../i18n';
 import { WorkStatus } from './types';
+import { buildProgressSlots, type ProgressSlot } from '../../utils/progressSlots';
 
 /** Основной жизненный цикл заказа (без «Отказано») */
 export const WORK_STATUS_FLOW: WorkStatus[] = [
@@ -30,6 +32,29 @@ export const WORK_STATUS_SHORT: Record<WorkStatus, string> = {
   [WorkStatus.COMPLETED]: 'Готово',
   [WorkStatus.REJECTED]: 'Отказ',
 };
+
+const WORK_STATUS_I18N: Record<WorkStatus, string> = {
+  [WorkStatus.NEW]: 'statusNew',
+  [WorkStatus.OFFERED]: 'statusOffered',
+  [WorkStatus.TO_LOAD]: 'statusToLoad',
+  [WorkStatus.ON_LOAD]: 'statusOnLoad',
+  [WorkStatus.LOADING]: 'statusLoading',
+  [WorkStatus.LOADED]: 'statusLoaded',
+  [WorkStatus.IN_WORK]: 'statusInWork',
+  [WorkStatus.TO_UNLOAD]: 'statusToUnload',
+  [WorkStatus.UNLOADING]: 'statusUnloading',
+  [WorkStatus.UNLOADED]: 'statusUnloaded',
+  [WorkStatus.COMPLETED]: 'statusCompleted',
+  [WorkStatus.REJECTED]: 'statusRejected',
+};
+
+export function workStatusLabel(status: WorkStatus | string): string {
+  const normalized = normalizeWorkStatus(status);
+  return i18n.t(WORK_STATUS_I18N[normalized], {
+    ns: 'works',
+    defaultValue: WORK_STATUS_SHORT[normalized],
+  });
+}
 
 /** Что делать исполнителю на этом статусе */
 export const WORK_CURRENT_ACTION: Record<WorkStatus, string> = {
@@ -114,37 +139,11 @@ export function getStatusFlowIndex(status: WorkStatus | string): number {
   return idx >= 0 ? idx : 0;
 }
 
-export type OrderProgressSlot =
-  | { type: 'status'; status: WorkStatus; role: 'prev' | 'current' | 'next' | 'last' }
-  | { type: 'ellipsis' };
+export type OrderProgressSlot = ProgressSlot<WorkStatus>;
 
-/** Предыдущий, текущий, следующий и последний статус; «…» если между следующим и последним есть этапы. */
+/** До 7 точек: соседние этапы вокруг текущего и финиш, «…» если дальше ещё есть шаги. */
 export function getOrderProgressSlots(status: WorkStatus | string): OrderProgressSlot[] {
-  const currentIndex = getStatusFlowIndex(status);
-  if (currentIndex < 0) return [];
-
-  const lastIndex = WORK_STATUS_FLOW.length - 1;
-  const slots: OrderProgressSlot[] = [];
-
-  if (currentIndex > 0) {
-    slots.push({ type: 'status', status: WORK_STATUS_FLOW[currentIndex - 1], role: 'prev' });
-  }
-  slots.push({ type: 'status', status: WORK_STATUS_FLOW[currentIndex], role: 'current' });
-
-  const nextIndex = currentIndex + 1;
-  if (nextIndex > lastIndex) return slots;
-
-  if (nextIndex === lastIndex) {
-    slots.push({ type: 'status', status: WORK_STATUS_FLOW[lastIndex], role: 'last' });
-    return slots;
-  }
-
-  slots.push({ type: 'status', status: WORK_STATUS_FLOW[nextIndex], role: 'next' });
-  if (nextIndex < lastIndex - 1) {
-    slots.push({ type: 'ellipsis' });
-  }
-  slots.push({ type: 'status', status: WORK_STATUS_FLOW[lastIndex], role: 'last' });
-  return slots;
+  return buildProgressSlots(WORK_STATUS_FLOW, getStatusFlowIndex(status));
 }
 
 /** Лента: новые, отклики, рейсы и завершённые */

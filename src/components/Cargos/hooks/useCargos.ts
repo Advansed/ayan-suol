@@ -13,13 +13,15 @@ import { useToken } from '../../../Store/loginStore'
 // ============================================
 // ТИПЫ
 // ============================================
+export type CargoActionResult = { success: boolean; message?: string }
+
 export interface UseCargosReturn {
   cargos: CargoInfo[]
   isLoading: boolean
   createCargo: (data: Partial<CargoInfo>) => Promise<boolean>
   updateCargo: (guid: string, data: Partial<CargoInfo>) => Promise<boolean>
   deleteCargo: (guid: string) => Promise<boolean>
-  publishCargo: (guid: string) => Promise<boolean>
+  publishCargo: (guid: string) => Promise<CargoActionResult>
   unpublishCargo: (guid: string) => Promise<boolean>
   getCargo: (guid: string) => CargoInfo | undefined
   refreshCargos: () => Promise<void>
@@ -32,6 +34,8 @@ const SOCKET_EVENTS = {
   SAVE_CARGO: 'set_cargo',
   DELETE_CARGO: 'delete_cargo',
   PUBLISH_CARGO: 'publish_cargo',
+  /** Ответ сервера приходит отдельным событием, не тем же именем, что запрос. */
+  PUBLISH_CARGO_RESPONSE: 'publish',
   UNPUBLISH_CARGO: 'unpublish_cargo',
   GET_CARGOS: 'get_cargos',
   GET_ORGS: 'get_orgs',
@@ -42,7 +46,7 @@ const SOCKET_EVENTS = {
 // ============================================
 export const useCargos = (): UseCargosReturn => {
   const token = useToken()
-  const { emit } = useSocket()
+  const { emit, on } = useSocket()
   const toast = useToast()
 
   const cargos = useCargoStore((state) => state.cargos)
@@ -124,34 +128,61 @@ export const useCargos = (): UseCargosReturn => {
   )
 
   const publishCargo = useCallback(
-    async (guid: string): Promise<boolean> => {
+    async (guid: string): Promise<CargoActionResult> => {
+      const cargo = cargos.find((c) => c.guid === guid)
+      if (!cargo) {
+        return { success: false, message: 'Груз не найден' }
+      }
+      if (!token) {
+        return { success: false, message: 'Нет токена авторизации' }
+      }
+
       setLoading(true)
       try {
-        const cargo = cargos.find((c) => c.guid === guid)
-        if (!cargo) {
-          toast.error('Груз не найден')
-          return false
+        const response = await new Promise<any>((resolve) => {
+          let settled = false
+          let unsubscribe = () => {}
+          const timeoutId = window.setTimeout(() => {
+            if (settled) return
+            settled = true
+            unsubscribe()
+            resolve({ success: false, message: 'Превышено время ожидания ответа от сервера' })
+          }, 10000)
+
+          unsubscribe = on(SOCKET_EVENTS.PUBLISH_CARGO_RESPONSE, (payload: any) => {
+            if (settled) return
+            settled = true
+            window.clearTimeout(timeoutId)
+            unsubscribe()
+            resolve(payload)
+          })
+
+          emit(SOCKET_EVENTS.PUBLISH_CARGO, { guid, token })
+        })
+
+        if (response?.success) {
+          storePublishCargo(guid)
+          toast.success('Груз опубликован')
+          return { success: true }
         }
 
-        storePublishCargo(guid)
-        emit(SOCKET_EVENTS.PUBLISH_CARGO, { guid, token })
-        toast.success('Груз опубликован')
-        return true
+        const reason = response?.message || response?.error || response?.reason
+        return {
+          success: false,
+          message: typeof reason === 'string' && reason.trim()
+            ? reason.trim()
+            : 'Не удалось опубликовать заказ',
+        }
       } catch (error) {
-        toast.error('Ошибка публикации груза')
-        return false
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : 'Ошибка публикации груза',
+        }
       } finally {
         setLoading(false)
       }
     },
-    [
-      token,
-      cargos,
-      setLoading,
-      storePublishCargo,
-      emit,
-      toast,
-    ]
+    [token, cargos, setLoading, storePublishCargo, emit, on, toast]
   )
 
   const unpublishCargo = useCallback(

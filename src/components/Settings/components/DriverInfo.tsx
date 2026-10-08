@@ -10,7 +10,7 @@ import {
   toTransportTypeId,
   transportDisplayName,
 } from '../../../Store/transportStore';
-import { resolveImageSrc } from '../../../utils/fileUpload';
+import { useResolvedImageSrc } from '../../../utils/fileUpload';
 import styles from './TransportPage.module.css';
 
 interface DriverInfoProps {
@@ -37,6 +37,7 @@ export const DriverInfo: React.FC<DriverInfoProps> = ({
   });
   const [saving, setSaving] = useState(false);
   const types = useTransportTypes();
+  const photoSrc = useResolvedImageSrc(transportData?.image);
 
   useEffect(() => {
     setFormData({
@@ -251,9 +252,9 @@ export const DriverInfo: React.FC<DriverInfoProps> = ({
           </div>
 
           <div className={styles.photoFrame}>
-            {transportData?.image ? (
+            {photoSrc ? (
               <img
-                src={resolveImageSrc(transportData.image)}
+                src={photoSrc}
                 alt="Фото транспорта"
                 className={styles.photoImg}
               />

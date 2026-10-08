@@ -1,3 +1,5 @@
+import { mapLanguage } from '../../../i18n';
+
 export const MAPS_CONFIG = {
   apiKey: (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined) || '',
   scriptUrl: 'https://maps.googleapis.com/maps/api/js',
@@ -17,7 +19,7 @@ export const validateApiKey = (): boolean => {
 export const generateApiUrl = (): string => {
   const url = new URL(MAPS_CONFIG.scriptUrl);
   url.searchParams.set('key', MAPS_CONFIG.apiKey);
-  url.searchParams.set('language', 'ru');
+  url.searchParams.set('language', mapLanguage());
   url.searchParams.set('libraries', 'places,geometry');
   return url.toString();
 };

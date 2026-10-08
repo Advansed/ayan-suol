@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { IonModal, useIonRouter } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import { ArrowLeft, Handshake, MessageSquare, X } from 'lucide-react';
 import { WorkInfo, WorkStatus } from '../../types';
-import { useWorkStore } from '../../workStore';
-import { passportGetters } from '../../../../Store/passportStore';
-import { companyGetters } from '../../../../Store/companyStore';
-import { transportGetters } from '../../../../Store/transportStore';
+import { isLocallyOffered, useWorkStore } from '../../workStore';
+import { companyGetters, useCompanyStore } from '../../../../Store/companyStore';
+import { useTransportStore } from '../../../../Store/transportStore';
 import { useToast } from '../../../Toast';
 import { useChats } from '../../../../Store/useChats';
 import { WORK_CURRENT_ACTION, findWorkByRef, normalizeWorkStatus } from '../../statusFlow';
@@ -30,12 +30,13 @@ import { UnloadingCard } from './UnloadingCard';
 import { UnloadedWaitCard } from './UnloadedWaitCard';
 import { WorkOrderInfo } from './WorkOrderInfo';
 import { StatusTimeline } from './StatusTimeline';
+import { OrganizationRequiredModal } from '../../../OrganizationRequiredModal';
 import styles from './WorkView.module.css';
 
 interface WorkViewProps {
     work: WorkInfo;
     onBack: () => void;
-    onOfferClick: (work: WorkInfo) => void;
+    onOfferClick: (work: WorkInfo) => Promise<boolean> | boolean;
     onOfferCancelClick: (work: WorkInfo) => void;
     onLoaded?: (work: WorkInfo, data: { verified: boolean; cargoPhotos: string[]; sealPhotos: string[] }) => Promise<void>;
     onArrivedAtLoad?: (work: WorkInfo, data: { bodyPhotos: string[] }) => Promise<void>;
@@ -67,6 +68,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
     onMapClick,
     onSignContract
 }) => {
+    const { t } = useTranslation('works');
     const works = useWorkStore(state => state.works);
     const archiveWorks = useWorkStore(state => state.archiveWorks);
     const hist = useIonRouter();
@@ -83,7 +85,12 @@ export const WorkView: React.FC<WorkViewProps> = ({
     // Явная подписка на статус/подпись — гарантирует ре-рендер таймлайна при push
     const liveStatus = useWorkStore((state) => {
         const found = findWorkByRef(state.works, work) ?? findWorkByRef(state.archiveWorks, work);
-        return found ? normalizeWorkStatus(found.status) : normalizeWorkStatus(work.status);
+        const status = found ? normalizeWorkStatus(found.status) : normalizeWorkStatus(work.status);
+        if ((found ? isLocallyOffered(found) : isLocallyOffered(work)) &&
+            (status === WorkStatus.NEW || status === WorkStatus.OFFERED)) {
+            return WorkStatus.OFFERED;
+        }
+        return status;
     });
     const liveSigned = useWorkStore((state) => {
         const found = findWorkByRef(state.works, work) ?? findWorkByRef(state.archiveWorks, work);
@@ -99,9 +106,19 @@ export const WorkView: React.FC<WorkViewProps> = ({
         [storeWork, liveStatus, liveSigned]
     );
 
-    const passportCompletion = passportGetters.getCompletionPercentage();
-    const companyCompletion = companyGetters.getCompletionPercentage();
-    const transportCompletion = transportGetters.getCompletionPercentage();
+    const companyData = useCompanyStore((state) => state.data);
+    const companyLoading = useCompanyStore((state) => state.isLoading);
+    const companyCompletion = useMemo(
+        () => companyGetters.getCompletionPercentage(),
+        [companyData]
+    );
+    const transportItems = useTransportStore((state) => state.items);
+    const transportData = useTransportStore((state) => state.data);
+    const transportLoading = useTransportStore((state) => state.isLoading);
+    const hasTransport =
+        transportItems.length > 0 ||
+        Boolean(transportData?.guid || transportData?.license_plate || transportData?.number);
+    const organizationRequired = !companyLoading && companyCompletion < 80;
 
     const actionHint = WORK_CURRENT_ACTION[workInfo.status] || 'Открыть действия по заказу';
     const hasInteractiveAction =
@@ -160,20 +177,12 @@ export const WorkView: React.FC<WorkViewProps> = ({
     }, [liveStatus, liveSigned]);
 
     useEffect(() => {
-        if (passportCompletion < 80) {
-            onBack();
-            toast.info('Надо сперва заполнить паспортные данные');
-            hist.push('/settings');
-        } else if (companyCompletion < 80) {
-            onBack();
-            toast.info('Надо сперва заполнить данные организации');
-            hist.push('/settings');
-        } else if (transportCompletion < 80) {
-            onBack();
-            toast.info('Надо заполнить данные по транспорту');
-            hist.push('/settings');
-        }
-    }, [passportCompletion, companyCompletion, transportCompletion, onBack, toast, hist]);
+        if (companyLoading || transportLoading || companyCompletion < 80) return;
+        if (hasTransport) return;
+        onBack();
+        toast.info('Добавьте транспорт, чтобы откликнуться на заказ');
+        hist.push('/vehicles');
+    }, [companyLoading, companyCompletion, transportLoading, hasTransport, onBack, toast, hist]);
 
     const handleOffer = async (data: Partial<WorkInfo>, volume: number): Promise<void> => {
         const updatedWork: WorkInfo = {
@@ -181,8 +190,8 @@ export const WorkView: React.FC<WorkViewProps> = ({
             ...data,
             volume
         };
-        onOfferClick(updatedWork);
-        setActionOpen(false);
+        const ok = await onOfferClick(updatedWork);
+        if (ok) setActionOpen(false);
     };
 
     const handleCancelOffer = async (data: Partial<WorkInfo>, volume: number): Promise<void> => {
@@ -318,7 +327,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
         <div className={styles.view}>
             <button type="button" className={styles.backBtn} onClick={onBack}>
                 <ArrowLeft size={16} strokeWidth={2} />
-                Назад к ленте заказов
+                {t('backToFeed')}
             </button>
 
             <header className={styles.head}>
@@ -409,6 +418,12 @@ export const WorkView: React.FC<WorkViewProps> = ({
                     <MessageSquare size={20} strokeWidth={1.75} />
                 </button>
             </div>
+
+            <OrganizationRequiredModal
+                isOpen={organizationRequired}
+                onClose={onBack}
+                onGoProfile={() => history.push('/profile')}
+            />
 
             <IonModal
                 isOpen={actionOpen}

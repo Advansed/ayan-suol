@@ -36,6 +36,8 @@ export interface UserData {
   gender:             boolean
   ratings:            UserRatings
   agreements:         Agreements
+  /** Комиссия платформы, % — приходит в ответе авторизации */
+  tax?:               number
 }
 
 export interface AuthResponse extends UserData {
@@ -60,6 +62,7 @@ interface LoginState {
   gender:             boolean
   ratings:            UserRatings
   agreements:         Agreements
+  tax:                number
 }
 
 interface LoginActions {
@@ -75,6 +78,22 @@ interface LoginActions {
 }
 
 type LoginStore = LoginState & LoginActions
+
+export function normalizeTax(value: unknown): number {
+  const raw = typeof value === 'string'
+    ? value.replace('%', '').replace(',', '.').trim()
+    : value
+  const n = Number(raw)
+  return Number.isFinite(n) && n >= 0 ? n : 0
+}
+
+/** Сумма на счёте, нужная для предложения: tax% от цены */
+export function offerTaxAmount(price: number, taxPercent: number): number {
+  const priceN = Number(price)
+  const taxN = normalizeTax(taxPercent)
+  if (!Number.isFinite(priceN) || priceN <= 0 || taxN <= 0) return 0
+  return Math.round((priceN * taxN) / 100)
+}
 
 // ============================================
 // ZUSTAND STORE
@@ -100,6 +119,7 @@ export const useLoginStore = create<LoginStore>()(
       gender:           true,
       ratings:          { orders: 0, rate: 0, invoices: 0, payd: 0 },
       agreements:       { personalData: false, userAgreement: false, marketing: false },
+      tax:              0,
 
       // ACTIONS
       setType:          (user_type) => set({ user_type }),
@@ -107,11 +127,15 @@ export const useLoginStore = create<LoginStore>()(
       setAuth:          (auth) => set({ auth }),
       setToken:         (token) => set({ token }),
       setLoading:       (isLoading) => set({ isLoading }),
-      setUser:          (userData) => set({ 
-                        ...userData, 
-                        isLoading: false 
+      setUser:          (userData) => set({
+                        ...userData,
+                        ...(userData.tax !== undefined ? { tax: normalizeTax(userData.tax) } : {}),
+                        isLoading: false
       }),
-      updateUser:       (updates) => set(updates),
+      updateUser:       (updates) => set({
+                        ...updates,
+                        ...(updates.tax !== undefined ? { tax: normalizeTax(updates.tax) } : {}),
+      }),
       clearAuth:        () => set({
         auth:           false,
         isLoading:      false,
@@ -128,7 +152,8 @@ export const useLoginStore = create<LoginStore>()(
         seller:         '',
         gender:         true,
         ratings:        { orders: 0, rate: 0, invoices: 0, payd: 0 },
-        agreements:     { personalData: false, userAgreement: false, marketing: false }
+        agreements:     { personalData: false, userAgreement: false, marketing: false },
+        tax:            0,
       }),
       toggleAgreements: (agreementType) => 
         set((state) => ({
@@ -203,8 +228,8 @@ export const loginGetters = {
     return !!token && token.length > 0
   },
   getAgreements: () => useLoginStore.getState().agreements,
-  getAgreement: (agreementType: keyof Agreements) => useLoginStore.getState().agreements[agreementType]
-
+  getAgreement: (agreementType: keyof Agreements) => useLoginStore.getState().agreements[agreementType],
+  getTax: () => useLoginStore.getState().tax,
 }
 
 // ============================================

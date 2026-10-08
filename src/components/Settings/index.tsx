@@ -23,12 +23,12 @@ export const Settings: React.FC = () => {
     }
   }, [routeName, history]);
 
-  const handleDriverClick = () => {
-    setUser({ user_type: user_type === 1 ? 2 : 1 });
+  const handleRoleChange = (nextType: number) => {
+    if (nextType !== user_type) setUser({ user_type: nextType });
   };
 
   return (
-    <SettingsPage onToggleClick={handleDriverClick} onBack={undefined} />
+    <SettingsPage onRoleChange={handleRoleChange} onBack={undefined} />
   );
 };
 

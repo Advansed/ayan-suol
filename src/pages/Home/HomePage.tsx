@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import {
   Banknote,
   Check,
   ChevronRight,
   FileText,
-  IdCard,
   LifeBuoy,
   MapPin,
   MessageCircle,
@@ -17,9 +17,13 @@ import {
   Wallet,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useLoginStore } from '../../Store/loginStore';
+import { useLoginStore, useToken } from '../../Store/loginStore';
+import { intlLocale } from '../../i18n';
 import { useTransportData } from '../../Store/transportStore';
 import { useCompanyData } from '../../Store/companyStore';
+import { useAccountData } from '../../Store/accountStore';
+import { isExecutorRole } from '../../Store/roles';
+import { useSocket } from '../../Store/useSocket';
 import { PanelFrame } from '../../layout/PanelFrame';
 import styles from './HomePage.module.css';
 
@@ -31,106 +35,93 @@ type ActivityItem = {
 };
 
 const DEMO_ACTIVITY: ActivityItem[] = [
-  {
-    id: 'delivered',
-    title: 'Рейс ЗК-10468 доставлен в Екатеринбург',
-    time: '2 часа назад',
-    icon: PackageCheck,
-  },
-  {
-    id: 'payout',
-    title: 'Выплата 26 000 ₽ зачислена на баланс',
-    time: '3 часа назад',
-    icon: Banknote,
-  },
-  {
-    id: 'message',
-    title: 'Новое сообщение от ООО "СтройГрад"',
-    time: '5 часов назад',
-    icon: MessageCircle,
-  },
-  {
-    id: 'offer',
-    title: 'Вы откликнулись на заказ ЗК-10482',
-    time: 'Вчера, 18:24',
-    icon: Send,
-  },
+  { id: 'delivered', title: 'actDelivered', time: 'time2h', icon: PackageCheck },
+  { id: 'payout', title: 'actPayout', time: 'time3h', icon: Banknote },
+  { id: 'message', title: 'actMessage', time: 'time5h', icon: MessageCircle },
+  { id: 'offer', title: 'actOffer', time: 'timeYesterday', icon: Send },
 ];
 
 export const HomePage: React.FC = () => {
+  const { t } = useTranslation('home');
   const history = useHistory();
   const name = useLoginStore((s) => s.name);
   const userType = useLoginStore((s) => s.user_type);
   const ratings = useLoginStore((s) => s.ratings);
-  const account = useLoginStore((s) => s.account);
+  const token = useToken();
+  const { socket, isConnected } = useSocket();
+  const accountData = useAccountData();
   const transport = useTransportData();
   const company = useCompanyData();
 
-  const isCarrier = userType === 2;
+  const isCarrier = isExecutorRole(userType);
   const displayName = name?.trim() || 'Пользователь';
+
+  useEffect(() => {
+    if (!token || !isConnected || !socket) return;
+    socket.emit('get_balance', { token });
+  }, [token, isConnected, socket]);
 
   const checklist = useMemo(() => {
     const items = [
       {
-        id: 'passport',
-        label: 'Пройти верификацию паспорта',
-        done: false,
-        icon: IdCard,
-        path: '/verification',
+        id: 'verified',
+        label: t('checkBalance'),
+        done: Boolean(company?.is_verified),
+        icon: Wallet,
+        path: '/finance',
       },
       {
         id: 'sts',
-        label: 'Загрузить фото СТС',
+        label: t('checkSts'),
         done: Boolean(transport?.image),
         icon: FileText,
         path: '/vehicles',
-        roles: [2],
+        roles: [2, 3],
       },
       {
         id: 'transport',
-        label: 'Указать данные транспорта',
+        label: t('checkTransport'),
         done: Boolean(transport?.name || transport?.license_plate || transport?.number),
         icon: Truck,
         path: '/vehicles',
-        roles: [2],
+        roles: [2, 3],
       },
       {
         id: 'address',
-        label: isCarrier ? 'Заполнить адрес регистрации' : 'Заполнить данные организации',
+        label: isCarrier ? t('checkAddressCarrier') : t('checkAddressCustomer'),
         done: isCarrier
           ? Boolean(transport?.name)
-          : Boolean(company?.name || company?.inn),
+          : Boolean(company?.name || company?.tax_number),
         icon: MapPin,
         path: '/profile',
       },
     ];
     return items.filter((i) => !i.roles || i.roles.includes(userType));
-  }, [transport, company, isCarrier, userType]);
+  }, [transport, company, isCarrier, userType, t]);
 
   const doneCount = checklist.filter((i) => i.done).length;
   const progress = checklist.length ? Math.round((doneCount / checklist.length) * 100) : 0;
   const needsFill = progress < 100;
 
   const activeOrders = ratings?.orders ?? 0;
-  const earnings = ratings?.payd ?? 0;
+  const earnings = Number(accountData?.monthIncome ?? 0);
+  const pendingPayout = isCarrier
+    ? Number(accountData?.upcomingIncome ?? 0)
+    : Number(accountData?.remainingToPay ?? 0);
   const rate = ratings?.rate ?? 0;
   const tripCount = ratings?.invoices ?? ratings?.orders ?? 0;
-  const reviewHint = tripCount
-    ? `На основе ${tripCount} рейсов`
-    : 'Пока нет рейсов';
-
-  const pendingPayout = account ? Number(account) || 0 : 15000;
+  const reviewHint = tripCount ? t('reviews', { count: tripCount }) : t('noTrips');
 
   return (
-    <PanelFrame title={`Добро пожаловать, ${displayName}`} bare>
+    <PanelFrame title={t('welcome', { name: displayName })} bare>
       <div className={styles.page}>
         <div className={styles.stats}>
           <div className={styles.statCard}>
             <div className={styles.statHead}>
               <span className={styles.statLabel}>
-                {isCarrier ? 'Активные рейсы' : 'Активные заказы'}
+                {isCarrier ? t('activeTrips') : t('activeOrders')}
               </span>
-              <span className={styles.trendBadge}>+12% за неделю</span>
+              <span className={styles.trendBadge}>{t('weekTrend')}</span>
             </div>
             <div className={styles.statValue}>{activeOrders}</div>
             <div className={styles.spark} aria-hidden />
@@ -139,21 +130,23 @@ export const HomePage: React.FC = () => {
           <div className={styles.statCard}>
             <div className={styles.statHead}>
               <span className={styles.statLabel}>
-                {isCarrier ? 'Заработок за месяц' : 'Оплачено за месяц'}
+                {isCarrier ? t('monthEarnings') : t('monthPaid')}
               </span>
             </div>
             <div className={styles.statValue}>
-              {earnings.toLocaleString('ru-RU')} ₽
+              {earnings.toLocaleString(intlLocale())} ₽
             </div>
             <div className={styles.statSub}>
-              Ожидается к выплате: {pendingPayout.toLocaleString('ru-RU')} ₽
+              {isCarrier
+                ? t('pendingPayout', { amount: `${pendingPayout.toLocaleString(intlLocale())} ₽` })
+                : t('remainingDue', { amount: `${pendingPayout.toLocaleString(intlLocale())} ₽` })}
             </div>
           </div>
 
           <div className={styles.statCard}>
             <div className={styles.statHead}>
               <span className={styles.statLabel}>
-                {isCarrier ? 'Рейтинг перевозчика' : 'Рейтинг заказчика'}
+                {isCarrier ? t('carrierRating') : t('customerRating')}
               </span>
             </div>
             <div className={styles.statValueRow}>
@@ -178,15 +171,15 @@ export const HomePage: React.FC = () => {
           <section className={styles.card}>
             <div className={styles.cardHead}>
               <div>
-                <h2 className={styles.cardTitle}>Последние действия</h2>
-                <p className={styles.cardSub}>Недавние события по вашему аккаунту</p>
+                <h2 className={styles.cardTitle}>{t('recent')}</h2>
+                <p className={styles.cardSub}>{t('recentSub')}</p>
               </div>
               <button
                 type="button"
                 className={styles.linkBtn}
                 onClick={() => history.push('/feed')}
               >
-                Всё
+                {t('all', { ns: 'common' })}
               </button>
             </div>
             <ul className={styles.activityList}>
@@ -197,8 +190,8 @@ export const HomePage: React.FC = () => {
                     <span className={styles.activityIcon}>
                       <Icon size={18} strokeWidth={1.75} />
                     </span>
-                    <span className={styles.activityTitle}>{item.title}</span>
-                    <span className={styles.activityTime}>{item.time}</span>
+                    <span className={styles.activityTitle}>{t(item.title)}</span>
+                    <span className={styles.activityTime}>{t(item.time)}</span>
                   </li>
                 );
               })}
@@ -208,22 +201,22 @@ export const HomePage: React.FC = () => {
           <div className={styles.sideCol}>
             <section className={styles.card}>
               <div className={styles.cardHead}>
-                <h2 className={styles.cardTitle}>Статус профиля</h2>
+                <h2 className={styles.cardTitle}>{t('profileStatus')}</h2>
                 {needsFill && (
-                  <span className={styles.warnBadge}>Требует заполнения</span>
+                  <span className={styles.warnBadge}>{t('needsFill')}</span>
                 )}
               </div>
 
               <div className={styles.progressBlock}>
                 <div className={styles.progressLabel}>
-                  <span>Верификация</span>
+                  <span>{t('profileReady')}</span>
                   <span>{progress}%</span>
                 </div>
                 <div className={styles.progressTrack}>
                   <div className={styles.progressFill} style={{ width: `${progress}%` }} />
                 </div>
                 <p className={styles.progressHint}>
-                  Заполнено {doneCount} из {checklist.length} шагов профиля и документов
+                  {t('profileSteps', { done: doneCount, total: checklist.length })}
                 </p>
               </div>
 
@@ -244,7 +237,7 @@ export const HomePage: React.FC = () => {
                         {item.done ? (
                           <span className={styles.doneBadge}>
                             <Check size={12} strokeWidth={2.5} />
-                            Готово
+                            {t('ready', { ns: 'common' })}
                           </span>
                         ) : (
                           <ChevronRight size={18} className={styles.chevron} />
@@ -257,7 +250,7 @@ export const HomePage: React.FC = () => {
             </section>
 
             <section className={styles.card}>
-              <h2 className={styles.cardTitle}>Быстрые действия</h2>
+              <h2 className={styles.cardTitle}>{t('quick')}</h2>
               <div className={styles.actions}>
                 <button
                   type="button"
@@ -265,7 +258,7 @@ export const HomePage: React.FC = () => {
                   onClick={() => history.push('/feed')}
                 >
                   <Search size={18} strokeWidth={1.75} />
-                  {isCarrier ? 'Найти груз' : 'Создать заказ'}
+                  {isCarrier ? t('findCargo') : t('createOrder')}
                 </button>
                 <button
                   type="button"
@@ -273,7 +266,7 @@ export const HomePage: React.FC = () => {
                   onClick={() => history.push('/finance')}
                 >
                   <Wallet size={18} strokeWidth={1.75} />
-                  Финансы
+                  {t('finance', { ns: 'nav' })}
                 </button>
                 <button
                   type="button"
@@ -281,7 +274,7 @@ export const HomePage: React.FC = () => {
                   onClick={() => history.push('/documents')}
                 >
                   <FileText size={18} strokeWidth={1.75} />
-                  Мои документы
+                  {t('myDocs')}
                 </button>
                 <button
                   type="button"
@@ -289,7 +282,7 @@ export const HomePage: React.FC = () => {
                   onClick={() => history.push('/support')}
                 >
                   <LifeBuoy size={18} strokeWidth={1.75} />
-                  Поддержка
+                  {t('support')}
                 </button>
               </div>
             </section>

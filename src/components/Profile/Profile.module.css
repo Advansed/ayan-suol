@@ -74,6 +74,26 @@
   color: var(--gvr-text, #1a1f2e);
 }
 
+.verifiedStatus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--gvr-text-muted, #8b93a7);
+}
+
+.verifiedStatusOk {
+  color: #1b7a52;
+  font-weight: 600;
+}
+
+.verifiedStatusOk svg {
+  flex-shrink: 0;
+}
+
 .cardIcon {
   width: 40px;
   height: 40px;

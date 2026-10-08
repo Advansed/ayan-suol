@@ -1,11 +1,14 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Download } from 'lucide-react';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { Redirect, useHistory, useLocation, useParams } from 'react-router-dom';
 import { Cargos } from '../components/Cargos';
 import { Works } from '../components/Works';
 import CargoArchive from '../components/Cargos/components/CargoArchive';
 import { WorkArchive } from '../components/Works/components';
 import { useUserType } from '../Store/loginStore';
+import { isDispatcher, isExecutorRole } from '../Store/roles';
+import { DriversPage } from '../components/Drivers/DriversPage';
 import Chats from '../components/Chats/Chats';
 import { ChatsList } from '../components/Chats/ChatsList';
 import { Settings } from '../components/Settings';
@@ -14,12 +17,11 @@ import { WalletPage } from '../components/Settings/components/WalletPage';
 import { TransportEditPage } from '../components/Settings/components/TransportEditPage';
 import { PanelFrame } from '../layout/PanelFrame';
 import panelStyles from '../layout/PanelFrame.module.css';
-import { PassportVerification } from '../components/Verification/PassportVerification';
 /** Лента заказов */
 export const FeedPage: React.FC = () => {
   const { user_type } = useUserType();
 
-  if (user_type === 2) {
+  if (isExecutorRole(user_type)) {
     return (
       <div className="web-performer-feed">
         <Works mode="feed" />
@@ -36,25 +38,27 @@ export const FeedPage: React.FC = () => {
 
 /** Архив */
 export const ArchivePage: React.FC = () => {
+  const { t } = useTranslation('works');
   const { user_type } = useUserType();
   return (
-    <PanelFrame title="Архив" subtitle="Завершённые заказы и работы">
+    <PanelFrame title={t('archiveTitle')} subtitle={t('archiveSub')}>
       <div className="web-list-layout">
-        {user_type === 2 ? <WorkArchive /> : <CargoArchive />}
+        {isExecutorRole(user_type) ? <WorkArchive /> : <CargoArchive />}
       </div>
     </PanelFrame>
   );
 };
 
 export const ChatsPage: React.FC = () => {
+  const { t } = useTranslation('works');
   const { id } = useParams<{ id?: string }>();
   const { user_type } = useUserType();
   const chatOpen = Boolean(id);
 
   return (
     <PanelFrame
-      crumb={user_type === 2 ? 'Общение с заказчиками' : 'Общение с перевозчиками'}
-      title="Чат"
+      crumb={isExecutorRole(user_type) ? t('chatsCrumbCarrier') : t('chatsCrumbCustomer')}
+      title={t('chatsTitle')}
       bare
       className="web-chats-frame"
     >
@@ -69,8 +73,8 @@ export const ChatsPage: React.FC = () => {
             <Chats name={id} />
           ) : (
             <div className="web-chats-empty">
-              <p>Выберите диалог</p>
-              <span>Переписка по заказу появится здесь</span>
+              <p>{t('pickChat')}</p>
+              <span>{t('pickChatHint')}</span>
             </div>
           )}
         </main>
@@ -79,19 +83,26 @@ export const ChatsPage: React.FC = () => {
   );
 };
 
-export const SettingsRoutePage: React.FC = () => (
-  <PanelFrame title="Настройки" subtitle="Параметры аккаунта и уведомлений" bare>
+export const SettingsRoutePage: React.FC = () => {
+  const { t } = useTranslation('settings');
+  return (
+  <PanelFrame title={t('title')} subtitle={t('subtitle')} bare>
     <Settings />
   </PanelFrame>
-);
+  );
+};
 
-export const ProfileRoutePage: React.FC = () => (
-  <PanelFrame title="Профиль" subtitle="Персональные данные и организация">
+export const ProfileRoutePage: React.FC = () => {
+  const { t } = useTranslation('settings');
+  return (
+  <PanelFrame title={t('profileTitle')} subtitle={t('profileSubtitle')}>
     <Profile />
   </PanelFrame>
-);
+  );
+};
 
 export const FinancePage: React.FC = () => {
+  const { t } = useTranslation('finance');
   const history = useHistory();
   const location = useLocation<{ amount?: number | string }>();
   const queryAmount = new URLSearchParams(location.search).get('amount');
@@ -99,8 +110,8 @@ export const FinancePage: React.FC = () => {
 
   return (
     <PanelFrame
-      crumb="Кошелёк и выплаты"
-      title="Финансы"
+      crumb={t('crumb')}
+      title={t('title')}
       actions={
         <button
           type="button"
@@ -108,7 +119,7 @@ export const FinancePage: React.FC = () => {
           onClick={() => document.getElementById('statement')?.scrollIntoView({ behavior: 'smooth' })}
         >
           <Download size={16} strokeWidth={2} />
-          Выписка
+          {t('statement')}
         </button>
       }
       bare
@@ -127,15 +138,13 @@ export const VehiclesPage: React.FC = () => {
   return <TransportEditPage />;
 };
 
-export const VerificationPage: React.FC = () => {
-  const history = useHistory();
+export const DriversRoutePage: React.FC = () => {
+  const { t } = useTranslation('drivers');
+  const { user_type } = useUserType();
+  if (!isDispatcher(user_type)) return <Redirect to="/" />;
   return (
-    <PanelFrame
-      title="Верификация"
-      subtitle="Паспортные данные и фото для подтверждения"
-      bare
-    >
-      <PassportVerification onBack={() => history.push('/profile')} />
+    <PanelFrame title={t('title')} subtitle={t('subtitle')}>
+      <DriversPage />
     </PanelFrame>
   );
 };

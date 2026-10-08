@@ -7,11 +7,12 @@ import { logApiRequest, logApiResponse } from '../utils/apiLogger';
 class SocketService {
   private socket: Socket | null = null;
   private isConnected = false;
+  private pendingConnect: Promise<boolean> | null = null;
   private responseLoggingAttached = false;
   private emitLoggingAttached = false;
 
   private readonly SERVER_URL = 'https://paitza.com';
-  private readonly SOCKET_PATH = '/node/socket.io/';
+  private readonly SOCKET_PATH = '/socket.io2/';
 
   private attachResponseLogging(socket: Socket) {
     if (this.responseLoggingAttached) return;
@@ -35,13 +36,25 @@ class SocketService {
   }
 
   connect(token: string): Promise<boolean> {
+    if (this.socket?.connected) {
+      return Promise.resolve(true);
+    }
+    if (this.pendingConnect) return this.pendingConnect;
+
+    if (this.socket) {
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+      this.responseLoggingAttached = false;
+      this.emitLoggingAttached = false;
+    }
+
     socketActions.setConnecting(true);
 
-    return new Promise((resolve, reject) => {
-      if (this.socket?.connected) {
-        resolve(true);
-        return;
-      }
+    this.pendingConnect = new Promise((resolve, reject) => {
+      const finish = () => {
+        this.pendingConnect = null;
+      };
 
       this.socket = io(this.SERVER_URL, {
         path: this.SOCKET_PATH,
@@ -65,6 +78,7 @@ class SocketService {
           this.emit('re_authorize', { token: loginGetters.getToken() });
         }
 
+        finish();
         resolve(true);
       };
       const handleDisconnect = () => {
@@ -74,6 +88,7 @@ class SocketService {
 
         socketActions.setConnecting(false);
 
+        finish();
         resolve(true);
       };
       const handleError = (error: any) => {
@@ -83,6 +98,7 @@ class SocketService {
 
         socketActions.updateStatus(false, false);
 
+        finish();
         reject(error);
       };
 
@@ -90,6 +106,8 @@ class SocketService {
       this.socket.once('connect', handleConnect);
       this.socket.once('connect_error', handleError);
     });
+
+    return this.pendingConnect;
   }
 
   emit(eventName: string, data: any): boolean {
@@ -107,6 +125,7 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
+      this.pendingConnect = null;
       this.responseLoggingAttached = false;
       this.emitLoggingAttached = false;
     }

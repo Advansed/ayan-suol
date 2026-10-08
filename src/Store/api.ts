@@ -1,7 +1,7 @@
 // URL базовый адрес API
 import { logApiError, logApiRequest, logApiResponse } from '../utils/apiLogger';
 
-export const URL = "https://paitza.com/node";
+export const URL = "https://paitza.com/api2";
 
 export const version = '1.0.1'
 

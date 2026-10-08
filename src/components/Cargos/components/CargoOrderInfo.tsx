@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
   Calendar,
@@ -14,7 +15,6 @@ import { formatters } from '../../../utils/utils';
 import {
   getPaymentLevel,
   PAYMENT_LABEL,
-  plural,
   publishedDateTime,
   resolvePublishedAt,
   shortDate,
@@ -32,8 +32,9 @@ type CargoOrderInfoProps = {
 };
 
 export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo, onMapClick }) => {
-  const fromCity = cargo.address?.city?.city || 'Не указано';
-  const toCity = cargo.destiny?.city?.city || 'Не указано';
+  const { t } = useTranslation('cargos');
+  const fromCity = cargo.address?.city?.city || t('notSpecified');
+  const toCity = cargo.destiny?.city?.city || t('notSpecified');
   const payment = getPaymentLevel(cargo);
   const reserved = Number(cargo.advance) || 0;
   const offers = cargo.invoices?.length ?? 0;
@@ -64,7 +65,7 @@ export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo, onMapClic
             </span>
             <span className={styles.id}>ЗК-{formatters.shortId(cargo.guid)}</span>
           </div>
-          <h2 className={styles.title}>{cargo.name || 'Без названия'}</h2>
+          <h2 className={styles.title}>{cargo.name || t('untitled')}</h2>
           <div className={styles.route}>
             <MapPin size={16} strokeWidth={1.75} />
             <span>{fromCity}</span>
@@ -74,7 +75,7 @@ export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo, onMapClic
           {onMapClick && (
             <button type="button" className={styles.mapBtn} onClick={() => onMapClick(cargo)}>
               <Map size={16} strokeWidth={1.75} />
-              Открыть карту
+              {t('openMap')}
             </button>
           )}
         </div>
@@ -92,28 +93,27 @@ export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo, onMapClic
         {publishedLabel && (
           <span className={styles.chip}>
             <Clock size={14} strokeWidth={1.75} className={styles.chipPrimary} />
-            Опубликовано: {publishedLabel}
+            {t('published', { date: publishedLabel })}
           </span>
         )}
         <span className={styles.chip}>
           <Calendar size={14} strokeWidth={1.75} className={styles.chipPrimary} />
-          Отправление: {pickup}
+          {t('departure', { date: pickup })}
         </span>
         <span className={styles.chip}>
           <CalendarCheck size={14} strokeWidth={1.75} className={styles.chipSuccess} />
-          Доставка: {delivery}
+          {t('delivery', { date: delivery })}
         </span>
         <span className={styles.chip}>
           <Users size={14} strokeWidth={1.75} className={styles.chipPrimary} />
-          {offers}{' '}
-          {plural(offers, 'отклик', 'отклика', 'откликов')}
+          {t('offers', { count: offers })}
         </span>
       </div>
 
       <div className={styles.escrowRow}>
         <div className={styles.escrowLabel}>
           <Lock size={16} strokeWidth={2} />
-          <span>На эскроу-счёте</span>
+          <span>{t('inEscrow')}</span>
         </div>
         <strong>{formatters.currency(reserved)}</strong>
       </div>

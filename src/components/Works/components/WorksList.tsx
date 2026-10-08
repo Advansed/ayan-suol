@@ -1,20 +1,22 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { List, Map, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { WorkInfo, WorkStatus } from '../types';
 import { WorkCard } from './WorkCard';
 import { normalizeWorkStatus } from '../statusFlow';
+import { intlLocale } from '../../../i18n';
 import { FeedRoutesMap } from '../../Maps/FeedRoutesMap';
 import { ordersToFeedRoutes } from '../../Maps/mockFeedRoutes';
 import styles from './WorksList.module.css';
 
 type FilterId = 'all' | 'new' | 'bids' | 'work' | 'done';
 
-const FILTERS: { id: FilterId; label: string }[] = [
-  { id: 'all', label: 'Все' },
-  { id: 'new', label: 'Новый' },
-  { id: 'bids', label: 'Торги' },
-  { id: 'work', label: 'В работе' },
-  { id: 'done', label: 'Завершён' },
+const FILTERS: { id: FilterId; key: string }[] = [
+  { id: 'all', key: 'filterAll' },
+  { id: 'new', key: 'filterNew' },
+  { id: 'bids', key: 'filterBids' },
+  { id: 'work', key: 'filterWork' },
+  { id: 'done', key: 'filterDone' },
 ];
 
 function matchesFilter(status: WorkStatus, filter: FilterId): boolean {
@@ -35,13 +37,9 @@ function workKey(work: WorkInfo): string {
   return work.guid || work.cargo;
 }
 
-function activeOrdersLabel(count: number): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (count === 0) return 'нет активных заказов';
-  if (mod10 === 1 && mod100 !== 11) return `${count} активный заказ`;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} активных заказа`;
-  return `${count} активных заказов`;
+function activeOrdersLabel(count: number, t: (key: string, opts?: Record<string, unknown>) => string): string {
+  if (count === 0) return t('activeNone');
+  return t('active', { count });
 }
 
 interface WorksListProps {
@@ -54,12 +52,12 @@ interface WorksListProps {
   variant?: 'feed' | 'simple';
 }
 
-function updatedLabel(at: number): string {
+function updatedLabel(at: number, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const mins = Math.floor((Date.now() - at) / 60000);
-  if (mins < 1) return 'обновлено только что';
-  if (mins === 1) return 'обновлено 1 минуту назад';
-  const time = new Date(at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  return `обновлено в ${time}`;
+  if (mins < 1) return t('updatedNow');
+  if (mins === 1) return t('updatedMin');
+  const time = new Date(at).toLocaleTimeString(intlLocale(), { hour: '2-digit', minute: '2-digit' });
+  return t('updatedAt', { time });
 }
 
 const WorksListInner: React.FC<WorksListProps> = ({
@@ -67,10 +65,13 @@ const WorksListInner: React.FC<WorksListProps> = ({
   isLoading = false,
   onWorkClick,
   onRefresh,
-  emptyTitle = 'Нет доступных заказов',
-  emptyHint = 'Доступные заказы появятся здесь, когда их опубликуют заказчики',
+  emptyTitle,
+  emptyHint,
   variant = 'simple',
 }) => {
+  const { t } = useTranslation('works');
+  const resolvedEmptyTitle = emptyTitle || t('emptyAllTitle');
+  const resolvedEmptyHint = emptyHint || t('emptyAllHint');
   const [filter, setFilter] = useState<FilterId>('all');
   const [view, setView] = useState<'list' | 'map'>('list');
   const [updatedAt, setUpdatedAt] = useState(() => Date.now());
@@ -114,14 +115,14 @@ const WorksListInner: React.FC<WorksListProps> = ({
   const list = (
     <>
       {isLoading && works.length === 0 ? (
-        <div className={styles.loading}>Загрузка заказов…</div>
+        <div className={styles.loading}>{t('loading')}</div>
       ) : visible.length === 0 ? (
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>
-            {works.length === 0 ? emptyTitle : 'Нет заказов в этом фильтре'}
+            {works.length === 0 ? resolvedEmptyTitle : t('emptyFilterTitle')}
           </p>
           <p className={styles.emptyHint}>
-            {works.length === 0 ? emptyHint : 'Переключите фильтр, чтобы увидеть другие заказы'}
+            {works.length === 0 ? resolvedEmptyHint : t('emptyFilterHint')}
           </p>
         </div>
       ) : (
@@ -145,13 +146,13 @@ const WorksListInner: React.FC<WorksListProps> = ({
     <div className={`${styles.feed} ${view === 'map' ? styles.feedFill : ''}`} data-feed-view={view}>
       <header className={styles.pageHead}>
         <div className={styles.pageHeadText}>
-          <h1 className={styles.pageTitle}>Лента заказов</h1>
+          <h1 className={styles.pageTitle}>{t('feedTitle')}</h1>
           <p className={styles.pageSub}>
-            {activeOrdersLabel(works.length)} · {updatedLabel(updatedAt)}
+            {activeOrdersLabel(works.length, t)} · {updatedLabel(updatedAt, t)}
           </p>
         </div>
         <div className={styles.pageHeadActions}>
-          <div className={styles.viewToggle} role="tablist" aria-label="Вид ленты">
+          <div className={styles.viewToggle} role="tablist" aria-label={t('viewLabel')}>
             <button
               type="button"
               role="tab"
@@ -160,7 +161,7 @@ const WorksListInner: React.FC<WorksListProps> = ({
               onClick={() => setView('list')}
             >
               <List size={16} strokeWidth={2} />
-              Список
+              <span className={styles.btnLabel}>{t('viewList')}</span>
             </button>
             <button
               type="button"
@@ -170,7 +171,7 @@ const WorksListInner: React.FC<WorksListProps> = ({
               onClick={() => setView('map')}
             >
               <Map size={16} strokeWidth={2} />
-              Карта
+              <span className={styles.btnLabel}>{t('viewMap')}</span>
             </button>
           </div>
           <button
@@ -178,11 +179,11 @@ const WorksListInner: React.FC<WorksListProps> = ({
             className={styles.refreshBtn}
             onClick={handleRefresh}
             disabled={refreshing || !onRefresh}
-            aria-label="Обновить ленту"
-            title="Обновить"
+            aria-label={t('refreshFeed')}
+            title={t('refresh')}
           >
             <RefreshCw size={18} strokeWidth={2.25} className={refreshing ? styles.refreshSpin : undefined} />
-            Обновить
+            <span className={styles.btnLabel}>{t('refresh')}</span>
           </button>
         </div>
       </header>
@@ -190,7 +191,7 @@ const WorksListInner: React.FC<WorksListProps> = ({
       {view === 'map' ? (
         <>
           <div className={styles.toolbar}>
-            <div className={styles.tabs} role="tablist" aria-label="Фильтр заказов">
+            <div className={styles.tabs} role="tablist" aria-label={t('filterLabel')}>
               {FILTERS.map((item) => (
                 <button
                   key={item.id}
@@ -200,7 +201,7 @@ const WorksListInner: React.FC<WorksListProps> = ({
                   className={`${styles.tab} ${filter === item.id ? styles.tabActive : ''}`}
                   onClick={() => setFilter(item.id)}
                 >
-                  {item.label}
+                  {t(item.key)}
                 </button>
               ))}
             </div>
@@ -217,24 +218,24 @@ const WorksListInner: React.FC<WorksListProps> = ({
         </>
       ) : (
         <>
-          <div className={styles.legend} aria-label="Светофор безопасной оплаты">
-            <span className={styles.legendTitle}>Светофор безопасной оплаты</span>
+          <div className={styles.legend} aria-label={t('legend')}>
+            <span className={styles.legendTitle}>{t('legend')}</span>
             <span className={styles.legendItem}>
               <span className={`${styles.legendDot} ${styles.dotFull}`} />
-              Полная оплата на эскроу
+              {t('payFull')}
             </span>
             <span className={styles.legendItem}>
               <span className={`${styles.legendDot} ${styles.dotPartial}`} />
-              Частичная оплата
+              {t('payPartial')}
             </span>
             <span className={styles.legendItem}>
               <span className={`${styles.legendDot} ${styles.dotNone}`} />
-              Без безопасной оплаты
+              {t('payNone')}
             </span>
           </div>
 
           <div className={styles.toolbar}>
-            <div className={styles.tabs} role="tablist" aria-label="Фильтр заказов">
+            <div className={styles.tabs} role="tablist" aria-label={t('filterLabel')}>
               {FILTERS.map((item) => (
                 <button
                   key={item.id}
@@ -244,13 +245,13 @@ const WorksListInner: React.FC<WorksListProps> = ({
                   className={`${styles.tab} ${filter === item.id ? styles.tabActive : ''}`}
                   onClick={() => setFilter(item.id)}
                 >
-                  {item.label}
+                  {t(item.key)}
                 </button>
               ))}
             </div>
             <button type="button" className={styles.filterBtn}>
               <SlidersHorizontal size={15} strokeWidth={2} />
-              Фильтры
+              <span className={styles.btnLabel}>{t('filters')}</span>
             </button>
           </div>
 

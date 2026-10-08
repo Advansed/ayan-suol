@@ -1,3 +1,4 @@
+import { mapLanguage } from '../i18n'
 import { loadGoogleMapsAPI } from '../components/Maps/services/googleMapServices'
 
 export type GeoPlace = {
@@ -142,7 +143,7 @@ async function autocompletePlaces(
   const sessionToken = new window.google.maps.places.AutocompleteSessionToken()
   const request: Record<string, unknown> = {
     input: q,
-    language: 'ru',
+    language: mapLanguage(),
     sessionToken,
   }
   if (options.types?.length) request.types = options.types
@@ -198,7 +199,7 @@ export async function geocodeAddress(
   if (signal?.aborted || !window.google?.maps?.Geocoder) return null
   try {
     const geocoder = new window.google.maps.Geocoder()
-    const result = await geocoder.geocode({ address: q, language: 'ru' })
+    const result = await geocoder.geocode({ address: q, language: mapLanguage() })
     if (signal?.aborted) return null
     return parsePlace(result.results?.[0])
   } catch {

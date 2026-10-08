@@ -131,6 +131,21 @@
   letter-spacing: 0.08em;
 }
 
+.dense .dot {
+  width: 26px;
+  height: 26px;
+}
+
+.dense .connector {
+  top: 12px;
+  left: calc(-50% + 13px);
+  right: calc(50% + 13px);
+}
+
+.dense .stepLabel {
+  font-size: 10px;
+}
+
 .rejectedBanner {
   padding: 10px 12px;
   border-radius: 10px;

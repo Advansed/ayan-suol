@@ -1,17 +1,19 @@
 import { IonButton, IonContent, IonHeader, IonIcon, IonModal, IonTitle, IonToolbar } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 const Oferta: React.FC<Props> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation('settings');
   return (
     <IonModal isOpen={isOpen} onDidDismiss={onClose}>
               <IonHeader>
                 <IonToolbar>
-                  <IonTitle>Пользовательское соглашение</IonTitle>
+                  <IonTitle>{t('licenseAgreement')}</IonTitle>
                   <IonButton 
                     fill="clear" 
                     slot="end" 

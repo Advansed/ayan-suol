@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import agreementStyles from '../../ProfileOld/components/Agreements/Agreements.module.css';
 import EULA from '../../ProfileOld/components/Agreements/eula';
 import Signs from '../../ProfileOld/components/Agreements/Signs';
@@ -6,16 +7,11 @@ import Oferta from '../../ProfileOld/components/Agreements/Oferta';
 import { useAgreements } from '../../ProfileOld/components/Agreements/useAgreements';
 import settingsStyles from '../Settings.module.css';
 
-/** Тексты как в ProfileOld `Agreements.tsx` (UI_TEXT). */
-const UI_TEXT = {
-  USER_AGREEMENT: 'Пользовательское соглашение',
-  MARKETING_AGREEMENT: 'Согласие на рекламные рассылки'
-} as const;
-
 /**
  * Пользовательское соглашение (с вложенными документами) и маркетинг — логика и модалки из ProfileOld.
  */
 export const SettingsAgreementsSection: React.FC = () => {
+  const { t } = useTranslation('settings');
   const { agreements, toggleAgreement, isLoading } = useAgreements();
   const [isEulaOpen, setIsEulaOpen] = useState(false);
   const [isSignOpen, setIsSignOpen] = useState(false);
@@ -38,15 +34,15 @@ export const SettingsAgreementsSection: React.FC = () => {
             </div>
             <div className={agreementStyles.agreementText}>
               <div onClick={handleUserAgreementOpen}>
-                <b className="cl-blue t-underline">{UI_TEXT.USER_AGREEMENT}</b>
+                <b className="cl-blue t-underline">{t('userAgreement')}</b>
               </div>
               <div className="ml-2 mt-1" onClick={() => setIsSignOpen(true)}>
-                <b className="cl-blue t-underline">— Об использовании ПЭП</b>
+                <b className="cl-blue t-underline">— {t('pepAgreement')}</b>
               </div>
 
               {/* Лицензионное соглашение показываем как просмотр, без отдельной галочки */}
               <div className="ml-2 mt-1" onClick={() => setIsOferta(true)}>
-                <b className="cl-blue t-underline">— Лицензионное соглашение</b>
+                <b className="cl-blue t-underline">— {t('licenseAgreement')}</b>
               </div>
             </div>
           </div>
@@ -60,7 +56,7 @@ export const SettingsAgreementsSection: React.FC = () => {
             >
               <div className={agreementStyles.checkIcon}>✓</div>
             </div>
-            <div className={agreementStyles.agreementText}>{UI_TEXT.MARKETING_AGREEMENT}</div>
+            <div className={agreementStyles.agreementText}>{t('adsConsent')}</div>
           </div>
         </div>
       </div>

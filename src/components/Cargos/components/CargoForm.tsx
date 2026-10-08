@@ -3,11 +3,11 @@ import DataEditor from '../../DataEditor';
 import { AddressData, CityData, FieldData, PageData } from '../../DataEditor/types';
 import { CargoInfo, EMPTY_CARGO } from '../../../Store/cargoStore';
 import { useToast } from '../../Toast';
-import { passportGetters } from '../../../Store/passportStore';
 import { companyGetters, useCompanyStore } from '../../../Store/companyStore';
 import { useLoginStore } from '../../../Store/loginStore';
-import { useIonRouter } from '@ionic/react';
+import { useHistory } from 'react-router-dom';
 import { useCompany } from '../../../Store/useCompany';
+import { OrganizationRequiredModal } from '../../OrganizationRequiredModal';
 
 interface CargoFormProps {
   cargo:      CargoInfo;
@@ -219,7 +219,7 @@ export const CargoForm: React.FC<CargoFormProps> = ({
   onCreate 
 }) => {
     const toast = useToast();
-    const hist = useIonRouter();
+    const history = useHistory();
     const user_type = useLoginStore((s) => s.user_type);
 
     // Подписка на store, чтобы пересчитать процент после загрузки компании
@@ -227,7 +227,6 @@ export const CargoForm: React.FC<CargoFormProps> = ({
     const companyLoading = useCompanyStore((s) => s.isLoading);
     const { loadData: loadCompany } = useCompany();
 
-    const passportCompletion = passportGetters.getCompletionPercentage();
     const companyCompletion = companyGetters.getCompletionPercentage();
 
   // Инициализация данных формы
@@ -270,28 +269,21 @@ export const CargoForm: React.FC<CargoFormProps> = ({
     }
   }, [user_type, companyData, companyLoading, loadCompany]);
 
-  // Проверка паспорта и компании: не редиректить, пока компания ещё загружается
-  useEffect(() => {
-    if (passportCompletion < 80) {
-      onBack();
-      toast.info("Надо сперва заполнить паспортные данные");
-      hist.push("/settings");
-      return;
-    }
-    if (companyLoading) return;
-    if (companyCompletion < 80) {
-      onBack();
-      toast.info("Надо сперва заполнить данные организации");
-      hist.push("/settings");
-    }
-  }, [passportCompletion, companyCompletion, companyLoading, onBack, toast, hist]);
-  
+  const organizationRequired = !companyLoading && companyCompletion < 80;
+
   return (
+    <>
+    <OrganizationRequiredModal
+      isOpen={organizationRequired}
+      onClose={onBack}
+      onGoProfile={() => history.push('/profile')}
+    />
     <DataEditor
       data      = { formData }
       onSave    = { handleSave }
       onBack    = { onBack }
       title     = { cargo ? 'Редактировать груз' : 'Создать груз' }
     />
+    </>
   );
 };

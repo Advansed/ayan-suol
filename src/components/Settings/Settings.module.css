@@ -254,7 +254,7 @@
 
 .roleSwitcher {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   background-color: #e8ebf0;
   border: 1px solid #d5dae3;

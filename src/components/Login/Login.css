@@ -829,6 +829,67 @@
   }
 }
 
+.login-split-solo {
+  grid-template-columns: 1fr;
+}
+
+.login-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  background: rgba(15, 23, 40, 0.55);
+  backdrop-filter: blur(4px);
+  box-sizing: border-box;
+}
+
+.login-modal-dialog {
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  border-radius: 20px;
+  background: var(--gvr-bg, #f0f3f8);
+  box-shadow: 0 24px 64px rgba(15, 23, 40, 0.35);
+}
+
+.login-panel-modal {
+  padding: 28px 22px 24px;
+  min-height: 0;
+  height: auto;
+  align-items: flex-start;
+  border-radius: 20px;
+}
+
+.login-modal-close {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--gvr-text-muted, #8b93a7);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.login-modal-close:hover {
+  background: #e8ecf3;
+  color: var(--gvr-text, #1a1f2e);
+}
+
+.login-panel-modal .login-lang {
+  top: 14px;
+  right: 14px;
+}
+
 .login-root {
   min-height: 100%;
   height: 100%;

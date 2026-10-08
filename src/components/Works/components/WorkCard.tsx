@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   BadgeCheck,
   Building2,
@@ -59,6 +60,7 @@ const BADGE_CLASS: Record<ReturnType<typeof feedStatusKind>, string> = {
 };
 
 export const WorkCard: React.FC<WorkCardProps> = ({ work, selected, onClick }) => {
+  const { t } = useTranslation('works');
   const status = normalizeWorkStatus(work.status);
   const kind = feedStatusKind(status);
   const fromCity = work.address?.city?.city || 'Не указано';
@@ -126,19 +128,19 @@ export const WorkCard: React.FC<WorkCardProps> = ({ work, selected, onClick }) =
             {publishedLabel && (
               <span>
                 <Clock size={14} strokeWidth={1.75} aria-hidden />
-                Опубликовано: {publishedLabel}
+                {t('publishedLine', { date: publishedLabel })}
               </span>
             )}
             {pickup && (
               <span>
                 <Calendar size={14} strokeWidth={1.75} aria-hidden />
-                Отправление: {pickup}
+                {t('departure', { date: pickup })}
               </span>
             )}
             {delivery && (
               <span>
                 <Calendar size={14} strokeWidth={1.75} aria-hidden />
-                Доставка: {delivery}
+                {t('delivery', { date: delivery })}
               </span>
             )}
           </div>

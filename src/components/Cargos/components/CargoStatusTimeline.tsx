@@ -1,8 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Check } from 'lucide-react';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
 import {
-  CARGO_STATUS_SHORT,
+  cargoStatusLabel,
   getCargoProgressSlots,
   resolveCargoProgressStatus,
 } from '../cargoStatusFlow';
@@ -13,26 +14,27 @@ type CargoStatusTimelineProps = {
 };
 
 export const CargoStatusTimeline: React.FC<CargoStatusTimelineProps> = ({ cargo }) => {
+  const { t } = useTranslation('works');
   const current = resolveCargoProgressStatus(cargo);
   const isProblems = current === CargoStatus.PROBLEMS;
   const slots = isProblems ? [] : getCargoProgressSlots(current);
 
   return (
-    <section className={styles.wrap} aria-label="Статус рейса">
+    <section className={styles.wrap} aria-label={t('tripStatus')}>
       <div className={styles.head}>
-        <p className={styles.title}>Статус рейса</p>
+        <p className={styles.title}>{t('tripStatus')}</p>
         {!isProblems && (
-          <span className={styles.pill}>{CARGO_STATUS_SHORT[current] || current}</span>
+          <span className={styles.pill}>{cargoStatusLabel(current)}</span>
         )}
       </div>
 
       {isProblems ? (
         <div className={styles.rejectedBanner}>
           <AlertTriangle size={16} strokeWidth={2} />
-          <span>По заявке зафиксирован внештатный статус «Проблемы»</span>
+          <span>{t('problems', { ns: 'cargos' })}</span>
         </div>
       ) : (
-        <ol className={styles.track}>
+        <ol className={`${styles.track} ${slots.length >= 6 ? styles.dense : ''}`}>
           {slots.map((slot, offset) => {
             if (slot.type === 'ellipsis') {
               return (
@@ -73,7 +75,7 @@ export const CargoStatusTimeline: React.FC<CargoStatusTimelineProps> = ({ cargo 
                     <span className={styles.dotMark} />
                   )}
                 </span>
-                <span className={styles.stepLabel}>{CARGO_STATUS_SHORT[slot.status]}</span>
+                <span className={styles.stepLabel}>{cargoStatusLabel(slot.status)}</span>
               </li>
             );
           })}

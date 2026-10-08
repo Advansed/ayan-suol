@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { IonIcon, useIonRouter } from "@ionic/react";
 import { arrowBackOutline } from "ionicons/icons";
 import { BadgeCheck, MoreVertical, Paperclip, Phone, Send } from "lucide-react";
@@ -21,6 +22,7 @@ const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessa
     userInitials:  string; 
     clickMessage: (url: string) => void
 }) => {
+    const { t } = useTranslation('chats');
     const renderContent = () => {
         if (message.image) {
             const imageSrc = resolveImageSrc(message.image);
@@ -30,7 +32,7 @@ const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessa
                 >
                     <img 
                         src={imageSrc} 
-                        alt="Изображение" 
+                        alt={t('image')} 
                         className="chat-image"
                         onError={(e) => {
                             e.currentTarget.style.display = 'none';
@@ -68,6 +70,7 @@ const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessa
 const ImageUploadButton = React.memo(({ onImageSelect }: { 
     onImageSelect: (image: any) => void; 
 }) => {
+    const { t } = useTranslation('chats');
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +90,7 @@ const ImageUploadButton = React.memo(({ onImageSelect }: {
                 type="button"
                 className="chat-attach-button"
                 onClick={() => inputRef.current?.click()}
-                title="Прикрепить файл"
+                title={t('attach')}
             >
                 <Paperclip size={18} strokeWidth={2} />
             </button>
@@ -171,10 +174,11 @@ const MessagesList = React.memo(({ messages, userInitials, clickMessage }: {
 
 // Компонент пустого состояния
 const EmptyState = React.memo(() => {
+    const { t } = useTranslation('chats');
     return (
         <div className="chat-empty-state">
             <div className="chat-empty-icon">💬</div>
-            <div className="chat-empty-text">Начните общение</div>
+            <div className="chat-empty-text">{t('start')}</div>
         </div>
     );
 });
@@ -186,24 +190,25 @@ const ChatHeader = React.memo(({ onBack, userName, userInitials, subtitle }: {
     userInitials: string;
     subtitle?: string;
 }) => {
+    const { t } = useTranslation('chats');
     return (
         <div className="chat-thread-header">
-            <button type="button" className="chat-header-back chat-back-mobile-only" onClick={onBack} aria-label="Назад">
+            <button type="button" className="chat-header-back chat-back-mobile-only" onClick={onBack} aria-label={t('back', { ns: 'common' })}>
                 <IonIcon icon={arrowBackOutline} />
             </button>
             <div className="chat-header-avatar">{userInitials}</div>
             <div className="chat-header-meta">
                 <div className="chat-header-name">
-                    {userName || 'Чат'}
+                    {userName || t('title')}
                     <BadgeCheck size={16} strokeWidth={2.25} className="chat-header-verified" />
                 </div>
                 {subtitle && <div className="chat-header-sub">{subtitle}</div>}
             </div>
             <div className="chat-header-actions">
-                <button type="button" className="chat-header-icon" aria-label="Позвонить" disabled>
+                <button type="button" className="chat-header-icon" aria-label={t('call')} disabled>
                     <Phone size={18} strokeWidth={2} />
                 </button>
-                <button type="button" className="chat-header-icon" aria-label="Ещё" disabled>
+                <button type="button" className="chat-header-icon" aria-label={t('more')} disabled>
                     <MoreVertical size={18} strokeWidth={2} />
                 </button>
             </div>
@@ -227,6 +232,7 @@ const ChatFooter = React.memo(({
     onKeyPress:     ( e: React.KeyboardEvent ) => void;
     onImageSelect:  ( dataUrl: string ) => void;
 }) => {
+    const { t } = useTranslation('chats');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const adjustHeight = useCallback(() => {
@@ -250,7 +256,7 @@ const ChatFooter = React.memo(({
                     <textarea
                         ref={textareaRef}
                         className="chat-input"
-                        placeholder="Введите сообщение…"
+                        placeholder={t('placeholder')}
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
                         onKeyPress={onKeyPress}
@@ -262,7 +268,7 @@ const ChatFooter = React.memo(({
                     className   = { `chat-send-button ${!value.trim() && !selectedImage ? 'chat-send-disabled' : ''}` }
                     onClick     = { onSend}
                     disabled    = { !value.trim() && !selectedImage }
-                    aria-label="Отправить"
+                    aria-label={t('send')}
                 >
                     <Send size={16} strokeWidth={2.25} />
                 </button>
@@ -272,6 +278,7 @@ const ChatFooter = React.memo(({
 });
 
 export function Chats(props: ChatsProps) {
+    const { t } = useTranslation('chats');
     const [value, setValue]                 = useState("");
     const [selectedImage, setSelectedImage] = useState<string | null>(null);  
     const [isOpen, setOpen]                 = useState<string>("")
@@ -351,19 +358,19 @@ export function Chats(props: ChatsProps) {
             <div className="chat-image-preview">
                 <img 
                     src = { selectedImage } 
-                    alt = "Предпросмотр" 
+                    alt = {t('preview')} 
                     className = "chat-preview-image"
                 />
                 <button 
                     className="chat-remove-image"
                     onClick={() => setSelectedImage(null)}
-                    title="Удалить изображение"
+                    title={t('removeImage')}
                 >
                     ×
                 </button>
             </div>
         );
-    }, [selectedImage]);
+    }, [selectedImage, t]);
     
     // Загрузка сообщений (ручное обновление в шапке)
     // Загрузка при смене чата. loadMessages должен быть стабильным (useChats + useToast), иначе
@@ -429,7 +436,7 @@ export function Chats(props: ChatsProps) {
                 onBack={handleBack}
                 userName={userName}
                 userInitials={userInitials}
-                subtitle={orderLine ? `В сети · ${orderLine}` : 'В сети'}
+                subtitle={orderLine ? t('onlineOrder', { order: orderLine }) : t('online')}
             />
 
             <div className="chat-page-content">

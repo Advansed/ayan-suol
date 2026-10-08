@@ -1,9 +1,10 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
-import { Boxes } from 'lucide-react';
 import { FOOTER_NAV, MAIN_NAV, filterNavByRole, isNavActive } from './navConfig';
 import { useLoginStore } from '../Store/loginStore';
-import { resolveImageSrc } from '../utils/fileUpload';
+import { roleLabel } from '../Store/roles';
+import { useResolvedImageSrc } from '../utils/fileUpload';
 import styles from './Sidebar.module.css';
 
 type SidebarProps = {
@@ -16,25 +17,31 @@ type SidebarProps = {
 export const Sidebar: React.FC<SidebarProps> = ({ userType, pathname, onNavigate, compact }) => {
   const main = filterNavByRole(MAIN_NAV, userType);
   const footer = filterNavByRole(FOOTER_NAV, userType);
+  const { t } = useTranslation();
   const name = useLoginStore((s) => s.name);
   const image = useLoginStore((s) => s.image);
-  const displayName = name?.trim() || 'Пользователь';
+  const imageSrc = useResolvedImageSrc(image);
+  const displayName = name?.trim() || t('user');
   const initial = displayName.charAt(0).toUpperCase() || 'П';
-  const roleLabel = userType === 2 ? 'Перевозчик' : 'Заказчик';
+  const role = roleLabel(userType);
 
   return (
     <aside className={`${styles.sidebar} ${compact ? styles.compact : ''}`}>
       <div className={styles.brand}>
-        <div className={styles.logoMark} aria-hidden>
-          <Boxes size={22} strokeWidth={2} color="#ffffff" />
-        </div>
+        <img
+          src="/landing/logo.jpg"
+          alt=""
+          className={styles.logoImg}
+          width={40}
+          height={40}
+        />
         <div className={styles.brandText}>
-          <div className={styles.brandTitle}>ГРУЗ В РЕЙС</div>
-          <div className={styles.brandSubtitle}>ЛОГИСТИЧЕСКАЯ ПЛАТФОРМА</div>
+          <div className={styles.brandTitle}>ПАЙЦЗА</div>
+          <div className={styles.brandSubtitle}>{t('brandSubtitle')}</div>
         </div>
       </div>
 
-      <nav className={styles.nav} aria-label="Основное меню">
+      <nav className={styles.nav} aria-label={t('mainMenu')}>
         {main.map((item) => {
           const Icon = item.icon;
           const active = isNavActive(pathname, item.path);
@@ -46,9 +53,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ userType, pathname, onNavigate
               onClick={onNavigate}
             >
               <Icon size={19} strokeWidth={1.85} className={styles.navIcon} />
-              <span className={styles.navLabel}>{item.label}</span>
+              <span className={styles.navLabel}>{t(`nav:${item.id}`)}</span>
               {active && <span className={styles.activeDot} aria-hidden />}
-              {!active && item.alert && <span className={styles.alertDot} aria-label="Требует внимания" />}
+              {!active && item.alert && <span className={styles.alertDot} aria-label={t('attention')} />}
             </NavLink>
           );
         })}
@@ -66,9 +73,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ userType, pathname, onNavigate
               onClick={onNavigate}
             >
               <Icon size={19} strokeWidth={1.85} className={styles.navIcon} />
-              <span className={styles.navLabel}>{item.label}</span>
+              <span className={styles.navLabel}>{t(`nav:${item.id}`)}</span>
               {active && <span className={styles.activeDot} aria-hidden />}
-              {!active && item.alert && <span className={styles.alertDot} aria-label="Требует внимания" />}
+              {!active && item.alert && <span className={styles.alertDot} aria-label={t('attention')} />}
             </NavLink>
           );
         })}
@@ -80,15 +87,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ userType, pathname, onNavigate
         onClick={onNavigate}
       >
         <span className={styles.userAvatar}>
-          {image ? (
-            <img src={resolveImageSrc(image)} alt="" />
+          {imageSrc ? (
+            <img src={imageSrc} alt="" />
           ) : (
             <span>{initial}</span>
           )}
         </span>
         <span className={styles.userMeta}>
           <span className={styles.userName}>{displayName}</span>
-          <span className={styles.userRole}>{roleLabel}</span>
+          <span className={styles.userRole}>{role}</span>
         </span>
       </NavLink>
     </aside>

@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n, { intlLocale } from '../../../i18n';
 import { IonIcon, IonInput, IonSpinner } from '@ionic/react';
 import {
   addOutline,
@@ -47,21 +49,10 @@ const parseAmountInput = (value: string): number => {
 };
 
 const WALLET_POLL_MS = 60_000;
-const MONTHS_SHORT = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
-const MONTHS_NOM = [
-  'январь',
-  'февраль',
-  'март',
-  'апрель',
-  'май',
-  'июнь',
-  'июль',
-  'август',
-  'сентябрь',
-  'октябрь',
-  'ноябрь',
-  'декабрь',
-];
+
+function monthLabel(date: Date, style: 'short' | 'long') {
+  return date.toLocaleDateString(intlLocale(), { month: style }).replace('.', '');
+}
 
 function parseTxDate(raw: string): Date | null {
   if (!raw) return null;
@@ -88,10 +79,11 @@ function formatTxWhen(raw: string): string {
     date.getDate() === now.getDate() &&
     date.getMonth() === now.getMonth() &&
     date.getFullYear() === now.getFullYear();
-  const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  if (sameDay && time !== '00:00') return `Сегодня, ${time}`;
-  if (sameDay) return 'Сегодня';
-  return date.toLocaleDateString('ru-RU');
+  const time = date.toLocaleTimeString(intlLocale(), { hour: '2-digit', minute: '2-digit' });
+  const today = i18n.t('today', { ns: 'common' });
+  if (sameDay && time !== '00:00') return `${today}, ${time}`;
+  if (sameDay) return today;
+  return date.toLocaleDateString(intlLocale());
 }
 
 function MonthChart({ bars }: { bars: { key: string; label: string; value: number }[] }) {
@@ -137,6 +129,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
   onBack: _onBack,
   initialAmount,
 }) => {
+  const { t } = useTranslation('finance');
   const toast = useToast();
   const { user } = useLogin();
   const isCustomer = user.user_type === 1;
@@ -210,7 +203,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
 
   const formatMoney = (n: number) => {
     try {
-      return n.toLocaleString('ru-RU', {
+      return n.toLocaleString(intlLocale(), {
         style: 'currency',
         currency: accountData?.currency || 'RUB',
         maximumFractionDigits: 0,
@@ -229,7 +222,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
 
     const bars = Array.from({ length: 6 }, (_, i) => {
       const d = new Date(thisYear, thisMonth - 5 + i, 1);
-      return { key: `${d.getFullYear()}-${d.getMonth()}`, label: MONTHS_SHORT[d.getMonth()], value: 0 };
+      return { key: `${d.getFullYear()}-${d.getMonth()}`, label: monthLabel(d, 'short'), value: 0 };
     });
 
     for (const t of list) {
@@ -244,12 +237,12 @@ export const WalletPage: React.FC<WalletPageProps> = ({
     }
 
     return { bars };
-  }, [transactions, thisMonth, thisYear]);
+  }, [transactions, thisMonth, thisYear, i18n.language]);
 
   const amountNumber = useMemo(() => parseAmountInput(amount), [amount]);
 
   const canPay = amountNumber > 0 && !isLoading && !payLoading;
-  const displayName = user?.name?.trim() || 'Пользователь';
+  const displayName = user?.name?.trim() || t('user', { ns: 'common' });
 
   const deposit = Number(accountData?.deposit ?? 0);
   const depositPaid = deposit > 0;
@@ -271,7 +264,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
     try {
       const res = await get_deals();
       if (!res.success) {
-        toast.error(res.error || 'Не удалось загрузить сделки');
+        toast.error(res.error || t('dealsLoadError'));
         setDeals([]);
         return;
       }
@@ -289,11 +282,11 @@ export const WalletPage: React.FC<WalletPageProps> = ({
   const handleDealPayment = async (deal: DueDeal) => {
     if (payingDealId) return;
     if (!deal.cargoId || !deal.performer) {
-      toast.error('Не хватает данных сделки для доплаты');
+      toast.error(t('dueMissing'));
       return;
     }
     if (deal.due <= 0) {
-      toast.error('Сумма доплаты должна быть больше нуля');
+      toast.error(t('dueZero'));
       return;
     }
 
@@ -307,10 +300,10 @@ export const WalletPage: React.FC<WalletPageProps> = ({
         currency: deal.currency || accountData?.currency || 'RUB',
       });
       if (!res.success) {
-        toast.error(res.error || 'Не удалось провести доплату');
+        toast.error(res.error || t('dueFailed'));
         return;
       }
-      toast.success('Доплата отправлена');
+      toast.success(t('dueSent'));
       void refreshWallet({ silent: true });
       const refreshed = await get_deals();
       if (refreshed.success) setDeals(refreshed.data || []);
@@ -325,7 +318,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
     try {
       const res = await get_invoice(invoiceId, { silent: true });
       if (res?.success) setInvoiceModalData(res.data);
-      else toast.error(res?.error || 'Не удалось загрузить счёт');
+      else toast.error(res?.error || t('invoiceLoadError'));
     } finally {
       setInvoiceLoadingId(null);
     }
@@ -341,7 +334,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
         description: `Пополнение лицевого счета ${user?.id || ''}`.trim(),
       });
       if (!res?.success) {
-        toast.error(res?.error || 'Ошибка пополнения');
+        toast.error(res?.error || t('topUpError'));
         return;
       }
 
@@ -353,10 +346,10 @@ export const WalletPage: React.FC<WalletPageProps> = ({
             setShowTopUp(false);
             void refreshWallet({ silent: true });
           } catch {
-            toast.error('Не удалось открыть страницу оплаты');
+            toast.error(t('payOpenError'));
           }
         } else {
-          toast.info('Ссылка на оплату не найдена в ответе сервера');
+          toast.info(t('payLinkMissing'));
         }
       } else {
         const payload = res?.data?.sbp_payload || res?.data?.sbpPayload;
@@ -366,10 +359,10 @@ export const WalletPage: React.FC<WalletPageProps> = ({
             setShowTopUp(false);
             void refreshWallet({ silent: true });
           } catch {
-            toast.error('Не удалось открыть СБП');
+            toast.error(t('sbpOpenError'));
           }
         } else {
-          toast.info('SBP-пейлоад не найден в ответе сервера');
+          toast.info(t('sbpMissing'));
         }
       }
     } finally {
@@ -401,7 +394,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
       };
       const res = await set_invoice(payload);
       if (!res?.success) {
-        toast.error(res?.error || 'Не удалось сформировать счёт');
+        toast.error(res?.error || t('invoiceError'));
         return;
       }
 
@@ -418,7 +411,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
       }
 
       if (!invoice) {
-        toast.error('Счёт создан, но данные для просмотра не получены');
+        toast.error(t('invoiceViewMissing'));
         void refreshWallet({ silent: true });
         return;
       }
@@ -459,17 +452,17 @@ export const WalletPage: React.FC<WalletPageProps> = ({
             <div className={walletStyles.modalHead}>
               <div>
                 <h2 id="deals-title" className={walletStyles.modalTitle}>
-                  Сделки к доплате
+                  {t('dealsTitle')}
                 </h2>
                 <p className={walletStyles.modalSub}>
-                  Всего к доплате: {formatMoney(remainingToPay)}
+                  {t('dealsTotal', { amount: formatMoney(remainingToPay) })}
                 </p>
               </div>
               <button
                 type="button"
                 className={walletStyles.modalClose}
                 onClick={closeDeals}
-                aria-label="Закрыть"
+                aria-label={t('close', { ns: 'common' })}
                 disabled={dealsLoading || Boolean(payingDealId)}
               >
                 <X size={18} strokeWidth={2} />
@@ -483,8 +476,8 @@ export const WalletPage: React.FC<WalletPageProps> = ({
             ) : deals.length === 0 ? (
               <div className={walletStyles.empty}>
                 <IonIcon icon={receiptOutline} />
-                <p>Сделок к доплате нет</p>
-                <span>Когда появится остаток по перевозкам, они отобразятся здесь</span>
+                <p>{t('dealsEmpty')}</p>
+                <span>{t('dealsEmptyHint')}</span>
               </div>
             ) : (
               <ul className={walletStyles.dealList}>
@@ -499,10 +492,10 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                       <div className={walletStyles.dealText}>
                         <div className={walletStyles.dealTitle}>{deal.cargoName}</div>
                         <div className={walletStyles.dealSub}>
-                          Исполнитель: {deal.executorName || '—'}
+                          {t('executor', { name: deal.executorName || '—' })}
                         </div>
                         <div className={walletStyles.dealMeta}>
-                          Доставка: {deal.deliveryDate ? shortDate(deal.deliveryDate) || deal.deliveryDate : '—'}
+                          {t('delivery', { date: deal.deliveryDate ? shortDate(deal.deliveryDate) || deal.deliveryDate : '—' })}
                         </div>
                       </div>
                       <button
@@ -510,14 +503,14 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                         className={walletStyles.dealPayBtn}
                         disabled={!canPay}
                         onClick={() => void handleDealPayment(deal)}
-                        aria-label={`Доплатить ${formatMoney(deal.due)}`}
+                        aria-label={t('payDue', { amount: formatMoney(deal.due) })}
                       >
                         {isPaying ? (
                           <IonSpinner name="bubbles" />
                         ) : (
                           <>
                             <span className={walletStyles.dealDue}>{formatMoney(deal.due)}</span>
-                            <span className={walletStyles.dealPayLabel}>К доплате</span>
+                            <span className={walletStyles.dealPayLabel}>{t('dueLabel')}</span>
                           </>
                         )}
                       </button>
@@ -543,15 +536,15 @@ export const WalletPage: React.FC<WalletPageProps> = ({
             <div className={walletStyles.modalHead}>
               <div>
                 <h2 id="topup-title" className={walletStyles.modalTitle}>
-                  Пополнить баланс
+                  {t('topUpTitle')}
                 </h2>
-                <p className={walletStyles.modalSub}>Укажите сумму и способ оплаты</p>
+                <p className={walletStyles.modalSub}>{t('topUpSub')}</p>
               </div>
               <button
                 type="button"
                 className={walletStyles.modalClose}
                 onClick={closeTopUp}
-                aria-label="Закрыть"
+                aria-label={t('close', { ns: 'common' })}
                 disabled={Boolean(payLoading)}
               >
                 <X size={18} strokeWidth={2} />
@@ -579,7 +572,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                   onClick={() => setAmount(formatAmountInput(q))}
                   disabled={Boolean(payLoading)}
                 >
-                  {q.toLocaleString('ru-RU')} ₽
+                  {q.toLocaleString(intlLocale())} ₽
                 </button>
               ))}
             </div>
@@ -595,8 +588,8 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                   {payLoading === 'invoice' ? <IonSpinner name="bubbles" /> : <IonIcon icon={businessOutline} />}
                 </span>
                 <span className={walletStyles.payMethodText}>
-                  <strong>Счёт на оплату</strong>
-                  <span>Для юридических лиц</span>
+                  <strong>{t('invoice')}</strong>
+                  <span>{t('invoiceSub')}</span>
                 </span>
               </button>
 
@@ -610,8 +603,8 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                   {payLoading === 'sbp' ? <IonSpinner name="bubbles" /> : <IonIcon icon={phonePortraitOutline} />}
                 </span>
                 <span className={walletStyles.payMethodText}>
-                  <strong>СБП</strong>
-                  <span>Система быстрых платежей</span>
+                  <strong>{t('sbp')}</strong>
+                  <span>{t('sbpSub')}</span>
                 </span>
               </button>
 
@@ -625,8 +618,8 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                   {payLoading === 'acquiring' ? <IonSpinner name="bubbles" /> : <IonIcon icon={cardOutline} />}
                 </span>
                 <span className={walletStyles.payMethodText}>
-                  <strong>Эквайринг</strong>
-                  <span>Банковская карта</span>
+                  <strong>{t('acquiring')}</strong>
+                  <span>{t('acquiringSub')}</span>
                 </span>
               </button>
             </div>
@@ -641,22 +634,22 @@ export const WalletPage: React.FC<WalletPageProps> = ({
               <ArrowUpRight size={18} strokeWidth={2.25} />
             </span>
             <span className={walletStyles.statLabel}>
-              {isCustomer ? 'Баланс' : 'Доступно к выводу'}
+              {isCustomer ? t('balance') : t('available')}
             </span>
           </div>
           <div className={walletStyles.statValue}>{formattedBalance}</div>
           {!isCustomer && (
-            <div className={walletStyles.statSub}>Ожидаемые выплаты: {formatMoney(upcomingIncome)}</div>
+            <div className={walletStyles.statSub}>{t('expected', { amount: formatMoney(upcomingIncome) })}</div>
           )}
           <div className={walletStyles.statActions}>
             {!isCustomer && (
               <button
                 type="button"
                 className={walletStyles.heroGhost}
-                onClick={() => toast.info('Вывод средств скоро будет доступен')}
+                onClick={() => toast.info(t('withdrawSoon'))}
               >
                 <ArrowUpRight size={16} strokeWidth={2.25} />
-                Вывести
+                {t('withdraw')}
               </button>
             )}
             <button
@@ -668,7 +661,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
               }}
             >
               <Plus size={16} strokeWidth={2.25} />
-              Пополнить
+              {t('topUp')}
             </button>
           </div>
         </section>
@@ -680,10 +673,10 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                 <span className={`${walletStyles.statIcon} ${walletStyles.statIconBlue}`} aria-hidden>
                   <Lock size={16} strokeWidth={2.25} />
                 </span>
-                <span className={walletStyles.statLabel}>Резерв под заявки</span>
+                <span className={walletStyles.statLabel}>{t('reserve')}</span>
               </div>
               <div className={walletStyles.statValue}>{formatMoney(advanceReserve)}</div>
-              <div className={walletStyles.statSub}>Зарезервировано под опубликованные заявки</div>
+              <div className={walletStyles.statSub}>{t('reserveSub')}</div>
             </section>
 
             <section className={walletStyles.statCard}>
@@ -691,10 +684,10 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                 <span className={`${walletStyles.statIcon} ${walletStyles.statIconOrange}`} aria-hidden>
                   <Briefcase size={16} strokeWidth={2.25} />
                 </span>
-                <span className={walletStyles.statLabel}>Авансы в работе</span>
+                <span className={walletStyles.statLabel}>{t('advances')}</span>
               </div>
               <div className={walletStyles.statValue}>{formatMoney(advanceInWork)}</div>
-              <div className={walletStyles.statSub}>На эскроу по активным перевозкам</div>
+              <div className={walletStyles.statSub}>{t('advancesSub')}</div>
             </section>
 
             <section
@@ -708,16 +701,16 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                   void openDueDeals();
                 }
               }}
-              aria-label="Открыть список сделок к доплате"
+              aria-label={t('dueAria')}
             >
               <div className={walletStyles.statHead}>
                 <span className={`${walletStyles.statIcon} ${walletStyles.statIconGreen}`} aria-hidden>
                   <Wallet size={16} strokeWidth={2.25} />
                 </span>
-                <span className={walletStyles.statLabel}>Остаток к доплате</span>
+                <span className={walletStyles.statLabel}>{t('due')}</span>
               </div>
               <div className={walletStyles.statValue}>{formatMoney(remainingToPay)}</div>
-              <div className={walletStyles.statSub}>Нажмите, чтобы открыть сделки к доплате</div>
+              <div className={walletStyles.statSub}>{t('dueSub')}</div>
             </section>
           </>
         ) : (
@@ -727,7 +720,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                 <span className={`${walletStyles.statIcon} ${walletStyles.statIconGreen}`} aria-hidden>
                   <TrendingUp size={16} strokeWidth={2.25} />
                 </span>
-                <span className={walletStyles.statLabel}>Доход за {MONTHS_NOM[thisMonth]}</span>
+                <span className={walletStyles.statLabel}>{t('monthIncome', { month: monthLabel(now, 'long') })}</span>
               </div>
               <div className={walletStyles.statValue}>{formatMoney(monthIncome)}</div>
             </section>
@@ -737,11 +730,11 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                 <span className={`${walletStyles.statIcon} ${walletStyles.statIconOrange}`} aria-hidden>
                   <Clock size={16} strokeWidth={2.25} />
                 </span>
-                <span className={walletStyles.statLabel}>Ожидаемые выплаты</span>
+                <span className={walletStyles.statLabel}>{t('expectedTitle')}</span>
               </div>
               <div className={walletStyles.statValue}>{formatMoney(upcomingIncome)}</div>
               <div className={walletStyles.statSub}>
-                Получено авансов: {formatMoney(holdAdvance)}
+                {t('advancesGot', { amount: formatMoney(holdAdvance) })}
               </div>
             </section>
 
@@ -750,15 +743,14 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                 <span className={`${walletStyles.statIcon} ${walletStyles.statIconBlue}`} aria-hidden>
                   <Lock size={16} strokeWidth={2.25} />
                 </span>
-                <span className={walletStyles.statLabel}>Гарантийный депозит</span>
+                <span className={walletStyles.statLabel}>{t('deposit')}</span>
                 <span className={`${walletStyles.depositBadge} ${depositPaid ? walletStyles.depositOn : walletStyles.depositOff}`}>
-                  {depositPaid ? 'Внесён' : 'Не внесён'}
+                  {depositPaid ? t('depositPaid') : t('depositUnpaid')}
                 </span>
               </div>
               <div className={walletStyles.statValue}>{formatMoney(deposit)}</div>
               <p className={walletStyles.depositHint}>
-                Заблокирован на кошельке — требуется для верификации и покрытия ущерба, если рейс
-                срывается или груз повреждён по вашей вине.
+                {t('depositHint')}
               </p>
             </section>
           </>
@@ -768,17 +760,17 @@ export const WalletPage: React.FC<WalletPageProps> = ({
       {!isCustomer && (
       <div className={walletStyles.midGrid}>
         <section className={walletStyles.card}>
-          <h2 className={walletStyles.cardTitle}>Доход по месяцам</h2>
-          <p className={walletStyles.cardSub}>Последние 6 месяцев, тыс. ₽</p>
+          <h2 className={walletStyles.cardTitle}>{t('incomeChart')}</h2>
+          <p className={walletStyles.cardSub}>{t('incomeChartSub')}</p>
           <MonthChart bars={stats.bars} />
         </section>
 
         <section className={walletStyles.card}>
-          <h2 className={walletStyles.cardTitle}>Способ выплаты</h2>
-          <div className={walletStyles.bankCard} aria-label="Карта для выплат">
+          <h2 className={walletStyles.cardTitle}>{t('payoutMethod')}</h2>
+          <div className={walletStyles.bankCard} aria-label={t('payoutCard')}>
             <div className={walletStyles.bankCardTop}>
               <span className={walletStyles.chip} aria-hidden />
-              <span className={walletStyles.bankBadge}>Основная</span>
+              <span className={walletStyles.bankBadge}>{t('primary')}</span>
             </div>
             <div className={walletStyles.bankNumber}>•• •• •• 4417</div>
             <div className={walletStyles.bankWho}>{displayName} · МИР</div>
@@ -786,17 +778,17 @@ export const WalletPage: React.FC<WalletPageProps> = ({
           <button
             type="button"
             className={walletStyles.addCardBtn}
-            onClick={() => toast.info('Привязка карты для выплат появится позже')}
+            onClick={() => toast.info(t('addCardLater'))}
           >
             <IonIcon icon={addOutline} />
-            Добавить карту
+            {t('addCard')}
           </button>
         </section>
       </div>
       )}
 
       <section className={walletStyles.card} id="statement">
-        <h2 className={walletStyles.cardTitle}>История операций</h2>
+        <h2 className={walletStyles.cardTitle}>{t('history')}</h2>
         {isLoading ? (
           <div className={walletStyles.loadingWrap}>
             <IonSpinner name="bubbles" />
@@ -804,46 +796,46 @@ export const WalletPage: React.FC<WalletPageProps> = ({
         ) : (transactions || []).length === 0 ? (
           <div className={walletStyles.empty}>
             <IonIcon icon={receiptOutline} />
-            <p>Операций пока нет</p>
-            <span>Здесь появятся поступления и списания</span>
+            <p>{t('emptyTx')}</p>
+            <span>{t('emptyTxHint')}</span>
           </div>
         ) : (
           <ul className={walletStyles.txList}>
-            {(transactions || []).slice(0, 50).map((t) => {
-              const inv = t.type === 'inv';
-              const icon = txIcon(t);
+            {(transactions || []).slice(0, 50).map((tx) => {
+              const inv = tx.type === 'inv';
+              const icon = txIcon(tx);
               return (
-                <li key={t.id}>
+                <li key={tx.id}>
                   <button
                     type="button"
                     className={walletStyles.txItem}
                     disabled={!inv}
-                    onClick={inv ? () => void handleOpenInvoicePdf(t.id) : undefined}
+                    onClick={inv ? () => void handleOpenInvoicePdf(tx.id) : undefined}
                   >
                     <span className={`${walletStyles.txIcon} ${icon.className}`} aria-hidden>
                       {icon.icon}
                     </span>
                     <div className={walletStyles.txText}>
-                      <div className={walletStyles.txTitle}>{t.title || 'Операция'}</div>
-                      {(t.subtitle || '').trim() ? (
-                        <div className={walletStyles.txSub}>{t.subtitle}</div>
+                      <div className={walletStyles.txTitle}>{tx.title || t('operation')}</div>
+                      {(tx.subtitle || '').trim() ? (
+                        <div className={walletStyles.txSub}>{tx.subtitle}</div>
                       ) : null}
                     </div>
                     <div className={walletStyles.txRight}>
                       <div
                         className={
-                          isIncome(t)
+                          isIncome(tx)
                             ? walletStyles.txPlus
-                            : isExpense(t)
+                            : isExpense(tx)
                               ? walletStyles.txMinus
                               : walletStyles.txNeutral
                         }
                       >
-                        {t.amount > 0 ? '+' : ''}
-                        {formatMoney(t.amount)}
+                        {tx.amount > 0 ? '+' : ''}
+                        {formatMoney(tx.amount)}
                       </div>
                       <span className={walletStyles.txWhen}>
-                        {inv && invoiceLoadingId === t.id ? 'Загрузка…' : formatTxWhen(t.date)}
+                        {inv && invoiceLoadingId === tx.id ? t('loading', { ns: 'common' }) : formatTxWhen(tx.date)}
                       </span>
                     </div>
                   </button>

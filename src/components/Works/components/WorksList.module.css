@@ -105,6 +105,10 @@
   cursor: default;
 }
 
+.btnLabel {
+  display: inline;
+}
+
 .refreshSpin {
   animation: feedRefreshSpin 0.8s linear infinite;
 }
@@ -252,10 +256,86 @@
 
 @media (max-width: 767px) {
   .pageTitle {
-    font-size: 22px;
+    font-size: 20px;
+  }
+
+  .pageSub {
+    font-size: 12px;
+  }
+
+  .pageHead {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .pageHeadActions {
+    width: 100%;
+    gap: 8px;
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
+  .viewToggle {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .viewBtn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 10px;
+    gap: 4px;
+  }
+
+  .refreshBtn {
+    flex-shrink: 0;
+    width: 42px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .btnLabel {
+    display: none;
   }
 
   .legend {
     gap: 8px 12px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .toolbar {
+    flex-wrap: nowrap;
+    gap: 8px;
+    align-items: stretch;
+    min-width: 0;
+  }
+
+  .tabs {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    min-width: 0;
+    padding-bottom: 2px;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    flex-shrink: 0;
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .filterBtn {
+    flex-shrink: 0;
+    width: 40px;
+    padding: 7px 0;
+    justify-content: center;
   }
 }

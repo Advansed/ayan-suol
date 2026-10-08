@@ -10,7 +10,7 @@ const Tab4: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen>
-        {user_type == 2 ? <WorkArchive /> : <CargoArchive />}
+        {user_type == 2 || user_type == 3 ? <WorkArchive /> : <CargoArchive />}
       </IonContent>
     </IonPage>
   );

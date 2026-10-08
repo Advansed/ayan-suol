@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { IonAlert, IonModal } from '@ionic/react';
 import {
   ArrowLeft,
@@ -15,6 +16,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { CargoInfo, CargoStatus, DriverInfo, useCargoStore } from '../../../Store/cargoStore';
+import type { CargoActionResult } from '../hooks/useCargos';
 import { statusUtils, formatters } from '../../../utils/utils';
 import {
   getCargoActionHint,
@@ -33,7 +35,7 @@ interface CargoViewProps {
   onBack: () => void;
   onEdit: (cargo: CargoInfo) => void;
   onDelete: (guid: string) => Promise<boolean>;
-  onPublish: (guid: string) => Promise<boolean>;
+  onPublish: (guid: string) => Promise<CargoActionResult>;
   onUnpublish: (guid: string) => Promise<boolean>;
   onAcceptInvoice: (invoice: DriverInfo) => void | Promise<void>;
   onRejectInvoice: (invoice: DriverInfo) => Promise<boolean>;
@@ -45,23 +47,26 @@ interface CargoViewProps {
   isLoading?: boolean;
 }
 
-function invoiceStatusMeta(status: DriverInfo['status']) {
+function invoiceStatusMeta(
+  status: DriverInfo['status'],
+  label: (key: 'bidPending' | 'bidAccepted') => string,
+) {
   if (status === 'Заказано') {
     return {
-      label: 'Ожидает решения',
+      label: label('bidPending'),
       kind: 'pending' as const,
       Icon: Clock,
     };
   }
   if (status === 'Завершено' || status === 'Доставлено' || status === 'Разгружено') {
     return {
-      label: 'Принят',
+      label: label('bidAccepted'),
       kind: 'accepted' as const,
       Icon: CheckCircle2,
     };
   }
   return {
-    label: 'Принят',
+    label: label('bidAccepted'),
     kind: 'accepted' as const,
     Icon: CheckCircle2,
   };
@@ -87,10 +92,12 @@ export const CargoView: React.FC<CargoViewProps> = ({
   onMapClick,
   isLoading = false,
 }) => {
+  const { t } = useTranslation('cargos');
   const cargos = useCargoStore((state) => state.cargos);
   const [actionOpen, setActionOpen] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showPublishAlert, setShowPublishAlert] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
   const [showUnpublishAlert, setShowUnpublishAlert] = useState(false);
   const [rejectInvoice, setRejectInvoice] = useState<DriverInfo | null>(null);
   const [acceptInvoice, setAcceptInvoice] = useState<DriverInfo | null>(null);
@@ -144,7 +151,10 @@ export const CargoView: React.FC<CargoViewProps> = ({
   const handlePublish = async () => {
     setShowPublishAlert(false);
     setActionOpen(false);
-    await onPublish(cargoInfo.guid);
+    const result = await onPublish(cargoInfo.guid);
+    if (!result.success) {
+      setPublishError(result.message || 'Не удалось опубликовать заказ');
+    }
   };
 
   const handleUnpublish = async () => {
@@ -270,7 +280,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
   );
 
   const renderBid = (invoice: DriverInfo, actionable: boolean) => {
-    const meta = invoiceStatusMeta(invoice.status);
+    const meta = invoiceStatusMeta(invoice.status, t);
     const StatusIcon = meta.Icon;
     const truckLine = [invoice.transport, invoice.capacity].filter(Boolean).join(' · ') || 'Транспорт не указан';
 
@@ -348,7 +358,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
     <div className={styles.view}>
       <button type="button" className={styles.backBtn} onClick={onBack}>
         <ArrowLeft size={16} strokeWidth={2} />
-        Назад к моим заказам
+        {t('backToOrders')}
       </button>
 
       <div className={styles.stack}>
@@ -360,7 +370,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
           <section className={styles.carrierCard}>
             <p className={styles.carrierKicker}>
               <ShieldCheck size={14} strokeWidth={2} />
-              {completed ? 'Рейс выполнен исполнителем' : 'Выбранный исполнитель'}
+              {completed ? t('tripDone') : t('selectedCarrier')}
             </p>
             <div className={styles.carrierRow}>
               <span className={styles.carrierAvatar} aria-hidden>
@@ -368,13 +378,13 @@ export const CargoView: React.FC<CargoViewProps> = ({
               </span>
               <p className={styles.carrierName}>
                 {[selectedInvoice.client, selectedInvoice.transport].filter(Boolean).join(' · ') ||
-                  'Исполнитель'}
+                  t('carrier')}
               </p>
               <button
                 type="button"
                 className={styles.carrierChat}
                 onClick={() => onChatInvoice(selectedInvoice)}
-                aria-label="Написать исполнителю"
+                aria-label={t('writeToCarrier')}
               >
                 <MessageSquare size={16} strokeWidth={1.75} />
               </button>
@@ -406,14 +416,14 @@ export const CargoView: React.FC<CargoViewProps> = ({
           <div className={styles.bidsHead}>
             <h3 className={styles.bidsTitle}>
               {inExecution || completed
-                ? 'Все отклики по заказу'
-                : `Отклики исполнителей (${totalInvoices})`}
+                ? t('allBids')
+                : t('bidsCount', { count: totalInvoices })}
             </h3>
           </div>
 
           {totalInvoices === 0 ? (
             <div className={styles.bidsEmpty}>
-              Пока никто не откликнулся на этот заказ.
+              {t('noBids')}
             </div>
           ) : (
             <div className={styles.bidsList}>
@@ -601,6 +611,41 @@ export const CargoView: React.FC<CargoViewProps> = ({
           },
         ]}
       />
+
+      <IonModal
+        isOpen={publishError !== null}
+        onDidDismiss={() => setPublishError(null)}
+        className={styles.actionModal}
+      >
+        <div className={styles.modalShell}>
+          <div className={styles.modalHead}>
+            <div>
+              <div className={styles.modalKicker}>Публикация</div>
+              <h2 className={styles.modalTitle}>Публикация неудачна</h2>
+            </div>
+            <button
+              type="button"
+              className={styles.modalClose}
+              onClick={() => setPublishError(null)}
+              aria-label="Закрыть"
+            >
+              <X size={20} strokeWidth={2} />
+            </button>
+          </div>
+          <div className={styles.modalBody}>
+            <p className={styles.confirmText}>{publishError}</p>
+            <div className={styles.confirmActions}>
+              <button
+                type="button"
+                className={styles.confirmSubmit}
+                onClick={() => setPublishError(null)}
+              >
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </div>
+      </IonModal>
 
       <IonAlert
         isOpen={showPublishAlert}

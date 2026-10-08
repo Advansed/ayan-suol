@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import {
   ArrowLeft,
   Box,
@@ -44,6 +45,8 @@ import Maps from '../../Maps/Maps';
 import { fetchDrivingDistanceKm } from '../../Maps/services/googleMapServices';
 import { geocodeAddress } from '../../../utils/googlePlaces';
 import { getPaymentLevel, type PaymentLevel } from '../../Works/feedFormat';
+import { companyGetters, useCompanyStore } from '../../../Store/companyStore';
+import { OrganizationRequiredModal } from '../../OrganizationRequiredModal';
 import styles from './CargoNew.module.css';
 
 function coordString(lat?: number | null, lon?: number | null): { lat: string; lon: string } {
@@ -201,6 +204,13 @@ export const CargoNew: React.FC<CargoNewProps> = ({
 }) => {
   const userName = useLoginStore((state) => state.name);
   const userPhone = useLoginStore((state) => state.phone);
+  const history = useHistory();
+  const companyData = useCompanyStore((state) => state.data);
+  const companyLoading = useCompanyStore((state) => state.isLoading);
+  const organizationRequired = useMemo(
+    () => !companyLoading && companyGetters.getCompletionPercentage() < 80,
+    [companyData, companyLoading]
+  );
   const token = useToken();
   const { emit } = useSocket();
   const transportTypes = useTransportTypes();
@@ -613,6 +623,11 @@ export const CargoNew: React.FC<CargoNewProps> = ({
 
   return (
     <div className={styles.page}>
+      <OrganizationRequiredModal
+        isOpen={organizationRequired}
+        onClose={onBack}
+        onGoProfile={() => history.push('/profile')}
+      />
       <button type="button" className={styles.backBtn} onClick={onBack}>
         <ArrowLeft size={16} strokeWidth={2} />
         К моим заказам
@@ -1198,7 +1213,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
             className={styles.submit}
             disabled={isSubmitting || !info.name?.trim()}
           >
-            {isEdit ? 'Сохранить изменения' : 'Опубликовать заказ'}
+            {isEdit ? 'Сохранить изменения' : 'Создать заказ'}
           </button>
           <button type="button" className={styles.cancel} onClick={onBack}>
             Отмена

@@ -159,6 +159,22 @@
   color: var(--gvr-text-secondary, #5c6578);
 }
 
+.holdNote,
+.holdWarn {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.holdNote {
+  color: var(--gvr-text, #1a1f2e);
+}
+
+.holdWarn {
+  color: #c62828;
+}
+
 .error {
   padding: 10px 12px;
   border-radius: 12px;

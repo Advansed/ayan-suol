@@ -1,12 +1,17 @@
 /**
  * Загрузка файлов.
  * - getUrl / uploadFileToMinIO — публичный бакет (legacy)
- * - uploadFotos / getFotos — приватные документы (паспорт, фото заказа)
+ * - uploadFotos / getFotos — приватные документы (паспорт, фото заказа, транспорт)
+ * - upload_url / signed_url — фото профиля (bucket kz-files).
+ *   Nginx на /api2/ сам добавляет префикс /api, поэтому в клиенте его нет.
  */
 
+import { useEffect, useState } from 'react';
 import { URL as API_BASE } from '../Store/api';
 import { loginGetters } from '../Store/loginStore';
 import { logApiError, logApiRequest, logApiResponse } from './apiLogger';
+
+const PROFILE_BUCKET = 'kz-files';
 
 export interface UploadResult {
   filePath: string;
@@ -332,37 +337,164 @@ export const uploadOrderPhoto = async (
 };
 
 /**
- * Фото транспорта: ключ {userId}/profile/transport/{vehicleId}.{ext}
+ * Фото транспорта: ключ <userId>/transports/<transportId>.<ext>
+ * Тот же поток, что у фото профиля: GET /upload_url, затем PUT на upload_url.
  */
 export const uploadTransportPhoto = async (
   imageFile: string | File,
   vehicleId?: string
 ): Promise<{ filePath: string; signUrl?: string }> => {
+  const token = loginGetters.getToken();
+  if (!token) {
+    throw new Error('Нет токена авторизации');
+  }
   const userId = loginGetters.getUserId();
   if (!userId) {
     throw new Error('Нет идентификатора пользователя');
   }
-  const ext = getImageExtension(imageFile);
-  const slug = String(vehicleId || `new_${Date.now()}`)
-    .replace(/[^a-zA-Z0-9_-]/g, '')
-    .slice(0, 48) || `new_${Date.now()}`;
-  const key = `${userId}/profile/transport/${slug}.${ext}`;
-  return uploadFileToDocs(imageFile, key);
+  const transportId = String(vehicleId || '').trim().replace(/[/\\]/g, '');
+  if (!transportId) {
+    throw new Error('Нет идентификатора транспорта');
+  }
+
+  const source =
+    typeof imageFile === 'string' ? imageFile : await fileToDataUrl(imageFile);
+  const compressed = await compressImageDataUrl(source);
+  const ext = getImageExtension(compressed);
+  const key = `${userId}/transports/${transportId}.${ext}`;
+  const file = dataUrlToFile(compressed, `image.${ext}`);
+  const filePath = await putSignedObject(token, key, file);
+  return { filePath };
+};
+
+const normalizeStorageKey = (filename: string): string =>
+  filename.startsWith('/') ? filename.slice(1) : filename;
+
+const isSignedObjectKey = (pathOrUrl: string): boolean => {
+  const key = normalizeStorageKey(pathOrUrl);
+  return (
+    key.startsWith('profile/') ||
+    key.includes('/transports/') ||
+    /^[^/]+\/image\.[a-z0-9]+$/i.test(key)
+  );
+};
+
+const profileObjectQuery = (token: string, key: string): URLSearchParams =>
+  new URLSearchParams({
+    token,
+    bucket: PROFILE_BUCKET,
+    key: normalizeStorageKey(key),
+  });
+
+const pickHttpUrl = (data: Record<string, unknown>): string => {
+  for (const field of ['signed_url', 'url', 'download_url', 'read_url', 'upload_url']) {
+    const value = data[field];
+    if (typeof value === 'string' && /^https?:\/\//i.test(value)) return value;
+  }
+  return '';
+};
+
+const signedReadInflight = new Map<string, Promise<string>>();
+
+const putSignedObject = async (token: string, key: string, file: File): Promise<string> => {
+  if (file.size > HARD_MAX_UPLOAD_BYTES) {
+    throw new Error('Не удалось загрузить фото: файл слишком большой.');
+  }
+
+  const searchParams = profileObjectQuery(token, key);
+  logApiRequest('http', 'upload_url', { bucket: PROFILE_BUCKET, key });
+  const res = await fetch(`${API_BASE}/upload_url?${searchParams}`);
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    logApiError('http', 'upload_url', err);
+    throw new Error(err.message || `HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  logApiResponse('http', 'upload_url', data);
+  const filePath = (data.filePath as string | undefined) || key;
+  const uploadUrl = data.upload_url as string | undefined;
+
+  if (!uploadUrl) {
+    throw new Error('Сервер не вернул upload_url');
+  }
+
+  const uploadRes = await fetch(uploadUrl, {
+    method: 'PUT',
+    body: file,
+    headers: {
+      'Content-Type': '',
+    },
+  });
+
+  if (!uploadRes.ok) {
+    throw new Error(`Ошибка загрузки файла: HTTP ${uploadRes.status}`);
+  }
+
+  return filePath;
+};
+
+/** Временная ссылка на чтение ключа профиля: GET /signed_url. */
+export const fetchProfileReadUrl = (filename: string, token?: string): Promise<string> => {
+  const authToken = token || loginGetters.getToken();
+  const key = normalizeStorageKey(filename);
+  if (!authToken || !key) return Promise.resolve('');
+
+  const cacheKey = `${authToken}:${key}`;
+  const pending = signedReadInflight.get(cacheKey);
+  if (pending) return pending;
+
+  const request = (async () => {
+    const searchParams = profileObjectQuery(authToken, key);
+    logApiRequest('http', 'signed_url', { bucket: PROFILE_BUCKET, key });
+    const res = await fetch(`${API_BASE}/signed_url?${searchParams}`);
+    const data = await res.json().catch(() => ({}));
+    logApiResponse('http', 'signed_url', data);
+
+    if (!res.ok) {
+      logApiError('http', 'signed_url', data);
+      throw new Error(data.message || `HTTP ${res.status}`);
+    }
+
+    const url = pickHttpUrl(data as Record<string, unknown>);
+    if (!url) {
+      throw new Error('Сервер не вернул ссылку на чтение');
+    }
+    return url;
+  })().finally(() => {
+    signedReadInflight.delete(cacheKey);
+  });
+
+  signedReadInflight.set(cacheKey, request);
+  return request;
 };
 
 /**
- * Фото профиля: ключ {userId}/profile/avatar.{ext}
+ * Фото профиля: ключ <userId>/image.<ext>
+ * GET /upload_url (подпись на запись), затем PUT файла на upload_url.
+ * В image сохраняется ключ, не публичный URL.
  */
 export const uploadProfilePhoto = async (
   imageFile: string | File
 ): Promise<{ filePath: string; signUrl?: string }> => {
+  const token = loginGetters.getToken();
+  if (!token) {
+    throw new Error('Нет токена авторизации');
+  }
   const userId = loginGetters.getUserId();
   if (!userId) {
     throw new Error('Нет идентификатора пользователя');
   }
-  const ext = getImageExtension(imageFile);
-  const key = `${userId}/profile/avatar.${ext}`;
-  return uploadFileToDocs(imageFile, key);
+
+  const source =
+    typeof imageFile === 'string' ? imageFile : await fileToDataUrl(imageFile);
+  const compressed = await compressImageDataUrl(source);
+  const ext = getImageExtension(compressed);
+  const key = `${userId}/image.${ext}`;
+  const file = dataUrlToFile(compressed, `image.${ext}`);
+  const filePath = await putSignedObject(token, key, file);
+  return { filePath };
 };
 
 /**
@@ -376,7 +508,7 @@ export const getFotosUrl = (filename: string, token?: string): string => {
   return `${API_BASE}/api/getFotos?token=${encodeURIComponent(authToken)}&filename=${encodeURIComponent(key)}`;
 };
 
-/** Публичный URL / data / blob — как есть; иначе ключ через getFotos. */
+/** Публичный URL / data / blob — как есть. Ключи профиля и транспорта читаются через signed_url. */
 export const resolveImageSrc = (pathOrUrl?: string | null): string => {
   if (!pathOrUrl) return '';
   if (
@@ -386,7 +518,41 @@ export const resolveImageSrc = (pathOrUrl?: string | null): string => {
   ) {
     return pathOrUrl;
   }
-  return getFotosUrl(pathOrUrl);
+  if (isSignedObjectKey(pathOrUrl)) return '';
+  return getFotosUrl(normalizeStorageKey(pathOrUrl));
+};
+
+/** Ключи профиля и транспорта подменяются временной ссылкой с GET /signed_url. */
+export const useResolvedImageSrc = (pathOrUrl?: string | null): string => {
+  const syncSrc = !pathOrUrl || isSignedObjectKey(pathOrUrl) ? '' : resolveImageSrc(pathOrUrl);
+  const [src, setSrc] = useState(syncSrc);
+
+  useEffect(() => {
+    if (!pathOrUrl) {
+      setSrc('');
+      return;
+    }
+    if (!isSignedObjectKey(pathOrUrl)) {
+      setSrc(resolveImageSrc(pathOrUrl));
+      return;
+    }
+
+    let cancelled = false;
+    fetchProfileReadUrl(pathOrUrl)
+      .then((url) => {
+        if (!cancelled) setSrc(url);
+      })
+      .catch((error) => {
+        console.error(error);
+        if (!cancelled) setSrc('');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathOrUrl]);
+
+  return src;
 };
 
 /**

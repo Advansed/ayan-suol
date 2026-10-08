@@ -9,8 +9,8 @@ import {
   FileText,
   Settings,
   User,
-  ShieldCheck,
   Handshake,
+  Users,
 } from 'lucide-react';
 
 export type NavItem = {
@@ -18,7 +18,7 @@ export type NavItem = {
   label: string;
   path: string;
   icon: LucideIcon;
-  /** 1 = заказчик, 2 = исполнитель; undefined = оба */
+  /** 1 = заказчик, 2 = исполнитель, 3 = диспетчер; undefined = все */
   roles?: number[];
   footer?: boolean;
   alert?: boolean;
@@ -30,7 +30,8 @@ export const MAIN_NAV: NavItem[] = [
   { id: 'feed', label: 'Лента заказов', path: '/feed', icon: ListChecks },
   { id: 'finance', label: 'Финансы', path: '/finance', icon: Wallet },
   { id: 'chats', label: 'Чат', path: '/chats', icon: MessageSquare },
-  { id: 'vehicles', label: 'Мои машины', path: '/vehicles', icon: Truck, roles: [2] },
+  { id: 'vehicles', label: 'Мои машины', path: '/vehicles', icon: Truck, roles: [2, 3] },
+  { id: 'drivers', label: 'Водители', path: '/drivers', icon: Users, roles: [3] },
   { id: 'support', label: 'Поддержка', path: '/support', icon: LifeBuoy, stub: true },
   { id: 'documents', label: 'Документы', path: '/documents', icon: FileText, stub: true },
   { id: 'settings', label: 'Настройки', path: '/settings', icon: Settings },
@@ -38,7 +39,6 @@ export const MAIN_NAV: NavItem[] = [
 ];
 
 export const FOOTER_NAV: NavItem[] = [
-  { id: 'verification', label: 'Верификация', path: '/verification', icon: ShieldCheck, footer: true, alert: true, stub: true },
   { id: 'partners', label: 'Партнёрам', path: '/partners', icon: Handshake, footer: true, stub: true },
 ];
 
