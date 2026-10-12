@@ -1,8 +1,5 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import ru from './locales/ru.json'
-import en from './locales/en.json'
-import zh from './locales/zh.json'
 
 export const LOCALE_STORAGE_KEY = 'gvrs.lang'
 export const APP_LOCALES = ['ru', 'en', 'zh'] as const
@@ -77,17 +74,43 @@ export function applyDocumentLocale(locale: string) {
 
 const initial = detectLocale()
 
-void i18n.use(initReactI18next).init({
-  resources: { ru, en, zh },
-  lng: initial,
-  fallbackLng: 'ru',
-  ns: [...NAMESPACES],
-  defaultNS: 'common',
-  interpolation: { escapeValue: false },
-  returnNull: false,
-})
+type LocaleBundle = Record<string, Record<string, unknown>>
 
-applyDocumentLocale(initial)
+const localeLoaders: Record<AppLocale, () => Promise<{ default: LocaleBundle }>> = {
+  ru: () => import('./locales/ru.json'),
+  en: () => import('./locales/en.json'),
+  zh: () => import('./locales/zh.json'),
+}
+
+const localeCache = new Map<AppLocale, LocaleBundle>()
+
+async function ensureLocale(locale: AppLocale): Promise<LocaleBundle> {
+  const cached = localeCache.get(locale)
+  if (cached) return cached
+  const bundle = (await localeLoaders[locale]()).default
+  localeCache.set(locale, bundle)
+  if (i18n.isInitialized) {
+    for (const ns of NAMESPACES) {
+      const pack = bundle[ns]
+      if (pack) i18n.addResourceBundle(locale, ns, pack, true, true)
+    }
+  }
+  return bundle
+}
+
+export const i18nReady: Promise<void> = (async () => {
+  const bundle = await ensureLocale(initial)
+  await i18n.use(initReactI18next).init({
+    resources: { [initial]: bundle },
+    lng: initial,
+    fallbackLng: initial,
+    ns: [...NAMESPACES],
+    defaultNS: 'common',
+    interpolation: { escapeValue: false },
+    returnNull: false,
+  })
+  applyDocumentLocale(initial)
+})()
 
 export async function setAppLocale(locale: AppLocale) {
   try {
@@ -95,6 +118,7 @@ export async function setAppLocale(locale: AppLocale) {
   } catch {
     /* ignore */
   }
+  await ensureLocale(locale)
   await i18n.changeLanguage(locale)
   applyDocumentLocale(locale)
 }

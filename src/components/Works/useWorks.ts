@@ -421,6 +421,7 @@ export const useWorks = () => {
       socket.emit('set_contract', {
         token: token,
         id: info.guid,
+        cargo_id: info.cargo || info.guid,
         sign: sign
       })
     })

@@ -5,7 +5,7 @@ import { DriverInfo } from '../../../../Store/cargoStore';
 import { useChats } from '../../../../Store/useChats';
 import offerStyles from './OfferCard.module.css';
 import { PhotoPreview } from '../../../Chats/PhotoPreview';
-import { resolveImageSrc } from '../../../../utils/fileUpload';
+import { latestPhotoBatch, resolvePhotoBatch } from '../../../../utils/orderPhotos';
 
 /** Фото груза/пломбы при прибытии на выгрузку (Works sendImage …, 18) */
 const UNLOAD_ARRIVAL_PHOTO_STATUS = 18;
@@ -38,9 +38,10 @@ export const ToUnloadCard: React.FC<ToUnloadCardProps> = ({
         setPhotosLoading(true);
 
         getPhotos(info.recipient, info.cargo, UNLOAD_ARRIVAL_PHOTO_STATUS)
-            .then((data: any[]) => {
+            .then(async (data: any[]) => {
+                const srcs = await resolvePhotoBatch(latestPhotoBatch(data || []));
                 if (!isMounted) return;
-                setFotos(data || []);
+                setFotos(srcs);
             })
             .catch((err: unknown) => {
                 console.error(err);
@@ -102,13 +103,7 @@ export const ToUnloadCard: React.FC<ToUnloadCardProps> = ({
                 )}
                 {!photosLoading && fotos.length > 0 && (
                     <div className="flex flex-wrap mt-02">
-                        {fotos.map((item: any, index: number) => {
-                            const raw =
-                                typeof item === 'string'
-                                    ? item
-                                    : item?.url || item?.image || item?.path || item?.filePath;
-                            const src = resolveImageSrc(raw);
-
+                        {fotos.map((src: string, index: number) => {
                             if (!src) return null;
 
                             return (

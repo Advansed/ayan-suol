@@ -209,7 +209,7 @@ export const useChats = (): UseChatsReturn => {
     })
   }, [isConnected, token, emit, once])
 
-  // Отправка изображения через uploadFotos (ключ cargo/recipient/filename)
+  // Отправка изображения: ключ <userId>/chats/<cargo>/<recipient>/<file>.<ext>
   const sendImage = useCallback(async (
     recipient: string,
     cargo: string,

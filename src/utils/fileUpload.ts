@@ -1,8 +1,8 @@
 /**
  * Загрузка файлов.
  * - getUrl / uploadFileToMinIO — публичный бакет (legacy)
- * - uploadFotos / getFotos — приватные документы (паспорт, фото заказа, транспорт)
- * - upload_url / signed_url — фото профиля (bucket kz-files).
+ * - uploadFotos / getFotos — старые приватные документы (паспорт)
+ * - upload_url / signed_url — фото профиля, транспорта, СТС и чата (bucket kz-files).
  *   Nginx на /api2/ сам добавляет префикс /api, поэтому в клиенте его нет.
  */
 
@@ -320,20 +320,35 @@ export const uploadFileToDocs = async (
   };
 };
 
+const storageSegment = (value: string): string =>
+  String(value || '').trim().replace(/[/\\]/g, '') || 'unknown';
+
 /**
- * Фото по заказу: ключ cargo_id/recipient_id/filename через uploadFotos.
+ * Фото чата и заказа: ключ <userId>/chats/<cargoId>/<recipientId>/<file>.<ext>
+ * Тот же поток, что у фото профиля: GET /upload_url, затем PUT на upload_url.
  */
 export const uploadOrderPhoto = async (
   imageFile: string | File,
   params: { cargo_id: string; recipient_id: string }
 ): Promise<{ filePath: string; signUrl?: string }> => {
-  const baseName =
-    typeof imageFile === 'string'
-      ? `image.${getImageExtension(imageFile)}`
-      : imageFile.name || 'image.jpg';
-  const safeFilename = uniqueFilename(baseName);
-  const key = `${params.cargo_id}/${params.recipient_id}/${safeFilename}`;
-  return uploadFileToDocs(imageFile, key);
+  const token = loginGetters.getToken();
+  if (!token) {
+    throw new Error('Нет токена авторизации');
+  }
+  const userId = loginGetters.getUserId();
+  if (!userId) {
+    throw new Error('Нет идентификатора пользователя');
+  }
+
+  const source =
+    typeof imageFile === 'string' ? imageFile : await fileToDataUrl(imageFile);
+  const compressed = await compressImageDataUrl(source);
+  const ext = getImageExtension(compressed);
+  const fileId = `img_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const key = `${storageSegment(userId)}/chats/${storageSegment(params.cargo_id)}/${storageSegment(params.recipient_id)}/${fileId}.${ext}`;
+  const file = dataUrlToFile(compressed, `image.${ext}`);
+  const filePath = await putSignedObject(token, key, file);
+  return { filePath };
 };
 
 /**
@@ -367,6 +382,36 @@ export const uploadTransportPhoto = async (
   return { filePath };
 };
 
+/**
+ * Скан СТС: ключ <userId>/transports/<transportId>/sts.<ext>
+ */
+export const uploadTransportSts = async (
+  imageFile: string | File,
+  vehicleId?: string
+): Promise<{ filePath: string; signUrl?: string }> => {
+  const token = loginGetters.getToken();
+  if (!token) {
+    throw new Error('Нет токена авторизации');
+  }
+  const userId = loginGetters.getUserId();
+  if (!userId) {
+    throw new Error('Нет идентификатора пользователя');
+  }
+  const transportId = String(vehicleId || '').trim().replace(/[/\\]/g, '');
+  if (!transportId) {
+    throw new Error('Нет идентификатора транспорта');
+  }
+
+  const source =
+    typeof imageFile === 'string' ? imageFile : await fileToDataUrl(imageFile);
+  const compressed = await compressImageDataUrl(source);
+  const ext = getImageExtension(compressed);
+  const key = `${userId}/transports/${transportId}/sts.${ext}`;
+  const file = dataUrlToFile(compressed, `sts.${ext}`);
+  const filePath = await putSignedObject(token, key, file);
+  return { filePath };
+};
+
 const normalizeStorageKey = (filename: string): string =>
   filename.startsWith('/') ? filename.slice(1) : filename;
 
@@ -375,6 +420,7 @@ const isSignedObjectKey = (pathOrUrl: string): boolean => {
   return (
     key.startsWith('profile/') ||
     key.includes('/transports/') ||
+    key.includes('/chats/') ||
     /^[^/]+\/image\.[a-z0-9]+$/i.test(key)
   );
 };
@@ -508,7 +554,23 @@ export const getFotosUrl = (filename: string, token?: string): string => {
   return `${API_BASE}/api/getFotos?token=${encodeURIComponent(authToken)}&filename=${encodeURIComponent(key)}`;
 };
 
-/** Публичный URL / data / blob — как есть. Ключи профиля и транспорта читаются через signed_url. */
+/** http/data/blob как есть. Ключи профиля, транспорта и чата — через GET /signed_url. */
+export const resolveStoredImageSrc = async (pathOrUrl?: string | null): Promise<string> => {
+  if (!pathOrUrl) return '';
+  if (
+    /^https?:\/\//i.test(pathOrUrl) ||
+    pathOrUrl.startsWith('data:') ||
+    pathOrUrl.startsWith('blob:')
+  ) {
+    return pathOrUrl;
+  }
+  if (isSignedObjectKey(pathOrUrl)) {
+    return fetchProfileReadUrl(pathOrUrl);
+  }
+  return getFotosUrl(normalizeStorageKey(pathOrUrl));
+};
+
+/** Публичный URL / data / blob — как есть. Ключи профиля, транспорта и чата читаются через signed_url. */
 export const resolveImageSrc = (pathOrUrl?: string | null): string => {
   if (!pathOrUrl) return '';
   if (

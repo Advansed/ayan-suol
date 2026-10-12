@@ -7,7 +7,7 @@ import {
   BODY_PHOTO_STATUS,
   MAX_BODY_PHOTOS,
   latestPhotoBatch,
-  photoSrc,
+  resolvePhotoBatch,
   toUploadablePhoto,
 } from '../../../../utils/orderPhotos';
 import styles from './CounterOffer.module.css';
@@ -35,9 +35,10 @@ export const OnLoadWaitCard: React.FC<OnLoadWaitCardProps> = ({ work, onSendBody
     let cancelled = false;
     setLoadingCurrent(true);
     getPhotos(work.recipient, cargo, BODY_PHOTO_STATUS)
-      .then((data) => {
+      .then(async (data) => {
         if (cancelled) return;
-        const srcs = latestPhotoBatch(data || []).map(photoSrc).filter(Boolean);
+        const srcs = await resolvePhotoBatch(latestPhotoBatch(data || []));
+        if (cancelled) return;
         setBodyPhotos(srcs);
         setHadPhotos(srcs.length > 0);
       })

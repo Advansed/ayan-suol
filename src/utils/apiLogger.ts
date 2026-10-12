@@ -30,15 +30,24 @@ export function sanitize(value: unknown, depth = 0): unknown {
   return out
 }
 
+function debugApi(): boolean {
+  if (import.meta.env.DEV) return true
+  try {
+    return localStorage.getItem('gvrs.debugApi') === '1'
+  } catch {
+    return false
+  }
+}
+
 export function logApiRequest(channel: string, event: string, params?: unknown) {
-  // API request log — kept intentionally
+  if (!debugApi()) return
   console.info(`[API →] ${channel}:${event}`, {
     params: params === undefined ? null : sanitize(params),
   })
 }
 
 export function logApiResponse(channel: string, event: string, response?: unknown) {
-  // API response log — kept intentionally
+  if (!debugApi()) return
   console.info(`[API ←] ${channel}:${event}`, {
     response: response === undefined ? null : sanitize(response),
   })

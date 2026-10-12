@@ -8,7 +8,7 @@ import {
   LOAD_SEAL_PHOTO_STATUS,
   MAX_BODY_PHOTOS,
   latestPhotoBatch,
-  photoSrc,
+  resolvePhotoBatch,
   prepareUploadablePhotos,
 } from '../../../../utils/orderPhotos';
 import styles from './CounterOffer.module.css';
@@ -46,8 +46,8 @@ export const LoadedWaitDispatchCard: React.FC<LoadedWaitDispatchCardProps> = ({
         const cargoData = await getPhotos(work.recipient, cargoId, LOAD_CARGO_PHOTO_STATUS);
         const sealData = await getPhotos(work.recipient, cargoId, LOAD_SEAL_PHOTO_STATUS);
         if (cancelled) return;
-        const cargoSrcs = latestPhotoBatch(cargoData || []).map(photoSrc).filter(Boolean);
-        const sealSrcs = latestPhotoBatch(sealData || []).map(photoSrc).filter(Boolean);
+        const cargoSrcs = await resolvePhotoBatch(latestPhotoBatch(cargoData || []));
+        const sealSrcs = await resolvePhotoBatch(latestPhotoBatch(sealData || []));
         setCargoPhotos(cargoSrcs);
         setSealPhotos(sealSrcs);
         setHadPhotos(cargoSrcs.length > 0 || sealSrcs.length > 0);

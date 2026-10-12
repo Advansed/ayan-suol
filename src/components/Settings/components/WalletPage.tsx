@@ -481,13 +481,13 @@ export const WalletPage: React.FC<WalletPageProps> = ({
               </div>
             ) : (
               <ul className={walletStyles.dealList}>
-                {deals.map((deal) => {
+                {deals.map((deal, index) => {
                   const dealKey = deal.id || `${deal.cargoId}-${deal.performer}`;
                   const isPaying = payingDealId === dealKey;
                   const canPay =
                     Boolean(deal.cargoId && deal.performer && deal.due > 0) && !payingDealId;
                   return (
-                  <li key={dealKey}>
+                  <li key={`${dealKey}-${index}`}>
                     <div className={walletStyles.dealItem}>
                       <div className={walletStyles.dealText}>
                         <div className={walletStyles.dealTitle}>{deal.cargoName}</div>
@@ -801,11 +801,11 @@ export const WalletPage: React.FC<WalletPageProps> = ({
           </div>
         ) : (
           <ul className={walletStyles.txList}>
-            {(transactions || []).slice(0, 50).map((tx) => {
+            {(transactions || []).slice(0, 50).map((tx, index) => {
               const inv = tx.type === 'inv';
               const icon = txIcon(tx);
               return (
-                <li key={tx.id}>
+                <li key={`${tx.id || 'tx'}-${index}`}>
                   <button
                     type="button"
                     className={walletStyles.txItem}

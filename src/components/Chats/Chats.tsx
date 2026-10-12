@@ -8,7 +8,7 @@ import { useChats } from "../../Store/useChats";
 import { chatActions } from "../../Store/chatStore";
 import { loginGetters } from "../../Store/loginStore";
 import { PhotoPreview } from "./PhotoPreview";
-import { resolveImageSrc } from "../../utils/fileUpload";
+import { useResolvedImageSrc } from "../../utils/fileUpload";
 import { useChatStore } from "../../Store/chatStore";
 
 interface ChatsProps {
@@ -23,9 +23,9 @@ const MessageComponent = React.memo(({ message, isSent, userInitials, clickMessa
     clickMessage: (url: string) => void
 }) => {
     const { t } = useTranslation('chats');
+    const imageSrc = useResolvedImageSrc(message.image);
     const renderContent = () => {
         if (message.image) {
-            const imageSrc = resolveImageSrc(message.image);
             return (
                 <div className="chat-image-container"
                     onClick = { () => { clickMessage( imageSrc ) } }

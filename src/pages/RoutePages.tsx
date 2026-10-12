@@ -1,22 +1,33 @@
-import React from 'react';
+import React, { lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Download } from 'lucide-react';
 import { Redirect, useHistory, useLocation, useParams } from 'react-router-dom';
-import { Cargos } from '../components/Cargos';
-import { Works } from '../components/Works';
-import CargoArchive from '../components/Cargos/components/CargoArchive';
-import { WorkArchive } from '../components/Works/components';
 import { useUserType } from '../Store/loginStore';
 import { isDispatcher, isExecutorRole } from '../Store/roles';
-import { DriversPage } from '../components/Drivers/DriversPage';
-import Chats from '../components/Chats/Chats';
-import { ChatsList } from '../components/Chats/ChatsList';
-import { Settings } from '../components/Settings';
-import { Profile } from '../components/Profile';
-import { WalletPage } from '../components/Settings/components/WalletPage';
-import { TransportEditPage } from '../components/Settings/components/TransportEditPage';
 import { PanelFrame } from '../layout/PanelFrame';
 import panelStyles from '../layout/PanelFrame.module.css';
+
+const Cargos = lazy(() => import('../components/Cargos').then((m) => ({ default: m.Cargos })));
+const Works = lazy(() => import('../components/Works').then((m) => ({ default: m.Works })));
+const CargoArchive = lazy(() => import('../components/Cargos/components/CargoArchive'));
+const WorkArchive = lazy(() =>
+  import('../components/Works/components/WorkArchive').then((m) => ({ default: m.WorkArchive })),
+);
+const DriversPage = lazy(() =>
+  import('../components/Drivers/DriversPage').then((m) => ({ default: m.DriversPage })),
+);
+const Chats = lazy(() => import('../components/Chats/Chats'));
+const ChatsList = lazy(() =>
+  import('../components/Chats/ChatsList').then((m) => ({ default: m.ChatsList })),
+);
+const Settings = lazy(() => import('../components/Settings').then((m) => ({ default: m.Settings })));
+const Profile = lazy(() => import('../components/Profile').then((m) => ({ default: m.Profile })));
+const WalletPage = lazy(() =>
+  import('../components/Settings/components/WalletPage').then((m) => ({ default: m.WalletPage })),
+);
+const TransportEditPage = lazy(() =>
+  import('../components/Settings/components/TransportEditPage').then((m) => ({ default: m.TransportEditPage })),
+);
 /** Лента заказов */
 export const FeedPage: React.FC = () => {
   const { user_type } = useUserType();

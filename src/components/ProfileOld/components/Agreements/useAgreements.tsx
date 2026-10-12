@@ -1,6 +1,7 @@
 // src/hooks/useAgreements.ts
 
-import { loginActions, loginGetters, useLoginStore, useToken } from "../../../../Store/loginStore"
+import { useCallback } from "react"
+import { loginActions, loginGetters, useLoginStore, useToken, type Agreements } from "../../../../Store/loginStore"
 import { useSocket } from "../../../../Store/useSocket"
 
 export const useAgreements = () => {
@@ -9,14 +10,15 @@ export const useAgreements = () => {
   const { emit }    = useSocket()
   const token       = useToken();
 
+  const saveAgreement = useCallback((agreementType: keyof Agreements, value: boolean) => {
+    if (isLoading) return
+    if (loginGetters.getAgreement(agreementType) === value) return
+    loginActions.setAgreement(agreementType, value)
+    emit("set_agreement", { token, [agreementType]: value })
+  }, [emit, isLoading, token])
+
   const toggleAgreement = (agreementType: keyof typeof agreements) => {
-    if (!isLoading) {
-
-      loginActions.toggleAgreements( agreementType )
-
-      emit("set_agreement", { token: token, [agreementType]: loginGetters.getAgreement( agreementType )})
-
-    }
+    saveAgreement(agreementType, !loginGetters.getAgreement(agreementType))
   }
 
   return {
@@ -24,6 +26,7 @@ export const useAgreements = () => {
     agreements, 
     isLoading,
     toggleAgreement,
+    saveAgreement,
     hasAgreement:       (agreementType: keyof typeof agreements) => agreements[agreementType],
     hasAllAgreements:   () => Object.values(agreements).every(Boolean),
     hasAnyAgreement:    () => Object.values(agreements).some(Boolean)

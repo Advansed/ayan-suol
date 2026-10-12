@@ -173,6 +173,10 @@ function VehicleCard({
         <Meta icon={<Calendar size={15} />} label={t('yearMileage')} value={yearLabel || '—'} />
       </div>
 
+      <div className={`${styles.stsNote} ${vehicle.sts ? styles.stsNote_ok : ''}`}>
+        {vehicle.sts ? t('stsLoaded') : t('stsMissing')}
+      </div>
+
       {needsVerify && (
         <div className={styles.warn}>
           <AlertTriangle size={14} strokeWidth={2} />

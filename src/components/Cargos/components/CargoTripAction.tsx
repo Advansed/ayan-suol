@@ -3,7 +3,7 @@ import { Camera, MessageSquare, Package, RefreshCw, Send, Star, type LucideIcon 
 import { DriverInfo } from '../../../Store/cargoStore';
 import { useChats } from '../../../Store/useChats';
 import { formatters } from '../../../utils/utils';
-import { latestPhotoBatch, photoSrc, LOAD_CARGO_PHOTO_STATUS, LOAD_SEAL_PHOTO_STATUS } from '../../../utils/orderPhotos';
+import { latestPhotoBatch, resolvePhotoBatch, LOAD_CARGO_PHOTO_STATUS, LOAD_SEAL_PHOTO_STATUS } from '../../../utils/orderPhotos';
 import { PhotoPreview } from '../../Chats/PhotoPreview';
 import styles from './CargoView.module.css';
 
@@ -175,7 +175,9 @@ export const CargoTripAction: React.FC<CargoTripActionProps> = ({
       try {
         const next: Record<number, unknown[]> = {};
         for (const status of statuses) {
-          next[status] = (await getPhotos(invoice.recipient, invoice.cargo, status)) || [];
+          next[status] = await resolvePhotoBatch(
+            latestPhotoBatch((await getPhotos(invoice.recipient, invoice.cargo, status)) || [])
+          );
         }
         if (!cancelled) setGroupFotos(next);
       } catch (err: unknown) {
@@ -204,7 +206,7 @@ export const CargoTripAction: React.FC<CargoTripActionProps> = ({
   const groupedPhotos = useMemo(() => {
     return photoGroups.map((group) => ({
       ...group,
-      srcs: latestPhotoBatch(groupFotos[group.status] || []).map(photoSrc).filter(Boolean),
+      srcs: (groupFotos[group.status] || []) as string[],
     }));
   }, [photoGroups, groupFotos]);
 

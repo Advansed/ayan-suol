@@ -21,6 +21,7 @@ export interface TransportData {
   vin?: string
   manufacture_year?: number
   image?: string
+  sts?: string
   transport_type?: TransportTypeField
   experience?: number
   load_capacity?: number

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router';
 import { useSocket } from '../../../Store/useSocket';
 import { useToken } from '../../../Store/loginStore';
@@ -52,6 +52,8 @@ function waitForSocketEvent<T>(
 
 export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => {
     const [invoices, setInvoices] = useState<DriverInfo[]>(info?.invoices ?? []);
+    const invoicesRef = useRef(invoices);
+    invoicesRef.current = invoices;
     const [contract, setContract] = useState<unknown>();
     const [isLoading, setIsLoading] = useState(false);
     const history = useHistory();
@@ -79,15 +81,14 @@ export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => 
     }, []);
 
     const applyInvoiceStatus = useCallback((infoRow: DriverInfo, status: number) => {
-        setInvoices(prevInvoices => {
-            const next = prevInvoices.map(invoice =>
-                invoice.guid === infoRow.guid
-                    ? { ...invoice, status: setStatus(status) as DriverInfo['status'] }
-                    : invoice
-            );
-            persistInvoices(infoRow.cargo, next);
-            return next;
-        });
+        const next = invoicesRef.current.map(invoice =>
+            invoice.guid === infoRow.guid
+                ? { ...invoice, status: setStatus(status) as DriverInfo['status'] }
+                : invoice
+        );
+        invoicesRef.current = next;
+        setInvoices(next);
+        persistInvoices(infoRow.cargo, next);
     }, [persistInvoices]);
 
     const handleAccept = useCallback(
@@ -214,11 +215,10 @@ export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => 
                 const handleOfferResponse = (response: { success: boolean; error?: string }) => {
                     if (response.success) {
                         toast.success('Предложение успешно удалено');
-                        setInvoices(prevInvoices => {
-                            const next = prevInvoices.filter(invoice => invoice.guid !== infoRow.guid);
-                            persistInvoices(infoRow.cargo, next);
-                            return next;
-                        });
+                        const next = invoicesRef.current.filter(invoice => invoice.guid !== infoRow.guid);
+                        invoicesRef.current = next;
+                        setInvoices(next);
+                        persistInvoices(infoRow.cargo, next);
                         finish(true);
                     } else {
                         toast.error(response.error || 'Ошибка удаления предложения');
@@ -251,15 +251,14 @@ export const useInvoices = ({ info }: UseInvoicesOptions): UseInvoicesReturn => 
                     tasks,
                 });
 
-                setInvoices(prevInvoices => {
-                    const next = prevInvoices.map(invoice =>
-                        invoice.guid === infoRow.guid
-                            ? { ...invoice, status: setStatus(20) as DriverInfo['status'] }
-                            : invoice
-                    );
-                    persistInvoices(infoRow.cargo, next);
-                    return next;
-                });
+                const next = invoicesRef.current.map(invoice =>
+                    invoice.guid === infoRow.guid
+                        ? { ...invoice, status: setStatus(20) as DriverInfo['status'] }
+                        : invoice
+                );
+                invoicesRef.current = next;
+                setInvoices(next);
+                persistInvoices(infoRow.cargo, next);
             } catch (error) {
                 console.error('Ошибка при завершении:', error);
             } finally {

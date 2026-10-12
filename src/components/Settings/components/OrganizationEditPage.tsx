@@ -15,7 +15,7 @@ export const OrganizationEditPage: React.FC = () => {
   const { t } = useTranslation('settings');
   const history = useHistory();
   const { companyData, updateCompany } = useProfile();
-  const { agreements, toggleAgreement, isLoading } = useAgreements();
+  const { agreements, saveAgreement, isLoading } = useAgreements();
   const [isEscrowOpen, setIsEscrowOpen] = useState(false);
 
   const isOrganizationFilled = (data: Partial<CompanyData> | null | undefined) => {
@@ -39,17 +39,17 @@ export const OrganizationEditPage: React.FC = () => {
   const organizationFilled = useMemo(() => isOrganizationFilled(companyData), [companyData]);
 
   useEffect(() => {
-    if (organizationFilled && !agreements.userAgreement && !isLoading) {
-      toggleAgreement('userAgreement');
+    if (organizationFilled && !agreements.escrow && !isLoading) {
+      saveAgreement('escrow', true);
     }
-  }, [agreements.userAgreement, isLoading, organizationFilled, toggleAgreement]);
+  }, [agreements.escrow, isLoading, organizationFilled, saveAgreement]);
 
   const handleSaveCompany = async (data: Partial<CompanyData>) => {
     const nextCompany = { ...(companyData || {}), ...data };
     const nextFilled = isOrganizationFilled(nextCompany);
 
-    if (nextFilled && !agreements.userAgreement) {
-      toggleAgreement('userAgreement');
+    if (nextFilled || agreements.escrow) {
+      saveAgreement('escrow', true);
     }
 
     await updateCompany(data);
@@ -59,11 +59,11 @@ export const OrganizationEditPage: React.FC = () => {
     <div className={`${styles.consentBlock} ${styles.consentBlockTop}`}>
       <div className={styles.checkboxWrapper}>
         <IonCheckbox
-          checked={agreements.userAgreement}
+          checked={Boolean(agreements.escrow)}
           disabled={isLoading || organizationFilled}
-          onIonChange={() => {
+          onIonChange={(event) => {
             if (organizationFilled) return;
-            toggleAgreement('userAgreement');
+            saveAgreement('escrow', Boolean(event.detail.checked));
           }}
         />
         <div className={styles.consentCheckboxText}>

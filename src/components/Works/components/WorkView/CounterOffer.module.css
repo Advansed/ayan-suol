@@ -59,6 +59,10 @@
   box-sizing: border-box;
 }
 
+.priceInput {
+  font-variant-numeric: tabular-nums;
+}
+
 .field input:focus {
   outline: none;
   border-color: var(--gvr-primary, #2b5adc);

@@ -9,7 +9,7 @@ import {
     LOAD_CARGO_PHOTO_STATUS,
     LOAD_SEAL_PHOTO_STATUS,
     latestPhotoBatch,
-    photoSrc,
+    resolvePhotoBatch,
 } from '../../../../utils/orderPhotos';
 
 interface LoadedCardProps {
@@ -37,8 +37,8 @@ export const LoadedCard: React.FC<LoadedCardProps> = ({ info, onChat, onSend, is
                 const cargoData = await getPhotos(info.recipient, info.cargo, LOAD_CARGO_PHOTO_STATUS);
                 const sealData = await getPhotos(info.recipient, info.cargo, LOAD_SEAL_PHOTO_STATUS);
                 if (cancelled) return;
-                setCargoFotos(latestPhotoBatch(cargoData || []).map(photoSrc).filter(Boolean));
-                setSealFotos(latestPhotoBatch(sealData || []).map(photoSrc).filter(Boolean));
+                setCargoFotos(await resolvePhotoBatch(latestPhotoBatch(cargoData || [])));
+                setSealFotos(await resolvePhotoBatch(latestPhotoBatch(sealData || [])));
             } catch (error: unknown) {
                 console.error(error);
             }

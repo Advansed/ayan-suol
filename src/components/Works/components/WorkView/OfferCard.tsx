@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ShieldCheck } from 'lucide-react';
 import { WorkInfo, WorkStatus } from '../../types';
@@ -7,7 +7,31 @@ import { offerTaxAmount, useLoginStore, useToken } from '../../../../Store/login
 import { useAccountData } from '../../../../Store/accountStore';
 import { useSocket } from '../../../../Store/useSocket';
 import { formatters } from '../../../../utils/utils';
+import { intlLocale } from '../../../../i18n';
 import styles from './CounterOffer.module.css';
+
+function formatGroupedPrice(price: number | undefined): string {
+  if (!price) return '';
+  return new Intl.NumberFormat(intlLocale(), {
+    maximumFractionDigits: 0,
+  }).format(Math.trunc(price));
+}
+
+function digitsBefore(value: string, caret: number): number {
+  return value.slice(0, Math.max(0, caret)).replace(/\D/g, '').length;
+}
+
+function caretAfterDigits(formatted: string, digits: number): number {
+  if (digits <= 0) return 0;
+  let seen = 0;
+  for (let i = 0; i < formatted.length; i += 1) {
+    if (/\d/.test(formatted[i])) {
+      seen += 1;
+      if (seen === digits) return i + 1;
+    }
+  }
+  return formatted.length;
+}
 
 interface CounterOfferCardProps {
   work: WorkInfo;
@@ -24,6 +48,8 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({ work, onSubm
   const [volume, setVolume] = useState<number>(work.volume);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const priceRef = useRef<HTMLInputElement>(null);
+  const priceCaretDigits = useRef<number | null>(null);
 
   const transport = useTransportStore((state) => state.data);
   const isOffered = work.status === WorkStatus.OFFERED;
@@ -46,9 +72,21 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({ work, onSubm
   }, [transport?.guid]);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const numValue = parseInt(e.target.value.replace(/\s/g, ''), 10) || 0;
+    const raw = e.target.value;
+    const caret = e.target.selectionStart ?? raw.length;
+    priceCaretDigits.current = digitsBefore(raw, caret);
+    const numValue = parseInt(raw.replace(/\D/g, ''), 10) || 0;
     setFormData({ ...formData, price: numValue });
   };
+
+  useLayoutEffect(() => {
+    const input = priceRef.current;
+    const digits = priceCaretDigits.current;
+    if (!input || digits == null) return;
+    const next = caretAfterDigits(formatGroupedPrice(formData.price), digits);
+    input.setSelectionRange(next, next);
+    priceCaretDigits.current = null;
+  }, [formData.price]);
 
   const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const weight = parseFloat(e.target.value) || 0;
@@ -61,11 +99,6 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({ work, onSubm
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setVolume(parseFloat(e.target.value) || 0);
-  };
-
-  const formatPrice = (price: number | undefined): string => {
-    if (!price) return '';
-    return String(price);
   };
 
   const transportLabel = transport
@@ -130,11 +163,13 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({ work, onSubm
           <label className={styles.field}>
             <span>{t('priceRub')}</span>
             <input
+              ref={priceRef}
+              className={styles.priceInput}
               type="text"
               inputMode="numeric"
-              value={formatPrice(formData.price)}
+              value={formatGroupedPrice(formData.price)}
               onChange={handlePriceChange}
-              placeholder="22500"
+              placeholder="22 500"
               disabled={isOffered}
             />
           </label>

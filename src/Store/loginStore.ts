@@ -17,6 +17,24 @@ export interface Agreements {
   personalData:       boolean
   userAgreement:      boolean
   marketing:          boolean
+  /** Согласие с договором эскроу */
+  escrow:             boolean
+}
+
+export const EMPTY_AGREEMENTS: Agreements = {
+  personalData: false,
+  userAgreement: false,
+  marketing: false,
+  escrow: false,
+}
+
+export function normalizeAgreements(raw?: Partial<Agreements> | null): Agreements {
+  return {
+    personalData: Boolean(raw?.personalData),
+    userAgreement: Boolean(raw?.userAgreement),
+    marketing: Boolean(raw?.marketing),
+    escrow: Boolean(raw?.escrow),
+  }
 }
 
 export interface UserData {
@@ -75,6 +93,7 @@ interface LoginActions {
   updateUser:         ( updates: Partial<UserData> ) => void
   clearAuth:          ( ) => void
   toggleAgreements:   ( agreementType: keyof Agreements ) => void
+  setAgreement:       ( agreementType: keyof Agreements, value: boolean ) => void
 }
 
 type LoginStore = LoginState & LoginActions
@@ -118,7 +137,7 @@ export const useLoginStore = create<LoginStore>()(
       seller:           '',
       gender:           true,
       ratings:          { orders: 0, rate: 0, invoices: 0, payd: 0 },
-      agreements:       { personalData: false, userAgreement: false, marketing: false },
+      agreements:       { ...EMPTY_AGREEMENTS },
       tax:              0,
 
       // ACTIONS
@@ -129,6 +148,12 @@ export const useLoginStore = create<LoginStore>()(
       setLoading:       (isLoading) => set({ isLoading }),
       setUser:          (userData) => set({
                         ...userData,
+                        ...(userData.agreements
+                          ? { agreements: normalizeAgreements({
+                              ...useLoginStore.getState().agreements,
+                              ...userData.agreements,
+                            }) }
+                          : {}),
                         ...(userData.tax !== undefined ? { tax: normalizeTax(userData.tax) } : {}),
                         isLoading: false
       }),
@@ -152,7 +177,7 @@ export const useLoginStore = create<LoginStore>()(
         seller:         '',
         gender:         true,
         ratings:        { orders: 0, rate: 0, invoices: 0, payd: 0 },
-        agreements:     { personalData: false, userAgreement: false, marketing: false },
+        agreements:     { ...EMPTY_AGREEMENTS },
         tax:            0,
       }),
       toggleAgreements: (agreementType) => 
@@ -161,7 +186,14 @@ export const useLoginStore = create<LoginStore>()(
             ...state.agreements,
             [agreementType]: !state.agreements[agreementType]
           }
-        }))
+        })),
+      setAgreement: (agreementType, value) =>
+        set((state) => ({
+          agreements: {
+            ...normalizeAgreements(state.agreements),
+            [agreementType]: value,
+          }
+        })),
     }),
     { name: 'login-store' }
   )
@@ -243,6 +275,8 @@ export const loginActions = {
   clearAuth:          ( ) => useLoginStore.getState().clearAuth(),
   updateUser:         ( updates: Partial<UserData> ) => useLoginStore.getState().updateUser(updates),
   toggleAgreements:   ( agreementType: keyof Agreements ) => useLoginStore.getState().toggleAgreements(agreementType),
+  setAgreement:       ( agreementType: keyof Agreements, value: boolean ) =>
+    useLoginStore.getState().setAgreement(agreementType, value),
 }
 
 // ============================================

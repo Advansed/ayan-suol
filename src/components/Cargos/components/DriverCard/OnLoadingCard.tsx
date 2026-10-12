@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IonButton, IonIcon, IonSpinner } from '@ionic/react';
 import { chatboxEllipsesOutline, cubeOutline, refreshOutline } from 'ionicons/icons';
 import { DriverInfo } from '../../../../Store/cargoStore';
@@ -8,7 +8,7 @@ import { PhotoPreview } from '../../../Chats/PhotoPreview';
 import {
     BODY_PHOTO_STATUS,
     latestPhotoBatch,
-    photoSrc,
+    resolvePhotoBatch,
 } from '../../../../utils/orderPhotos';
 
 interface OnLoadingCardProps {
@@ -44,7 +44,8 @@ export const OnLoadingCard: React.FC<OnLoadingCardProps> = ({
             if (showSpinner) setPhotosLoading(true);
             try {
                 const data = await getPhotos(info.recipient, info.cargo, BODY_PHOTO_STATUS);
-                if (!cancelled) setFotos(data || []);
+                const srcs = await resolvePhotoBatch(latestPhotoBatch(data || []));
+                if (!cancelled) setFotos(srcs);
             } catch (err: unknown) {
                 console.error(err);
                 if (!cancelled) setFotos([]);
@@ -65,10 +66,7 @@ export const OnLoadingCard: React.FC<OnLoadingCardProps> = ({
         };
     }, [info.recipient, info.cargo, getPhotos, photoTick]);
 
-    const photos = useMemo(
-        () => latestPhotoBatch(fotos).map(photoSrc).filter(Boolean),
-        [fotos]
-    );
+    const photos = fotos;
     const canStartLoading = !photosLoading && photos.length > 0;
 
     return (

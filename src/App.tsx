@@ -23,23 +23,22 @@ import { useLogin } from './Store/useLogin';
 import { ServerConnectionGuard } from './components/ServerConnectionGuard';
 import { useSocketManager } from './services/useSocketManager';
 import { useApp } from './Store/useApp';
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getVersion } from './Store/api';
 import { AppShell } from './layout';
 import { HomePage } from './pages/Home/HomePage';
 import { LandingPage } from './pages/Landing/LandingPage';
 import { StubPage } from './pages/Stub/StubPage';
-import {
-  ArchivePage,
-  ChatsPage,
-  DriversRoutePage,
-  FeedPage,
-  FinancePage,
-  ProfileRoutePage,
-  SettingsRoutePage,
-  VehiclesPage,
-} from './pages/RoutePages';
+
+const FeedPage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.FeedPage })));
+const ArchivePage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.ArchivePage })));
+const ChatsPage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.ChatsPage })));
+const DriversRoutePage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.DriversRoutePage })));
+const FinancePage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.FinancePage })));
+const ProfileRoutePage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.ProfileRoutePage })));
+const SettingsRoutePage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.SettingsRoutePage })));
+const VehiclesPage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.VehiclesPage })));
 
 setupIonicReact({
   mode: 'ios',
@@ -84,6 +83,7 @@ const AppContent: React.FC = () => {
       {auth ? (
         <IonReactRouter>
           <AppShell>
+            <Suspense fallback={null}>
             <Switch>
               <Route exact path="/" component={HomePage} />
               <Route exact path="/feed" component={FeedPage} />
@@ -147,6 +147,7 @@ const AppContent: React.FC = () => {
                 <Redirect to="/" />
               </Route>
             </Switch>
+            </Suspense>
           </AppShell>
         </IonReactRouter>
       ) : (

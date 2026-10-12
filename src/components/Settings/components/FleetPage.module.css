@@ -257,6 +257,17 @@
   font-weight: 600;
 }
 
+.stsNote {
+  margin: 0 18px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--gvr-text-muted, #8b93a7);
+}
+
+.stsNote_ok {
+  color: #15803d;
+}
+
 .addCard {
   display: flex;
   flex-direction: column;

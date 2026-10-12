@@ -1,4 +1,4 @@
-import { resolveImageSrc } from './fileUpload';
+import { resolveImageSrc, resolveStoredImageSrc } from './fileUpload';
 
 /** Фото кузова при прибытии на погрузку (sendImage / getPhotos) */
 export const BODY_PHOTO_STATUS = 14;
@@ -24,6 +24,11 @@ export function photoRaw(item: unknown): string {
 
 export function photoSrc(item: unknown): string {
   return resolveImageSrc(photoRaw(item));
+}
+
+export async function resolvePhotoBatch(items: unknown[]): Promise<string[]> {
+  const urls = await Promise.all(items.map((item) => resolveStoredImageSrc(photoRaw(item))));
+  return urls.filter(Boolean);
 }
 
 function photoTime(item: unknown): number {

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, Truck, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Camera, FileText, Truck, X } from 'lucide-react';
 import {
   TransportData,
   useTransportTypes,
@@ -9,7 +10,7 @@ import {
   transportDisplayName,
   transportDriverName,
 } from '../../../Store/transportStore';
-import { uploadTransportPhoto, useResolvedImageSrc } from '../../../utils/fileUpload';
+import { uploadTransportPhoto, uploadTransportSts, useResolvedImageSrc } from '../../../utils/fileUpload';
 import { useToast } from '../../Toast';
 import styles from './VehicleModal.module.css';
 
@@ -26,14 +27,21 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
   onClose,
   onSave,
 }) => {
+  const { t } = useTranslation('fleet');
   const types = useTransportTypes();
   const toast = useToast();
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const stsInputRef = useRef<HTMLInputElement>(null);
   const isEdit = Boolean(vehicle?.guid);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const savedPhotoSrc = useResolvedImageSrc(photoFile ? null : vehicle?.image);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [stsFile, setStsFile] = useState<File | null>(null);
+  const [stsPreview, setStsPreview] = useState('');
+  const savedStsSrc = useResolvedImageSrc(stsFile ? null : vehicle?.sts);
+  const [stsUploading, setStsUploading] = useState(false);
+  const [page, setPage] = useState<1 | 2>(1);
   const [form, setForm] = useState({
     name: '',
     licensePlate: '',
@@ -58,13 +66,17 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
     });
     setPhotoFile(null);
     setPhotoPreview('');
+    setStsFile(null);
+    setStsPreview('');
+    setPage(1);
   }, [vehicle, types]);
 
   useEffect(() => {
     return () => {
       if (photoPreview.startsWith('blob:')) URL.revokeObjectURL(photoPreview);
+      if (stsPreview.startsWith('blob:')) URL.revokeObjectURL(stsPreview);
     };
-  }, [photoPreview]);
+  }, [photoPreview, stsPreview]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -79,7 +91,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
   };
 
   const currentType = asTransportType(vehicle?.transport_type);
-  const busy = saving || photoUploading;
+  const busy = saving || photoUploading || stsUploading;
   const canSubmit = Boolean(form.name.trim() && form.licensePlate.trim() && !busy);
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,11 +100,11 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
     if (!file) return;
 
     if (!file.type.match(/^image\/(png|jpe?g|webp)$/i)) {
-      toast.error('Формат файла должен быть PNG, JPG или WebP');
+      toast.error(t('badFormat'));
       return;
     }
     if (file.size > 12 * 1024 * 1024) {
-      toast.error('Размер файла не должен превышать 12 МБ');
+      toast.error(t('tooLarge'));
       return;
     }
 
@@ -100,9 +112,31 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
     setPhotoPreview(URL.createObjectURL(file));
   };
 
+  const handleStsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (!file.type.match(/^image\/(png|jpe?g|webp)$/i)) {
+      toast.error(t('badFormat'));
+      return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      toast.error(t('tooLarge'));
+      return;
+    }
+
+    setStsFile(file);
+    setStsPreview(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!canSubmit) return;
+    if (page === 1) {
+      setPage(2);
+      return;
+    }
 
     const data: Partial<TransportData> = {
       name: form.name.trim(),
@@ -127,22 +161,39 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
       if (!isNaN(year)) data.manufacture_year = year;
     }
 
+    const transportId = vehicle?.guid || (photoFile || stsFile ? crypto.randomUUID() : '');
+    if (transportId && (photoFile || stsFile)) data.guid = transportId;
+
     if (photoFile) {
       setPhotoUploading(true);
       try {
-        const transportId = vehicle?.guid || crypto.randomUUID();
         const { filePath } = await uploadTransportPhoto(photoFile, transportId);
-        if (!filePath) throw new Error('Сервер не вернул путь к файлу');
-        data.guid = transportId;
+        if (!filePath) throw new Error(t('noFilePath'));
         data.image = filePath;
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Не удалось загрузить фото');
+        toast.error(error instanceof Error ? error.message : t('photoFailed'));
         setPhotoUploading(false);
         return;
       }
       setPhotoUploading(false);
     } else if (vehicle?.image) {
       data.image = vehicle.image;
+    }
+
+    if (stsFile) {
+      setStsUploading(true);
+      try {
+        const { filePath } = await uploadTransportSts(stsFile, transportId);
+        if (!filePath) throw new Error(t('noFilePath'));
+        data.sts = filePath;
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : t('stsFailed'));
+        setStsUploading(false);
+        return;
+      }
+      setStsUploading(false);
+    } else if (vehicle?.sts) {
+      data.sts = vehicle.sts;
     }
 
     await onSave(data);
@@ -158,17 +209,22 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
         onClick={(event) => event.stopPropagation()}
       >
         <header className={styles.head}>
-          <h2 id="vehicle-modal-title" className={styles.title}>
-            {isEdit ? 'Изменить машину' : 'Добавить машину'}
-          </h2>
-          <button type="button" className={styles.close} onClick={onClose} aria-label="Закрыть">
+          <div>
+            <h2 id="vehicle-modal-title" className={styles.title}>
+              {page === 2 ? t('stsTitle') : isEdit ? t('editTitle') : t('add')}
+            </h2>
+            <p className={styles.step}>{t('pageOf', { page, total: 2 })}</p>
+          </div>
+          <button type="button" className={styles.close} onClick={onClose} aria-label={t('close')}>
             <X size={20} strokeWidth={2} />
           </button>
         </header>
 
         <form className={styles.form} onSubmit={handleSubmit}>
+          {page === 1 && (
+          <>
           <div className={styles.photoField}>
-            <span>Фото машины</span>
+            <span>{t('photo')}</span>
             <button
               type="button"
               className={styles.photoFrame}
@@ -176,12 +232,12 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
               disabled={busy}
             >
               {photoPreview || savedPhotoSrc ? (
-                <img src={photoPreview || savedPhotoSrc} alt="Фото машины" className={styles.photoImg} />
+                <img src={photoPreview || savedPhotoSrc} alt={t('photo')} className={styles.photoImg} />
               ) : (
                 <div className={styles.photoEmpty}>
                   <Truck size={36} strokeWidth={1.5} />
-                  <p>Добавьте фото кузова или машины</p>
-                  <span>PNG, JPG или WebP, до 12 МБ</span>
+                  <p>{t('photoEmpty')}</p>
+                  <span>{t('fileHint')}</span>
                 </div>
               )}
             </button>
@@ -201,46 +257,46 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
             >
               <Camera size={16} strokeWidth={2} />
               {photoUploading
-                ? 'Загрузка…'
+                ? t('uploading')
                 : photoPreview || savedPhotoSrc
-                  ? 'Заменить фото'
-                  : 'Загрузить фото'}
+                  ? t('replacePhoto')
+                  : t('uploadPhoto')}
             </button>
           </div>
 
           <label className={styles.field}>
             <span>
-              Марка и модель <i>*</i>
+              {t('brand')} <i>*</i>
             </span>
             <input
               value={form.name}
               onChange={(e) => setField('name', e.target.value)}
-              placeholder="Например, МАЗ 5440"
+              placeholder={t('brandPlaceholder')}
             />
           </label>
 
           <div className={styles.row2}>
             <label className={styles.field}>
               <span>
-                Гос. номер <i>*</i>
+                {t('plate')} <i>*</i>
               </span>
               <input
                 value={form.licensePlate}
                 onChange={(e) => setField('licensePlate', e.target.value)}
-                placeholder="А 123 ВС 77"
+                placeholder={t('platePlaceholder')}
               />
             </label>
             <label className={styles.field}>
-              <span>Тип кузова</span>
+              <span>{t('bodyType')}</span>
               <select
                 value={form.transportType}
                 onChange={(e) => setField('transportType', e.target.value)}
               >
-                <option value="">Выберите</option>
+                <option value="">{t('choose')}</option>
                 {form.transportType &&
                   !types.some((type) => type.id === form.transportType) && (
                     <option value={form.transportType}>
-                      {currentType?.name || 'Текущий тип'}
+                      {currentType?.name || t('currentType')}
                     </option>
                   )}
                 {types.map((type) => (
@@ -254,7 +310,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
 
           <div className={styles.row3}>
             <label className={styles.field}>
-              <span>Тоннаж, т</span>
+              <span>{t('tonsLabel')}</span>
               <input
                 type="number"
                 step="0.1"
@@ -264,7 +320,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
               />
             </label>
             <label className={styles.field}>
-              <span>Объём, м³</span>
+              <span>{t('volumeLabel')}</span>
               <input
                 type="number"
                 step="0.1"
@@ -274,7 +330,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
               />
             </label>
             <label className={styles.field}>
-              <span>Год выпуска</span>
+              <span>{t('year')}</span>
               <input
                 type="number"
                 value={form.manufactureYear}
@@ -286,15 +342,15 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
 
           <div className={styles.row2}>
             <label className={styles.field}>
-              <span>Водитель</span>
+              <span>{t('driver')}</span>
               <input
                 value={form.driverFio}
                 onChange={(e) => setField('driverFio', e.target.value)}
-                placeholder="Фамилия И.О. (необязательно)"
+                placeholder={t('driverPlaceholder')}
               />
             </label>
             <label className={styles.field}>
-              <span>Телефон водителя</span>
+              <span>{t('driverPhone')}</span>
               <input
                 type="tel"
                 value={form.driverPhone}
@@ -303,13 +359,69 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
               />
             </label>
           </div>
+          </>
+          )}
+
+          {page === 2 && (
+          <div className={styles.photoField}>
+            <span>{t('stsTitle')}</span>
+            <button
+              type="button"
+              className={styles.photoFrame}
+              onClick={() => stsInputRef.current?.click()}
+              disabled={busy}
+            >
+              {stsPreview || savedStsSrc ? (
+                <img src={stsPreview || savedStsSrc} alt={t('stsTitle')} className={styles.photoImg} />
+              ) : (
+                <div className={styles.photoEmpty}>
+                  <FileText size={36} strokeWidth={1.5} />
+                  <p>{t('stsEmpty')}</p>
+                  <span>{t('fileHint')}</span>
+                </div>
+              )}
+            </button>
+            <input
+              ref={stsInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              className={styles.fileInput}
+              onChange={handleStsChange}
+              disabled={busy}
+            />
+            <button
+              type="button"
+              className={styles.photoBtn}
+              onClick={() => stsInputRef.current?.click()}
+              disabled={busy}
+            >
+              <FileText size={16} strokeWidth={2} />
+              {stsUploading
+                ? t('uploading')
+                : stsPreview || savedStsSrc
+                  ? t('replaceSts')
+                  : t('uploadSts')}
+            </button>
+          </div>
+          )}
 
           <div className={styles.actions}>
-            <button type="submit" className={styles.submit} disabled={!canSubmit}>
-              {busy ? 'Сохранение…' : isEdit ? 'Сохранить' : 'Добавить в парк'}
-            </button>
-            <button type="button" className={styles.cancel} onClick={onClose}>
-              Отмена
+            {page === 1 ? (
+              <button type="submit" className={styles.submit} disabled={!canSubmit}>
+                {t('next')}
+              </button>
+            ) : (
+              <button type="submit" className={styles.submit} disabled={!canSubmit}>
+                {busy ? t('saving') : isEdit ? t('save') : t('addToFleet')}
+              </button>
+            )}
+            <button
+              type="button"
+              className={styles.cancel}
+              onClick={page === 1 ? onClose : () => setPage(1)}
+              disabled={busy}
+            >
+              {page === 1 ? t('cancel') : t('back')}
             </button>
           </div>
         </form>
