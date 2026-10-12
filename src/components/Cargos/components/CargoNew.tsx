@@ -31,6 +31,7 @@ import {
   normalizeCargoRoute,
 } from '../../../Store/cargoStore';
 import { useLoginStore, useToken } from '../../../Store/loginStore';
+import { api } from '../../../Store/api';
 import {
   formatHaulPriceRange,
   haulPriceRange,
@@ -527,6 +528,52 @@ export const CargoNew: React.FC<CargoNewProps> = ({
         : formula === 2 && hasTariffs
           ? `${tariffParts} Укажите маршрут`
           : null;
+
+  const [serverQuote, setServerQuote] = useState<{
+    min: number;
+    target: number;
+    max: number;
+    currency: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!token || !transportTypeId || !routeKm) {
+      setServerQuote(null);
+      return;
+    }
+    if (formula === 1 && !(Number(info.weight) > 0)) {
+      setServerQuote(null);
+      return;
+    }
+    let cancelled = false;
+    api('pricing/calculate', {
+      token,
+      transportTypeId,
+      distanceKm: routeKm,
+      weight: info.weight,
+    })
+      .then((res) => {
+        if (cancelled) return;
+        const data = res?.data;
+        if (
+          res?.success &&
+          data &&
+          Number.isFinite(Number(data.min)) &&
+          Number.isFinite(Number(data.target)) &&
+          Number.isFinite(Number(data.max))
+        ) {
+          setServerQuote(data);
+        } else {
+          setServerQuote(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setServerQuote(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, transportTypeId, routeKm, info.weight, formula]);
 
   const buildCargo = (): CargoInfo => {
     const advance =
@@ -1204,6 +1251,15 @@ export const CargoNew: React.FC<CargoNewProps> = ({
               <div className={styles.readonly}>{formatNumber(totalWithInsurance) || '0'} ₽</div>
             </Field>
           </div>
+          {serverQuote ? (
+            <p className={styles.helpText}>
+              Минимум <strong>{formatNumber(serverQuote.min)} ₽</strong>
+              {' · '}
+              Середина <strong>{formatNumber(serverQuote.target)} ₽</strong>
+              {' · '}
+              Максимум <strong>{formatNumber(serverQuote.max)} ₽</strong>
+            </p>
+          ) : null}
           {priceHint ? <p className={styles.helpText}>{priceHint}</p> : null}
         </Section>
 
