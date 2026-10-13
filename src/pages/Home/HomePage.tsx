@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import {
@@ -17,13 +17,12 @@ import {
   Wallet,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useLoginStore, useToken } from '../../Store/loginStore';
+import { useLoginStore } from '../../Store/loginStore';
 import { intlLocale } from '../../i18n';
 import { useTransportData } from '../../Store/transportStore';
 import { useCompanyData } from '../../Store/companyStore';
 import { useAccountData } from '../../Store/accountStore';
 import { isExecutorRole } from '../../Store/roles';
-import { useSocket } from '../../Store/useSocket';
 import { PanelFrame } from '../../layout/PanelFrame';
 import styles from './HomePage.module.css';
 
@@ -47,19 +46,12 @@ export const HomePage: React.FC = () => {
   const name = useLoginStore((s) => s.name);
   const userType = useLoginStore((s) => s.user_type);
   const ratings = useLoginStore((s) => s.ratings);
-  const token = useToken();
-  const { socket, isConnected } = useSocket();
   const accountData = useAccountData();
   const transport = useTransportData();
   const company = useCompanyData();
 
   const isCarrier = isExecutorRole(userType);
   const displayName = name?.trim() || 'Пользователь';
-
-  useEffect(() => {
-    if (!token || !isConnected || !socket) return;
-    socket.emit('get_balance', { token });
-  }, [token, isConnected, socket]);
 
   const checklist = useMemo(() => {
     const items = [
@@ -73,7 +65,7 @@ export const HomePage: React.FC = () => {
       {
         id: 'sts',
         label: t('checkSts'),
-        done: Boolean(transport?.image),
+        done: Boolean(transport?.sts || transport?.image),
         icon: FileText,
         path: '/vehicles',
         roles: [2, 3],

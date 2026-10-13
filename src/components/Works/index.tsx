@@ -553,16 +553,10 @@ export type {
     DriverTransport
 } from './types';
 
-// Экспорт хуков для внешнего использования
-export {
-    useOfferForm
-} from './hooks';
-
 // Экспорт компонентов для внешнего использования
 export {
     WorkCard,
     WorksList,
     WorkView,
-    WorkOffer,
-    WorkArchive
+    WorkOffer
 } from './components';

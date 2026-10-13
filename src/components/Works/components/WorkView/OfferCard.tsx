@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { ChevronDown, ShieldCheck } from 'lucide-react';
 import { WorkInfo, WorkStatus } from '../../types';
 import { useTransportStore, transportDisplayName } from '../../../../Store/transportStore';
-import { offerTaxAmount, useLoginStore, useToken } from '../../../../Store/loginStore';
+import { offerTaxAmount, useLoginStore } from '../../../../Store/loginStore';
 import { useAccountData } from '../../../../Store/accountStore';
-import { useSocket } from '../../../../Store/useSocket';
 import { formatters } from '../../../../utils/utils';
 import { intlLocale } from '../../../../i18n';
 import styles from './CounterOffer.module.css';
@@ -55,15 +54,8 @@ export const CounterOfferCard: React.FC<CounterOfferCardProps> = ({ work, onSubm
   const isOffered = work.status === WorkStatus.OFFERED;
   const tax = useLoginStore((state) => state.tax);
   const accountData = useAccountData();
-  const token = useToken();
-  const { socket } = useSocket();
   const required = offerTaxAmount(Number(formData.price) || 0, tax);
   const balance = accountData?.balance;
-
-  useEffect(() => {
-    if (isOffered || !token || !socket) return;
-    socket.emit('get_balance', { token });
-  }, [isOffered, token, socket]);
 
   useEffect(() => {
     if (transport?.guid) {

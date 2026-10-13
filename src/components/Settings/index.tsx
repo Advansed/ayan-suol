@@ -32,5 +32,4 @@ export const Settings: React.FC = () => {
   );
 };
 
-export { Cabinet } from './Cabinet';
 export { SettingsPage } from './components/SettingsPage';

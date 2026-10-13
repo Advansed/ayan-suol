@@ -153,6 +153,7 @@ export const useWallet = () => {
   const setTransactions = useAccountStore((s) => s.setTransactions);
 
   const pendingRequests = useRef<Map<string, { resolve: Function; reject: Function }>>(new Map());
+  const isRefreshingRef = useRef(false);
 
   const socketRequest = useCallback(
     (event: string, data: any, responseEvent: string): Promise<any> => {
@@ -313,9 +314,17 @@ export const useWallet = () => {
 
   const refreshWallet = useCallback(
     async (opts?: { silent?: boolean }) => {
+      if (isRefreshingRef.current) return;
+      isRefreshingRef.current = true;
       const silent = opts?.silent ?? false;
-      await get_balanse({ silent });
-      await get_transactions({ silent });
+      try {
+        await Promise.all([
+          get_balanse({ silent }),
+          get_transactions({ silent }),
+        ]);
+      } finally {
+        isRefreshingRef.current = false;
+      }
     },
     [get_balanse, get_transactions]
   );

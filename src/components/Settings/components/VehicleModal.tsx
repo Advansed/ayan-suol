@@ -11,6 +11,8 @@ import {
   transportDriverName,
 } from '../../../Store/transportStore';
 import { uploadTransportPhoto, uploadTransportSts, useResolvedImageSrc } from '../../../utils/fileUpload';
+import { useLoginStore } from '../../../Store/loginStore';
+import { isExecutorRole } from '../../../Store/roles';
 import { useToast } from '../../Toast';
 import styles from './VehicleModal.module.css';
 
@@ -30,6 +32,8 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
   const { t } = useTranslation('fleet');
   const types = useTransportTypes();
   const toast = useToast();
+  const { name: userName, phone: userPhone, user_type } = useLoginStore();
+  const isExecutor = isExecutorRole(user_type);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const stsInputRef = useRef<HTMLInputElement>(null);
   const isEdit = Boolean(vehicle?.guid);
@@ -54,6 +58,10 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
   });
 
   useEffect(() => {
+    const isNew = !vehicle?.guid;
+    const defaultFio = isNew && isExecutor ? (userName || '') : '';
+    const defaultPhone = isNew && isExecutor ? (userPhone || '') : '';
+
     setForm({
       name: transportDisplayName(vehicle),
       licensePlate: vehicle?.license_plate || vehicle?.number || '',
@@ -61,15 +69,15 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
       loadCapacity: String(vehicle?.load_capacity ?? vehicle?.capacity ?? ''),
       volume: String(vehicle?.volume ?? ''),
       manufactureYear: String(vehicle?.manufacture_year ?? vehicle?.year ?? ''),
-      driverFio: transportDriverName(vehicle),
-      driverPhone: vehicle?.driver_phone || (typeof vehicle?.driver === 'object' ? vehicle.driver?.phone || '' : ''),
+      driverFio: transportDriverName(vehicle) || defaultFio,
+      driverPhone: vehicle?.driver_phone || (typeof vehicle?.driver === 'object' ? vehicle.driver?.phone || '' : '') || defaultPhone,
     });
     setPhotoFile(null);
     setPhotoPreview('');
     setStsFile(null);
     setStsPreview('');
     setPage(1);
-  }, [vehicle, types]);
+  }, [vehicle, types, isExecutor, userName, userPhone]);
 
   useEffect(() => {
     return () => {
@@ -138,11 +146,15 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
       return;
     }
 
+    const finalDriverFio = form.driverFio.trim() || (isExecutor && !isEdit ? (userName || '') : '');
+    const finalDriverPhone = form.driverPhone.trim() || (isExecutor && !isEdit ? (userPhone || '') : '');
+
     const data: Partial<TransportData> = {
       name: form.name.trim(),
       license_plate: form.licensePlate.trim(),
-      driver_fio: form.driverFio.trim(),
-      driver_phone: form.driverPhone.trim(),
+      driver_fio: finalDriverFio,
+      driver_phone: finalDriverPhone,
+      driver: finalDriverFio || finalDriverPhone ? { fio: finalDriverFio, phone: finalDriverPhone } : undefined,
     };
 
     if (form.transportType.trim()) {
@@ -186,6 +198,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
         const { filePath } = await uploadTransportSts(stsFile, transportId);
         if (!filePath) throw new Error(t('noFilePath'));
         data.sts = filePath;
+        data.verified = true;
       } catch (error) {
         toast.error(error instanceof Error ? error.message : t('stsFailed'));
         setStsUploading(false);
@@ -194,6 +207,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
       setStsUploading(false);
     } else if (vehicle?.sts) {
       data.sts = vehicle.sts;
+      data.verified = true;
     }
 
     await onSave(data);

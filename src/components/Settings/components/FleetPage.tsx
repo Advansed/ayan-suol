@@ -123,8 +123,8 @@ function VehicleCard({
     (typeof vehicle.driver === 'object' && vehicle.driver ? vehicle.driver.phone || '' : '');
   const driver =
     transportDriverName(vehicle) || (driverPhone ? formatPhonePretty(driverPhone) : '') || t('unassigned');
-  const verified = vehicle.verified ?? Boolean(vehicle.vin && vehicle.image);
-  const needsVerify = !vehicle.vin || !vehicle.image;
+  const verified = vehicle.verified ?? Boolean(vehicle.sts);
+  const needsVerify = !vehicle.sts && !vehicle.verified;
   const capacityLabel = [
     tons != null ? t('tons', { value: formatNum(tons) }) : '',
     volume != null ? t('volume', { value: formatNum(volume) }) : '',

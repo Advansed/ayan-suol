@@ -167,7 +167,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
 
             {publishedAt && (
                 <div className={styles.publishedRow} title={publishedDateTime(publishedAt)}>
-                    <span className={styles.publishedLabel}>Опубликовано</span>
+                    <span className={styles.publishedLabel}>{t('publishedLabel', { defaultValue: 'Опубликовано' })}</span>
                     <span className={styles.publishedValue}>{publishedDateTime(publishedAt)}</span>
                 </div>
             )}

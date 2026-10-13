@@ -5,6 +5,7 @@ import { useSocket } from './useSocket'
 import { isExecutorRole } from './roles'
 import { companyActions, CompanyData, normalizeCompany } from './companyStore'
 import { transportActions, asTransportList } from './transportStore'
+import { accountActions } from './accountStore'
 
 // ============================================
 // HOOK
@@ -16,6 +17,7 @@ export const useApp = () => {
   const hasLoadedCompany = useRef(false)
   const loadedTransportFor = useRef<number | null>(null)
   const hasLoadedTransportTypes = useRef(false)
+  const hasLoadedBalance = useRef(false)
 
   // Загрузка данных компании при авторизации (обе роли — нужен is_verified)
   useEffect(() => {
@@ -85,6 +87,21 @@ export const useApp = () => {
 
     hasLoadedTransportTypes.current = true
     emit('get_transport_types', { token })
+  }, [auth, isConnected, token, emit])
+
+  // Баланс пользователя при авторизации
+  useEffect(() => {
+    if (auth && isConnected && token && !hasLoadedBalance.current) {
+      hasLoadedBalance.current = true
+      accountActions.setLoading(true)
+      emit('get_balance', { token })
+    }
+
+    // Сброс флага при выходе
+    if (!auth) {
+      hasLoadedBalance.current = false
+      accountActions.reset()
+    }
   }, [auth, isConnected, token, emit])
 
   return {

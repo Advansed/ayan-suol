@@ -155,6 +155,10 @@ export function asTransportList(raw: unknown): TransportData[] {
       if (driver.fio && !transport.driver_fio) transport.driver_fio = String(driver.fio)
     }
 
+    if (transport.verified == null && transport.sts) {
+      transport.verified = true
+    }
+
     return transport
   })
 }
@@ -241,7 +245,7 @@ function sameTransport(a: TransportData, b: TransportData): boolean {
 function mergeItems(items: TransportData[], data: TransportData): TransportData[] {
   const idx = items.findIndex((item) => sameTransport(item, data))
   if (idx >= 0) return items.map((item, i) => (i === idx ? { ...item, ...data } : item))
-  return items.length ? items : [data]
+  return items.length ? [...items, data] : [data]
 }
 
 export const useTransportData = () => useTransportStore((state) => state.data)

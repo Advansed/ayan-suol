@@ -9,10 +9,6 @@ import panelStyles from '../layout/PanelFrame.module.css';
 
 const Cargos = lazy(() => import('../components/Cargos').then((m) => ({ default: m.Cargos })));
 const Works = lazy(() => import('../components/Works').then((m) => ({ default: m.Works })));
-const CargoArchive = lazy(() => import('../components/Cargos/components/CargoArchive'));
-const WorkArchive = lazy(() =>
-  import('../components/Works/components/WorkArchive').then((m) => ({ default: m.WorkArchive })),
-);
 const DriversPage = lazy(() =>
   import('../components/Drivers/DriversPage').then((m) => ({ default: m.DriversPage })),
 );
@@ -44,19 +40,6 @@ export const FeedPage: React.FC = () => {
     <div className="web-performer-feed">
       <Cargos />
     </div>
-  );
-};
-
-/** Архив */
-export const ArchivePage: React.FC = () => {
-  const { t } = useTranslation('works');
-  const { user_type } = useUserType();
-  return (
-    <PanelFrame title={t('archiveTitle')} subtitle={t('archiveSub')}>
-      <div className="web-list-layout">
-        {isExecutorRole(user_type) ? <WorkArchive /> : <CargoArchive />}
-      </div>
-    </PanelFrame>
   );
 };
 

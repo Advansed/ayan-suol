@@ -120,7 +120,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
         Boolean(transportData?.guid || transportData?.license_plate || transportData?.number);
     const organizationRequired = !companyLoading && companyCompletion < 80;
 
-    const actionHint = WORK_CURRENT_ACTION[workInfo.status] || 'Открыть действия по заказу';
+    const actionHint = WORK_CURRENT_ACTION[workInfo.status] || t('orderActionHint');
     const hasInteractiveAction =
         workInfo.status !== WorkStatus.COMPLETED &&
         workInfo.status !== WorkStatus.REJECTED;
@@ -134,25 +134,25 @@ export const WorkView: React.FC<WorkViewProps> = ({
         (isNew && !slotsOpen);
     const ctaLabel =
         workInfo.status === WorkStatus.REJECTED
-            ? 'Вы отказались от заказа'
+            ? t('ctaRejected')
             : workInfo.status === WorkStatus.COMPLETED
-              ? 'Заказ завершён'
+              ? t('ctaCompleted')
               : isNew && !slotsOpen
-                ? 'Все машины набраны'
+                ? t('ctaSlotsFull')
                 : isNew
-                  ? 'Откликнуться'
+                  ? t('ctaRespond')
                   : isBidding
-                    ? 'Изменить предложение'
+                    ? t('ctaChangeOffer')
                     : workInfo.status === WorkStatus.TO_LOAD && !workInfo.signed
-                      ? 'Подписать договор'
+                      ? t('ctaSignContract')
                       : workInfo.status === WorkStatus.TO_LOAD && workInfo.signed
-                        ? 'Приехал на погрузку'
+                        ? t('ctaArrivedLoad')
                       : workInfo.status === WorkStatus.ON_LOAD
-                        ? 'Фото кузова'
+                        ? t('ctaBodyPhotos')
                         : workInfo.status === WorkStatus.LOADED
-                          ? 'Фото груза и пломбы'
+                          ? t('ctaCargoPhotos')
                           : hasInteractiveAction
-                          ? 'Продолжить'
+                          ? t('ctaContinue')
                           : '';
     const statusKind = feedStatusKind(workInfo.status);
     const badgeClass =
@@ -168,7 +168,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
     const publishedAt = resolvePublishedAt(workInfo);
     const subtitleParts = [
         workInfo.category?.trim() || '',
-        publishedAt ? `Опубликовано: ${publishedDateTime(publishedAt)}` : '',
+        publishedAt ? t('publishedLine', { date: publishedDateTime(publishedAt) }) : '',
     ].filter(Boolean);
 
     // Смена этапа с сервера — закрыть модалку, чтобы показать новое действие
@@ -180,9 +180,9 @@ export const WorkView: React.FC<WorkViewProps> = ({
         if (companyLoading || transportLoading || companyCompletion < 80) return;
         if (hasTransport) return;
         onBack();
-        toast.info('Добавьте транспорт, чтобы откликнуться на заказ');
+        toast.info(t('addTransportToast'));
         hist.push('/vehicles');
-    }, [companyLoading, companyCompletion, transportLoading, hasTransport, onBack, toast, hist]);
+    }, [companyLoading, companyCompletion, transportLoading, hasTransport, onBack, toast, hist, t]);
 
     const handleOffer = async (data: Partial<WorkInfo>, volume: number): Promise<void> => {
         const updatedWork: WorkInfo = {
@@ -212,9 +212,9 @@ export const WorkView: React.FC<WorkViewProps> = ({
     const handleOpenChat = () => {
         const recipient = workInfo.recipient;
         const cargo = workInfo.cargo || workInfo.guid;
-        const name = getWorkCustomerName(workInfo) || 'Заказчик';
+        const name = getWorkCustomerName(workInfo) || t('sender');
         if (!recipient || !cargo) {
-            toast.error('Не удалось открыть чат по этому заказу');
+            toast.error(t('chatOpenError'));
             return;
         }
         setCurrentChat(recipient, cargo);
@@ -311,13 +311,13 @@ export const WorkView: React.FC<WorkViewProps> = ({
 
             {workInfo.status === WorkStatus.COMPLETED && (
                 <div className={styles.doneNote}>
-                    Заказ завершён. Дальнейших действий не требуется.
+                    {t('orderDoneNote')}
                 </div>
             )}
 
             {workInfo.status === WorkStatus.REJECTED && (
                 <div className={styles.doneNote}>
-                    Предложение отклонено. Можно вернуться к ленте заказов.
+                    {t('orderRejectedNote')}
                 </div>
             )}
         </>
@@ -339,7 +339,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
                         ЗК-{workFormatters.shortId(workInfo.guid || workInfo.cargo)}
                     </span>
                 </div>
-                <h1 className={styles.title}>{workInfo.name || 'Без названия'}</h1>
+                <h1 className={styles.title}>{workInfo.name || t('untitled')}</h1>
                 {subtitleParts.length > 0 && (
                     <p className={styles.subtitle}>{subtitleParts.join(' · ')}</p>
                 )}
@@ -354,11 +354,10 @@ export const WorkView: React.FC<WorkViewProps> = ({
                     <section className={styles.bidsCard}>
                         <p className={styles.bidsTitle}>
                             <Handshake size={16} strokeWidth={2} />
-                            Идут торги по заказу
+                            {t('bidsTitle')}
                         </p>
                         <p className={styles.bidsText}>
-                            Заказчик рассматривает предложения нескольких перевозчиков. Вы можете
-                            скорректировать цену, уточнить детали в чате или отказаться от заказа.
+                            {t('bidsText')}
                         </p>
                         <div className={styles.bidsActions}>
                             <button
@@ -367,7 +366,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
                                 onClick={() => setActionOpen(true)}
                             >
                                 <Handshake size={16} strokeWidth={2} />
-                                Торговаться
+                                {t('bargain')}
                             </button>
                             <button
                                 type="button"
@@ -375,14 +374,14 @@ export const WorkView: React.FC<WorkViewProps> = ({
                                 onClick={handleOpenChat}
                             >
                                 <MessageSquare size={16} strokeWidth={2} />
-                                Чат с заказчиком
+                                {t('chatWithCustomer')}
                             </button>
                             <button
                                 type="button"
                                 className={styles.bidsDanger}
                                 onClick={() => onOfferCancelClick(workInfo)}
                             >
-                                Отказаться от заказа
+                                {t('cancelOrder')}
                             </button>
                         </div>
                     </section>
@@ -390,8 +389,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
 
                 {workInfo.status === WorkStatus.REJECTED && (
                     <p className={styles.refusedNote}>
-                        Вы отказались от этого заказа. Он больше не будет отображаться в ваших
-                        активных откликах.
+                        {t('refusedNote')}
                     </p>
                 )}
             </div>
@@ -413,7 +411,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
                     type="button"
                     className={styles.chatCta}
                     onClick={handleOpenChat}
-                    aria-label="Написать отправителю"
+                    aria-label={t('writeToSender')}
                 >
                     <MessageSquare size={20} strokeWidth={1.75} />
                 </button>
@@ -433,8 +431,8 @@ export const WorkView: React.FC<WorkViewProps> = ({
                 <div className={styles.modalShell}>
                     <div className={styles.modalHead}>
                         <div>
-                            <div className={styles.modalKicker}>Заказ</div>
-                            <h2 className={styles.modalTitle}>Действие по заказу</h2>
+                            <div className={styles.modalKicker}>{t('orderKicker')}</div>
+                            <h2 className={styles.modalTitle}>{t('orderAction')}</h2>
                             {workInfo.status !== WorkStatus.NEW &&
                               workInfo.status !== WorkStatus.OFFERED &&
                               actionHint && (

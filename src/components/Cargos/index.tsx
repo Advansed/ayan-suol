@@ -54,7 +54,7 @@ export const Cargos: React.FC = () => {
         }
     }, [currentPage.type, currentPage.cargo?.guid, navigateTo]);
 
-    const handleAgreementSign = useCallback(
+    const handleAgreementSign       = useCallback(
         async (invoice: DriverInfo, signature: string) => {
             const signed = await create_contract(invoice, signature);
             if (signed) {
@@ -67,7 +67,7 @@ export const Cargos: React.FC = () => {
         [create_contract, handleAccept, currentPage.cargo, navigateTo]
     );
 
-    const handleOpenAgreement = useCallback(
+    const handleOpenAgreement       = useCallback(
         async (invoice: DriverInfo) => {
             const cargo = currentPage.cargo;
             if (!cargo) return;
@@ -79,7 +79,7 @@ export const Cargos: React.FC = () => {
         [currentPage.cargo, get_contract, navigateTo]
     );
 
-    const handleAdvanceInvoice = useCallback(
+    const handleAdvanceInvoice      = useCallback(
         async (invoice: DriverInfo, status: number) => {
             await handleAccept(invoice, status);
             if (status === 16) {
@@ -100,7 +100,7 @@ export const Cargos: React.FC = () => {
         [handleAccept, emit, token]
     );
 
-    const handleStartUnloading = useCallback(
+    const handleStartUnloading      = useCallback(
         async (invoice: DriverInfo) => {
             await handleAccept(invoice, 18);
             emit('send_message', {
@@ -119,7 +119,7 @@ export const Cargos: React.FC = () => {
         [handleAccept, emit, token]
     );
 
-    const handleCompleteTrip = useCallback(
+    const handleCompleteTrip        = useCallback(
         async (invoice: DriverInfo, rating: number, completed: boolean) => {
             await handleComplete(invoice, rating, {
                 delivered: completed,
@@ -137,7 +137,7 @@ export const Cargos: React.FC = () => {
     );
 
 
-    const renderList = () => (
+    const renderList                = () => (
         <CargosList
             cargos={cargos}
             isLoading={isLoading}
@@ -147,7 +147,7 @@ export const Cargos: React.FC = () => {
         />
     );
 
-    const renderContent = () => {
+    const renderContent             = () => {
         if (currentPage.cargo) {
             switch (currentPage.type) {
                 case 'edit':
@@ -281,9 +281,6 @@ export const Cargos: React.FC = () => {
     );
     
 };
-
-// Экспорты для внешнего использования
-export { default as CargoArchive } from './components/CargoArchive';
 
 // Основные типы для внешнего использования
 export type { 

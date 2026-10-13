@@ -48,8 +48,6 @@ const parseAmountInput = (value: string): number => {
   return digits ? Number(digits) : 0;
 };
 
-const WALLET_POLL_MS = 60_000;
-
 function monthLabel(date: Date, style: 'short' | 'long') {
   return date.toLocaleDateString(intlLocale(), { month: style }).replace('.', '');
 }
@@ -193,13 +191,6 @@ export const WalletPage: React.FC<WalletPageProps> = ({
     loadedRef.current = true;
     load();
   }, [load]);
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      void refreshWallet({ silent: true });
-    }, WALLET_POLL_MS);
-    return () => window.clearInterval(id);
-  }, [refreshWallet]);
 
   const formatMoney = (n: number) => {
     try {

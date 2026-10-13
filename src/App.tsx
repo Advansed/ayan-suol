@@ -32,7 +32,6 @@ import { LandingPage } from './pages/Landing/LandingPage';
 import { StubPage } from './pages/Stub/StubPage';
 
 const FeedPage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.FeedPage })));
-const ArchivePage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.ArchivePage })));
 const ChatsPage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.ChatsPage })));
 const DriversRoutePage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.DriversRoutePage })));
 const FinancePage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.FinancePage })));
@@ -93,7 +92,6 @@ const AppContent: React.FC = () => {
               <Route exact path="/orders">
                 <Redirect to="/feed" />
               </Route>
-              <Route exact path="/archive" component={ArchivePage} />
               <Route exact path="/finance" component={FinancePage} />
               <Route exact path="/chats" component={ChatsPage} />
               <Route exact path="/chats/:id" component={ChatsPage} />
@@ -133,7 +131,7 @@ const AppContent: React.FC = () => {
                 <Redirect to="/settings" />
               </Route>
               <Route exact path="/tab4">
-                <Redirect to="/archive" />
+                <Redirect to="/feed" />
               </Route>
 
               <Route exact path="/login">

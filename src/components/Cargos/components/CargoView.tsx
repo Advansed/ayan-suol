@@ -273,7 +273,7 @@ export const CargoView: React.FC<CargoViewProps> = ({
 
       {completed && (
         <div className={styles.doneNote}>
-          Заказ завершён. Дальнейших действий не требуется.
+          {t('orderDoneNote', { defaultValue: 'Заказ завершён. Дальнейших действий не требуется.' })}
         </div>
       )}
     </>
