@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { List, Map, Plus, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { CargoCard } from './CargoCard';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
+import { useCompanyStore } from '../../../Store/companyStore';
 import { cargoFeedKind, resolveCargoProgressStatus } from '../cargoStatusFlow';
 import { intlLocale } from '../../../i18n';
 import { FeedRoutesMap } from '../../Maps/FeedRoutesMap';
@@ -49,7 +50,7 @@ function updatedLabel(at: number, t: (key: string, opts?: Record<string, unknown
   return t('updatedAt', { time });
 }
 
-export const CargosList: React.FC<CargosListProps> = ({
+const CargosListInner: React.FC<CargosListProps> = ({
   cargos,
   isLoading = false,
   onCreateNew,
@@ -58,6 +59,9 @@ export const CargosList: React.FC<CargosListProps> = ({
 }) => {
   const { t } = useTranslation('works');
   const { t: tc } = useTranslation('cargos');
+  const companyLabel = useCompanyStore(
+    (state) => state.data?.short_name || state.data?.name || ''
+  );
   const [filter, setFilter] = useState<FilterId>('all');
   const [view, setView] = useState<'list' | 'map'>('list');
   const [updatedAt, setUpdatedAt] = useState(() => Date.now());
@@ -72,7 +76,10 @@ export const CargosList: React.FC<CargosListProps> = ({
     [cargos, filter]
   );
 
-  const mapRoutes = useMemo(() => ordersToFeedRoutes(visible), [visible]);
+  const mapRoutes = useMemo(
+    () => (view === 'map' ? ordersToFeedRoutes(visible) : []),
+    [view, visible]
+  );
 
   useEffect(() => {
     if (!waitingRefresh.current) return;
@@ -232,7 +239,8 @@ export const CargosList: React.FC<CargosListProps> = ({
               key={cargo.guid}
               cargo={cargo}
               mode="list"
-              onClick={() => onCargoClick(cargo)}
+              companyName={companyLabel}
+              onSelect={onCargoClick}
             />
           ))
         )}
@@ -242,3 +250,5 @@ export const CargosList: React.FC<CargosListProps> = ({
     </div>
   );
 };
+
+export const CargosList = React.memo(CargosListInner);

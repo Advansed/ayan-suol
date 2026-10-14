@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IonIcon, IonText } from '@ionic/react';
 import { locationOutline } from 'ionicons/icons';
@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { formatters, statusUtils } from '../../../utils/utils';
 import { CargoInfo, CargoStatus } from '../../../Store/cargoStore';
-import { useCompanyData } from '../../../Store/companyStore';
 import { cargoFeedKind, cargoFeedLabel, resolveCargoProgressStatus } from '../cargoStatusFlow';
 import {
   PAYMENT_LABEL,
@@ -39,7 +38,8 @@ interface CargoCardProps {
     cargo: CargoInfo;
     mode?: 'view' | 'list';
     selected?: boolean;
-    onClick?: () => void;
+    onSelect?: (cargo: CargoInfo) => void;
+    companyName?: string | null;
 }
 
 const SURFACE_BY_STATUS: Record<CargoStatus, string> = {
@@ -90,15 +90,18 @@ function cargoFleet(cargo: CargoInfo): string | null {
     return fleetHint({ vehicles_total: total, vehicles_busy: busy });
 }
 
-export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', selected, onClick }) => {
+const CargoCardInner: React.FC<CargoCardProps> = ({
+    cargo,
+    mode = 'list',
+    selected,
+    onSelect,
+    companyName: companyLabel,
+}) => {
     const { t } = useTranslation('cargos');
-    const companyData = useCompanyData();
     const status = resolveCargoProgressStatus(cargo);
-    
+
     const handleClick = () => {
-        if (onClick) {
-            onClick();
-        }
+        onSelect?.(cargo);
     };
 
     const publishedAt = resolvePublishedAt(cargo);
@@ -275,7 +278,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
     const offers = cargo.invoices?.length ?? 0;
     const payment = getPaymentLevel(cargo);
     const bodyType = resolveBodyType(cargo);
-    const companyName = getCargoCompanyName(cargo, companyData?.name || companyData?.short_name);
+    const companyName = getCargoCompanyName(cargo, companyLabel);
     const publishedLabel = publishedAt ? publishedDateTime(publishedAt) : '';
     const pickup = shortDate(cargo.pickup_date);
     const delivery = shortDate(cargo.delivery_date);
@@ -314,7 +317,7 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
                     <div className={feedStyles.feedCompany}>
                         <Building2 size={15} strokeWidth={1.75} aria-hidden />
                         <span className={feedStyles.feedCompanyName}>{companyName}</span>
-                        {(Boolean(cargo.company) || Boolean(companyData)) && (
+                        {(Boolean(cargo.company) || Boolean(companyLabel)) && (
                             <BadgeCheck size={15} strokeWidth={2} className={feedStyles.verified} aria-label="Проверено" />
                         )}
                     </div>
@@ -379,6 +382,8 @@ export const CargoCard: React.FC<CargoCardProps> = ({ cargo, mode = 'list', sele
         </button>
     );
 };
+
+export const CargoCard = memo(CargoCardInner);
 
 function getCircle( cargo: CargoInfo) {
    if(cargo.advance === cargo.price) return 'circle-1'

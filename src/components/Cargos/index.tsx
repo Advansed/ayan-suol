@@ -1,39 +1,61 @@
 import './styles.css';
 
-import React, { useEffect, useCallback }       from 'react';
-import { useCargos }                                    from './hooks/useCargos';
-import { CargosList }                                   from './components/CargosList';
-import { CargoView }                                    from './components/CargoView';
-import { CargoMap }                                     from './components/CargoMap';
-import { CargoInvoice }                                 from './components/CargoInvoices';
-import { InsurancePage }                                from './components/InsurancePage';
-import { cargoGetters, CargoInfo, EMPTY_CARGO, DriverInfo } from '../../Store/cargoStore';
-import { CargoNew }                                               from './components';
-import { IonLoading }                                   from '@ionic/react';
-import { useCargoNavigation }                           from './hooks/useNavigation';
-import { PrepaymentPage }                               from './components/PrePayment';
-import { Agreement }                                    from '../Offers/Agreement';
-import { useInvoices }                                  from './hooks/useInvoices';
-import { useSocket }                                    from '../../Store/useSocket';
-import { useToken }                                     from '../../Store/loginStore';
+import React, { useCallback, useEffect }            from 'react';
+import { IonLoading }                               from '@ionic/react';
+import { cargoGetters, CargoInfo, DriverInfo
+    , EMPTY_CARGO, PageType }                       from '../../Store/cargoStore';
+import { useSocket }                                from '../../Store/useSocket';
+import { useToken }                                 from '../../Store/loginStore';
+import { Agreement }                                from '../Offers/Agreement';
+import { CargoNew }                                 from './components';
+import { CargoInvoice }                             from './components/CargoInvoices';
+import { CargoMap }                                 from './components/CargoMap';
+import { CargosList }                               from './components/CargosList';
+import { CargoView }                                from './components/CargoView';
+import { InsurancePage }                            from './components/InsurancePage';
+import { PrepaymentPage }                           from './components/PrePayment';
+import { useCargos, type UseCargosReturn }          from './hooks/useCargos';
+import { useInvoices }                              from './hooks/useInvoices';
+import { useCargoNavigation }                       from './hooks/useNavigation';
 
-export const Cargos: React.FC = () => {
-    
-    const { cargos, isLoading, createCargo, updateCargo, deleteCargo, publishCargo, unpublishCargo, refreshCargos } = useCargos()
-    const { currentPage, navigateTo, replaceCurrentPage, handleCreateNew, handleCargoClick } = useCargoNavigation()
-    const invoiceApi = useInvoices({ info: currentPage.cargo })
-    const { create_contract, handleAccept, get_contract, handleReject, handleChat, handleComplete } = invoiceApi
-    const { emit } = useSocket()
-    const token = useToken()
+type CargoActions = Pick<
+    UseCargosReturn,
+    'createCargo' | 'updateCargo' | 'deleteCargo' | 'publishCargo' | 'unpublishCargo'
+>;
 
-    useEffect(() => {
-        if (!currentPage.cargo?.guid) return;
-        const cargo = cargoGetters.getCargo(currentPage.cargo.guid);
-        if (!cargo || cargo === currentPage.cargo) return;
-        replaceCurrentPage({ type: currentPage.type, cargo });
-    }, [cargos, currentPage.cargo, currentPage.type, replaceCurrentPage]);
+function isDetailScreen(page: PageType): boolean {
+    if (page.type === 'create') return true;
+    if (!page.cargo) return false;
+    switch (page.type) {
+        case 'edit':
+        case 'view':
+        case 'map':
+        case 'invoices':
+        case 'agreement':
+        case 'prepayment':
+        case 'insurance':
+        case 'payment':
+            return true;
+        default:
+            return false;
+    }
+}
 
-    const handleBack                = useCallback(() => {
+const CargoDetail: React.FC<{ cargosLoading: boolean } & CargoActions> = ({
+    cargosLoading,
+    createCargo,
+    updateCargo,
+    deleteCargo,
+    publishCargo,
+    unpublishCargo,
+}) => {
+    const { currentPage, navigateTo } = useCargoNavigation();
+    const invoiceApi = useInvoices({ info: currentPage.cargo });
+    const { create_contract, handleAccept, get_contract, handleReject, handleChat, handleComplete } = invoiceApi;
+    const { emit } = useSocket();
+    const token = useToken();
+
+    const handleBack = useCallback(() => {
         if (currentPage.type === 'view' || currentPage.type === 'create') {
             navigateTo({ type: 'list' });
         } else if (currentPage.type === 'edit') {
@@ -54,7 +76,7 @@ export const Cargos: React.FC = () => {
         }
     }, [currentPage.type, currentPage.cargo?.guid, navigateTo]);
 
-    const handleAgreementSign       = useCallback(
+    const handleAgreementSign = useCallback(
         async (invoice: DriverInfo, signature: string) => {
             const signed = await create_contract(invoice, signature);
             if (signed) {
@@ -67,7 +89,7 @@ export const Cargos: React.FC = () => {
         [create_contract, handleAccept, currentPage.cargo, navigateTo]
     );
 
-    const handleOpenAgreement       = useCallback(
+    const handleOpenAgreement = useCallback(
         async (invoice: DriverInfo) => {
             const cargo = currentPage.cargo;
             if (!cargo) return;
@@ -79,7 +101,7 @@ export const Cargos: React.FC = () => {
         [currentPage.cargo, get_contract, navigateTo]
     );
 
-    const handleAdvanceInvoice      = useCallback(
+    const handleAdvanceInvoice = useCallback(
         async (invoice: DriverInfo, status: number) => {
             await handleAccept(invoice, status);
             if (status === 16) {
@@ -100,7 +122,7 @@ export const Cargos: React.FC = () => {
         [handleAccept, emit, token]
     );
 
-    const handleStartUnloading      = useCallback(
+    const handleStartUnloading = useCallback(
         async (invoice: DriverInfo) => {
             await handleAccept(invoice, 18);
             emit('send_message', {
@@ -119,7 +141,7 @@ export const Cargos: React.FC = () => {
         [handleAccept, emit, token]
     );
 
-    const handleCompleteTrip        = useCallback(
+    const handleCompleteTrip = useCallback(
         async (invoice: DriverInfo, rating: number, completed: boolean) => {
             await handleComplete(invoice, rating, {
                 delivered: completed,
@@ -136,54 +158,73 @@ export const Cargos: React.FC = () => {
         [handleComplete, handleAccept, emit, token]
     );
 
-
-    const renderList                = () => (
-        <CargosList
-            cargos={cargos}
-            isLoading={isLoading}
-            onCargoClick={handleCargoClick}
-            onCreateNew={handleCreateNew}
-            onRefresh={refreshCargos}
-        />
+    const handleEdit = useCallback(
+        (cargo: CargoInfo) => {
+            navigateTo({ type: 'edit', cargo });
+        },
+        [navigateTo]
     );
 
-    const renderContent             = () => {
+    const handleMapClick = useCallback(
+        (cargo: CargoInfo) => {
+            navigateTo({ type: 'map', cargo });
+        },
+        [navigateTo]
+    );
+
+    const handleInvoiceAgreement = useCallback(
+        (invoice: DriverInfo, contract: unknown) => {
+            if (!currentPage.cargo) return;
+            navigateTo({ type: 'agreement', cargo: currentPage.cargo, invoice, contract });
+        },
+        [currentPage.cargo, navigateTo]
+    );
+
+    const handleSign = useCallback(
+        (signature: string) => {
+            if (!currentPage.invoice) return;
+            void handleAgreementSign(currentPage.invoice, signature);
+        },
+        [currentPage.invoice, handleAgreementSign]
+    );
+
+    const renderContent = () => {
         if (currentPage.cargo) {
             switch (currentPage.type) {
                 case 'edit':
                     return (
                         <CargoNew
-                            cargo       = { currentPage.cargo as CargoInfo }
-                            onUpdate    = { updateCargo }
-                            onCreate    = { createCargo }
-                            onBack      = { handleBack }
+                            cargo={currentPage.cargo as CargoInfo}
+                            onUpdate={updateCargo}
+                            onCreate={createCargo}
+                            onBack={handleBack}
                         />
                     );
 
                 case 'view':
                     return (
                         <CargoView
-                            cargo           = { currentPage.cargo! }
-                            onEdit          = { (cargo) => navigateTo({ type: 'edit', cargo }) }
-                            onDelete        = { deleteCargo }
-                            onPublish       = { publishCargo }
-                            onUnpublish     = { unpublishCargo }
-                            onAcceptInvoice = { handleOpenAgreement }
-                            onRejectInvoice = { handleReject }
-                            onChatInvoice   = { handleChat }
-                            onAdvanceInvoice= { handleAdvanceInvoice }
-                            onStartUnloading= { handleStartUnloading }
-                            onComplete      = { handleCompleteTrip }
-                            onMapClick       = { (cargo) => navigateTo({ type: 'map', cargo }) }
-                            onBack          = { handleBack }
-                            isLoading       = { isLoading || invoiceApi.isLoading }
+                            cargo={currentPage.cargo}
+                            onEdit={handleEdit}
+                            onDelete={deleteCargo}
+                            onPublish={publishCargo}
+                            onUnpublish={unpublishCargo}
+                            onAcceptInvoice={handleOpenAgreement}
+                            onRejectInvoice={handleReject}
+                            onChatInvoice={handleChat}
+                            onAdvanceInvoice={handleAdvanceInvoice}
+                            onStartUnloading={handleStartUnloading}
+                            onComplete={handleCompleteTrip}
+                            onMapClick={handleMapClick}
+                            onBack={handleBack}
+                            isLoading={cargosLoading || invoiceApi.isLoading}
                         />
                     );
 
                 case 'map':
                     return (
                         <CargoMap
-                            cargo={currentPage.cargo!}
+                            cargo={currentPage.cargo}
                             onBack={handleBack}
                         />
                     );
@@ -191,12 +232,10 @@ export const Cargos: React.FC = () => {
                 case 'invoices':
                     return (
                         <CargoInvoice
-                            cargo           = { currentPage.cargo! }
-                            invoiceApi      = { invoiceApi }
-                            onBack          = { handleBack }
-                            onOpenAgreement = { (invoice, contract) =>
-                                navigateTo({ type: 'agreement', cargo: currentPage.cargo!, invoice, contract })
-                            }
+                            cargo={currentPage.cargo}
+                            invoiceApi={invoiceApi}
+                            onBack={handleBack}
+                            onOpenAgreement={handleInvoiceAgreement}
                         />
                     );
 
@@ -204,12 +243,10 @@ export const Cargos: React.FC = () => {
                     if (!currentPage.invoice) return null;
                     return (
                         <Agreement
-                            data     = { currentPage.contract }
-                            onMenu   = { handleBack }
-                            onCancel = { handleBack }
-                            onSign   = { (signature: string) =>
-                                handleAgreementSign(currentPage.invoice!, signature)
-                            }
+                            data={currentPage.contract}
+                            onMenu={handleBack}
+                            onCancel={handleBack}
+                            onSign={handleSign}
                         />
                     );
 
@@ -224,7 +261,7 @@ export const Cargos: React.FC = () => {
                 case 'insurance':
                     return (
                         <InsurancePage
-                            cargo={currentPage.cargo!}
+                            cargo={currentPage.cargo}
                             onBack={handleBack}
                         />
                     );
@@ -237,24 +274,6 @@ export const Cargos: React.FC = () => {
                         />
                     );
 
-                case 'list':
-                    return renderList();
-
-                case 'create':
-                    return <>
-                        <CargoNew
-                            cargo       = { EMPTY_CARGO }
-                            onUpdate    = { updateCargo }
-                            onCreate    = { createCargo } 
-                            onBack      = { handleBack }
-                        />
-                    </>
-    
-                default:
-                    return renderList();
-            }
-        } else {
-            switch (currentPage.type) {
                 case 'create':
                     return (
                         <CargoNew
@@ -266,48 +285,92 @@ export const Cargos: React.FC = () => {
                     );
 
                 default:
-                    return renderList();
+                    return null;
             }
         }
+
+        if (currentPage.type === 'create') {
+            return (
+                <CargoNew
+                    cargo={EMPTY_CARGO}
+                    onUpdate={updateCargo}
+                    onCreate={createCargo}
+                    onBack={handleBack}
+                />
+            );
+        }
+
+        return null;
     };
 
     return (
-        <div className="cargos-module">
-            <IonLoading isOpen={isLoading || invoiceApi.isLoading} message="Подождите" />
-
+        <>
+            <IonLoading isOpen={cargosLoading || invoiceApi.isLoading} message="Подождите" />
             {renderContent()}
-
-        </div>
+        </>
     );
-    
 };
 
-// Основные типы для внешнего использования
-export type { 
-    CargoInfo, 
-    CargoStatus, 
+export const Cargos: React.FC = () => {
+    const { cargos, isLoading, createCargo, updateCargo, deleteCargo, publishCargo, unpublishCargo, refreshCargos } = useCargos();
+    const { currentPage, replaceCurrentPage, handleCreateNew, handleCargoClick } = useCargoNavigation();
+    const detail = isDetailScreen(currentPage);
+
+    useEffect(() => {
+        if (!currentPage.cargo?.guid) return;
+        const cargo = cargoGetters.getCargo(currentPage.cargo.guid);
+        if (!cargo || cargo === currentPage.cargo) return;
+        replaceCurrentPage({ type: currentPage.type, cargo });
+    }, [cargos, currentPage.cargo, currentPage.type, replaceCurrentPage]);
+
+    return (
+        <div className="cargos-module">
+            {detail ? (
+                <CargoDetail
+                    cargosLoading={isLoading}
+                    createCargo={createCargo}
+                    updateCargo={updateCargo}
+                    deleteCargo={deleteCargo}
+                    publishCargo={publishCargo}
+                    unpublishCargo={unpublishCargo}
+                />
+            ) : (
+                <>
+                    <IonLoading isOpen={isLoading} message="Подождите" />
+                    <CargosList
+                        cargos={cargos}
+                        isLoading={isLoading}
+                        onCargoClick={handleCargoClick}
+                        onCreateNew={handleCreateNew}
+                        onRefresh={refreshCargos}
+                    />
+                </>
+            )}
+        </div>
+    );
+};
+
+export type {
+    CargoInfo,
+    CargoStatus,
     CargoPriority,
     CargoAddress,
     PageType,
     CargoFilters
 } from '../../Store/cargoStore';
 
-
-// Компоненты для внешнего использования
-export { 
-    CargoCard, 
-    CargoForm, 
+export {
+    CargoCard,
+    CargoForm,
     CargosList
 } from './components';
 
-// Утилиты для внешнего использования
-export { 
-    formatters, 
+export {
+    formatters,
     statusUtils
 } from '../../utils/utils';
 
-// Константы для внешнего использования
-export { 
+export {
     STATUS_CLASSES,
     STATUS_COLORS,
     VALIDATION_MESSAGES

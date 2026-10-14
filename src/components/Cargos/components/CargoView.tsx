@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IonAlert, IonModal } from '@ionic/react';
 import {
@@ -76,7 +76,7 @@ function isAssignedInvoice(invoice: DriverInfo) {
   return invoice.status !== 'Заказано';
 }
 
-export const CargoView: React.FC<CargoViewProps> = ({
+const CargoViewInner: React.FC<CargoViewProps> = ({
   cargo,
   onBack,
   onEdit,
@@ -667,3 +667,5 @@ export const CargoView: React.FC<CargoViewProps> = ({
     </div>
   );
 };
+
+export const CargoView = memo(CargoViewInner);
