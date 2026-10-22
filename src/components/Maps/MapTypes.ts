@@ -12,6 +12,7 @@ export interface MapProps {
   waypoints?: Coordinates[];
   cargoInfo?: CargoInfo;
   workInfo?: WorkInfo;
+  executorPoint?: Coordinates | null;
   height?: string;
 }
 
@@ -28,6 +29,7 @@ export interface GoogleMapInstance {
   lookAtPoints?: Array<{ lat: number; lng: number }>;
   lookAtZoom?: number;
   bounds?: any;
+  executorMarker?: any;
   destroy: () => void;
   resize: () => void;
 }

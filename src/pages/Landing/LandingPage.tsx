@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { useHistory, useLocation } from 'react-router-dom'
+import { Link, useHistory, useLocation } from 'react-router-dom'
 import {
   ArrowRight,
   Building2,
@@ -272,6 +272,12 @@ export const LandingPage: React.FC = () => {
           </div>
           <div className={styles.footerContacts}>
             <a href="mailto:info@paitza.com">info@paitza.com</a>
+            <Link to="/privacy" className={styles.footerLink}>
+              {t('privacyLink')}
+            </Link>
+            <Link to="/consent" className={styles.footerLink}>
+              {t('consentLink')}
+            </Link>
             <button type="button" className={styles.footerLink} onClick={() => openAuth('login')}>
               {t('login')}
             </button>

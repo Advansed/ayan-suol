@@ -45,6 +45,26 @@ export function loadGoogleMapsAPI(): Promise<void> {
   return loadPromise;
 }
 
+export function setExecutorMarker(instance: GoogleMapInstance, point: LatLng | null) {
+  if (!point || !instance.map || !window.google?.maps) {
+    instance.executorMarker?.setMap(null);
+    instance.executorMarker = null;
+    return;
+  }
+  if (instance.executorMarker) {
+    instance.executorMarker.setPosition(point);
+    if (!instance.executorMarker.getMap()) instance.executorMarker.setMap(instance.map);
+    return;
+  }
+  instance.executorMarker = new window.google.maps.Marker({
+    position: point,
+    map: instance.map,
+    zIndex: 20,
+    title: 'Исполнитель',
+    icon: circleIcon('#1d4ed8', 11),
+  });
+}
+
 function circleIcon(color: string, scale = 8) {
   return {
     path: window.google.maps.SymbolPath.CIRCLE,
@@ -356,6 +376,8 @@ export async function initializeMap(
     lookAtPoints: [center],
     lookAtZoom: options?.zoom ?? MAPS_CONFIG.defaultZoom,
     destroy: () => {
+      instance.executorMarker?.setMap(null);
+      instance.executorMarker = null;
       instance.objects.forEach((obj) => obj.setMap?.(null));
       instance.objects = [];
       instance.map = null;

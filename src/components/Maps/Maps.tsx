@@ -1,22 +1,33 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styles from './Maps.module.css';
 import { MapProps, GoogleMapInstance } from './MapTypes';
-import { createRoute, initializeMap } from './services/googleMapServices';
+import { createRoute, initializeMap, setExecutorMarker } from './services/googleMapServices';
 import { hasMapCoordinates } from './services/coordinatHelpers';
 
-const Maps: React.FC<MapProps> = ({ startCoords, endCoords, waypoints = [], cargoInfo, workInfo, height = '100%' }) => {
+const Maps: React.FC<MapProps> = ({
+  startCoords,
+  endCoords,
+  waypoints = [],
+  cargoInfo,
+  workInfo,
+  executorPoint = null,
+  height = '100%',
+}) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<GoogleMapInstance | null>(null);
   const infoRef = useRef(cargoInfo || workInfo);
   infoRef.current = cargoInfo || workInfo;
   const viaRef = useRef(waypoints);
   viaRef.current = waypoints;
+  const [mapReady, setMapReady] = useState(false);
   const coordsReady = hasMapCoordinates(startCoords) && hasMapCoordinates(endCoords);
   const startLat = startCoords.lat;
   const startLng = startCoords.long;
   const endLat = endCoords.lat;
   const endLng = endCoords.long;
   const viaKey = waypoints.map((point) => `${point.lat},${point.long}`).join('|');
+  const executorLat = executorPoint?.lat;
+  const executorLng = executorPoint?.long;
 
   useEffect(() => {
     if (!coordsReady || !mapRef.current) return;
@@ -43,6 +54,7 @@ const Maps: React.FC<MapProps> = ({ startCoords, endCoords, waypoints = [], carg
           viaRef.current
         );
         map.resize();
+        if (!cancelled) setMapReady(true);
       } catch (error) {
         console.error('Ошибка инициализации карты:', error);
       }
@@ -59,6 +71,7 @@ const Maps: React.FC<MapProps> = ({ startCoords, endCoords, waypoints = [], carg
 
     return () => {
       cancelled = true;
+      setMapReady(false);
       ro?.disconnect();
       if (mapInstance.current) {
         mapInstance.current.destroy();
@@ -66,6 +79,20 @@ const Maps: React.FC<MapProps> = ({ startCoords, endCoords, waypoints = [], carg
       }
     };
   }, [coordsReady, startLat, startLng, endLat, endLng, viaKey]);
+
+  useEffect(() => {
+    const map = mapInstance.current;
+    if (!mapReady || !map) return;
+    const point =
+      executorLat == null || executorLng == null
+        ? null
+        : { lat: executorLat, long: executorLng };
+    if (!point || !hasMapCoordinates(point)) {
+      setExecutorMarker(map, null);
+      return;
+    }
+    setExecutorMarker(map, { lat: point.lat, lng: point.long });
+  }, [mapReady, executorLat, executorLng]);
 
   if (!coordsReady) {
     return (

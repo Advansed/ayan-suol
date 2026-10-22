@@ -81,7 +81,7 @@ export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo, onMapClic
         </div>
 
         <div className={styles.topRight}>
-          <p className={styles.price}>{formatters.currency(cargo.price)}</p>
+          <p className={styles.price}>{formatters.currency(cargo.price, cargo.currency)}</p>
           <span className={`${styles.escrowBadge} ${styles[`escrow_${payment}`]}`}>
             <span className={styles.escrowDot} />
             {PAYMENT_LABEL[payment]}
@@ -115,7 +115,7 @@ export const CargoOrderInfo: React.FC<CargoOrderInfoProps> = ({ cargo, onMapClic
           <Lock size={16} strokeWidth={2} />
           <span>{t('inEscrow')}</span>
         </div>
-        <strong>{formatters.currency(reserved)}</strong>
+        <strong>{formatters.currency(reserved, cargo.currency)}</strong>
       </div>
 
       {cargo.description && cargo.description.trim() !== cargo.name && (

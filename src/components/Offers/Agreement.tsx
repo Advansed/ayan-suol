@@ -38,6 +38,7 @@ export interface ContractData {
   };
   payment?: {
     amount?: string;
+    currency?: string;
   };
   contract_date?: string;
   specification?: {
@@ -80,11 +81,13 @@ export const Agreement: React.FC<AgreementProps> = ({
 
   const contractData = data;
   
+  const payCurrency = contractData.payment?.currency || 'RUB';
+  const currencySign = ({ RUB: '₽', KZT: '₸', KGS: 'сом', UZS: "so'm", BYN: 'Br', AMD: '֏', CNY: '¥' } as Record<string, string>)[payCurrency] || payCurrency;
   const formatPrice = (price: string): string => {
-    if (!price) return '0 ₽';
+    if (!price) return `0 ${currencySign}`;
     const numPrice = parseFloat(price);
-    if (isNaN(numPrice)) return price + ' ₽';
-    return numPrice.toLocaleString('ru-RU').replace(/,/g, ' ') + ' ₽';
+    if (isNaN(numPrice)) return `${price} ${currencySign}`;
+    return `${numPrice.toLocaleString('ru-RU').replace(/,/g, ' ')} ${currencySign}`;
   };
 
   // Парсим детали отправителя (sender_details)

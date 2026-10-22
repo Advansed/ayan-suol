@@ -3,6 +3,7 @@ import { IonButton, IonIcon } from '@ionic/react';
 import { mailOutline, shieldCheckmarkOutline, documentOutline, timeOutline, closeOutline, checkmarkOutline } from 'ionicons/icons';
 import styles from './OfferCard.module.css';
 import { DriverInfo } from '../../../../Store/cargoStore';
+import { moneySign } from '../../../../utils/utils';
 
 interface OfferCardProps {
     info: DriverInfo
@@ -22,7 +23,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
     createdAt
 }) => {
     const formatPrice = (price: number): string => {
-        return price.toLocaleString('ru-RU').replace(/,/g, ' ');
+        return `${price.toLocaleString('ru-RU').replace(/,/g, ' ')} ${moneySign(info.currency)}`;
     };
 
     return (
@@ -67,9 +68,9 @@ export const OfferCard: React.FC<OfferCardProps> = ({
                 </div>
                 <div className={styles.infoRow}>
                     <div className={styles.infoField}>
-                        <label className={styles.label}> Цена (₽)</label>
+                        <label className={styles.label}> Цена</label>
                         <div className={styles.value}>
-                            {formatPrice(info.price)} (₽)
+                            {formatPrice(info.price)}
                         </div>
                     </div>
                     <div className={styles.infoField}>

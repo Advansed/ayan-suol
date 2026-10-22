@@ -47,6 +47,31 @@ fix_nginx_spa() {
   fi
 
   sudo cp -a "${conf}" "${conf}.bak.gvr"
+  if ! sudo grep -q 'location /payler/' "${conf}"; then
+    sudo python3 - "${conf}" <<'PY'
+import pathlib, sys
+conf = pathlib.Path(sys.argv[1])
+text = conf.read_text()
+block = """
+    location /payler/ {
+        proxy_pass https://sandbox.payler.com/;
+        proxy_ssl_server_name on;
+        proxy_set_header Host sandbox.payler.com;
+    }
+
+"""
+marker = "\n    location "
+idx = text.find(marker)
+if idx == -1:
+    idx = text.find("\n\tlocation ")
+if idx != -1:
+    text = text[: idx + 1] + block + text[idx + 1 :]
+else:
+    last = text.rfind("}")
+    text = text[:last] + block + text[last:]
+conf.write_text(text)
+PY
+  fi
   # SPA fallback: keep /node proxy intact (separate location).
   sudo sed -i \
     -e 's|try_files $uri $uri/ =404;|try_files $uri $uri/ /index.html;|g' \

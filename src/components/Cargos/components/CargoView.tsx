@@ -300,7 +300,7 @@ const CargoViewInner: React.FC<CargoViewProps> = ({
                 <p className={styles.bidTruck}>{truckLine}</p>
               </div>
               <div className={styles.bidPriceCol}>
-                <p className={styles.bidPrice}>{formatters.currency(invoice.price)}</p>
+                <p className={styles.bidPrice}>{formatters.currency(invoice.price, cargoInfo.currency || invoice.currency)}</p>
                 <span className={`${styles.bidStatus} ${styles[`bidStatus_${meta.kind}`]}`}>
                   <StatusIcon size={12} strokeWidth={2} />
                   {meta.label}
@@ -530,7 +530,7 @@ const CargoViewInner: React.FC<CargoViewProps> = ({
                 <div className={styles.confirmRow}>
                   <span className={styles.confirmLabel}>Ставка</span>
                   <span className={styles.confirmValue}>
-                    {formatters.currency(acceptInvoice.price)}
+                    {formatters.currency(acceptInvoice.price, cargoInfo.currency || acceptInvoice.currency)}
                   </span>
                 </div>
               </div>

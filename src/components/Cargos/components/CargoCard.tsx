@@ -158,7 +158,7 @@ const CargoCardInner: React.FC<CargoCardProps> = ({
                 </div>
                 <div className={styles.topRight}>
                     <IonText className="fs-09 cl-prim">
-                        <b>{formatters.currency(cargo.price)}</b>
+                        <b>{formatters.currency(cargo.price, cargo.currency)}</b>
                     </IonText>
                     {mode === 'view' && (
                         <div className="fs-08 cl-black">
@@ -303,7 +303,7 @@ const CargoCardInner: React.FC<CargoCardProps> = ({
                     </span>
                     <span className={feedStyles.feedId}>ЗК-{formatters.shortId(cargo.guid)}</span>
                     <div className={feedStyles.feedPriceCol}>
-                        <span className={feedStyles.feedPrice}>{formatters.currency(cargo.price)}</span>
+                        <span className={feedStyles.feedPrice}>{formatters.currency(cargo.price, cargo.currency)}</span>
                         <span className={`${feedStyles.payBadge} ${PAY_CLASS[payment]}`}>
                             <span className={feedStyles.payDot} />
                             {PAYMENT_LABEL[payment]}

@@ -14,6 +14,7 @@ import { WizardHeader } from '../../../Header/WizardHeader';
 import { companyGetters } from '../../../../Store/companyStore';
 import { transportGetters } from '../../../../Store/transportStore';
 import { passportGetters } from '../../../../Store/passportStore';
+import { moneySign } from '../../../../utils/utils';
 
 export interface ContractData {
   document_info?: {
@@ -39,6 +40,7 @@ export interface ContractData {
   };
   payment?: {
     amount?: string;
+    currency?: string;
   };
   contract_date?: string;
   specification?: {
@@ -138,11 +140,14 @@ export const Agreement: React.FC<AgreementProps> = ({
 
   const data = buildContractData();
 
+  const payCurrency =
+    data.payment?.currency || work.cargo_currency || work.currency || 'RUB';
   const formatPrice = (price: string | number): string => {
-    if (!price) return '0 ₽';
+    const sign = moneySign(payCurrency);
+    if (!price) return `0 ${sign}`;
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-    if (isNaN(numPrice)) return String(price) + ' ₽';
-    return numPrice.toLocaleString('ru-RU').replace(/,/g, ' ') + ' ₽';
+    if (isNaN(numPrice)) return `${String(price)} ${sign}`;
+    return `${numPrice.toLocaleString('ru-RU').replace(/,/g, ' ')} ${sign}`;
   };
 
   const parseSenderDetails = () => {

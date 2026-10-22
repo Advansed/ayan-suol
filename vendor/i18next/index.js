@@ -5,6 +5,7 @@ const state = {
   fallbackLng: 'ru',
   defaultNS: 'translation',
   resources: {},
+  initialized: false,
 }
 
 function bag(lng, ns) {
@@ -78,6 +79,9 @@ const i18n = {
   get resolvedLanguage() {
     return state.language
   },
+  get isInitialized() {
+    return state.initialized
+  },
   use() {
     return i18n
   },
@@ -86,7 +90,13 @@ const i18n = {
     state.fallbackLng = typeof options.fallbackLng === 'string' ? options.fallbackLng : 'ru'
     state.defaultNS = typeof options.defaultNS === 'string' ? options.defaultNS : 'translation'
     state.language = typeof options.lng === 'string' ? options.lng : state.fallbackLng
+    state.initialized = true
     return Promise.resolve(i18n)
+  },
+  addResourceBundle(lng, ns, resources) {
+    if (!state.resources[lng]) state.resources[lng] = {}
+    const current = state.resources[lng][ns]
+    state.resources[lng][ns] = current ? { ...current, ...resources } : { ...resources }
   },
   t(key, options) {
     return resolve(String(key), options)

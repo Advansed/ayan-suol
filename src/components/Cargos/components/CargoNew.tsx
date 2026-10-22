@@ -33,8 +33,6 @@ import {
 import { useLoginStore, useToken } from '../../../Store/loginStore';
 import { api } from '../../../Store/api';
 import {
-  formatHaulPriceRange,
-  haulPriceRange,
   resolveTransportTypeId,
   toTransportTypeId,
   useTransportTypes,
@@ -47,6 +45,7 @@ import { fetchDrivingDistanceKm } from '../../Maps/services/googleMapServices';
 import { geocodeAddress } from '../../../utils/googlePlaces';
 import { getPaymentLevel, type PaymentLevel } from '../../Works/feedFormat';
 import { companyGetters, useCompanyStore } from '../../../Store/companyStore';
+import { moneySign } from '../../../utils/utils';
 import { OrganizationRequiredModal } from '../../OrganizationRequiredModal';
 import styles from './CargoNew.module.css';
 
@@ -161,6 +160,19 @@ const formatNumber = (value: number | string): string => {
   return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 };
 
+const formatYuan = (value: number): string =>
+  new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+
+const formatCnyRate = (value: number): string =>
+  new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(value);
+
+const formatRateDate = (value: string | undefined): string => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('ru-RU');
+};
+
 const unformatNumber = (value: string): number => {
   return Number(value.replace(/\s/g, '')) || 0;
 };
@@ -207,6 +219,8 @@ export const CargoNew: React.FC<CargoNewProps> = ({
   const userPhone = useLoginStore((state) => state.phone);
   const history = useHistory();
   const companyData = useCompanyStore((state) => state.data);
+  const companyCurrency = (companyData?.currency || 'RUB').toUpperCase();
+  const moneyMark = moneySign(companyCurrency);
   const companyLoading = useCompanyStore((state) => state.isLoading);
   const organizationRequired = useMemo(
     () => !companyLoading && companyGetters.getCompletionPercentage() < 80,
@@ -507,7 +521,6 @@ export const CargoNew: React.FC<CargoNewProps> = ({
 
   const selectedTransportType = transportTypes.find((type) => type.id === transportTypeId);
   const routeKm = Number(info.route_distance) > 0 ? Number(info.route_distance) : null;
-  const priceRange = haulPriceRange(info.weight, routeKm, selectedTransportType);
   const formula = Number(selectedTransportType?.formula);
   const hasTariffs =
     Number.isFinite(Number(selectedTransportType?.min_tarif)) &&
@@ -521,19 +534,19 @@ export const CargoNew: React.FC<CargoNewProps> = ({
     ? `(${hintNum(info.weight)}, ${hintNum(routeKm)}, ${hintNum(selectedTransportType?.min_tarif)}~${hintNum(selectedTransportType?.max_tarif)})`
     : '';
   const priceHint =
-    priceRange
-      ? `${tariffParts} Цена перевозки ${formatHaulPriceRange(priceRange)}`.trim()
-      : formula === 1 && hasTariffs
-        ? `${tariffParts} Укажите вес и маршрут`
-        : formula === 2 && hasTariffs
-          ? `${tariffParts} Укажите маршрут`
-          : null;
+    formula === 1 && hasTariffs && !(Number(info.weight) > 0 && routeKm)
+      ? `${tariffParts} Укажите вес и маршрут`.trim()
+      : formula === 2 && hasTariffs && !routeKm
+        ? `${tariffParts} Укажите маршрут`.trim()
+        : null;
 
   const [serverQuote, setServerQuote] = useState<{
     min: number;
     target: number;
     max: number;
     currency: string;
+    rate?: number;
+    rateDate?: string;
   } | null>(null);
 
   useEffect(() => {
@@ -546,7 +559,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
       return;
     }
     let cancelled = false;
-    api('pricing/calculate', {
+    api('api/pricing/calculate', {
       token,
       transportTypeId,
       distanceKm: routeKm,
@@ -596,6 +609,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
       cost: cargoCost,
       advance,
       insurance: insurancePremium,
+      currency: companyCurrency,
       transport_type: transportTypeId ? toTransportTypeId(transportTypeId) : undefined,
       body_type: selectedType?.name || activeBody?.name || info.body_type || '',
       vehicles_total: 1,
@@ -738,7 +752,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
               />
             </Field>
 
-            <Field label="Стоимость груза, ₽" className={styles.span2}>
+            <Field label={`Стоимость груза, ${moneyMark}`} className={styles.span2}>
               <input
                 type="text"
                 inputMode="numeric"
@@ -1168,7 +1182,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
           {escrow === 'partial' && (
             <div className={styles.partialBox}>
               <div className={styles.grid2}>
-                <Field label="Сумма на эскроу-счёт, ₽">
+                <Field label={`Сумма на эскроу-счёт, ${moneyMark}`}>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -1181,13 +1195,13 @@ export const CargoNew: React.FC<CargoNewProps> = ({
                 </Field>
                 <Field label="Остаток напрямую заказчику">
                   <div className={styles.readonly}>
-                    {formatNumber(Math.max(haulPrice - escrowHeld, 0)) || '0'} ₽
+                    {formatNumber(Math.max(haulPrice - escrowHeld, 0)) || '0'} {moneyMark}
                   </div>
                 </Field>
               </div>
               <p className={styles.helpText}>
                 {haulPrice > 0
-                  ? `Указанная сумма — ${escrowPercent}% от цены перевозки (${formatNumber(haulPrice)} ₽). Она будет зарезервирована на эскроу-счёте платформы и переведена перевозчику после доставки, остальное оплачивается напрямую.`
+                  ? `Указанная сумма — ${escrowPercent}% от цены перевозки (${formatNumber(haulPrice)} ${moneyMark}). Она будет зарезервирована на эскроу-счёте платформы и переведена перевозчику после доставки, остальное оплачивается напрямую.`
                   : 'Укажите сумму, которую нужно зарезервировать на эскроу-счёте платформы. Она будет переведена перевозчику после подтверждения доставки.'}
               </p>
             </div>
@@ -1211,7 +1225,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
                     <Icon size={16} strokeWidth={1.75} className={styles.choiceIcon} />
                     <span className={styles.choiceTitle}>{option.label}</span>
                     <span className={styles.choiceRate}>
-                      {option.rate > 0 ? `${option.rate}%` : '0 ₽'}
+                      {option.rate > 0 ? `${option.rate}%` : `0 ${moneyMark}`}
                     </span>
                   </span>
                   <span className={styles.choiceDesc}>{option.desc}</span>
@@ -1227,16 +1241,16 @@ export const CargoNew: React.FC<CargoNewProps> = ({
             <p className={styles.helpText}>
               Страховая премия:{' '}
               <strong>
-                {formatNumber(insurancePremium)} ₽
+                {formatNumber(insurancePremium)} {moneyMark}
               </strong>{' '}
-              ({insuranceRate}% от стоимости груза {formatNumber(cargoCost)} ₽)
+              ({insuranceRate}% от стоимости груза {formatNumber(cargoCost)} {moneyMark})
             </p>
           ) : null}
         </Section>
 
         <Section icon={Wallet} title="Цена перевозки">
           <div className={styles.grid2}>
-            <Field label="Цена перевозки, ₽">
+            <Field label={`Цена перевозки, ${moneyMark}`}>
               <input
                 type="text"
                 inputMode="numeric"
@@ -1248,16 +1262,23 @@ export const CargoNew: React.FC<CargoNewProps> = ({
               />
             </Field>
             <Field label="Итого с учётом страхования">
-              <div className={styles.readonly}>{formatNumber(totalWithInsurance) || '0'} ₽</div>
+              <div className={styles.readonly}>{formatNumber(totalWithInsurance) || '0'} {moneyMark}</div>
             </Field>
           </div>
           {serverQuote ? (
             <p className={styles.helpText}>
-              Минимум <strong>{formatNumber(serverQuote.min)} ₽</strong>
+              Минимум <strong>{formatYuan(serverQuote.min)} {moneySign(serverQuote.currency)}</strong>
               {' · '}
-              Середина <strong>{formatNumber(serverQuote.target)} ₽</strong>
+              Середина <strong>{formatYuan(serverQuote.target)} {moneySign(serverQuote.currency)}</strong>
               {' · '}
-              Максимум <strong>{formatNumber(serverQuote.max)} ₽</strong>
+              Максимум <strong>{formatYuan(serverQuote.max)} {moneySign(serverQuote.currency)}</strong>
+              {Number.isFinite(Number(serverQuote.rate)) ? (
+                <>
+                  {' · '}
+                  курс ЦБ {formatCnyRate(Number(serverQuote.rate))} ₽
+                  {formatRateDate(serverQuote.rateDate) ? ` на ${formatRateDate(serverQuote.rateDate)}` : ''}
+                </>
+              ) : null}
             </p>
           ) : null}
           {priceHint ? <p className={styles.helpText}>{priceHint}</p> : null}

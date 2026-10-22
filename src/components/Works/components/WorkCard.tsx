@@ -95,7 +95,12 @@ export const WorkCard: React.FC<WorkCardProps> = ({ work, selected, onClick }) =
           </span>
           <span className={styles.feedId}>ЗК-{workFormatters.shortId(work.guid || work.cargo)}</span>
           <div className={styles.feedPriceCol}>
-            <span className={styles.feedPrice}>{workFormatters.currency(work.price)}</span>
+            <span className={styles.feedPrice}>{workFormatters.currency(work.price, work.cargo_currency)}</span>
+            {Number(work.advance) > 0 ? (
+              <span className={styles.payBadge}>
+                {workFormatters.currency(work.advance, work.cargo_currency || work.currency)}
+              </span>
+            ) : null}
             <span className={`${styles.payBadge} ${PAY_CLASS[payment]}`}>
               <span className={styles.payDot} />
               {PAYMENT_LABEL[payment]}

@@ -9,10 +9,12 @@ export interface TOptions {
 export interface I18n {
   language: string
   resolvedLanguage: string
+  isInitialized: boolean
   use(plugin: unknown): I18n
   init(options?: Record<string, unknown>): Promise<I18n>
   t(key: string, options?: TOptions): string
   changeLanguage(lng: string): Promise<void>
+  addResourceBundle(lng: string, ns: string, resources: Record<string, unknown>): void
   on(event: string, handler: (lng: string) => void): void
   off(event: string, handler: (lng: string) => void): void
 }
