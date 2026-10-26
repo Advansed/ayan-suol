@@ -547,6 +547,8 @@ export const CargoNew: React.FC<CargoNewProps> = ({
     currency: string;
     rate?: number;
     rateDate?: string;
+    urbanApplied?: boolean;
+    urbanCoef?: number;
   } | null>(null);
 
   useEffect(() => {
@@ -1272,6 +1274,12 @@ export const CargoNew: React.FC<CargoNewProps> = ({
               Середина <strong>{formatYuan(serverQuote.target)} {moneySign(serverQuote.currency)}</strong>
               {' · '}
               Максимум <strong>{formatYuan(serverQuote.max)} {moneySign(serverQuote.currency)}</strong>
+              {serverQuote.urbanApplied && Number.isFinite(Number(serverQuote.urbanCoef)) ? (
+                <>
+                  {' · '}
+                  городской ×{String(serverQuote.urbanCoef).replace('.', ',')}
+                </>
+              ) : null}
               {Number.isFinite(Number(serverQuote.rate)) ? (
                 <>
                   {' · '}

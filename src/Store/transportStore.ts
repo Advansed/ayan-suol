@@ -9,7 +9,12 @@ export interface TransportType {
   formula?: number
   min_tarif?: number
   max_tarif?: number
+  /** Городской множитель 2…4 при distanceKm ≤ 50 */
+  urban_coef?: number
 }
+
+/** Совпадает с paitza-bun URBAN_MAX_KM */
+export const URBAN_MAX_KM = 50
 
 export type TransportTypeField = TransportType | TransportType[] | string | number | null | undefined
 
@@ -102,13 +107,21 @@ export function asTransportType(value: unknown): TransportType | undefined {
     formula: optionalNumber(rec, ['formula']),
     min_tarif: optionalNumber(rec, ['min_tarif', 'minTarif', 'min_tariff']),
     max_tarif: optionalNumber(rec, ['max_tarif', 'maxTarif', 'max_tariff']),
+    urban_coef: optionalNumber(rec, ['urban_coef', 'urbanCoef']),
   }
+}
+
+function clampUrbanCoef(value: number | undefined): number {
+  if (value == null || !Number.isFinite(value)) return 3
+  if (value < 2) return 2
+  if (value > 4) return 4
+  return value
 }
 
 export function haulPriceRange(
   weight: number | null | undefined,
   km: number | null | undefined,
-  type: Pick<TransportType, 'formula' | 'min_tarif' | 'max_tarif'> | undefined
+  type: Pick<TransportType, 'formula' | 'min_tarif' | 'max_tarif' | 'urban_coef'> | undefined
 ): { min: number; max: number } | null {
   if (!type) return null
   const formula = Number(type.formula)
@@ -116,15 +129,25 @@ export function haulPriceRange(
   const maxTarif = Number(type.max_tarif)
   if (!Number.isFinite(km) || (km as number) <= 0) return null
   if (!Number.isFinite(minTarif) || !Number.isFinite(maxTarif)) return null
+  let min: number
+  let max: number
   if (formula === 1) {
     const tons = Number(weight)
     if (!Number.isFinite(tons) || tons <= 0) return null
-    return { min: tons * (km as number) * minTarif, max: tons * (km as number) * maxTarif }
+    min = tons * (km as number) * minTarif
+    max = tons * (km as number) * maxTarif
+  } else if (formula === 2) {
+    min = (km as number) * minTarif
+    max = (km as number) * maxTarif
+  } else {
+    return null
   }
-  if (formula === 2) {
-    return { min: (km as number) * minTarif, max: (km as number) * maxTarif }
+  if ((km as number) <= URBAN_MAX_KM) {
+    const coef = clampUrbanCoef(type.urban_coef)
+    min *= coef
+    max *= coef
   }
-  return null
+  return { min, max }
 }
 
 export function formatHaulPriceRange(range: { min: number; max: number }): string {
