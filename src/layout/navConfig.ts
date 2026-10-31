@@ -39,7 +39,7 @@ export const MAIN_NAV: NavItem[] = [
 ];
 
 export const FOOTER_NAV: NavItem[] = [
-  { id: 'partners', label: 'Партнёрам', path: '/partners', icon: Handshake, footer: true, stub: true },
+  { id: 'partners', label: 'Партнёрам', path: '/partners', icon: Handshake, footer: true },
 ];
 
 export const MOBILE_TABS: NavItem[] = [

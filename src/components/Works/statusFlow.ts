@@ -56,7 +56,7 @@ export function workStatusLabel(status: WorkStatus | string): string {
   });
 }
 
-/** Что делать исполнителю на этом статусе */
+/** Что делать исполнителю на этом статусе (fallback RU) */
 export const WORK_CURRENT_ACTION: Record<WorkStatus, string> = {
   [WorkStatus.NEW]: 'Сделайте предложение по цене и транспорту',
   [WorkStatus.OFFERED]: 'Ожидайте ответа заказчика или отмените предложение',
@@ -71,6 +71,32 @@ export const WORK_CURRENT_ACTION: Record<WorkStatus, string> = {
   [WorkStatus.COMPLETED]: 'Заказ успешно завершён',
   [WorkStatus.REJECTED]: 'Предложение отклонено — заказ больше недоступен',
 };
+
+const WORK_ACTION_I18N: Record<WorkStatus, string> = {
+  [WorkStatus.NEW]: 'actionHintNew',
+  [WorkStatus.OFFERED]: 'actionHintOffered',
+  [WorkStatus.TO_LOAD]: 'actionHintToLoad',
+  [WorkStatus.ON_LOAD]: 'actionHintOnLoad',
+  [WorkStatus.LOADING]: 'actionHintLoading',
+  [WorkStatus.LOADED]: 'actionHintLoaded',
+  [WorkStatus.IN_WORK]: 'actionHintInWork',
+  [WorkStatus.TO_UNLOAD]: 'actionHintToUnload',
+  [WorkStatus.UNLOADING]: 'actionHintUnloading',
+  [WorkStatus.UNLOADED]: 'actionHintUnloaded',
+  [WorkStatus.COMPLETED]: 'actionHintCompleted',
+  [WorkStatus.REJECTED]: 'actionHintRejected',
+};
+
+export function getWorkActionHint(status: WorkStatus | string): string {
+  const normalized = normalizeWorkStatus(status);
+  return i18n.t(WORK_ACTION_I18N[normalized], {
+    ns: 'works',
+    defaultValue: WORK_CURRENT_ACTION[normalized] || i18n.t('orderActionHint', {
+      ns: 'works',
+      defaultValue: 'Открыть действия по заказу',
+    }),
+  });
+}
 
 const WORK_STATUS_ALIASES: Record<string, WorkStatus> = {
   '10': WorkStatus.NEW,

@@ -62,7 +62,7 @@ export function cargoStatusLabel(status: string | CargoStatus): string {
   });
 }
 
-/** Что делать заказчику на этом статусе */
+/** Что делать заказчику на этом статусе (fallback RU) */
 export const CARGO_CURRENT_ACTION: Record<CargoStatus, string> = {
   [CargoStatus.NEW]: 'Опубликуйте заказ или настройте доп. услуги',
   [CargoStatus.WAITING]: 'Ожидайте предложений от водителей',
@@ -77,6 +77,22 @@ export const CARGO_CURRENT_ACTION: Record<CargoStatus, string> = {
   [CargoStatus.WAIT_COMPLETE]: 'Подтвердите завершение заказа',
   [CargoStatus.COMPLETED]: 'Заказ успешно завершён',
   [CargoStatus.PROBLEMS]: 'По заказу возникли проблемы — разберите ситуацию',
+};
+
+const CARGO_ACTION_I18N: Record<CargoStatus, string> = {
+  [CargoStatus.NEW]: 'actionHintNew',
+  [CargoStatus.WAITING]: 'actionHintWaiting',
+  [CargoStatus.HAS_ORDERS]: 'actionHintOrders',
+  [CargoStatus.ACCEPTED]: 'actionHintAccepted',
+  [CargoStatus.WAIT_LOAD]: 'actionHintWaitLoad',
+  [CargoStatus.LOADING]: 'actionHintLoading',
+  [CargoStatus.HAS_LOADED]: 'actionHintLoaded',
+  [CargoStatus.IN_TRANSIT]: 'actionHintTransit',
+  [CargoStatus.HAS_DELIVERED]: 'actionHintDelivered',
+  [CargoStatus.UNLOADING]: 'actionHintUnloading',
+  [CargoStatus.WAIT_COMPLETE]: 'actionHintWaitComplete',
+  [CargoStatus.COMPLETED]: 'actionHintCompleted',
+  [CargoStatus.PROBLEMS]: 'actionHintProblems',
 };
 
 /**
@@ -180,7 +196,13 @@ export function resolveCargoProgressStatus(cargo: {
 
 export function getCargoActionHint(status: string | CargoStatus): string {
   const normalized = normalizeCargoStatus(status);
-  return CARGO_CURRENT_ACTION[normalized] || 'Открыть действия по заказу';
+  return i18n.t(CARGO_ACTION_I18N[normalized], {
+    ns: 'cargos',
+    defaultValue: CARGO_CURRENT_ACTION[normalized] || i18n.t('orderActionHint', {
+      ns: 'cargos',
+      defaultValue: 'Открыть действия по заказу',
+    }),
+  });
 }
 
 /** Заявка уже на этапе исполнения (после выбора водителя) */

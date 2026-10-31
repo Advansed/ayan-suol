@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Login, type LoginFormMode } from '../../components/Login'
+import { persistPartnerFromUrl } from '../../components/Login/registration'
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher'
 import { CurrencyRatesBar } from './CurrencyRatesBar'
 import styles from './LandingPage.module.css'
@@ -66,6 +67,7 @@ export const LandingPage: React.FC = () => {
   )
 
   useEffect(() => {
+    persistPartnerFromUrl(location.search)
     setAuthMode(authFromSearch(location.search))
   }, [location.search])
 

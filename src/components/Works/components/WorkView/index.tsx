@@ -9,7 +9,7 @@ import { companyGetters, useCompanyStore } from '../../../../Store/companyStore'
 import { useTransportStore } from '../../../../Store/transportStore';
 import { useToast } from '../../../Toast';
 import { useChats } from '../../../../Store/useChats';
-import { WORK_CURRENT_ACTION, findWorkByRef, normalizeWorkStatus } from '../../statusFlow';
+import { getWorkActionHint, findWorkByRef, normalizeWorkStatus } from '../../statusFlow';
 import { getWorkCustomerName, workFormatters } from '../../utils';
 import {
   feedStatusKind,
@@ -120,7 +120,7 @@ export const WorkView: React.FC<WorkViewProps> = ({
         Boolean(transportData?.guid || transportData?.license_plate || transportData?.number);
     const organizationRequired = !companyLoading && companyCompletion < 80;
 
-    const actionHint = WORK_CURRENT_ACTION[workInfo.status] || t('orderActionHint');
+    const actionHint = getWorkActionHint(workInfo.status);
     const hasInteractiveAction =
         workInfo.status !== WorkStatus.COMPLETED &&
         workInfo.status !== WorkStatus.REJECTED;

@@ -30,6 +30,7 @@ import { AppShell } from './layout';
 import { HomePage } from './pages/Home/HomePage';
 import { LandingPage } from './pages/Landing/LandingPage';
 import { StubPage } from './pages/Stub/StubPage';
+import { PartnersPage } from './pages/Partners/PartnersPage';
 
 const PrivacyPage = lazy(() => import('./pages/Privacy/PrivacyPage'));
 
@@ -101,9 +102,7 @@ const AuthedRoutes: React.FC = () => {
           <Route exact path="/verification">
             <Redirect to="/finance" />
           </Route>
-          <Route exact path="/partners">
-            <StubPage title={t('partnersTitle')} description={t('partnersText')} />
-          </Route>
+          <Route exact path="/partners" component={PartnersPage} />
 
           <Route exact path="/tab1">
             <Redirect to="/feed" />
