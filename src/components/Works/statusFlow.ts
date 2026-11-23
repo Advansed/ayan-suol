@@ -48,8 +48,35 @@ const WORK_STATUS_I18N: Record<WorkStatus, string> = {
   [WorkStatus.REJECTED]: 'statusRejected',
 };
 
-export function workStatusLabel(status: WorkStatus | string): string {
+const BASIC_WORK_FLOW: WorkStatus[] = [
+  WorkStatus.NEW,
+  WorkStatus.OFFERED,
+  WorkStatus.IN_WORK,
+  WorkStatus.COMPLETED,
+];
+
+function basicWorkKey(status: WorkStatus): string {
+  if (status === WorkStatus.NEW) return 'statusBasicPublished';
+  if (status === WorkStatus.OFFERED) return 'statusBasicBids';
+  if (status === WorkStatus.COMPLETED) return 'statusBasicDone';
+  if (status === WorkStatus.REJECTED) return 'statusBasicReject';
+  return 'statusBasicTrip';
+}
+
+const BASIC_WORK_LABEL: Record<string, string> = {
+  statusBasicPublished: 'Опубликован',
+  statusBasicBids: 'Есть отклик',
+  statusBasicTrip: 'В рейсе',
+  statusBasicDone: 'Завершён',
+  statusBasicReject: 'Отказ',
+};
+
+export function workStatusLabel(status: WorkStatus | string, plan?: string): string {
   const normalized = normalizeWorkStatus(status);
+  if (plan === 'basic') {
+    const key = basicWorkKey(normalized);
+    return i18n.t(key, { ns: 'works', defaultValue: BASIC_WORK_LABEL[key] });
+  }
   return i18n.t(WORK_STATUS_I18N[normalized], {
     ns: 'works',
     defaultValue: WORK_STATUS_SHORT[normalized],
@@ -87,8 +114,22 @@ const WORK_ACTION_I18N: Record<WorkStatus, string> = {
   [WorkStatus.REJECTED]: 'actionHintRejected',
 };
 
-export function getWorkActionHint(status: WorkStatus | string): string {
+export function getWorkActionHint(status: WorkStatus | string, plan?: string): string {
   const normalized = normalizeWorkStatus(status);
+  if (plan === 'basic') {
+    const key = basicWorkKey(normalized);
+    const hint =
+      key === 'statusBasicPublished'
+        ? 'Сделайте предложение по цене и транспорту'
+        : key === 'statusBasicBids'
+          ? 'Ожидайте, пока заказчик начнёт рейс'
+          : key === 'statusBasicDone'
+            ? 'Заказ завершён'
+            : key === 'statusBasicReject'
+              ? 'Предложение отклонено'
+              : 'Рейс идёт. Его завершает заказчик';
+    return i18n.t(`action${key.slice(6)}`, { ns: 'works', defaultValue: hint });
+  }
   return i18n.t(WORK_ACTION_I18N[normalized], {
     ns: 'works',
     defaultValue: WORK_CURRENT_ACTION[normalized] || i18n.t('orderActionHint', {
@@ -170,6 +211,16 @@ export type OrderProgressSlot = ProgressSlot<WorkStatus>;
 /** До 7 точек: соседние этапы вокруг текущего и финиш, «…» если дальше ещё есть шаги. */
 export function getOrderProgressSlots(status: WorkStatus | string): OrderProgressSlot[] {
   return buildProgressSlots(WORK_STATUS_FLOW, getStatusFlowIndex(status));
+}
+
+export function getBasicOrderProgressSlots(status: WorkStatus | string): OrderProgressSlot[] {
+  const normalized = normalizeWorkStatus(status);
+  if (normalized === WorkStatus.REJECTED) return [];
+  let index = 2;
+  if (normalized === WorkStatus.NEW) index = 0;
+  else if (normalized === WorkStatus.OFFERED) index = 1;
+  else if (normalized === WorkStatus.COMPLETED) index = 3;
+  return buildProgressSlots(BASIC_WORK_FLOW, index);
 }
 
 /** Лента: новые, отклики, рейсы и завершённые */

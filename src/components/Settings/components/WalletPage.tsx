@@ -35,6 +35,8 @@ import { shortDate } from '../../Works/feedFormat';
 export interface WalletPageProps {
   onBack: () => void;
   initialAmount?: number | string | null;
+  variant?: 'full' | 'topup';
+  onPaid?: () => void;
 }
 
 type PayMethod = 'invoice' | 'sbp' | 'acquiring';
@@ -129,7 +131,10 @@ function MonthChart({ bars }: { bars: { key: string; label: string; value: numbe
 export const WalletPage: React.FC<WalletPageProps> = ({
   onBack: _onBack,
   initialAmount,
+  variant = 'full',
+  onPaid,
 }) => {
+  const topup = variant === 'topup';
   const { t } = useTranslation('finance');
   const toast = useToast();
   const { user } = useLogin();
@@ -154,7 +159,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
     const n = Number(initialAmount);
     return Number.isFinite(n) && n > 0 ? formatAmountInput(Math.ceil(n)) : '';
   });
-  const [showTopUp, setShowTopUp] = useState(() => Number(initialAmount) > 0);
+  const [showTopUp, setShowTopUp] = useState(() => variant === 'topup' || Number(initialAmount) > 0);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [withdrawCurrency, setWithdrawCurrency] = useState('RUB');
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -418,8 +423,9 @@ export const WalletPage: React.FC<WalletPageProps> = ({
       if (payload) {
         try {
           await openUrlInApp(payload);
-          setShowTopUp(false);
+          setShowTopUp(topup);
           void refreshWallet({ silent: true });
+          onPaid?.();
         } catch {
           toast.error(t('sbpOpenError'));
         }
@@ -477,9 +483,10 @@ export const WalletPage: React.FC<WalletPageProps> = ({
         return;
       }
 
-      setShowTopUp(false);
+      setShowTopUp(topup);
       setInvoiceModalData(invoice);
       void refreshWallet({ silent: true });
+      onPaid?.();
     } finally {
       setPayLoading(null);
     }
@@ -617,6 +624,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                   if (href.startsWith(window.location.origin)) {
                     setPayFrameUrl(null);
                     void refreshWallet({ silent: true });
+                    onPaid?.();
                   }
                 } catch {
                   // Форма Payler или страница банка ещё открыта.
@@ -700,8 +708,8 @@ export const WalletPage: React.FC<WalletPageProps> = ({
         </div>
       )}
 
-      {showTopUp && (
-        <div className={walletStyles.modalOverlay} role="presentation" onClick={closeTopUp}>
+      {(showTopUp || topup) && (
+        <div className={topup ? undefined : walletStyles.modalOverlay} role="presentation" onClick={topup ? undefined : closeTopUp}>
           <div
             className={walletStyles.modalDialog}
             role="dialog"
@@ -716,6 +724,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
                 </h2>
                 <p className={walletStyles.modalSub}>{t('topUpSub')}</p>
               </div>
+              {!topup && (
               <button
                 type="button"
                 className={walletStyles.modalClose}
@@ -725,6 +734,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
               >
                 <X size={18} strokeWidth={2} />
               </button>
+              )}
             </div>
 
             <div className={walletStyles.amountWrap}>
@@ -803,7 +813,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
         </div>
       )}
 
-      <div className={walletStyles.stats}>
+      {!topup && <div className={walletStyles.stats}>
         <section className={`${walletStyles.statCard} ${walletStyles.statHero}`}>
           <div className={walletStyles.statHead}>
             <span className={walletStyles.statIconHero} aria-hidden>
@@ -943,9 +953,9 @@ export const WalletPage: React.FC<WalletPageProps> = ({
             </section>
           </>
         )}
-      </div>
+      </div>}
 
-      {!isCustomer && (
+      {!topup && !isCustomer && (
       <div className={walletStyles.midGrid}>
         <section className={walletStyles.card}>
           <h2 className={walletStyles.cardTitle}>{t('incomeChart')}</h2>
@@ -975,7 +985,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
       </div>
       )}
 
-      <section className={walletStyles.card} id="statement">
+      {!topup && <section className={walletStyles.card} id="statement">
         <h2 className={walletStyles.cardTitle}>{t('history')}</h2>
         {isLoading ? (
           <div className={walletStyles.loadingWrap}>
@@ -1032,7 +1042,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
             })}
           </ul>
         )}
-      </section>
+      </section>}
     </div>
   );
 };

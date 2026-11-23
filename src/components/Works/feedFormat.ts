@@ -256,8 +256,8 @@ export function feedStatusKind(status: WorkStatus): 'new' | 'bids' | 'work' | 'd
   return 'work';
 }
 
-export function feedStatusLabel(status: WorkStatus): string {
-  return workStatusLabel(status);
+export function feedStatusLabel(status: WorkStatus, plan?: string): string {
+  return workStatusLabel(status, plan);
 }
 
 export function formatPhonePretty(phone: string): string {

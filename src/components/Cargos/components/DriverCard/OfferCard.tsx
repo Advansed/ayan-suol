@@ -4,6 +4,7 @@ import { mailOutline, shieldCheckmarkOutline, documentOutline, timeOutline, clos
 import styles from './OfferCard.module.css';
 import { DriverInfo } from '../../../../Store/cargoStore';
 import { moneySign } from '../../../../utils/utils';
+import { useAppPlan } from '../../../../plan';
 
 interface OfferCardProps {
     info: DriverInfo
@@ -22,6 +23,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
     comment,
     createdAt
 }) => {
+    const basic = useAppPlan() === 'basic';
     const formatPrice = (price: number): string => {
         return `${price.toLocaleString('ru-RU').replace(/,/g, ' ')} ${moneySign(info.currency)}`;
     };
@@ -88,7 +90,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
                 </div>
             </div>
 
-            {/* Card 3: Secure Payment */}
+            {!basic && (
             <div className={styles.secureCard}>
                 <IonIcon icon={shieldCheckmarkOutline} className={styles.secureIcon} />
                 <h3 className={styles.secureTitle}>Безопасная оплата через платформу</h3>
@@ -96,6 +98,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
                     Все платежи проходят через специальный счет приложения. Комиссия платформы 5% обеспечивает защиту обеих сторон и гарантию выполнения сделки.
                 </p>
             </div>
+            )}
 
             {/* Card 4: Comment (optional) */}
             {comment && (
@@ -130,7 +133,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
                             disabled={isLoading}
                         >
                             <IonIcon icon={checkmarkOutline} slot="start" />
-                            <span>Принять</span>
+                            <span>{basic ? 'Начать рейс' : 'Принять'}</span>
                         </IonButton>
                     )}
                 </div>

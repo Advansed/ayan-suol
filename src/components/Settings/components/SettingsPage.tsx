@@ -17,6 +17,8 @@ import {
 } from 'ionicons/icons';
 import { useLogin } from '../../../Store/useLogin';
 import { useProfile } from '../../Profile/useProfile';
+import { useCompany } from '../../../Store/useCompany';
+import { useAppPlan, useProUnlocked } from '../../../plan';
 import { useHistory } from 'react-router-dom';
 import styles from '../Settings.module.css';
 import { SettingsAgreementsSection } from './SettingsAgreementsSection';
@@ -33,6 +35,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const { t } = useTranslation('settings');
   const { logout } = useLogin();
   const { user_type } = useProfile();
+  const { setPlan } = useCompany();
+  const plan = useAppPlan();
+  const proUnlocked = useProUnlocked();
   const history = useHistory();
 
   const [pushNotifications, setPushNotifications] = useState(true);
@@ -113,6 +118,51 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           <p className={styles.instructionText}>
             {user_type === 3 ? t('hintDispatcher') : user_type === 2 ? t('hintCarrier') : t('hintCustomer')}
           </p>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.cardHead}>
+            <div className={styles.cardIcon} aria-hidden>
+              <IonIcon icon={checkmarkCircleOutline} />
+            </div>
+            <div>
+              <h3 className={styles.cardTitle}>{t('planTitle', { defaultValue: 'Тариф' })}</h3>
+              <p className={styles.cardSub}>
+                {t('planSub', { defaultValue: 'Basic и Pro не смешивают заявки' })}
+              </p>
+            </div>
+          </div>
+          {proUnlocked ? (
+            <div className={styles.roleSwitcher} role="radiogroup" aria-label={t('planTitle', { defaultValue: 'Тариф' })}>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={plan === 'basic'}
+                className={`${styles.roleItem} ${plan === 'basic' ? styles.roleActive : ''}`}
+                onClick={() => setPlan('basic')}
+              >
+                <span className={styles.roleText}>Basic</span>
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={plan === 'pro'}
+                className={`${styles.roleItem} ${plan === 'pro' ? styles.roleActive : ''}`}
+                onClick={() => setPlan('pro')}
+              >
+                <span className={styles.roleText}>Pro</span>
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className={styles.instructionText}>
+                {t('planLocked', { defaultValue: 'Сейчас Basic. Pro откроется после пополнения счёта.' })}
+              </p>
+              <IonButton expand="block" onClick={() => history.push('/finance')}>
+                {t('planTopUp', { defaultValue: 'Пополнить и открыть Pro' })}
+              </IonButton>
+            </>
+          )}
         </section>
 
         <section className={styles.section}>

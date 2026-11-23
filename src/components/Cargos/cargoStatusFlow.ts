@@ -54,8 +54,37 @@ const CARGO_STATUS_I18N: Record<CargoStatus, string> = {
   [CargoStatus.PROBLEMS]: 'statusProblems',
 };
 
-export function cargoStatusLabel(status: string | CargoStatus): string {
+const BASIC_CARGO_FLOW: CargoStatus[] = [
+  CargoStatus.WAITING,
+  CargoStatus.HAS_ORDERS,
+  CargoStatus.IN_TRANSIT,
+  CargoStatus.COMPLETED,
+];
+
+const BASIC_CARGO_LABEL: Record<string, string> = {
+  [CargoStatus.NEW]: 'Опубликован',
+  [CargoStatus.WAITING]: 'Опубликован',
+  [CargoStatus.HAS_ORDERS]: 'Есть отклик',
+  [CargoStatus.COMPLETED]: 'Завершён',
+  [CargoStatus.PROBLEMS]: 'Проблема',
+};
+
+function basicCargoKey(status: CargoStatus): string {
+  if (status === CargoStatus.NEW || status === CargoStatus.WAITING) return 'statusBasicPublished';
+  if (status === CargoStatus.HAS_ORDERS) return 'statusBasicBids';
+  if (status === CargoStatus.COMPLETED) return 'statusBasicDone';
+  if (status === CargoStatus.PROBLEMS) return 'statusBasicProblem';
+  return 'statusBasicTrip';
+}
+
+export function cargoStatusLabel(status: string | CargoStatus, plan?: string): string {
   const normalized = normalizeCargoStatus(status);
+  if (plan === 'basic') {
+    return i18n.t(basicCargoKey(normalized), {
+      ns: 'cargos',
+      defaultValue: BASIC_CARGO_LABEL[normalized] || 'В рейсе',
+    });
+  }
   return i18n.t(CARGO_STATUS_I18N[normalized], {
     ns: 'cargos',
     defaultValue: CARGO_STATUS_SHORT[normalized],
@@ -166,6 +195,16 @@ export function getCargoProgressSlots(status: string | CargoStatus): CargoProgre
   return buildProgressSlots(CARGO_STATUS_FLOW, getCargoStatusFlowIndex(status));
 }
 
+export function getBasicCargoProgressSlots(status: string | CargoStatus): CargoProgressSlot[] {
+  const normalized = normalizeCargoStatus(status);
+  if (normalized === CargoStatus.PROBLEMS) return [];
+  let index = 2;
+  if (normalized === CargoStatus.NEW || normalized === CargoStatus.WAITING) index = 0;
+  else if (normalized === CargoStatus.HAS_ORDERS) index = 1;
+  else if (normalized === CargoStatus.COMPLETED) index = 3;
+  return buildProgressSlots(BASIC_CARGO_FLOW, index);
+}
+
 /** Самый «продвинутый» статус: cargo.status или статусы заявок */
 export function resolveCargoProgressStatus(cargo: {
   status?: string | number | CargoStatus | null;
@@ -194,8 +233,32 @@ export function resolveCargoProgressStatus(cargo: {
   return best;
 }
 
-export function getCargoActionHint(status: string | CargoStatus): string {
+export function getCargoActionHint(status: string | CargoStatus, plan?: string): string {
   const normalized = normalizeCargoStatus(status);
+  if (plan === 'basic') {
+    const key = basicCargoKey(normalized);
+    const hintKey =
+      key === 'statusBasicPublished'
+        ? 'actionBasicPublished'
+        : key === 'statusBasicBids'
+          ? 'actionBasicBids'
+          : key === 'statusBasicDone'
+            ? 'actionBasicDone'
+            : key === 'statusBasicProblem'
+              ? 'actionBasicProblem'
+              : 'actionBasicTrip';
+    const fallback =
+      hintKey === 'actionBasicPublished'
+        ? 'Заявка опубликована, ждите отклики'
+        : hintKey === 'actionBasicBids'
+          ? 'Выберите перевозчика, рейс начнётся сразу'
+          : hintKey === 'actionBasicDone'
+            ? 'Заявка завершена'
+            : hintKey === 'actionBasicProblem'
+              ? 'По заявке проблема'
+              : 'Рейс идёт. Завершите его после доставки';
+    return i18n.t(hintKey, { ns: 'cargos', defaultValue: fallback });
+  }
   return i18n.t(CARGO_ACTION_I18N[normalized], {
     ns: 'cargos',
     defaultValue: CARGO_CURRENT_ACTION[normalized] || i18n.t('orderActionHint', {
@@ -232,6 +295,6 @@ export function cargoFeedKind(status: string | CargoStatus): CargoFeedKind {
   return 'work';
 }
 
-export function cargoFeedLabel(status: string | CargoStatus): string {
-  return cargoStatusLabel(status);
+export function cargoFeedLabel(status: string | CargoStatus, plan?: string): string {
+  return cargoStatusLabel(status, plan);
 }

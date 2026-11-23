@@ -53,6 +53,8 @@ export interface CompanyData {
   payout_type?: string
   card_number_mask?: string
   is_verified?: boolean
+  plan?: 'basic' | 'pro'
+  pro_unlocked?: boolean
   created_at?: string
   updated_at?: string
   files?: CompanyFile[]
@@ -180,6 +182,8 @@ export const EMPTY_COMPANY: CompanyData = {
   payout_type: DEFAULT_PAYOUT_TYPE,
   card_number_mask: '',
   is_verified: false,
+  plan: 'basic',
+  pro_unlocked: false,
 }
 
 /** Поля JSON для p_set_company (новые имена) */
@@ -304,6 +308,8 @@ export function normalizeCompany(raw: any): CompanyData | null {
     local_bank_code,
     intermediary_bank_account,
     is_verified: Boolean(raw.is_verified),
+    plan: raw.plan === 'pro' ? 'pro' : 'basic',
+    pro_unlocked: Boolean(raw.pro_unlocked ?? raw.proUnlocked),
     files: Array.isArray(raw.files) ? raw.files : [],
     inn: tax_number,
     kpp: tax_number_2,

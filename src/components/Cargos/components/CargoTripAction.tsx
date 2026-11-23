@@ -12,6 +12,7 @@ type TFn = (key: string, options?: { defaultValue?: string }) => string;
 
 type CargoTripActionProps = {
   invoice: DriverInfo;
+  basic?: boolean;
   onChat: (invoice: DriverInfo) => void;
   onStartLoading: (invoice: DriverInfo) => void | Promise<void>;
   onSend: (invoice: DriverInfo) => void | Promise<void>;
@@ -49,7 +50,16 @@ function resolvePhotoGroups(copy: StepCopy): PhotoGroupCopy[] {
   return [];
 }
 
-function stepCopy(status: DriverInfo['status'], t: TFn): StepCopy {
+function stepCopy(status: DriverInfo['status'], t: TFn, basic = false): StepCopy {
+  if (basic && status !== 'Заказано' && status !== 'Завершено') {
+    return {
+      title: t('tripBasicTitle', { defaultValue: 'Рейс идёт' }),
+      hint: t('tripBasicHint', { defaultValue: 'Завершите рейс, когда груз доставлен.' }),
+      primaryLabel: t('tripBasicComplete', { defaultValue: 'Завершить рейс' }),
+      requireRating: true,
+      PrimaryIcon: Star,
+    };
+  }
   switch (status) {
     case 'Принято':
       return {
@@ -170,6 +180,7 @@ function stepCopy(status: DriverInfo['status'], t: TFn): StepCopy {
 
 export const CargoTripAction: React.FC<CargoTripActionProps> = ({
   invoice,
+  basic = false,
   onChat,
   onStartLoading,
   onSend,
@@ -178,7 +189,7 @@ export const CargoTripAction: React.FC<CargoTripActionProps> = ({
   isLoading = false,
 }) => {
   const { t } = useTranslation('cargos');
-  const copy = stepCopy(invoice.status, t);
+  const copy = stepCopy(invoice.status, t, basic);
   const photoGroups = resolvePhotoGroups(copy);
   const photoKey = photoGroups.map((g) => g.status).join(',');
   const [groupFotos, setGroupFotos] = useState<Record<number, unknown[]>>({});
@@ -248,6 +259,10 @@ export const CargoTripAction: React.FC<CargoTripActionProps> = ({
   const canSubmit = Boolean(copy.primaryLabel) && photosReady && confirmReady && ratingReady && !isLoading;
 
   const handlePrimary = () => {
+    if (basic && invoice.status !== 'Заказано' && invoice.status !== 'Завершено') {
+      void onComplete(invoice, rating, true);
+      return;
+    }
     if (invoice.status === 'На погрузке') {
       void onStartLoading(invoice);
       return;

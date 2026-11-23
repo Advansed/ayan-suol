@@ -13,6 +13,7 @@ import { InvoiceOfferCard } from './InvoiceOfferCard';
 import { LicAccountPanel } from './LicAccountPanel';
 import { useLicAccount } from '../hooks/useLicAccount';
 import { cargoStatusLabel } from '../cargoStatusFlow';
+import { useAppPlan } from '../../../plan';
 import { formatters } from '../../../utils/utils';
 import styles from './CargoInvoices.module.css';
 
@@ -30,6 +31,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({
   onOpenAgreement,
 }) => {
   const { t } = useTranslation('cargos');
+  const basic = useAppPlan() === 'basic';
   const {
     invoices,
     isLoading,
@@ -127,6 +129,11 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({
   };
 
   const handleClick = async (invoice: DriverInfo) => {
+    if (basic) {
+      await handleAccept(invoice, 12);
+      setOpenGuid(null);
+      return;
+    }
     const contractData = await get_contract(invoice);
     if (onOpenAgreement && contractData) {
       setOpenGuid(null);
@@ -171,7 +178,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({
                 {invoice.client || t('driverFallback')}
               </div>
               <div className={styles.invoiceRowMeta}>
-                {cargoStatusLabel(invoice.status)}
+                {cargoStatusLabel(invoice.status, basic ? 'basic' : 'pro')}
                 {invoice.transport ? ` · ${invoice.transport}` : ''}
               </div>
             </div>
@@ -215,7 +222,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({
                     <div className={styles.actionPanelHead}>
                       <div className={styles.actionPanelKicker}>{t('currentAction')}</div>
                       <h2 className={styles.actionPanelTitle}>
-                        {cargoStatusLabel(openInvoice.status)}
+                        {cargoStatusLabel(openInvoice.status, basic ? 'basic' : 'pro')}
                       </h2>
                     </div>
                     <DriverCard
@@ -252,6 +259,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({
                   </button>
                 </div>
 
+                {!basic && (
                 <div className={styles.modalRight}>
                   <LicAccountPanel
                     data={lic.data}
@@ -259,6 +267,7 @@ export const CargoInvoice: React.FC<CargoInvoiceProps> = ({
                     error={lic.error}
                   />
                 </div>
+                )}
               </div>
             </div>
           </div>

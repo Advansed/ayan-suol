@@ -18,6 +18,7 @@ import {
 import { CargoInfo, CargoStatus, DriverInfo, useCargoStore } from '../../../Store/cargoStore';
 import type { CargoActionResult } from '../hooks/useCargos';
 import { statusUtils, formatters } from '../../../utils/utils';
+import { useAppPlan } from '../../../plan';
 import {
   getCargoActionHint,
   isCargoCompleted,
@@ -93,6 +94,8 @@ const CargoViewInner: React.FC<CargoViewProps> = ({
   isLoading = false,
 }) => {
   const { t } = useTranslation('cargos');
+  const plan = useAppPlan();
+  const basic = plan === 'basic';
   const cargos = useCargoStore((state) => state.cargos);
   const [actionOpen, setActionOpen] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
@@ -115,7 +118,7 @@ const CargoViewInner: React.FC<CargoViewProps> = ({
   const canDelete = statusUtils.canDelete(status);
   const invoices = cargoInfo.invoices ?? [];
   const totalInvoices = invoices.length;
-  const actionHint = getCargoActionHint(progressStatus);
+  const actionHint = getCargoActionHint(progressStatus, plan);
   const publishAlertMessage = t('publishConfirmMessage');
   const completed = isCargoCompleted(progressStatus);
   const problems = isCargoProblems(progressStatus);
@@ -474,6 +477,7 @@ const CargoViewInner: React.FC<CargoViewProps> = ({
             {showTripActions && selectedInvoice ? (
               <CargoTripAction
                 invoice={selectedInvoice}
+                basic={basic}
                 onChat={onChatInvoice}
                 onStartLoading={handleStartLoading}
                 onSend={handleSend}
@@ -551,7 +555,7 @@ const CargoViewInner: React.FC<CargoViewProps> = ({
                   disabled={isLoading}
                   onClick={handleConfirmAccept}
                 >
-                  {t('acceptCarrierConfirm')}
+                  {basic ? t('startTrip', { defaultValue: 'Начать рейс' }) : t('acceptCarrierConfirm')}
                 </button>
               </div>
             </div>

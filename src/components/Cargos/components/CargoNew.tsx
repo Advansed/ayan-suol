@@ -170,6 +170,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
   const userPhone = useLoginStore((state) => state.phone);
   const history = useHistory();
   const companyData = useCompanyStore((state) => state.data);
+  const basic = companyData?.plan !== 'pro';
   const companyCurrency = (companyData?.currency || 'RUB').toUpperCase();
   const moneyMark = moneySign(companyCurrency);
   const numberLocale = i18n.language?.startsWith('zh')
@@ -574,8 +575,13 @@ export const CargoNew: React.FC<CargoNewProps> = ({
   }, [token, transportTypeId, routeKm, info.weight, formula]);
 
   const buildCargo = (): CargoInfo => {
-    const advance =
-      escrow === 'full' ? haulPrice : escrow === 'partial' ? Number(escrowHeld) || 0 : 0;
+    const advance = basic
+      ? 0
+      : escrow === 'full'
+        ? haulPrice
+        : escrow === 'partial'
+          ? Number(escrowHeld) || 0
+          : 0;
     const selectedType = transportTypes.find((type) => type.id === transportTypeId);
 
     const route = buildCargoRoute(
@@ -593,7 +599,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
       price: haulPrice,
       cost: cargoCost,
       advance,
-      insurance: insurancePremium,
+      insurance: basic ? 0 : insurancePremium,
       currency: companyCurrency,
       transport_type: transportTypeId ? toTransportTypeId(transportTypeId) : undefined,
       body_type:
@@ -1143,7 +1149,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
           </div>
         </Section>
 
-        <Section icon={Shield} title={t('sectionEscrow')}>
+        {!basic && <Section icon={Shield} title={t('sectionEscrow')}>
           <div className={styles.choiceGrid}>
             {ESCROW_OPTIONS.map((option) => (
               <button
@@ -1192,9 +1198,9 @@ export const CargoNew: React.FC<CargoNewProps> = ({
               </p>
             </div>
           )}
-        </Section>
+        </Section>}
 
-        <Section icon={ShieldCheck} title={t('sectionInsurance')}>
+        {!basic && <Section icon={ShieldCheck} title={t('sectionInsurance')}>
           <div className={styles.choiceGrid}>
             {INSURANCE_OPTIONS.map((option) => {
               const Icon = option.Icon;
@@ -1231,7 +1237,7 @@ export const CargoNew: React.FC<CargoNewProps> = ({
               })}
             </p>
           ) : null}
-        </Section>
+        </Section>}
 
         <Section icon={Wallet} title={t('sectionPrice')}>
           <div className={styles.quoteLayout}>
