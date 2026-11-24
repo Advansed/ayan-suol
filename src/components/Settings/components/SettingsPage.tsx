@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IonIcon, IonToggle, IonButton } from '@ionic/react';
+import { IonIcon, IonToggle, IonButton, IonAlert } from '@ionic/react';
 import {
   personOutline,
   carOutline,
@@ -13,9 +13,13 @@ import {
   lockClosedOutline,
   linkOutline,
   logOutOutline,
+  trashOutline,
   chevronForwardOutline,
 } from 'ionicons/icons';
 import { useLogin } from '../../../Store/useLogin';
+import { useToken } from '../../../Store/loginStore';
+import { useSocket } from '../../../Store/useSocket';
+import { useToast } from '../../Toast/useToast';
 import { useProfile } from '../../Profile/useProfile';
 import { useCompany } from '../../../Store/useCompany';
 import { useAppPlan, useProUnlocked } from '../../../plan';
@@ -34,6 +38,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 }) => {
   const { t } = useTranslation('settings');
   const { logout } = useLogin();
+  const token = useToken();
+  const { socket } = useSocket();
+  const toast = useToast();
   const { user_type } = useProfile();
   const { setPlan } = useCompany();
   const plan = useAppPlan();
@@ -43,10 +50,49 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [pushNotifications, setPushNotifications] = useState(true);
   const [sound, setSound] = useState(true);
   const [vibration, setVibration] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleLogout = () => {
     logout();
     history.push('/');
+  };
+
+  const deleteAccount = useCallback(() => {
+    return new Promise<{ success: boolean; error?: string }>((resolve) => {
+      if (!socket) {
+        resolve({ success: false, error: t('deleteAccountError') });
+        return;
+      }
+      let settled = false;
+      const finish = (result: { success: boolean; error?: string }) => {
+        if (settled) return;
+        settled = true;
+        socket.off('delete_account', onResponse);
+        resolve(result);
+      };
+      const onResponse = (response: { success?: boolean; message?: string }) => {
+        if (response?.success) finish({ success: true });
+        else finish({ success: false, error: response?.message || t('deleteAccountError') });
+      };
+      socket.on('delete_account', onResponse);
+      window.setTimeout(() => finish({ success: false, error: t('deleteAccountError') }), 10000);
+      socket.emit('delete_account', { token });
+    });
+  }, [socket, t, token]);
+
+  const handleDeleteAccount = () => {
+    if (deleting) return;
+    setDeleting(true);
+    void deleteAccount()
+      .then((result) => {
+        if (!result.success) {
+          toast.error(result.error || t('deleteAccountError'));
+          return;
+        }
+        handleLogout();
+      })
+      .finally(() => setDeleting(false));
   };
 
   const handleRole = (nextType: number) => {
@@ -261,7 +307,32 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <IonIcon icon={logOutOutline} slot="start" />
             {t('logout')}
           </IonButton>
+          <IonButton
+            fill="outline"
+            color="danger"
+            className={styles.deleteAccountButton}
+            disabled={deleting}
+            onClick={() => setConfirmDelete(true)}
+          >
+            <IonIcon icon={trashOutline} slot="start" />
+            {t('deleteAccount')}
+          </IonButton>
         </div>
+
+        <IonAlert
+          isOpen={confirmDelete}
+          onDidDismiss={() => setConfirmDelete(false)}
+          header={t('deleteAccountHeader')}
+          message={t('deleteAccountMessage')}
+          buttons={[
+            { text: t('cancel', { ns: 'common' }), role: 'cancel' },
+            {
+              text: t('deleteAccountConfirm'),
+              role: 'destructive',
+              handler: handleDeleteAccount,
+            },
+          ]}
+        />
     </div>
   );
 };

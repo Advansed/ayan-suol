@@ -33,6 +33,7 @@ import { StubPage } from './pages/Stub/StubPage';
 import { PartnersPage } from './pages/Partners/PartnersPage';
 
 const PrivacyPage = lazy(() => import('./pages/Privacy/PrivacyPage'));
+const AccountDeletionPage = lazy(() => import('./pages/AccountDeletion/AccountDeletionPage'));
 const PublicStatsPage = lazy(() => import('./pages/Landing/PublicStatsPage'));
 
 const FeedPage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.FeedPage })));
@@ -164,6 +165,11 @@ const AppContent: React.FC = () => {
         <Route exact path="/consent">
           <Suspense fallback={null}>
             <PrivacyPage />
+          </Suspense>
+        </Route>
+        <Route exact path="/account-deletion">
+          <Suspense fallback={null}>
+            <AccountDeletionPage />
           </Suspense>
         </Route>
         <Route>
