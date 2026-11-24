@@ -112,6 +112,9 @@ export const LandingPage: React.FC = () => {
                   {t(item.key)}
                 </a>
               ))}
+              <Link to="/stats" className={styles.navLink} onClick={closeMenu}>
+                {t('navStats')}
+              </Link>
               <div className={styles.navAuth}>
                 <button type="button" className={styles.btnGhost} onClick={() => openAuth('login')}>
                   {t('login')}
@@ -197,6 +200,11 @@ export const LandingPage: React.FC = () => {
               <span>{t(item.sub)}</span>
             </div>
           ))}
+        </div>
+        <div className={styles.metricsFoot}>
+          <Link to="/stats" className={styles.metricsLink}>
+            {t('statsLink')}
+          </Link>
         </div>
       </section>
 

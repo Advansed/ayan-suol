@@ -33,6 +33,7 @@ import { StubPage } from './pages/Stub/StubPage';
 import { PartnersPage } from './pages/Partners/PartnersPage';
 
 const PrivacyPage = lazy(() => import('./pages/Privacy/PrivacyPage'));
+const PublicStatsPage = lazy(() => import('./pages/Landing/PublicStatsPage'));
 
 const FeedPage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.FeedPage })));
 const ChatsPage = lazy(() => import('./pages/RoutePages').then((m) => ({ default: m.ChatsPage })));
@@ -150,6 +151,11 @@ const AppContent: React.FC = () => {
   return (
     <IonReactRouter>
       <Switch>
+        <Route exact path="/stats">
+          <Suspense fallback={null}>
+            <PublicStatsPage />
+          </Suspense>
+        </Route>
         <Route exact path="/privacy">
           <Suspense fallback={null}>
             <PrivacyPage />

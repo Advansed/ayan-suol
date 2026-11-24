@@ -147,6 +147,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({
     load,
     refreshWallet,
     set_payment,
+    set_card_payment,
     set_invoice,
     get_invoice,
     get_deals,
@@ -381,13 +382,31 @@ export const WalletPage: React.FC<WalletPageProps> = ({
     setPayLoading(method);
     try {
       if (method === 'acquiring') {
+        const back = `${window.location.origin}/finance`;
+        const walletCurrency = (accountData?.currency || 'RUB').toUpperCase();
+        if (walletCurrency === 'RUB') {
+          const res = await set_card_payment({
+            type: 2,
+            amount: amountNumber,
+            description: `Пополнение лицевого счета ${user?.id || ''}`.trim(),
+            success_url: back,
+            fail_url: back,
+          });
+          const url = res?.data?.payment_url || res?.data?.paymentUrl;
+          if (!res?.success || !url) {
+            toast.error(res?.error || t('payOpenError'));
+            return;
+          }
+          setPayFrameUrl(url);
+          setShowTopUp(false);
+          return;
+        }
+
         const userId = String(user?.id || '0').replace(/[^A-Za-z0-9]/g, '').slice(0, 20) || '0';
         const orderId = `p${userId}${Date.now()}`.slice(0, 100);
         const email = user.email?.trim() || 'pay@paitza.com';
-        const back = `${window.location.origin}/finance`;
         const lang = (i18n.resolvedLanguage || i18n.language || 'ru').slice(0, 2);
         try {
-          const walletCurrency = (accountData?.currency || 'RUB').toUpperCase();
           let charge = amountNumber;
           if (walletCurrency !== 'KGS') {
             const rates = await fetchCbrRates();

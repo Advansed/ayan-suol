@@ -239,6 +239,19 @@ export const useWallet = () => {
     [setLoading, socketRequest, token]
   );
 
+  const set_card_payment = useCallback(
+    async (data: { type: number; amount: number; description: string; success_url: string; fail_url: string }) => {
+      setLoading(true);
+      try {
+        const result = await socketRequest('create_payment_card', { token, ...data }, 'create_payment_card');
+        return result;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading, socketRequest, token]
+  );
+
   const set_invoice = useCallback(
     async (invoiceData: any): Promise<any> => {
       setLoading(true);
@@ -368,6 +381,7 @@ export const useWallet = () => {
     load,
     refreshWallet,
     set_payment,
+    set_card_payment,
     set_invoice,
     get_invoice,
     get_deals,
